@@ -1,0 +1,15 @@
+# Frontend 개발용 Dockerfile
+# Hot reload 지원 (React Fast Refresh)
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 패키지 파일 복사 및 의존성 설치
+COPY package*.json ./
+RUN npm install
+
+EXPOSE 3000
+
+# 개발 서버 실행
+CMD ["npm", "start"]

@@ -1,0 +1,32 @@
+# 환경 변수 파일 (보안)
+.env
+.env.prod
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 빌드 결과물
+build/
+dist/
+target/
+*.jar
+*.war
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# 로그 파일
+*.log
+logs/
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# Docker 볼륨 데이터 (로컬)
+postgres_data/

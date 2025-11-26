@@ -1,0 +1,79 @@
+# 개발용 Docker Compose
+# 사용법: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  database:
+    image: postgres:16-alpine
+    container_name: bulc-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-bulc_homepage_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-bulc_homepage_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bulc-network
+
+  # Spring Boot 백엔드 (개발 모드)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: bulc-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${DB_NAME:-bulc_homepage_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres123}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./backend/build.gradle:/app/build.gradle:ro
+      - ./backend/settings.gradle:/app/settings.gradle:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - bulc-network
+
+  # React 프론트엔드 (개발 모드)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: bulc-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:${BACKEND_PORT:-8080}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+    networks:
+      - bulc-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  bulc-network:
+    driver: bridge
