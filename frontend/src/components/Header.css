@@ -1,0 +1,344 @@
+/* ========================================
+   HEADER ACTION BUTTONS (로그인, 언어)
+======================================== */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: transform 0.3s ease;
+  border-radius: 6px;
+}
+
+.header-action-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: #C4320A;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.header-action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.header-action-btn:hover::after {
+  transform: scaleX(1);
+}
+
+.header-action-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+.header-action-btn:hover .header-action-icon {
+  color: var(--accent);
+}
+
+.header-action-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+.header-action-btn:hover .header-action-text {
+  color: var(--accent);
+}
+
+/* ========================================
+   SUB NAVIGATION - Desktop
+======================================== */
+.sub-nav {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 24px;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 90;
+  min-width: 320px;
+}
+
+.sub-nav-center {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sub-nav-item {
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.sub-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: #C4320A;
+  transition: width 0.3s ease;
+}
+
+.sub-nav-item:hover {
+  color: #C4320A;
+}
+
+.sub-nav-item:hover::after {
+  width: 80%;
+}
+
+.sub-nav-item.active {
+  color: #C4320A;
+  font-weight: 600;
+}
+
+.sub-nav-item.active::after {
+  width: 80%;
+}
+
+/* ========================================
+   FLOATING CONTACT BUTTON
+======================================== */
+.floating-contact-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #C4320A 0%, #e85d33 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(196, 50, 10, 0.4);
+  z-index: 1000;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.floating-contact-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(196, 50, 10, 0.5);
+}
+
+.floating-contact-icon {
+  width: 22px;
+  height: 22px;
+  color: #ffffff;
+}
+
+.floating-contact-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* ========================================
+   SUB NAVIGATION - Mobile Dropdown
+======================================== */
+.sub-nav-mobile {
+  flex: 1;
+  position: relative;
+}
+
+.sub-nav-mobile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 200px;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sub-nav-mobile-btn:hover {
+  background: #eeeeee;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.sub-nav-mobile-arrow {
+  width: 18px;
+  height: 18px;
+  color: var(--text);
+  transition: transform 0.3s ease;
+}
+
+.sub-nav-mobile-arrow.open {
+  transform: rotate(180deg);
+}
+
+.sub-nav-mobile-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 200;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sub-nav-mobile-item {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sub-nav-mobile-item:hover {
+  background: rgba(196, 50, 10, 0.08);
+}
+
+.sub-nav-mobile-item.active {
+  color: #C4320A;
+  background: rgba(196, 50, 10, 0.08);
+  font-weight: 600;
+}
+
+/* ========================================
+   Visibility Classes
+======================================== */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* ========================================
+   Mobile Responsive
+======================================== */
+@media (max-width: 768px) {
+  /* 헤더 액션 버튼: 모바일에서 텍스트 숨김 */
+  .header-action-text {
+    display: none;
+  }
+
+  .header-action-btn {
+    padding: 8px;
+  }
+
+  .header-action-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 서브 네비게이션: 드롭다운으로 전환 */
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: flex;
+  }
+
+  .sub-nav {
+    padding: 12px 16px;
+  }
+
+  /* 모바일에서 플로팅 버튼 텍스트 숨김 */
+  .floating-contact-text {
+    display: none;
+  }
+
+  .floating-contact-btn {
+    padding: 16px;
+    border-radius: 50%;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .floating-contact-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-right {
+    gap: 4px;
+  }
+
+  .header-action-btn {
+    padding: 6px;
+  }
+
+  .header-action-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sub-nav-mobile-btn {
+    max-width: 160px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .floating-contact-btn {
+    padding: 14px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .floating-contact-icon {
+    width: 22px;
+    height: 22px;
+  }
+}

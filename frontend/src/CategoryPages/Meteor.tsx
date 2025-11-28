@@ -1,31 +1,52 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import './CategoryPages.css';
+import Header from '../components/Header';
+
+const SUB_NAV_ITEMS = [
+  { id: 'overview', label: '개요' },
+  { id: 'features', label: '주요 기능' },
+  { id: 'cases', label: '적용 사례' },
+  { id: 'pricing', label: '요금제' },
+];
 
 const MeteorPage: React.FC = () => {
-  const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState('overview');
 
   return (
     <div className="app">
-      <header className="header visible">
-        <div className="header-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
-          <span className="header-logo-text">METEOR</span>
-        </div>
-        <div className="header-right">
-          <button className="login-btn" onClick={() => navigate('/login')}>
-            <svg className="login-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </header>
+      <Header
+        showSubNav={true}
+        subNavItems={SUB_NAV_ITEMS}
+        activeSubNav={activeMenu}
+        onSubNavChange={setActiveMenu}
+        contactLabel="도입 문의하기"
+      />
 
-      <main className="main-content">
-        <div className="page-container">
-          <h1 className="page-title">Meteor</h1>
-        </div>
+      <main className="main-content sub-page">
+        {activeMenu === 'overview' && (
+          <div className="page-container">
+            <h1 className="page-title">Meteor Simulation</h1>
+            <p className="page-subtitle">개요</p>
+          </div>
+        )}
+        {activeMenu === 'features' && (
+          <div className="page-container">
+            <h1 className="page-title">Meteor Simulation</h1>
+            <p className="page-subtitle">주요 기능</p>
+          </div>
+        )}
+        {activeMenu === 'cases' && (
+          <div className="page-container">
+            <h1 className="page-title">Meteor Simulation</h1>
+            <p className="page-subtitle">적용 사례</p>
+          </div>
+        )}
+        {activeMenu === 'pricing' && (
+          <div className="page-container">
+            <h1 className="page-title">Meteor Simulation</h1>
+            <p className="page-subtitle">요금제</p>
+          </div>
+        )}
       </main>
     </div>
   );

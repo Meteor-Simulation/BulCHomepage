@@ -40,7 +40,7 @@ CREATE TABLE user_profiles (
     state           VARCHAR(100) NULL,
     postal_code     VARCHAR(20) NULL,
     country         VARCHAR(100) NULL,
-    extra_meta      JSON NULL,
+    extra_meta      TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES users(id)
@@ -57,7 +57,7 @@ CREATE TABLE user_auth_providers (
     access_token        TEXT NULL,
     refresh_token       TEXT NULL,
     token_expires_at    TIMESTAMP NULL,
-    raw_profile         JSON NULL,
+    raw_profile         TEXT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_auth_user FOREIGN KEY (user_id) REFERENCES users(id),
@@ -177,7 +177,7 @@ CREATE TABLE order_items (
     quantity        INT NOT NULL DEFAULT 1,
     unit_amount     DECIMAL(18,2) NOT NULL,
     total_amount    DECIMAL(18,2) NOT NULL,
-    metadata        JSON NULL,
+    metadata        TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_orderitems_order FOREIGN KEY (order_id) REFERENCES orders(id),
     CONSTRAINT fk_orderitems_product FOREIGN KEY (product_id) REFERENCES products(id),
@@ -198,7 +198,7 @@ CREATE TABLE payments (
     status              VARCHAR(50) NOT NULL,
     paid_at             TIMESTAMP NULL,
     failure_reason      TEXT NULL,
-    raw_response        JSON NULL,
+    raw_response        TEXT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(id),
@@ -234,7 +234,7 @@ CREATE TABLE user_activity_logs (
     ip_address      VARCHAR(50) NULL,
     user_agent      TEXT NULL,
     referrer        VARCHAR(500) NULL,
-    metadata        JSON NULL,
+    metadata        TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -431,6 +431,22 @@ INSERT INTO products (code, name, description, is_active) VALUES
     ('BULC', 'BulC 화재 시뮬레이션', '실제 화재 데이터 기반 연기 시뮬레이션', TRUE),
     ('METEOR', 'Meteor Simulation', '화재 확산 예측 시뮬레이션', TRUE),
     ('VR_TRAINING', 'VR 안전 교육', 'VR 기반 화재 대피 훈련', TRUE);
+
+-- 테스트 사용자 계정 (비밀번호: 1234)
+-- BCrypt 해시: $2a$10$N9qo8uLOickgx2ZMRZoMye7EtHGrr8tQKqLF5O.9kYVEJvVVcezDK
+INSERT INTO users (email, password_hash, email_verified, status, sign_up_channel, locale, timezone) VALUES
+    ('Meteor', '$2a$10$N9qo8uLOickgx2ZMRZoMye7EtHGrr8tQKqLF5O.9kYVEJvVVcezDK', TRUE, 'active', 'web', 'ko', 'Asia/Seoul'),
+    ('TESTUSER', '$2a$10$N9qo8uLOickgx2ZMRZoMye7EtHGrr8tQKqLF5O.9kYVEJvVVcezDK', TRUE, 'active', 'web', 'ko', 'Asia/Seoul');
+
+-- 테스트 사용자 프로필
+INSERT INTO user_profiles (user_id, name, company_name) VALUES
+    (1, 'Meteor Admin', 'Meteor Simulation'),
+    (2, 'Test User', 'Test Company');
+
+-- 테스트 사용자 역할 매핑
+INSERT INTO user_role_mappings (user_id, role_id) VALUES
+    (1, 1),  -- Meteor -> admin
+    (2, 2);  -- TESTUSER -> user
 
 -- 초기화 완료 메시지
 DO $$
