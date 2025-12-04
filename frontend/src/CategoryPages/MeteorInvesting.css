@@ -1,0 +1,446 @@
+/* ========================================
+   Investing Container
+======================================== */
+
+.investing-container {
+  width: 100%;
+  padding: 0;
+}
+
+/* ========================================
+   Chart Section
+======================================== */
+
+.chart-section {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 48px;
+}
+
+.chart-wrapper {
+  height: 450px;
+  position: relative;
+}
+
+/* ========================================
+   Section Subtitle
+======================================== */
+
+.section-subtitle {
+  font-family: var(--font-main);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 40px;
+  letter-spacing: -0.02em;
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.section-subtitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: var(--accent);
+}
+
+/* ========================================
+   Major Deliveries Section
+======================================== */
+
+.deliveries-section {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 48px;
+}
+
+.deliveries-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.delivery-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 32px;
+  background: var(--off-white);
+  border-radius: 10px;
+  border-left: 5px solid var(--accent);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.delivery-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(196, 50, 10, 0.05) 0%, transparent 100%);
+  transition: width 0.4s ease;
+  z-index: 0;
+}
+
+.delivery-card:hover::before {
+  width: 100%;
+}
+
+.delivery-card:hover {
+  transform: translateX(8px);
+  box-shadow: var(--shadow-md);
+}
+
+.delivery-rank {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--accent);
+  min-width: 60px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.delivery-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.delivery-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.delivery-revenue {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.revenue-amount {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.revenue-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   Future Goals Section
+======================================== */
+
+.goals-section {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.tier-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.tier-card {
+  background: var(--off-white);
+  padding: 36px;
+  border-radius: 12px;
+  border-top: 5px solid;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tier-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  opacity: 0.05;
+  transition: all 0.4s ease;
+}
+
+.tier-card:hover::before {
+  transform: scale(1.5);
+  opacity: 0.08;
+}
+
+.tier-card.tier-1 {
+  border-top-color: #c9a961;
+}
+
+.tier-card.tier-1::before {
+  background: #c9a961;
+}
+
+.tier-card.tier-2 {
+  border-top-color: #2c5aa0;
+}
+
+.tier-card.tier-2::before {
+  background: #2c5aa0;
+}
+
+.tier-card.tier-3 {
+  border-top-color: #2d7a4f;
+}
+
+.tier-card.tier-3::before {
+  background: #2d7a4f;
+}
+
+.tier-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.tier-header {
+  margin-bottom: 24px;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.tier-1 .tier-badge {
+  background: #c9a961;
+}
+
+.tier-2 .tier-badge {
+  background: #2c5aa0;
+}
+
+.tier-3 .tier-badge {
+  background: #2d7a4f;
+}
+
+.tier-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tier-clients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+.client-tag {
+  padding: 8px 14px;
+  background: white;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.client-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tier-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.target-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.target-item:hover {
+  background: var(--light-gray);
+}
+
+.target-item.highlight {
+  background: linear-gradient(135deg, rgba(196, 50, 10, 0.08) 0%, rgba(196, 50, 10, 0.02) 100%);
+  border: 2px solid var(--accent);
+}
+
+.target-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.target-value {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.target-item.highlight .target-value {
+  color: var(--accent);
+  font-size: 24px;
+}
+
+/* ========================================
+   Responsive Design - Tablet
+======================================== */
+
+@media (max-width: 1024px) {
+  .tier-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .chart-wrapper {
+    height: 400px;
+  }
+
+  .deliveries-grid {
+    gap: 16px;
+  }
+
+  .delivery-card {
+    padding: 24px;
+  }
+
+  .delivery-rank {
+    font-size: 30px;
+    min-width: 50px;
+  }
+
+  .delivery-name {
+    font-size: 16px;
+  }
+
+  .revenue-amount {
+    font-size: 24px;
+  }
+}
+
+/* ========================================
+   Responsive Design - Mobile
+======================================== */
+
+@media (max-width: 768px) {
+  .chart-section,
+  .deliveries-section,
+  .goals-section {
+    padding: 40px 24px;
+  }
+
+  .section-subtitle {
+    font-size: 24px;
+    margin-bottom: 28px;
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+
+  .delivery-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .delivery-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .delivery-rank {
+    font-size: 24px;
+  }
+
+  .tier-card {
+    padding: 28px;
+  }
+
+  .tier-title {
+    font-size: 18px;
+  }
+
+  .target-value {
+    font-size: 18px;
+  }
+
+  .target-item.highlight .target-value {
+    font-size: 20px;
+  }
+}
+
+/* ========================================
+   Responsive Design - Small Mobile
+======================================== */
+
+@media (max-width: 480px) {
+  .chart-wrapper {
+    height: 250px;
+  }
+
+  .delivery-name {
+    font-size: 14px;
+  }
+
+  .revenue-amount {
+    font-size: 20px;
+  }
+
+  .tier-clients {
+    gap: 8px;
+  }
+
+  .client-tag {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .target-label {
+    font-size: 12px;
+  }
+
+  .target-value {
+    font-size: 16px;
+  }
+}

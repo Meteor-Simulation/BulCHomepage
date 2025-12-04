@@ -83,7 +83,9 @@ const Header: React.FC<HeaderProps> = ({
       <header className="header visible">
         <div className="header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
-          <span className="header-logo-text">METEOR</span>
+          <span className="header-logo-text">
+            METEOR<span style={{ color: '#C4320A' }}> SIMULATION</span>
+          </span>
         </div>
         <div className="header-right">
           {isLoggedIn ? (

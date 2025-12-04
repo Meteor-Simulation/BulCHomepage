@@ -290,9 +290,9 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
   <p class="cover-subtitle">Available Safe Egress Time Assessment</p>
   <div class="cover-metadata">
     <div class="cover-metadata-item"><strong>Analysis Type:</strong> Performance-Based Fire Safety Engineering</div>
-    <div class="cover-metadata-item"><strong>Exit Location:</strong> (0.00, 0.00, 1.80) m</div>
-    <div class="cover-metadata-item"><strong>ASET Time:</strong> 0.6 seconds</div>
-    <div class="cover-metadata-item"><strong>Report Generated:</strong> 2025-11-20 14:21:49</div>
+    <div class="cover-metadata-item"><strong>Exit Location:</strong> (8.00, 3.00, 1.80) m</div>
+    <div class="cover-metadata-item"><strong>ASET Time:</strong> 5.5 seconds</div>
+    <div class="cover-metadata-item"><strong>Report Generated:</strong> 2025-12-04 16:20:47</div>
     <div class="cover-metadata-item"><strong>Software:</strong> BULC ASET Analyzer v1.0</div>
   </div>
 </div>
@@ -343,13 +343,13 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
   <p>This report presents a comprehensive Available Safe Egress Time (ASET) analysis conducted using Fire Dynamics Simulator (FDS) computational fluid dynamics modeling. The analysis evaluates the time available for safe evacuation before untenable conditions develop at the designated exit location.</p>
   <div class="alert-box alert-warning">
     <div class="alert-title">ASET Result</div>
-    <p>Available Safe Egress Time: <strong>0.6 seconds</strong></p>
-    <p>Critical Failure: <strong>O2</strong></p>
-    <p>The analysis indicates that untenable conditions develop at 0.6 seconds due to O2 exceeding safe limits. This ASET value must be compared with Required Safe Egress Time (RSET) to determine if the building design provides adequate safety margins.</p>
+    <p>Available Safe Egress Time: <strong>5.5 seconds</strong></p>
+    <p>Critical Failure: <strong>Temperature</strong></p>
+    <p>The analysis indicates that untenable conditions develop at 5.5 seconds due to Temperature exceeding safe limits. This ASET value must be compared with Required Safe Egress Time (RSET) to determine if the building design provides adequate safety margins.</p>
   </div>
   <h3 class="subsection-title">Key Findings</h3>
   <ul>
-    <li><strong>Exit Location:</strong> (0.00, 0.00, 1.80) meters (X, Y, Z coordinates at breathing zone height)</li>
+    <li><strong>Exit Location:</strong> (8.00, 3.00, 1.80) meters (X, Y, Z coordinates at breathing zone height)</li>
     <li><strong>Analysis Method:</strong> FDS computational fluid dynamics simulation with Plot3D data extraction</li>
     <li><strong>Tenability Assessment:</strong> Five physiological criteria evaluated (temperature, visibility, CO₂, CO, O₂)</li>
     <li><strong>Safety Approach:</strong> Performance-based design per NFPA 101 and ISO/TR 16738 guidelines</li>
@@ -671,9 +671,9 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
   <h3 class="subsection-title">7.1 ASET Summary</h3>
   <div class="alert-box alert-warning">
     <div class="alert-title">Tenability Limit Exceeded</div>
-    <p><strong>ASET Time:</strong> 0.6 seconds</p>
-    <p><strong>Failed Criterion:</strong> O2</p>
-    <p>Untenable conditions developed at 0.6 seconds after ignition due to O2 exceeding safe limits at the exit location.</p>
+    <p><strong>ASET Time:</strong> 5.5 seconds</p>
+    <p><strong>Failed Criterion:</strong> Temperature</p>
+    <p>Untenable conditions developed at 5.5 seconds after ignition due to Temperature exceeding safe limits at the exit location.</p>
   </div>
   <h3 class="subsection-title">7.2 Individual Criterion Results</h3>
   <table class="data-table">
@@ -689,20 +689,20 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
       <tr>
         <td>Temperature</td>
         <td>&lt; 60.0 °C</td>
-        <td>Not exceeded</td>
-        <td><strong style="color: var(--success-green);">✓ PASS</strong></td>
+        <td>5.5 s</td>
+        <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
       </tr>
       <tr>
         <td>Visibility</td>
         <td>&gt; 5.0 m</td>
-        <td>0.6 s</td>
+        <td>5.5 s</td>
         <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
       </tr>
       <tr>
         <td>CO₂</td>
         <td>&lt; 5.0 %</td>
-        <td>Not exceeded</td>
-        <td><strong style="color: var(--success-green);">✓ PASS</strong></td>
+        <td>18.5 s</td>
+        <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
       </tr>
       <tr>
         <td>CO</td>
@@ -713,7 +713,7 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
       <tr>
         <td>O₂</td>
         <td>&gt; 15.0 %</td>
-        <td>0.6 s</td>
+        <td>18.0 s</td>
         <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
       </tr>
     </tbody>
@@ -724,8 +724,8 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
       <tr><th>Parameter</th><th>Value</th></tr>
     </thead>
     <tbody>
-      <tr><td>X Coordinate</td><td>0.00 m</td></tr>
-      <tr><td>Y Coordinate</td><td>0.00 m</td></tr>
+      <tr><td>X Coordinate</td><td>8.00 m</td></tr>
+      <tr><td>Y Coordinate</td><td>3.00 m</td></tr>
       <tr><td>Z Coordinate (Height)</td><td>1.80 m</td></tr>
       <tr><td>Location Description</td><td>Breathing zone at exit point</td></tr>
     </tbody>
@@ -787,7 +787,7 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
 <div class="section">
   <h2 class="section-title">10. Discussion and Safety Margin Analysis</h2>
   <h3 class="subsection-title">10.1 ASET Interpretation</h3>
-  <p>The analysis reveals that untenable conditions develop at the exit location after 0.6 seconds. The critical failure mode is <strong>O2</strong>, which reaches its tenability limit first among all evaluated criteria.</p>
+  <p>The analysis reveals that untenable conditions develop at the exit location after 5.5 seconds. The critical failure mode is <strong>Temperature</strong>, which reaches its tenability limit first among all evaluated criteria.</p>
   <p>This ASET value must be compared with the Required Safe Egress Time (RSET) calculated from evacuation modeling to assess overall building safety:</p>
   <div class="alert-box alert-warning">
     <div class="alert-title">Safety Assessment Required</div>
@@ -812,7 +812,7 @@ h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; 
   <p><strong>Validation and Verification:</strong></p>
   <p>FDS has been extensively validated against experimental data for various fire scenarios. NIST validation studies show temperature predictions typically within ±15% and heat flux predictions within ±25% of measured values. However, model accuracy depends strongly on grid resolution, fire scenario complexity, and proper input specification.</p>
   <h3 class="subsection-title">10.3 Design Implications</h3>
-  <p>The calculated ASET of 0.6 seconds provides a quantitative basis for evaluating design alternatives:</p>
+  <p>The calculated ASET of 5.5 seconds provides a quantitative basis for evaluating design alternatives:</p>
   <ul>
     <li><strong>Fire protection systems:</strong> Earlier detection and suppression can extend ASET</li>
     <li><strong>Ventilation design:</strong> Smoke management systems can improve visibility and reduce toxicity</li>
