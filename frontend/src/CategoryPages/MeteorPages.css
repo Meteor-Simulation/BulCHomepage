@@ -1,0 +1,574 @@
+/* ========================================
+   Meteor Pages Common Styles
+======================================== */
+
+:root {
+  --white: #FFFFFF;
+  --off-white: #FAFAFA;
+  --light-gray: #F5F5F5;
+  --mid-gray: #E8E8E8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent: #C4320A;
+  --accent-light: #E84A1F;
+  --accent-dark: #8B2400;
+  --font-main: 'DM Sans', -apple-system, sans-serif;
+  --section-padding: 80px;
+  --container-width: 1400px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+.meteor-section {
+  padding: var(--section-padding) 48px;
+  background: var(--white);
+  min-height: 60vh;
+}
+
+.meteor-container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+/* ========================================
+   Section Headers
+======================================== */
+
+.section-header {
+  margin-bottom: 80px;
+  max-width: 900px;
+}
+
+.section-eyebrow {
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-family: var(--font-main);
+  font-size: clamp(36px, 5vw, 72px);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-bottom: 32px;
+  letter-spacing: -0.02em;
+}
+
+.section-description {
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 900px;
+}
+
+/* ========================================
+   About Page - Value Props
+======================================== */
+
+.meteor-about {
+  background: var(--light-gray);
+}
+
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--mid-gray);
+  margin-bottom: 80px;
+}
+
+.value-card {
+  background: var(--white);
+  padding: 72px 56px;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.value-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: var(--accent);
+  transition: height 0.4s ease;
+}
+
+.value-card:hover::before {
+  height: 100%;
+}
+
+.value-card:hover {
+  background: var(--off-white);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.value-number {
+  font-family: var(--font-main);
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--light-gray);
+  line-height: 1;
+  display: block;
+  margin-bottom: 32px;
+  letter-spacing: -0.04em;
+}
+
+.value-card:hover .value-number {
+  color: rgba(196, 50, 10, 0.1);
+}
+
+.value-title {
+  font-family: var(--font-main);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+.value-description {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   Stats Grid
+======================================== */
+
+.stats-section {
+  margin-top: 80px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--mid-gray);
+}
+
+.stat-item {
+  padding: 64px 48px;
+  border-right: 1px solid var(--mid-gray);
+  border-bottom: 1px solid var(--mid-gray);
+  transition: all 0.3s ease;
+  background: var(--white);
+}
+
+.stat-item:hover {
+  background: var(--off-white);
+  transform: translateY(-2px);
+}
+
+.stat-number {
+  font-family: var(--font-main);
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 16px;
+  letter-spacing: -0.03em;
+}
+
+.stat-label {
+  font-family: var(--font-main);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.stat-description {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ========================================
+   Solutions Page
+======================================== */
+
+.meteor-solutions {
+  background: var(--white);
+}
+
+.solutions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+.solution-card {
+  background: var(--white);
+  padding: 48px;
+  border: 1px solid var(--mid-gray);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.solution-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 4px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.solution-card:hover::before {
+  width: 100%;
+}
+
+.solution-card:hover {
+  border-color: var(--accent-light);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.solution-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.solution-title {
+  font-family: var(--font-main);
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.solution-description {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.solution-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tag {
+  padding: 8px 16px;
+  background: var(--light-gray);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* ========================================
+   Solution Video
+======================================== */
+
+.solution-video {
+  position: relative;
+  padding-bottom: 56.25%;
+  margin: 32px 0;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.solution-video iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.sample-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btn-sample {
+  padding: 16px 32px;
+  background: var(--white);
+  color: var(--text-primary);
+  border: 2px solid var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-sample:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   Achievements Page - Tabs
+======================================== */
+
+.meteor-achievements {
+  background: var(--white);
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 48px;
+  border-bottom: 2px solid var(--mid-gray);
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 16px 32px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  font-family: var(--font-main);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ========================================
+   Data Tables
+======================================== */
+
+.tabpanel {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  table-layout: fixed;
+}
+
+.data-table thead {
+  background: var(--light-gray);
+}
+
+.data-table th {
+  padding: 20px 24px;
+  text-align: left;
+  font-family: var(--font-main);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--mid-gray);
+}
+
+.data-table td {
+  padding: 24px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--mid-gray);
+}
+
+.data-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background: var(--off-white);
+}
+
+.status-active {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+}
+
+/* ========================================
+   Responsive Design - Tablet
+======================================== */
+
+@media (max-width: 1024px) {
+  .meteor-section {
+    padding: 60px 32px;
+  }
+
+  .value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .value-card {
+    padding: 48px 40px;
+  }
+
+  .solutions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ========================================
+   Responsive Design - Mobile
+======================================== */
+
+@media (max-width: 768px) {
+  .meteor-section {
+    padding: 48px 24px;
+  }
+
+  .section-header {
+    margin-bottom: 48px;
+  }
+
+  .section-title {
+    font-size: 36px;
+  }
+
+  .section-description {
+    font-size: 17px;
+  }
+
+  .value-card {
+    padding: 40px 32px;
+  }
+
+  .value-number {
+    font-size: 72px;
+  }
+
+  .value-title {
+    font-size: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-item {
+    padding: 40px 32px;
+  }
+
+  .solution-card {
+    padding: 32px 24px;
+  }
+
+  .tabs {
+    gap: 8px;
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .data-table {
+    font-size: 14px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 16px;
+  }
+
+  .sample-buttons {
+    flex-direction: column;
+  }
+
+  .btn-sample {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   Responsive Design - Small Mobile
+======================================== */
+
+@media (max-width: 480px) {
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: 24px;
+    border: 1px solid var(--mid-gray);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .data-table td {
+    text-align: left;
+    padding: 16px;
+    position: relative;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 8px;
+  }
+}

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASET Analysis Report - Fire Safety Engineering Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary-navy: #1a2332;
+    --secondary-blue: #2c5aa0;
+    --accent-gold: #c9a961;
+    --alert-red: #c44536;
+    --success-green: #2d7a4f;
+    --bg-cream: #fdfbf7;
+    --bg-white: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --border-light: #e0e0e0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.7;
+    color: var(--text-primary);
+    background: var(--bg-cream);
+    font-size: 11pt;
+}
+h1, h2, h3, h4 { font-family: 'Crimson Text', Georgia, serif; font-weight: 600; }
+.cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-blue) 100%);
+    color: white;
+    padding: 4rem 2rem;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+}
+.cover-page::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -50%;
+    width: 100%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    transform: rotate(-15deg);
+}
+.cover-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+.cover-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 3rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
+.cover-metadata {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 1;
+}
+.cover-metadata-item {
+    margin: 0.75rem 0;
+    font-size: 1.1rem;
+}
+.section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    background: var(--bg-white);
+    margin-top: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.section-title {
+    font-size: 2.25rem;
+    color: var(--primary-navy);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--accent-gold);
+}
+.subsection-title {
+    font-size: 1.5rem;
+    color: var(--secondary-blue);
+    margin: 2rem 0 1rem 0;
+}
+.toc {
+    background: var(--bg-white);
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 3rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.toc-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+}
+.toc-item:last-child { border-bottom: none; }
+.toc-number {
+    color: var(--secondary-blue);
+    font-weight: 600;
+    margin-right: 1rem;
+}
+.formula-block {
+    background: #f8f9fa;
+    padding: 2rem;
+    margin: 2rem 0;
+    border-left: 4px solid var(--secondary-blue);
+    border-radius: 4px;
+}
+.formula-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--secondary-blue);
+    margin-bottom: 1rem;
+}
+.formula {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 1.3rem;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-primary);
+}
+.formula-notation {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+.notation-item {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 1rem;
+    margin: 0.75rem 0;
+    padding: 0.5rem 0;
+}
+.notation-var {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--secondary-blue);
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+}
+.data-table th {
+    background: var(--primary-navy);
+    color: white;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+.data-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+.data-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+.data-table tr:hover {
+    background: #e8f4f8;
+}
+.alert-box {
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border-radius: 8px;
+    border-left: 5px solid;
+}
+.alert-success {
+    background: #d4edda;
+    border-color: var(--success-green);
+    color: #155724;
+}
+.alert-warning {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+.alert-danger {
+    background: #f8d7da;
+    border-color: var(--alert-red);
+    color: #721c24;
+}
+.alert-title {
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+}
+.criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+.criteria-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--border-light);
+    transition: all 0.3s ease;
+}
+.criteria-card:hover {
+    border-color: var(--secondary-blue);
+    box-shadow: 0 4px 12px rgba(44,90,160,0.15);
+}
+.criteria-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-navy);
+    margin-bottom: 0.5rem;
+}
+.criteria-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary-blue);
+    margin: 0.5rem 0;
+}
+.image-container {
+    margin: 2rem 0;
+    text-align: center;
+}
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.image-caption {
+    margin-top: 1rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+.reference-list {
+    list-style: none;
+    padding: 0;
+}
+.reference-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.6;
+}
+.reference-item:last-child { border-bottom: none; }
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 1.5rem 0;
+}
+.footer {
+    background: var(--primary-navy);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 3rem;
+}
+@media print {
+    .section { page-break-inside: avoid; }
+    .cover-page { page-break-after: always; }
+}
+</style>
+</head>
+<body>
+<div class="cover-page">
+  <h1 class="cover-title">ASET ANALYSIS REPORT</h1>
+  <p class="cover-subtitle">Available Safe Egress Time Assessment</p>
+  <div class="cover-metadata">
+    <div class="cover-metadata-item"><strong>Analysis Type:</strong> Performance-Based Fire Safety Engineering</div>
+    <div class="cover-metadata-item"><strong>Exit Location:</strong> (0.00, 0.00, 1.80) m</div>
+    <div class="cover-metadata-item"><strong>ASET Time:</strong> 0.6 seconds</div>
+    <div class="cover-metadata-item"><strong>Report Generated:</strong> 2025-11-20 14:21:49</div>
+    <div class="cover-metadata-item"><strong>Software:</strong> BULC ASET Analyzer v1.0</div>
+  </div>
+</div>
+<div class="toc">
+  <h2 class="section-title">Table of Contents</h2>
+  <div class="toc-item">
+    <span><span class="toc-number">1.</span>Executive Summary</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">2.</span>Introduction to ASET Analysis</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">3.</span>FDS Configuration and Simulation Setup</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">4.</span>Fire Scenario Description</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">5.</span>Tenability Criteria and Scientific Basis</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">6.</span>ASET Calculation Methodology</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">7.</span>Analysis Results</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">8.</span>Slice Visualizations at Exit Height</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">9.</span>Time-Series Graphs with Threshold Lines</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">10.</span>Discussion and Safety Margin Analysis</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">11.</span>Recommendations</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">12.</span>References</span>
+  </div>
+  <div class="toc-item">
+    <span><span class="toc-number">13.</span>Appendices</span>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">1. Executive Summary</h2>
+  <p>This report presents a comprehensive Available Safe Egress Time (ASET) analysis conducted using Fire Dynamics Simulator (FDS) computational fluid dynamics modeling. The analysis evaluates the time available for safe evacuation before untenable conditions develop at the designated exit location.</p>
+  <div class="alert-box alert-warning">
+    <div class="alert-title">ASET Result</div>
+    <p>Available Safe Egress Time: <strong>0.6 seconds</strong></p>
+    <p>Critical Failure: <strong>O2</strong></p>
+    <p>The analysis indicates that untenable conditions develop at 0.6 seconds due to O2 exceeding safe limits. This ASET value must be compared with Required Safe Egress Time (RSET) to determine if the building design provides adequate safety margins.</p>
+  </div>
+  <h3 class="subsection-title">Key Findings</h3>
+  <ul>
+    <li><strong>Exit Location:</strong> (0.00, 0.00, 1.80) meters (X, Y, Z coordinates at breathing zone height)</li>
+    <li><strong>Analysis Method:</strong> FDS computational fluid dynamics simulation with Plot3D data extraction</li>
+    <li><strong>Tenability Assessment:</strong> Five physiological criteria evaluated (temperature, visibility, CO₂, CO, O₂)</li>
+    <li><strong>Safety Approach:</strong> Performance-based design per NFPA 101 and ISO/TR 16738 guidelines</li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">2. Introduction to ASET Analysis</h2>
+  <h3 class="subsection-title">2.1 Performance-Based Fire Safety Design</h3>
+  <p>Performance-based fire safety design represents an engineering approach that evaluates building safety through quantitative analysis rather than prescriptive code compliance. The fundamental safety criterion is expressed as:</p>
+  <div class="formula-block">
+    <div class="formula-title">Fundamental Safety Criterion</div>
+    <div class="formula">ASET > RSET</div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">ASET</span>
+        <span>Available Safe Egress Time - time until untenable conditions develop</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">RSET</span>
+        <span>Required Safe Egress Time - time needed for complete evacuation</span>
+      </div>
+    </div>
+  </div>
+  <h3 class="subsection-title">2.2 ASET Definition and Significance</h3>
+  <p>ASET represents the time interval from fire ignition to the onset of untenable conditions at a specified location. Untenable conditions are defined as environmental parameters that would prevent safe egress or cause incapacitation of building occupants. The ASET analysis employs multiple physiological criteria based on toxicological and thermal tolerance research.</p>
+  <p>This analysis uses Fire Dynamics Simulator (FDS), a computational fluid dynamics (CFD) model developed by the National Institute of Standards and Technology (NIST), to predict the fire environment evolution. FDS solves the Navier-Stokes equations for low-speed, thermally-driven flows with an emphasis on smoke and heat transport from fires.</p>
+  <h3 class="subsection-title">2.3 Regulatory Framework</h3>
+  <p>This ASET analysis follows internationally recognized standards and guidelines:</p>
+  <ul>
+    <li><strong>NFPA 101:</strong> Life Safety Code - Performance-based design options (Chapter 5)</li>
+    <li><strong>ISO/TR 16738:</strong> Fire safety engineering - Technical information on methods for evaluating behavior and movement of people</li>
+    <li><strong>ISO/TS 13571:</strong> Life-threatening components of fire - Guidelines for the estimation of time to compromised tenability in fires</li>
+    <li><strong>SFPE Handbook:</strong> Society of Fire Protection Engineers engineering methods</li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">3. FDS Configuration and Simulation Setup</h2>
+  <h3 class="subsection-title">3.1 Fire Dynamics Simulator Overview</h3>
+  <p>Fire Dynamics Simulator (FDS) is a large-eddy simulation (LES) code developed by NIST for modeling fire-driven fluid flow. The model numerically solves a form of the Navier-Stokes equations appropriate for low-speed, thermally-driven flow with an emphasis on smoke and heat transport.</p>
+  <h3 class="subsection-title">3.2 Computational Domain and Mesh</h3>
+  <p><strong>Mesh Resolution Criteria:</strong></p>
+  <ul>
+    <li><strong>D*/δx ratio:</strong> The characteristic fire diameter (D*) to cell size (δx) ratio should typically be between 4 and 16 for adequate plume resolution</li>
+    <li><strong>Characteristic fire diameter:</strong> D* = (Q̇/ρ∞c<sub>p</sub>T∞√g)<sup>2/5</sup></li>
+    <li><strong>Cell aspect ratio:</strong> Grid cells should have aspect ratios close to 1:1:1 in critical regions</li>
+  </ul>
+  <h3 class="subsection-title">3.3 Simulation Parameters</h3>
+  <p><strong>Numerical Methods:</strong></p>
+  <ul>
+    <li><strong>Turbulence model:</strong> Large Eddy Simulation (LES) with Deardorff subgrid-scale model</li>
+    <li><strong>Radiation solver:</strong> Finite volume method with gray gas assumption</li>
+    <li><strong>Time integration:</strong> Second-order accurate explicit Runge-Kutta scheme</li>
+    <li><strong>Pressure solver:</strong> Fast Fourier Transform (FFT)-based direct solver</li>
+  </ul>
+  <h3 class="subsection-title">3.4 Output Quantities</h3>
+  <p>The simulation generates Plot3D format output files containing three-dimensional field data for the following quantities at regular time intervals:</p>
+  <ul>
+    <li><strong>Temperature (°C):</strong> Gas phase temperature field</li>
+    <li><strong>Visibility (m):</strong> Calculated from smoke extinction coefficient</li>
+    <li><strong>CO₂ Volume Fraction:</strong> Carbon dioxide concentration</li>
+    <li><strong>CO Concentration (ppm):</strong> Carbon monoxide concentration</li>
+    <li><strong>O₂ Volume Fraction:</strong> Oxygen concentration</li>
+  </ul>
+  <h3 class="subsection-title">3.5 Boundary Conditions</h3>
+  <p>The simulation employs the following boundary conditions:</p>
+  <ul>
+    <li><strong>Walls:</strong> Adiabatic or heat transfer boundaries with specified thermal properties</li>
+    <li><strong>Openings:</strong> Open boundary conditions allowing natural ventilation</li>
+    <li><strong>Initial conditions:</strong> Ambient temperature (20°C) and atmospheric pressure</li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">4. Fire Scenario Description</h2>
+  <h3 class="subsection-title">4.1 Fire Source Characteristics</h3>
+  <p>The fire scenario includes combustible materials configured with heat release rate per unit area (HRRPUA) specifications. The fire growth follows the defined ramp function or constant heat release rate.</p>
+  <h3 class="subsection-title">4.2 Heat Release Rate (HRR)</h3>
+  <p>The heat release rate is the single most important parameter in fire hazard analysis. It represents the rate of energy release due to combustion and drives the fire-induced flows:</p>
+  <div class="formula-block">
+    <div class="formula-title">Total Heat Release Rate</div>
+    <div class="formula">Q̇(t) = HRRPUA × A<sub>burn</sub> × f(t)</div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">Q̇(t)</span>
+        <span>Time-dependent heat release rate (kW)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">HRRPUA</span>
+        <span>Heat release rate per unit area (kW/m²)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">A<sub>burn</sub></span>
+        <span>Burning surface area (m²)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">f(t)</span>
+        <span>Time-dependent ramp function (0 to 1)</span>
+      </div>
+    </div>
+  </div>
+  <h3 class="subsection-title">4.3 Combustion Products</h3>
+  <p>The combustion process generates products that affect tenability:</p>
+  <ul>
+    <li><strong>Carbon Dioxide (CO₂):</strong> Primary combustion product; elevated levels cause increased respiration rate and reduced egress capability</li>
+    <li><strong>Carbon Monoxide (CO):</strong> Toxic gas produced under oxygen-limited conditions; interferes with oxygen transport in blood</li>
+    <li><strong>Oxygen Depletion:</strong> Combustion consumes oxygen, potentially reducing O₂ concentration below safe breathing levels</li>
+    <li><strong>Smoke Particulates:</strong> Reduce visibility and cause respiratory irritation</li>
+  </ul>
+  <h3 class="subsection-title">4.4 Fire Growth and Development</h3>
+  <p>Fire growth typically follows characteristic phases:</p>
+  <ul>
+    <li><strong>Incipient Phase:</strong> Initial ignition and slow growth</li>
+    <li><strong>Growth Phase:</strong> Accelerating fire development (often following t² growth for design fires)</li>
+    <li><strong>Fully Developed:</strong> Peak heat release rate</li>
+    <li><strong>Decay Phase:</strong> Fuel-limited reduction in HRR</li>
+  </ul>
+  <p>For performance-based analysis, design fires are often characterized by t-squared growth curves:</p>
+  <div class="formula-block">
+    <div class="formula">Q̇(t) = α t²</div>
+    <div class="formula-notation">
+      <p><strong>Growth rates (α):</strong></p>
+      <ul>
+        <li>Slow: α = 0.00293 kW/s² (600s to 1055 kW)</li>
+        <li>Medium: α = 0.01172 kW/s² (300s to 1055 kW)</li>
+        <li>Fast: α = 0.0469 kW/s² (150s to 1055 kW)</li>
+        <li>Ultra-fast: α = 0.1876 kW/s² (75s to 1055 kW)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">5. Tenability Criteria and Scientific Basis</h2>
+  <p>Tenability criteria define the environmental conditions beyond which building occupants cannot safely egress. These criteria are based on extensive physiological research and are specified in ISO/TS 13571 and other fire safety engineering standards.</p>
+  <div class="criteria-grid">
+    <div class="criteria-card">
+      <div class="criteria-name">Temperature</div>
+      <div class="criteria-value">&lt; 60.0 °C</div>
+      <p>Upper thermal tolerance limit for exposed skin and respiratory tract</p>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-name">Visibility</div>
+      <div class="criteria-value">&gt; 5.0 m</div>
+      <p>Minimum visibility required for wayfinding and egress</p>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-name">CO₂</div>
+      <div class="criteria-value">&lt; 5.0 %</div>
+      <p>Carbon dioxide threshold before hyperventilation effects</p>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-name">CO</div>
+      <div class="criteria-value">&lt; 1400.0 ppm</div>
+      <p>Carbon monoxide limit to prevent incapacitation</p>
+    </div>
+    <div class="criteria-card">
+      <div class="criteria-name">O₂</div>
+      <div class="criteria-value">&gt; 15.0 %</div>
+      <p>Minimum oxygen concentration for normal respiration</p>
+    </div>
+  </div>
+  <h3 class="subsection-title">5.1 Temperature Effects</h3>
+  <p><strong>Thermal Tolerance Limits:</strong></p>
+  <ul>
+    <li><strong>60°C:</strong> Conservative limit for clothed individuals during short-duration exposure (ISO/TS 13571 recommendation)</li>
+    <li><strong>Skin burns:</strong> Occur at temperatures above 44°C with prolonged exposure (pain threshold ~43°C)</li>
+    <li><strong>Respiratory tract damage:</strong> Inhalation of hot gases above 60°C can cause airway burns and edema</li>
+  </ul>
+  <p>The fractional effective dose (FED) for convective heat exposure is calculated as:</p>
+  <div class="formula-block">
+    <div class="formula">FED<sub>heat</sub> = ∑ Δt / t<sub>limit</sub>(T)</div>
+    <div class="formula-notation">
+      <p>where t<sub>limit</sub> is the time to incapacitation at temperature T, based on empirical tolerance data.</p>
+    </div>
+  </div>
+  <h3 class="subsection-title">5.2 Visibility Through Smoke</h3>
+  <p><strong>Visibility and Egress Capability:</strong></p>
+  <ul>
+    <li><strong>5m visibility:</strong> Minimum for unfamiliar occupants to identify exit signs and navigate corridors</li>
+    <li><strong>3m visibility:</strong> Limit for familiar occupants in known environments</li>
+    <li><strong>Walking speed reduction:</strong> Movement slows significantly below 10m visibility</li>
+  </ul>
+  <p>Visibility is calculated from the smoke extinction coefficient:</p>
+  <div class="formula-block">
+    <div class="formula">S = C / K</div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">S</span>
+        <span>Visibility distance (m)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">K</span>
+        <span>Smoke extinction coefficient (1/m)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">C</span>
+        <span>Contrast factor (typically 3 for illuminated signs, 8 for reflective signs)</span>
+      </div>
+    </div>
+  </div>
+  <h3 class="subsection-title">5.3 Carbon Dioxide (CO₂)</h3>
+  <p><strong>Physiological Effects:</strong></p>
+  <ul>
+    <li><strong>Normal atmospheric:</strong> 0.04% (400 ppm)</li>
+    <li><strong>1-2%:</strong> Noticeable respiratory stimulation</li>
+    <li><strong>3-5%:</strong> Significant hyperventilation, headache, increased breathing rate (doubles at 3%)</li>
+    <li><strong>&gt;5%:</strong> Severe physiological stress, impaired egress capability</li>
+  </ul>
+  <p>Elevated CO₂ acts as a respiratory stimulant, causing occupants to breathe more deeply and rapidly, which increases the uptake of other toxic gases. The 5% threshold represents a conservative limit before significant performance degradation.</p>
+  <h3 class="subsection-title">5.4 Carbon Monoxide (CO)</h3>
+  <p><strong>Toxicity Mechanism:</strong></p>
+  <p>Carbon monoxide binds to hemoglobin with 200-250 times the affinity of oxygen, forming carboxyhemoglobin (COHb) and reducing oxygen transport capacity in blood. The fractional effective dose for CO is calculated using the CO exposure dose (CED) model:</p>
+  <div class="formula-block">
+    <div class="formula">FED<sub>CO</sub> = ∑ [CO]<sup>1.036</sup> × V̇<sub>CO₂</sub> × Δt / (3.5 × 10⁷)</div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">[CO]</span>
+        <span>Carbon monoxide concentration (ppm)</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">V̇<sub>CO₂</sub></span>
+        <span>CO₂-induced hyperventilation factor (typically 1-7 based on CO₂ level)</span>
+      </div>
+    </div>
+  </div>
+  <p><strong>Exposure Effects:</strong></p>
+  <ul>
+    <li><strong>400 ppm:</strong> Headache after 1-2 hours</li>
+    <li><strong>800 ppm:</strong> Dizziness, nausea after 45 minutes</li>
+    <li><strong>1400 ppm:</strong> Conservative tenability limit (5-10% COHb after 10-15 minutes)</li>
+    <li><strong>3200 ppm:</strong> Headache, impaired judgment within 10 minutes</li>
+    <li><strong>6400 ppm:</strong> Incapacitation within 10-15 minutes</li>
+  </ul>
+  <h3 class="subsection-title">5.5 Oxygen Depletion</h3>
+  <p><strong>Hypoxia Effects:</strong></p>
+  <ul>
+    <li><strong>Normal atmospheric:</strong> 21% (20.95% O₂)</li>
+    <li><strong>17-19%:</strong> Mild symptoms - increased heart rate and breathing</li>
+    <li><strong>15-17%:</strong> Impaired coordination, rapid fatigue, respiratory distress</li>
+    <li><strong>12-15%:</strong> Poor judgment, poor coordination, labored breathing</li>
+    <li><strong>&lt;12%:</strong> Severe incapacitation risk</li>
+  </ul>
+  <p>The 15% threshold provides a conservative safety margin. Oxygen depletion primarily occurs in confined spaces with significant fire loads and limited ventilation.</p>
+  <div class="formula-block">
+    <div class="formula">FED<sub>O₂</sub> = ∑ Δt / (exp(8.13 - 0.54(20.9 - [O₂])))</div>
+    <div class="formula-notation">
+      <p>This hypoxia model accounts for the exponential increase in incapacitation time as oxygen concentration decreases below normal levels.</p>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">6. ASET Calculation Methodology</h2>
+  <h3 class="subsection-title">6.1 Primary ASET Equation</h3>
+  <p>ASET is determined as the earliest time at which any tenability criterion is exceeded:</p>
+  <div class="formula-block">
+    <div class="formula-title">ASET Definition</div>
+    <div class="formula">ASET = min(t<sub>temp</sub>, t<sub>vis</sub>, t<sub>CO₂</sub>, t<sub>CO</sub>, t<sub>O₂</sub>)</div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">t<sub>temp</sub></span>
+        <span>Time when temperature exceeds 60.0°C</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">t<sub>vis</sub></span>
+        <span>Time when visibility drops below 5.0 m</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">t<sub>CO₂</sub></span>
+        <span>Time when CO₂ exceeds 5.0%</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">t<sub>CO</sub></span>
+        <span>Time when CO exceeds 1400.0 ppm</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">t<sub>O₂</sub></span>
+        <span>Time when O₂ drops below 15.0%</span>
+      </div>
+    </div>
+  </div>
+  <h3 class="subsection-title">6.2 Data Extraction from FDS Simulation</h3>
+  <p>The ASET analysis extracts time-series data at the specified exit location from FDS Plot3D output files. The process involves:</p>
+  <ol>
+    <li><strong>Coordinate Transformation:</strong> Converting physical exit coordinates (X, Y, Z) to FDS grid indices (i, j, k)</li>
+    <li><strong>Trilinear Interpolation:</strong> Extracting values at the exact exit position using interpolation between surrounding grid cells</li>
+    <li><strong>Time-Series Assembly:</strong> Collecting data at each output timestep throughout the simulation</li>
+    <li><strong>Threshold Comparison:</strong> Comparing each variable against its tenability limit at each timestep</li>
+  </ol>
+  <h3 class="subsection-title">6.3 Trilinear Interpolation</h3>
+  <p>Since the exit location may not align with grid cell centers, trilinear interpolation provides accurate values at arbitrary positions within the computational domain:</p>
+  <div class="formula-block">
+    <div class="formula">V(x,y,z) = ∑<sub>i=0</sub><sup>1</sup> ∑<sub>j=0</sub><sup>1</sup> ∑<sub>k=0</sub><sup>1</sup> V<sub>ijk</sub> × (1-x<sub>d</sub>)<sup>(1-i)</sup> × x<sub>d</sub><sup>i</sup> × (1-y<sub>d</sub>)<sup>(1-j)</sup> × y<sub>d</sub><sup>j</sup> × (1-z<sub>d</sub>)<sup>(1-k)</sup> × z<sub>d</sub><sup>k</sup></div>
+    <div class="formula-notation">
+      <div class="notation-item">
+        <span class="notation-var">V<sub>ijk</sub></span>
+        <span>Values at the 8 surrounding grid cell corners</span>
+      </div>
+      <div class="notation-item">
+        <span class="notation-var">x<sub>d</sub>, y<sub>d</sub>, z<sub>d</sub></span>
+        <span>Normalized distances from lower grid cell corner (0 to 1)</span>
+      </div>
+    </div>
+  </div>
+  <h3 class="subsection-title">6.4 Safety Margin Analysis</h3>
+  <p>The safety margin represents the difference between ASET and RSET:</p>
+  <div class="formula-block">
+    <div class="formula">SM = ASET - RSET</div>
+    <div class="formula-notation">
+      <p><strong>Safety margin interpretations:</strong></p>
+      <ul>
+        <li><strong>SM &gt; 0:</strong> Safe design (evacuation completes before untenable conditions)</li>
+        <li><strong>SM = 0:</strong> Marginal case (no safety buffer)</li>
+        <li><strong>SM &lt; 0:</strong> Unsafe design (untenable conditions before evacuation complete)</li>
+      </ul>
+      <p><strong>Recommended safety factors:</strong> NFPA 101 suggests maintaining SM ≥ 1.5 to 2.0 times RSET to account for uncertainties in occupant behavior, fire growth, and model predictions.</p>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">7. Analysis Results</h2>
+  <h3 class="subsection-title">7.1 ASET Summary</h3>
+  <div class="alert-box alert-warning">
+    <div class="alert-title">Tenability Limit Exceeded</div>
+    <p><strong>ASET Time:</strong> 0.6 seconds</p>
+    <p><strong>Failed Criterion:</strong> O2</p>
+    <p>Untenable conditions developed at 0.6 seconds after ignition due to O2 exceeding safe limits at the exit location.</p>
+  </div>
+  <h3 class="subsection-title">7.2 Individual Criterion Results</h3>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Criterion</th>
+        <th>Threshold</th>
+        <th>Exceedance Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Temperature</td>
+        <td>&lt; 60.0 °C</td>
+        <td>Not exceeded</td>
+        <td><strong style="color: var(--success-green);">✓ PASS</strong></td>
+      </tr>
+      <tr>
+        <td>Visibility</td>
+        <td>&gt; 5.0 m</td>
+        <td>0.6 s</td>
+        <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
+      </tr>
+      <tr>
+        <td>CO₂</td>
+        <td>&lt; 5.0 %</td>
+        <td>Not exceeded</td>
+        <td><strong style="color: var(--success-green);">✓ PASS</strong></td>
+      </tr>
+      <tr>
+        <td>CO</td>
+        <td>&lt; 1400.0 ppm</td>
+        <td>Not exceeded</td>
+        <td><strong style="color: var(--success-green);">✓ PASS</strong></td>
+      </tr>
+      <tr>
+        <td>O₂</td>
+        <td>&gt; 15.0 %</td>
+        <td>0.6 s</td>
+        <td><strong style="color: var(--alert-red);">✗ FAIL</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 class="subsection-title">7.3 Exit Location Details</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Parameter</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>X Coordinate</td><td>0.00 m</td></tr>
+      <tr><td>Y Coordinate</td><td>0.00 m</td></tr>
+      <tr><td>Z Coordinate (Height)</td><td>1.80 m</td></tr>
+      <tr><td>Location Description</td><td>Breathing zone at exit point</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="section">
+  <h2 class="section-title">8. Slice Visualizations at Exit Height</h2>
+  <p>The following visualizations show horizontal slices at Z = 1.80 m (breathing zone height) for each tenability parameter. The red crosshair marker indicates the exit location where ASET was evaluated.</p>
+  <h3 class="subsection-title">8.1 Temperature</h3>
+  <div class="image-container">
+    <img src="slice_temperature.png" alt="Temperature Slice">
+    <p class="image-caption">Figure 1: Temperature distribution showing thermal stratification and hot gas layer development</p>
+  </div>
+  <h3 class="subsection-title">8.2 Visibility</h3>
+  <div class="image-container">
+    <img src="slice_visibility.png" alt="Visibility Slice">
+    <p class="image-caption">Figure 2: Visibility through smoke showing areas of optical obscuration</p>
+  </div>
+  <h3 class="subsection-title">8.3 CO2</h3>
+  <div class="image-container">
+    <img src="slice_co2.png" alt="CO2 Slice">
+    <p class="image-caption">Figure 3: Carbon dioxide concentration showing combustion product distribution</p>
+  </div>
+  <h3 class="subsection-title">8.4 CO</h3>
+  <div class="image-container">
+    <img src="slice_co.png" alt="CO Slice">
+    <p class="image-caption">Figure 4: Carbon monoxide concentration showing toxic gas accumulation</p>
+  </div>
+  <h3 class="subsection-title">8.5 O2</h3>
+  <div class="image-container">
+    <img src="slice_o2.png" alt="O2 Slice">
+    <p class="image-caption">Figure 5: Oxygen concentration showing vitiation and depletion zones</p>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">9. Time-Series Graphs with Threshold Lines</h2>
+  <p>Time-series graphs show the evolution of each tenability parameter at the exit location throughout the simulation. Orange horizontal lines indicate threshold values. Red vertical lines mark the time when criteria are exceeded (if applicable).</p>
+  <h3 class="subsection-title">9.1 Temperature Time-Series</h3>
+  <div class="image-container">
+    <img src="graph_temperature.png" alt="Temperature Graph">
+    <p class="image-caption">Figure 6: Temperature vs. time showing thermal environment development</p>
+  </div>
+  <h3 class="subsection-title">9.2 Visibility Time-Series</h3>
+  <div class="image-container">
+    <img src="graph_visibility.png" alt="Visibility Graph">
+    <p class="image-caption">Figure 7: Visibility vs. time showing smoke obscuration progression</p>
+  </div>
+  <h3 class="subsection-title">9.3 CO2 Time-Series</h3>
+  <div class="image-container">
+    <img src="graph_co2.png" alt="CO2 Graph">
+    <p class="image-caption">Figure 8: CO₂ concentration vs. time showing combustion product accumulation</p>
+  </div>
+  <h3 class="subsection-title">9.4 CO Time-Series</h3>
+  <div class="image-container">
+    <img src="graph_co.png" alt="CO Graph">
+    <p class="image-caption">Figure 9: CO concentration vs. time showing toxic gas buildup</p>
+  </div>
+</div>
+<div class="section">
+  <h2 class="section-title">10. Discussion and Safety Margin Analysis</h2>
+  <h3 class="subsection-title">10.1 ASET Interpretation</h3>
+  <p>The analysis reveals that untenable conditions develop at the exit location after 0.6 seconds. The critical failure mode is <strong>O2</strong>, which reaches its tenability limit first among all evaluated criteria.</p>
+  <p>This ASET value must be compared with the Required Safe Egress Time (RSET) calculated from evacuation modeling to assess overall building safety:</p>
+  <div class="alert-box alert-warning">
+    <div class="alert-title">Safety Assessment Required</div>
+    <p><strong>Required Condition:</strong> ASET &gt; RSET + Safety Factor</p>
+    <p>NFPA 101 and ISO/TR 16738 recommend maintaining a safety margin of 1.5-2.0 times RSET to account for uncertainties in:</p>
+    <ul>
+      <li>Occupant response time variability</li>
+      <li>Fire growth rate uncertainties</li>
+      <li>Model prediction accuracy</li>
+      <li>Evacuation flow variations</li>
+    </ul>
+  </div>
+  <h3 class="subsection-title">10.2 Model Limitations and Uncertainties</h3>
+  <p><strong>FDS Model Uncertainty Factors:</strong></p>
+  <ul>
+    <li><strong>Grid resolution:</strong> Coarse grids may under-predict peak temperatures and over-predict smoke dilution (±20-30% typical uncertainty)</li>
+    <li><strong>Combustion modeling:</strong> Simplified chemistry and soot formation models introduce uncertainty in CO and visibility predictions</li>
+    <li><strong>Turbulence modeling:</strong> LES subgrid-scale models affect mixing and transport predictions</li>
+    <li><strong>Radiation modeling:</strong> Gray gas assumption and angular discretization affect radiative heat transfer accuracy</li>
+    <li><strong>Input parameters:</strong> Fuel properties, HRR curves, and boundary conditions contain inherent variability</li>
+  </ul>
+  <p><strong>Validation and Verification:</strong></p>
+  <p>FDS has been extensively validated against experimental data for various fire scenarios. NIST validation studies show temperature predictions typically within ±15% and heat flux predictions within ±25% of measured values. However, model accuracy depends strongly on grid resolution, fire scenario complexity, and proper input specification.</p>
+  <h3 class="subsection-title">10.3 Design Implications</h3>
+  <p>The calculated ASET of 0.6 seconds provides a quantitative basis for evaluating design alternatives:</p>
+  <ul>
+    <li><strong>Fire protection systems:</strong> Earlier detection and suppression can extend ASET</li>
+    <li><strong>Ventilation design:</strong> Smoke management systems can improve visibility and reduce toxicity</li>
+    <li><strong>Exit geometry:</strong> Relocating exits or adding redundant egress paths</li>
+    <li><strong>Fire resistance:</strong> Compartmentation to limit fire spread</li>
+    <li><strong>Material selection:</strong> Low-smoke, low-toxicity materials can improve ASET</li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">11. Recommendations</h2>
+  <h3 class="subsection-title">11.1 Required Actions</h3>
+  <div class="alert-box alert-warning">
+    <div class="alert-title">Critical Action Items</div>
+    <ol>
+      <li><strong>Conduct RSET Analysis:</strong> Complete evacuation modeling to calculate required egress time and compare with ASET</li>
+      <li><strong>Verify Safety Margin:</strong> Ensure ASET - RSET ≥ 1.5 × RSET (minimum 50% margin)</li>
+      <li><strong>Evaluate Design Options:</strong> If safety margin is insufficient, consider fire protection enhancements or egress improvements</li>
+      <li><strong>Sensitivity Analysis:</strong> Test variations in fire location, HRR, and ventilation conditions</li>
+    </ol>
+  </div>
+  <h3 class="subsection-title">11.2 Model Refinement Opportunities</h3>
+  <ul>
+    <li><strong>Grid refinement:</strong> Perform mesh sensitivity study to ensure grid-independent results (D*/δx ≥ 10 recommended)</li>
+    <li><strong>Multiple exit points:</strong> Analyze ASET at all critical exit locations, not just a single point</li>
+    <li><strong>Transient occupancy:</strong> Consider ASET along egress paths, not just final exit locations</li>
+    <li><strong>Detector activation:</strong> Include smoke detector response to account for alarm delay in RSET</li>
+  </ul>
+  <h3 class="subsection-title">11.3 Documentation Requirements</h3>
+  <p>For regulatory approval and peer review, the following documentation should be prepared:</p>
+  <ul>
+    <li>Complete FDS input file with annotated parameter selections</li>
+    <li>Justification for design fire scenarios (HRR, location, fuel properties)</li>
+    <li>Grid resolution verification study</li>
+    <li>RSET analysis report with evacuation simulation results</li>
+    <li>Safety margin calculation and sensitivity analysis</li>
+    <li>Comparison with prescriptive code requirements</li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">12. References</h2>
+  <ul class="reference-list">
+    <li class="reference-item">
+      NFPA 101, <em>Life Safety Code</em>, 2021 Edition. National Fire Protection Association, Quincy, MA.
+    </li>
+    <li class="reference-item">
+      NFPA 92, <em>Standard for Smoke Control Systems</em>, 2021 Edition. National Fire Protection Association, Quincy, MA.
+    </li>
+    <li class="reference-item">
+      ISO/TR 16738:2009, <em>Fire safety engineering — Technical information on methods for evaluating behavior and movement of people</em>. International Organization for Standardization.
+    </li>
+    <li class="reference-item">
+      ISO/TS 13571:2012, <em>Life-threatening components of fire — Guidelines for the estimation of time to compromised tenability in fires</em>. International Organization for Standardization.
+    </li>
+    <li class="reference-item">
+      McGrattan, K., et al., <em>Fire Dynamics Simulator Technical Reference Guide</em>, NIST Special Publication 1018-1, Sixth Edition. National Institute of Standards and Technology, Gaithersburg, MD, 2021.
+    </li>
+    <li class="reference-item">
+      McGrattan, K., et al., <em>Fire Dynamics Simulator User's Guide</em>, NIST Special Publication 1019, Sixth Edition. National Institute of Standards and Technology, Gaithersburg, MD, 2021.
+    </li>
+    <li class="reference-item">
+      Hurley, M.J., et al., <em>SFPE Handbook of Fire Protection Engineering</em>, Fifth Edition. Society of Fire Protection Engineers, Bethesda, MD, 2016.
+    </li>
+    <li class="reference-item">
+      Purser, D.A., "Toxicity Assessment of Combustion Products," <em>SFPE Handbook of Fire Protection Engineering</em>, Fifth Edition, pp. 2308-2428, 2016.
+    </li>
+    <li class="reference-item">
+      Jin, T., "Visibility Through Fire Smoke," <em>Journal of Fire and Flammability</em>, Vol. 9, pp. 135-157, 1978.
+    </li>
+    <li class="reference-item">
+      Babrauskas, V., <em>Ignition Handbook</em>. Fire Science Publishers, Issaquah, WA, 2003.
+    </li>
+    <li class="reference-item">
+      Tewarson, A., "Generation of Heat and Chemical Compounds in Fires," <em>SFPE Handbook of Fire Protection Engineering</em>, Fifth Edition, pp. 1966-2043, 2016.
+    </li>
+    <li class="reference-item">
+      Peacock, R.D., et al., <em>CFAST – Consolidated Fire and Smoke Transport (Version 7) Technical Reference Guide</em>, NIST Technical Note 1889v1. National Institute of Standards and Technology, Gaithersburg, MD, 2015.
+    </li>
+    <li class="reference-item">
+      Nelson, H.E., and Mowrer, F.W., "Emergency Movement," <em>SFPE Handbook of Fire Protection Engineering</em>, Third Edition, pp. 3-367 to 3-380, 2002.
+    </li>
+    <li class="reference-item">
+      Gwynne, S.M.V., and Rosenbaum, E.R., "Employing the Hydraulic Model in Assessing Emergency Movement," <em>SFPE Handbook of Fire Protection Engineering</em>, Fifth Edition, pp. 2115-2151, 2016.
+    </li>
+    <li class="reference-item">
+      Bukowski, R.W., "Emergency Egress from Buildings, Part 1: History and Current Regulations," <em>Journal of Fire Protection Engineering</em>, Vol. 19, No. 4, pp. 249-269, 2009.
+    </li>
+  </ul>
+</div>
+<div class="section">
+  <h2 class="section-title">13. Appendices</h2>
+  <h3 class="subsection-title">Appendix A: Tenability Criteria Summary</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Parameter</th><th>Threshold</th><th>Basis</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Temperature</td><td>&lt; 60.0 °C</td><td>ISO/TS 13571 thermal tolerance limit</td></tr>
+      <tr><td>Visibility</td><td>&gt; 5.0 m</td><td>Unfamiliar occupants, illuminated signs</td></tr>
+      <tr><td>CO₂</td><td>&lt; 5.0 %</td><td>Hyperventilation and performance degradation</td></tr>
+      <tr><td>CO</td><td>&lt; 1400.0 ppm</td><td>10-15 min exposure without incapacitation</td></tr>
+      <tr><td>O₂</td><td>&gt; 15.0 %</td><td>Hypoxia effects and coordination loss</td></tr>
+    </tbody>
+  </table>
+  <h3 class="subsection-title">Appendix C: Glossary</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Term</th><th>Definition</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ASET</td><td>Available Safe Egress Time - time until untenable conditions</td></tr>
+      <tr><td>CFD</td><td>Computational Fluid Dynamics - numerical simulation of fluid flows</td></tr>
+      <tr><td>COHb</td><td>Carboxyhemoglobin - CO bound to hemoglobin in blood</td></tr>
+      <tr><td>FDS</td><td>Fire Dynamics Simulator - NIST fire modeling software</td></tr>
+      <tr><td>FED</td><td>Fractional Effective Dose - cumulative exposure metric</td></tr>
+      <tr><td>HRR</td><td>Heat Release Rate - energy release rate from combustion (kW)</td></tr>
+      <tr><td>HRRPUA</td><td>Heat Release Rate Per Unit Area (kW/m²)</td></tr>
+      <tr><td>LES</td><td>Large Eddy Simulation - turbulence modeling approach</td></tr>
+      <tr><td>RSET</td><td>Required Safe Egress Time - time needed for evacuation</td></tr>
+      <tr><td>Tenability</td><td>Conditions allowing safe egress without incapacitation</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="footer">
+  <p>Report generated by <strong>BULC ASET Analyzer, Version 1.0</strong></p>
+  <p>Meteor Simulation Inc. | Fire Safety Engineering Solutions</p>
+</div>
+</body>
+</html>

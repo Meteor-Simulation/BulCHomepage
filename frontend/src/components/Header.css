@@ -89,7 +89,7 @@
 
 .sub-nav-item {
   padding: 16px 20px;
-  font-size: 14px;
+  font-size: 28px;
   font-weight: 500;
   color: var(--text);
   cursor: pointer;
@@ -234,7 +234,7 @@
 
 .sub-nav-mobile-item {
   padding: 12px 16px;
-  font-size: 14px;
+  font-size: 28px;
   font-weight: 500;
   color: var(--text);
   cursor: pointer;

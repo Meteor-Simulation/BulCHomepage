@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSET Analysis Report - Professional Engineering Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+        :root {
+            --primary-navy: #1a2332;
+            --secondary-blue: #2c5aa0;
+            --accent-gold: #c9a961;
+            --alert-red: #c44536;
+            --success-green: #2d7a4f;
+            --bg-cream: #fdfbf7;
+            --bg-white: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --border-color: #d4d0c8;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', 'Noto Sans KR', -apple-system, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: var(--bg-cream);
+            font-size: 11pt;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-blue) 100%);
+            color: white;
+            padding: 4rem 2rem;
+            page-break-after: always;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transform: rotate(-15deg);
+            opacity: 0.3;
+        }
+
+        .cover-page .report-title {
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-page .report-subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-page .metadata {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-page .metadata-item {
+            margin: 0.8rem 0;
+            font-size: 1.1rem;
+        }
+
+        .cover-page .metadata-label {
+            font-weight: 600;
+            margin-right: 0.5rem;
+            color: var(--accent-gold);
+        }
+
+        .cover-page .footer-note {
+            position: absolute;
+            bottom: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Main Content Container */
+        .content-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 4rem;
+            background: var(--bg-white);
+            box-shadow: 0 0 60px var(--shadow);
+        }
+
+        /* Table of Contents */
+        .toc {
+            page-break-after: always;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-cream);
+            border-left: 4px solid var(--secondary-blue);
+        }
+
+        .toc h2 {
+            font-family: 'Crimson Text', serif;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-navy);
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-item {
+            padding: 0.6rem 0;
+            border-bottom: 1px dotted var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.05rem;
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-number {
+            font-weight: 600;
+            color: var(--secondary-blue);
+            margin-right: 1rem;
+        }
+
+        /* Section Styling */
+        .section {
+            margin: 3rem 0;
+            page-break-inside: avoid;
+        }
+
+        .section-number {
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-right: 0.8rem;
+        }
+
+        h1 {
+            font-family: 'Crimson Text', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-navy);
+            margin: 2rem 0 1.5rem 0;
+            border-bottom: 3px solid var(--secondary-blue);
+            padding-bottom: 0.8rem;
+        }
+
+        h2 {
+            font-family: 'Crimson Text', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-navy);
+            margin: 2.5rem 0 1.2rem 0;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--secondary-blue);
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.8rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.95rem;
+        }
+
+        p {
+            margin: 1rem 0;
+            text-align: justify;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 5px solid var(--accent-gold);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .highlight-box.critical {
+            border-left-color: var(--alert-red);
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+        }
+        
+        .highlight-box.success {
+            border-left-color: var(--success-green);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        /* Formula Display */
+        .formula-block {
+            background: var(--bg-white);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .formula-title {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-weight: 600;
+            color: var(--secondary-blue);
+            margin-bottom: 1.2rem;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .formula {
+            font-size: 1.3rem;
+            line-height: 2;
+            color: var(--primary-navy);
+            margin: 1rem 0;
+        }
+
+        .formula-notation {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1.5rem;
+            margin-top: 1.5rem;
+            text-align: left;
+            font-size: 0.95rem;
+            padding: 1rem;
+            background: var(--bg-cream);
+            border-radius: 4px;
+        }
+
+        .notation-var {
+            font-weight: 600;
+            color: var(--secondary-blue);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 2rem 0;
+            box-shadow: 0 2px 12px var(--shadow);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-blue) 100%);
+            color: white;
+        }
+
+        th {
+            padding: 1.2rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:nth-child(even) {
+            background: var(--bg-cream);
+        }
+
+        tbody tr:hover {
+            background: #e8f4f8;
+            transition: background 0.2s;
+        }
+
+        .table-caption {
+            font-weight: 600;
+            color: var(--secondary-blue);
+            margin: 1.5rem 0 0.8rem 0;
+            font-size: 1.05rem;
+        }
+
+        /* Citation and Reference */
+        .citation {
+            color: var(--secondary-blue);
+            font-weight: 500;
+            font-size: 0.95em;
+            vertical-align: super;
+        }
+
+        .reference-list {
+            list-style: none;
+            counter-reset: ref-counter;
+        }
+
+        .reference-item {
+            counter-increment: ref-counter;
+            margin: 1.5rem 0;
+            padding-left: 2.5rem;
+            position: relative;
+            text-align: left;
+        }
+
+        .reference-item::before {
+            content: "[" counter(ref-counter) "]";
+            position: absolute;
+            left: 0;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        /* Statistical Panels */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--shadow);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-navy);
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-unit {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: var(--bg-cream);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0.8rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-blue) 0%, var(--accent-gold) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.8rem;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: width 1s ease-out;
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 5px solid;
+        }
+
+        .alert.info {
+            background: #e8f4f8;
+            border-color: var(--secondary-blue);
+            color: #1a4d8f;
+        }
+
+        .alert.warning {
+            background: #fff8e8;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .alert.critical {
+            background: #fef2f2;
+            border-color: var(--alert-red);
+            color: #991b1b;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+            .content-wrapper {
+                box-shadow: none;
+                max-width: none;
+            }
+            .cover-page {
+                page-break-after: always;
+            }
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+</style>
+</head>
+<body>
+<div class="cover-page">
+            <div class="report-title">RSET 분석 보고서</div>
+            <div class="report-subtitle">필요 안전 피난 시간 평가</div>
+            <div class="metadata">
+                <div class="metadata-item">
+                    <span class="metadata-label">생성일:</span>
+                    <span>2025-11-28 15:39:18</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">총 RSET:</span>
+                    <span>102.28 초</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">피난 성공률:</span>
+                    <span>100.0%</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">기준 적합성:</span>
+                    <span>NFPA 101, ISO/TR 16738:2009</span>
+                </div>
+            </div>
+            <div class="footer-note">
+                BULC Fire Safety Analysis System v1.0.7<br>
+                Meteor Simulation Inc.
+            </div>
+        </div>
+        <div class="content-wrapper">
+<div class="toc">
+            <h2>목차</h2>
+            <ul class="toc-list">
+                <li class="toc-item"><span class="toc-number">1.</span> <span>요약</span></li>
+                <li class="toc-item"><span class="toc-number">2.</span> <span>서론 및 배경</span></li>
+                <li class="toc-item"><span class="toc-number">3.</span> <span>방법론 및 계산 체계</span></li>
+                <li class="toc-item"><span class="toc-number">4.</span> <span>RSET 구성요소 분석</span></li>
+                <li class="toc-item"><span class="toc-number">5.</span> <span>상세 계산</span></li>
+                <li class="toc-item"><span class="toc-number">6.</span> <span>피난 성능 결과</span></li>
+                <li class="toc-item"><span class="toc-number">7.</span> <span>논의 및 해석</span></li>
+                <li class="toc-item"><span class="toc-number">8.</span> <span>권고사항</span></li>
+                <li class="toc-item"><span class="toc-number">9.</span> <span>참고문헌</span></li>
+                <li class="toc-item"><span class="toc-number">10.</span> <span>부록</span></li>
+            </ul>
+        </div>
+<div class="section">
+            <h1><span class="section-number">1.</span> 요약</h1>
+
+            <div class="highlight-box success">
+                <h3>RSET 분석 결과</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">총 RSET</div>
+                        <div class="stat-value">102.28<span class="stat-unit">s</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">이동 시간</div>
+                        <div class="stat-value">75.90<span class="stat-unit">s</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">피난 전 시간</div>
+                        <div class="stat-value">15.00<span class="stat-unit">s</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">성공률</div>
+                        <div class="stat-value">100.0<span class="stat-unit">%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <p>본 보고서는 성능 기반 화재 안전 공학 원칙에 따른 종합적인 RSET(필요 안전 피난 시간) 분석을 제시합니다.</p>
+
+            <h3>주요 결과</h3>
+            <ul>
+                <li><strong>피난 효율성:</strong> 100.0%</li>
+                <li><strong>피난 전:</strong> 15.00 초 (감지 시간: 3.00 s, 경보 시간: 5.00 s, 이동 전 시간: 7.00 s)</li>
+                <li><strong>이동 단계:</strong> 75.90 초</li>
+                <li><strong>안전 여유:</strong> 15.0% (11.38 초)</li>
+                <li><strong>총 RSET:</strong> 102.28 초</li>
+            </ul>
+        </div>
+<div class="section">
+            <h1><span class="section-number">2.</span> 서론 및 배경</h1>
+
+            <h3>2.1 목적 및 범위</h3>
+            <p>
+                필요 안전 피난 시간(RSET) 분석은 성능 기반 화재 안전 설계의 기본 구성요소로, 화재 비상 시 건물 재실자가 안전하게 피난하는 데 필요한 시간에 대한 정량적 평가를 제공합니다. 이 분석은 건물의 화재 보호 시스템이 적절한 생명 안전 성능을 제공하는지 결정하는 데 중요한 입력 자료입니다.
+            </p>
+
+            <p>
+                본 RSET 평가의 주요 목적은 화재 발생부터 완전한 피난까지의 모든 단계를 고려하여 모든 건물 재실자가 안전한 장소에 도달하는 데 필요한 총 시간을 계산하고 문서화하는 것입니다. 이 계산은 재실자가 불가능 조건이 발생하기 전에 피난할 수 있는지 확인하기 위해 가용 안전 피난 시간(ASET)과 비교해야 합니다.<span class="citation">[4]</span>
+            </p>
+
+            <h3>2.2 규제 체계</h3>
+            <p>
+                본 분석은 다음 국제 기준 및 코드를 준수합니다:
+            </p>
+            <ul>
+                <li><strong>NFPA 101:</strong> NFPA 101: 생명안전코드 - 성능기반 옵션 (제5장)</li>
+                <li><strong>ISO/TR 16738:2009:</strong> ISO/TR 16738:2009: 화재안전공학 - 인간 행동 및 이동 평가 방법에 관한 기술 정보</li>
+                <li><strong>ISO 13571:2012:</strong> ISO 13571:2012: 화재의 생명 위협 요소 - 화재 시 거주 불능 시간 추정 지침</li>
+                <li><strong>SFPE Handbook:</strong> SFPE 핸드북: 소방공학 (5판) - 인간 행동 및 피난 모델링</li>
+            </ul>
+
+            <h3>2.3 성능 기준</h3>
+            <p>
+                허용 가능한 생명 안전 성능을 위해 다음 기준을 충족해야 합니다:
+            </p>
+            <div class="formula-block">
+                <div class="formula">ASET &gt; RSET</div>
+                <p style="margin-top: 1rem; text-align: center; font-family: 'IBM Plex Sans', sans-serif;">
+                    여유(ASET - RSET)는 모델링 및 인간 행동의 불확실성을 고려하여 일반적으로 RSET의 20-50%를 초과해야 합니다.<span class="citation">[5]</span>
+                </p>
+            </div>
+
+            <h3>2.4 분석 방법론 개요</h3>
+            <p>
+                본 RSET 분석은 다음 방법론을 사용합니다:
+            </p>
+            <ol>
+                <li>
+                    에이전트 기반 피난 시뮬레이션: 사회력 모델과 충돌 회피 알고리즘을 구현한 JuPedSim 보행자 역학 엔진을 사용하여 개별 재실자 움직임을 모델링합니다.<span class="citation">[6]</span>
+                </li>
+                <li>
+                    피난 전 시간 평가: 감지, 경보 및 이동 전 시간은 SFPE 지침에 따라 건물 특성, 재실자 유형 및 화재 보호 시스템을 기반으로 결정됩니다.
+                </li>
+                <li>
+                    이동 시간 계산: 보행 속도, 유동률, 대기열 형성 및 경로 탐색 행동을 고려하여 이동 시간을 계산합니다.
+                </li>
+                <li>
+                    안전 계수 적용: 모델링 불확실성과 인간 행동의 변동성을 고려하여 보수적인 안전 여유를 적용합니다.
+                </li>
+            </ol>
+        </div>
+<div class="section">
+            <h1><span class="section-number">3.</span> 방법론 및 계산 체계</h1>
+
+            <h3>3.1 RSET 계산 공식</h3>
+            <p>
+                필요 안전 피난 시간은 ISO/TR 16738:2009 및 SFPE 지침에서 도출된 다음 기본 방정식을 사용하여 계산됩니다:<span class="citation">[3,7]</span>
+            </p>
+
+            <div class="formula-block">
+                <div class="formula-title">기본 RSET 방정식</div>
+                <div class="formula">
+                    RSET = t<sub>det</sub> + t<sub>alarm</sub> + t<sub>pre</sub> + t<sub>move</sub> × (1 + SF)
+                </div>
+                <div class="formula-notation">
+                    <span class="notation-var">RSET</span>
+                    <span>필요 안전 피난 시간 (점화부터 안전 피난까지의 총 시간)</span>
+
+                    <span class="notation-var">t<sub>det</sub></span>
+                    <span>감지 시간 - 화재 발생부터 시스템 또는 재실자에 의한 감지까지의 시간</span>
+
+                    <span class="notation-var">t<sub>alarm</sub></span>
+                    <span>경보 시간 - 감지부터 경보 시스템을 통한 재실자 통보까지의 시간</span>
+
+                    <span class="notation-var">t<sub>pre</sub></span>
+                    <span>이동 전 시간 - 경보부터 피난 이동 시작까지의 시간</span>
+
+                    <span class="notation-var">t<sub>move</sub></span>
+                    <span>이동 시간 - 위치에서 안전 장소까지 물리적 피난에 소요되는 시간</span>
+
+                    <span class="notation-var">SF</span>
+                    <span>안전 계수 - 불확실성을 위한 추가 여유 (일반적으로 0.15-0.25)</span>
+                </div>
+            </div>
+
+            <h3>3.2 피난 전 시간 구성요소</h3>
+            <p>
+                피난 전 시간은 화재 발생과 피난 이동 시작 사이의 시간을 나타냅니다. 이 단계는 중요하며 자동 감지 시스템이 있는 건물에서 총 RSET의 50-70%를 차지하는 경우가 많습니다.
+            </p>
+
+            <h4>3.2.1 감지 시간 (t<sub>det</sub>)</h4>
+            <div class="formula-block">
+                <div class="formula">
+                    t<sub>det</sub> = f(detector type, spacing, fire growth rate, height)
+                </div>
+                <p style="margin-top: 1rem; text-align: left; padding: 0 1rem;">
+                    <strong>분석 매개변수:</strong><br>
+                    • 가정값: 3.00 초<br>
+                    • 근거: 빠른 응답 특성을 가진 자동 연기 감지 시스템<br>
+                    • 기준: NFPA 72 감지기 간격 및 감도 요구사항<br>
+                    • 가정: 적절히 유지관리된 시스템, 위험에 적합한 감지기 선택
+                </p>
+            </div>
+
+            <h4>3.2.2 경보 시간 (t<sub>alarm</sub>)</h4>
+            <div class="formula-block">
+                <div class="formula">
+                    t<sub>alarm</sub> = t<sub>system</sub> + t<sub>transmission</sub>
+                </div>
+                <p style="margin-top: 1rem; text-align: left; padding: 0 1rem;">
+                    <strong>분석 매개변수:</strong><br>
+                    • 가정값: 5.00 초<br>
+                    • 시스템 처리: ~1-2초 (FACP 확인 및 처리)<br>
+                    • 전송: ~1-2초 (통보 장치 활성화)<br>
+                    • 추가 지연: ~1-2초 (재실자의 경보 인식)<br>
+                    • 기준: NFPA 72 통보 장치 적용 범위 요구사항
+                </p>
+            </div>
+
+            <h4>3.2.3 이동 전 시간 (t<sub>pre</sub>)</h4>
+            <div class="formula-block">
+                <div class="formula">
+                    t<sub>pre</sub> = f(occupant characteristics, familiarity, building type, alarm type)
+                </div>
+                <p style="margin-top: 1rem; text-align: left; padding: 0 1rem;">
+                    <strong>분석 매개변수:</strong><br>
+                    • 가정값: 7.00 초<br>
+                    • 재실자 유형: 상업/공공 집회 시설의 주의 깊은 성인<br>
+                    • 익숙도: 피난 절차에 익숙한 정기 재실자<br>
+                    • 반응 활동: 정보 수집, 의사 결정, 준비<br>
+                    • 근거: SFPE 핸드북 W3 분포 데이터 (상업 용도)<br>
+                    • 참고문헌: Proulx & Fahy (2008) - 고층 사무실 건물 연구
+                </p>
+            </div>
+
+            <h3>3.3 이동 시간 계산</h3>
+            <p>
+                이동 시간(t<sub>move</sub>)은 재실자의 초기 위치에서 안전한 장소(출구)까지의 실제 이동 시간을 나타냅니다. 이는 다음을 포함하는 에이전트 기반 피난 시뮬레이션을 사용하여 계산됩니다:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula">
+                    t<sub>move</sub> = max(t<sub>i</sub>)<br>
+                    where t<sub>i</sub> = ∑ (d<sub>j</sub> / v<sub>j</sub>)
+                </div>
+                <div class="formula-notation">
+                    <span class="notation-var">t<sub>i</sub></span>
+                    <span>개별 재실자 i의 피난 시간</span>
+
+                    <span class="notation-var">d<sub>j</sub></span>
+                    <span>구간 j에서 이동한 거리</span>
+
+                    <span class="notation-var">v<sub>j</sub></span>
+                    <span>구간 j에서의 보행 속도 (밀도 의존적)</span>
+
+                    <span class="notation-var">max(t<sub>i</sub>)</span>
+                    <span>모든 재실자 중 최대 피난 시간</span>
+                </div>
+            </div>
+
+            <p>
+                <strong>보행 속도 모델:</strong> 본 분석은 Fruin-Predtechenskii 속도-밀도 관계식을 사용합니다<span class="citation">[8]</span>:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula">
+                    v = v<sub>0</sub> × (1 - a × D<sup>b</sup>)
+                </div>
+                <div class="formula-notation">
+                    <span class="notation-var">v</span>
+                    <span>밀도 D에서의 보행 속도 (m/s)</span>
+
+                    <span class="notation-var">v<sub>0</sub></span>
+                    <span>자유 유동 보행 속도 (기본값 1.2 m/s)</span>
+
+                    <span class="notation-var">D</span>
+                    <span>보행자 밀도 (명/m²)</span>
+
+                    <span class="notation-var">a, b</span>
+                    <span>경험적 상수 (a=0.266, b=0.4)</span>
+                </div>
+            </div>
+
+            <p>
+                <strong>실제 이동 시간:</strong> 75.90 초 (100명의 재실자 중 가장 긴 피난 시간)
+            </p>
+
+            <h3>3.4 안전 계수 적용</h3>
+            <p>
+                불확실성과 변동을 고려하기 위해 이동 시간에 안전 계수가 적용됩니다:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula">
+                    SF = 0.15 (15%)
+                </div>
+                <p style="margin-top: 1rem; text-align: left; padding: 0 1rem;">
+                    <strong>안전 계수 근거:</strong><br>
+                    • 모델 불확실성: 보행 속도 및 경로 선택의 ±10% 변동<br>
+                    • 인간 행동 변동성: 반응 및 이동성의 개인차<br>
+                    • 환경적 요인: 연기, 조명, 혼잡 영향<br>
+                    • 보수적 설계: NFPA 101에 따른 적절한 안전 여유 확보<br>
+                    • 적용된 시간: 11.38 초 추가 여유
+                </p>
+            </div>
+
+            <h3>3.5 최종 RSET 계산</h3>
+            <p>
+                기본 방정식에 모든 구성요소를 적용:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula">
+                    RSET = 3.00 + 5.00 + 7.00 + 75.90 × (1 + 0.15)
+                </div>
+                <div class="formula">
+                    RSET = 15.00 + 75.90 × 1.15
+                </div>
+                <div class="formula">
+                    RSET = 15.00 + 87.28
+                </div>
+                <div class="formula" style="font-size: 1.5rem; color: var(--alert-red); font-weight: 600;">
+                    <strong>RSET = 102.28 seconds</strong>
+                </div>
+            </div>
+        </div>
+<div class="section">
+            <h1><span class="section-number">4.</span> RSET 구성요소 분석</h1>
+
+            <h3>4.1 시간 구성요소 분석</h3>
+            <p>
+                다음 분석은 각 RSET 구성요소의 상세 분석과 총 피난 시간에 대한 기여도를 제시합니다:
+            </p>
+
+            <div class="table-caption">표 1: RSET 구성요소 요약</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>구성요소</th>
+                        <th>시간 (초)</th>
+                        <th>백분율</th>
+                        <th>분류</th>
+                        <th>제어 가능성</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>감지 시간</td>
+                        <td>3.00</td>
+                        <td>2.9%</td>
+                        <td>피난 전</td>
+                        <td>시스템 의존</td>
+                    </tr>
+                    <tr>
+                        <td>경보 시간</td>
+                        <td>5.00</td>
+                        <td>4.9%</td>
+                        <td>피난 전</td>
+                        <td>시스템 의존</td>
+                    </tr>
+                    <tr>
+                        <td>이동 전 시간</td>
+                        <td>7.00</td>
+                        <td>6.8%</td>
+                        <td>피난 전</td>
+                        <td>행동 의존</td>
+                    </tr>
+                    <tr>
+                        <td><strong>피난 전 소계</strong></td>
+                        <td><strong>15.00</strong></td>
+                        <td><strong>14.7%</strong></td>
+                        <td colspan="2"><strong>피난 전 이동 단계 합계</strong></td>
+                    </tr>
+                    <tr>
+                        <td>이동 시간 (기본)</td>
+                        <td>75.90</td>
+                        <td>74.2%</td>
+                        <td>피난</td>
+                        <td>설계 의존</td>
+                    </tr>
+                    <tr>
+                        <td>안전 여유 (15%)</td>
+                        <td>11.38</td>
+                        <td>11.1%</td>
+                        <td>비상</td>
+                        <td>정책 의존</td>
+                    </tr>
+                    <tr style="background: #e8f4f8; font-weight: 600;">
+                        <td><strong>총 RSET</strong></td>
+                        <td><strong>102.28</strong></td>
+                        <td><strong>100.0%</strong></td>
+                        <td colspan="2"><strong>완전 피난</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4.2 구성요소 분포 분석</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">피난 전 단계</div>
+                    <div class="stat-value">14.7<span class="stat-unit">%</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 14.7%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">이동 단계</div>
+                    <div class="stat-value">85.3<span class="stat-unit">%</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85.3%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>4.3 상세 구성요소 평가</h3>
+
+            <h4>감지 시간 (3.00 s)</h4>
+            <p>
+                감지 시간은 화재 발생과 감지 시스템 작동 사이의 간격을 나타냅니다. 이 값은 다음에 의해 영향을 받습니다:
+            </p>
+            <ul>
+                <li><strong>감지기 기술:</strong> 연기 vs 열 감지 능력</li>
+                <li><strong>감지기 간격:</strong> 커버리지 밀도 및 배치 최적화</li>
+                <li><strong>화재 성장률:</strong> 예상 화재 특성 (느림, 중간, 빠름, 초고속)</li>
+                <li><strong>천장 높이:</strong> 층화 및 희석 효과</li>
+                <li><strong>환경 조건:</strong> HVAC 운영, 주변 조건</li>
+            </ul>
+            <p>
+                <strong>민감도 분석:</strong> 감지 시간의 ±50% 변동 (범위: 1.50-4.50 s) )은 총 RSET에 ±1.5%, 의 영향을 미치며, 총 시간의 100.78-103.78 초 변동을 나타냅니다.
+            </p>
+
+            <h4>경보 시간 (5.00 s)</h4>
+            <p>
+                경보 시간은 시스템 처리 및 재실자 통보를 고려합니다:
+            </p>
+            <ul>
+                <li><strong>시스템 확인:</strong> FACP 확인 및 처리 (1-2초)</li>
+                <li><strong>신호 전송:</strong> 통보 장치 활성화 (1-2초)</li>
+                <li><strong>재실자 인식:</strong> 경보 인지 및 확인 (1-2초)</li>
+            </ul>
+            <p>
+                <strong>설계 고려사항:</strong> 이 구성요소는 적절한 시스템 설계를 통해 높은 제어가 가능하며, 명확한 음성 경보 시스템을 포함하여 벨/호른 시스템 대비 인식 시간을 20-30% 단축할 수 있습니다.
+            </p>
+
+            <h4>이동 전 시간 (7.00 s)</h4>
+            <p>
+                이동 전 시간은 인간 행동 요인으로 인해 가장 큰 변동성을 보입니다:
+            </p>
+            <ul>
+                <li><strong>정보 탐색:</strong> 재실자가 상황을 파악하려고 시도</li>
+                <li><strong>의사 결정:</strong> 경로 선택 및 행동 계획</li>
+                <li><strong>준비 활동:</strong> 소지품 수집, 다른 사람 지원</li>
+                <li><strong>사회적 영향:</strong> 그룹 역학 및 리더십 효과</li>
+            </ul>
+            <div class="alert warning">
+                <div class="alert-title">⚠ 중요 고려사항</div>
+                이동 전 시간은 용도 유형, 익숙도 및 경보 특성에 따라 30초에서 수 분까지 다양할 수 있습니다. 가정값 7.00 초는 명확한 비상 통신 시스템을 갖춘 건물에서 주의 깊고 익숙한 재실자에게 적합합니다.
+            </div>
+
+            <h4>이동 시간 (75.90 s)</h4>
+            <p>
+                이동 시간은 가장 긴 개별 피난 지속 시간을 나타내며 다음에 따라 달라집니다:
+            </p>
+            <ul>
+                <li><strong>이동 거리:</strong> 점유 공간에서 출구까지의 최대 거리</li>
+                <li><strong>보행 속도:</strong> 연령, 이동성 및 군중 밀도에 의해 영향을 받음</li>
+                <li><strong>경로 복잡성:</strong> 회전, 계단, 출입구 및 결정 지점</li>
+                <li><strong>병목 지점:</strong> 문, 계단 및 복도에서의 유동 제한</li>
+                <li><strong>군중 역학:</strong> 대기열, 합류 및 충돌 해결</li>
+            </ul>
+            <p>
+                <strong>성능 지표:</strong> 계산된 이동 시간은 약 1.20 m/s의 평균 유효 보행 속도에 해당하며, 이는 저밀도 시나리오에서 정상 피난 조건에 대한 설계 지침과 일치합니다.
+            </p>
+        </div>
+<div class="section">
+            <h1><span class="section-number">5.</span> 상세 계산</h1>
+
+            <h3>5.1 단계별 RSET 계산</h3>
+            <p>
+                이 섹션은 완전한 수치 투명성을 가진 전체 계산 과정을 제시합니다:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula-title">1단계: 피난 전 시간</div>
+                <div class="formula">
+                    t<sub>pre-evac</sub> = t<sub>det</sub> + t<sub>alarm</sub> + t<sub>pre</sub>
+                </div>
+                <div class="formula">
+                    t<sub>pre-evac</sub> = 3.00 + 5.00 + 7.00 = 15.00 seconds
+                </div>
+            </div>
+
+            <div class="formula-block">
+                <div class="formula-title">2단계: 안전 조정 이동 시간</div>
+                <div class="formula">
+                    t<sub>move-safe</sub> = t<sub>move</sub> × (1 + SF)
+                </div>
+                <div class="formula">
+                    t<sub>move-safe</sub> = 75.90 × (1 + 0.150) = 75.90 × 1.150 = 87.28 초
+                </div>
+                <p style="margin-top: 1rem; text-align: left; padding: 0 1rem;">
+                    이것은 기본 이동 시간과 안전 여유를 더한 것입니다 (75.90 s + 11.38 s)
+                </p>
+            </div>
+
+            <div class="formula-block">
+                <div class="formula-title">3단계: 총 RSET</div>
+                <div class="formula">
+                    RSET = t<sub>pre-evac</sub> + t<sub>move-safe</sub>
+                </div>
+                <div class="formula">
+                    RSET = 15.00 + 87.28 = 102.28 초
+                </div>
+            </div>
+
+            <h3>5.2 불확실성 분석</h3>
+            <p>
+                RSET 계산에서 잠재적 변동의 정량화:
+            </p>
+
+            <div class="table-caption">표 2: 민감도 분석 결과</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>매개변수</th>
+                        <th>기준값</th>
+                        <th>낮음 (-25%)</th>
+                        <th>높음 (+25%)</th>
+                        <th>RSET에 대한 영향</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>감지 시간</td>
+                        <td>3.00 s</td>
+                        <td>2.25 s</td>
+                        <td>3.75 s</td>
+                        <td>±0.75 s (±0.7%)</td>
+                    </tr>
+                    <tr>
+                        <td>이동 전 시간</td>
+                        <td>7.00 s</td>
+                        <td>5.25 s</td>
+                        <td>8.75 s</td>
+                        <td>±1.75 s (±1.7%)</td>
+                    </tr>
+                    <tr>
+                        <td>이동 시간</td>
+                        <td>75.90 s</td>
+                        <td>56.92 s</td>
+                        <td>94.87 s</td>
+                        <td>±21.82 s (±21.3%)</td>
+                    </tr>
+                    <tr>
+                        <td>안전 여유</td>
+                        <td>15.0%</td>
+                        <td>11.3%</td>
+                        <td>18.8%</td>
+                        <td>±2.85 s (±2.8%)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert info">
+                <div class="alert-title">📊 통계적 신뢰도</div>
+                민감도 분석에 따르면, 계산된 RSET 값은 ±15.0%의 추정 불확실성 범위를 가지며, 95% 신뢰 구간을 나타냅니다. 이 범위는 인간 행동 및 모델링 매개변수의 일반적인 변동을 고려합니다. 102.28 초 (86.94 - 117.63 초).
+            </div>
+
+            <h3>5.3 설계 지침 비교</h3>
+            <p>
+                확립된 벤치마크에 대한 성능 평가:
+            </p>
+            <ul>
+                <li><strong>NFPA 101 처방적 기준: 이동 거리 요구사항은 일반적인 용도에 대해 60-120초의 RSET를 제안합니다</strong></li>
+                <li><strong>영국 건축 규정: 대부분의 건물에 대해 2.5분 피난 시간 기준</strong></li>
+                <li><strong>계산된 RSET:</strong> 102.28 초 (1.7 분)</li>
+                <li><strong>평가:</strong> 우수 - 일반적인 처방적 한계보다 훨씬 낮음</li>
+            </ul>
+        </div>
+<div class="section">
+            <h1><span class="section-number">6.</span> 피난 성능 결과</h1>
+
+            <h3>6.1 인구 피난 통계</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">총 재실자 수</div>
+                    <div class="stat-value">100</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">피난 성공</div>
+                    <div class="stat-value">100</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">성공률</div>
+                    <div class="stat-value">100.0<span class="stat-unit">%</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">최종 출구 시간</div>
+                    <div class="stat-value">75.90<span class="stat-unit">s</span></div>
+                </div>
+            </div>
+
+            <div class="progress-bar" style="height: 40px; margin: 2rem 0;">
+                <div class="progress-fill" style="width: 100.0%; font-size: 1.1rem;">
+                    100.0% 피난 완료
+                </div>
+            </div>
+
+            <h3>6.2 시간별 피난 분석</h3>
+            <p>
+                재실자 인구 전체의 피난 완료 시간 분포:
+            </p>
+
+            <div class="table-caption">표 3: 피난 시간 분포</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>시간 구간</th>
+                        <th>누적 피난</th>
+                        <th>백분율</th>
+                        <th>유동률</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0 - 25% 최대 시간</td>
+                        <td>—</td>
+                        <td>—%</td>
+                        <td>— 명/초</td>
+                    </tr>
+                    <tr>
+                        <td>25% - 50% 최대 시간</td>
+                        <td>—</td>
+                        <td>—%</td>
+                        <td>— 명/초</td>
+                    </tr>
+                    <tr>
+                        <td>50% - 75% 최대 시간</td>
+                        <td>—</td>
+                        <td>—%</td>
+                        <td>— 명/초</td>
+                    </tr>
+                    <tr>
+                        <td>75% - 100% 최대 시간</td>
+                        <td>—</td>
+                        <td>—%</td>
+                        <td>— 명/초</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert info">
+                <div class="alert-title">💡 성능 해석</div>
+                100.0% 의 피난 성공률은 우수 성능을 나타냅니다.
+                거의 모든 재실자가 설계 시간 내에 성공적으로 피난하여 견고한 피난 용량을 보여줍니다.
+            </div>
+
+            <h3>6.3 비교 평가</h3>
+            <p>
+                <strong>총 피난 시간:</strong> 75.90 초<br>
+                <strong>설계 RSET:</strong> 102.28 초<br>
+                <strong>안전 여유:</strong> 26.38 초 (34.8%)<br>
+                <strong>평가:</strong> 적절한 안전 여유 확보
+            </p>
+        </div>
+<div class="section">
+            <h1><span class="section-number">7.</span> 논의 및 해석</h1>
+
+            <h3>7.1 RSET 성능 평가</h3>
+            <p>
+                <strong>102.28 초</strong> 계산된 RSET은 분석된 조건에서 안전한 건물 피난에 필요한 최소 시간을 나타냅니다. 이 값은 생명 안전 성능을 확인하기 위해 가용 안전 피난 시간(ASET)과 비교해야 합니다:
+            </p>
+
+            <div class="formula-block">
+                <div class="formula">
+                    안전 기준: ASET &gt; RSET<br>
+                    필요 여유: ASET ≥ 1.5 × RSET
+                </div>
+                <div class="formula">
+                    필요 최소 ASET = 1.5 × 102.28 = 153.43 초
+                </div>
+            </div>
+
+            <p>
+                화재 보호 시스템과 건물 설계는 점화 후 최소한 다음 시간 동안 점유된 어느 위치에서도 거주 불가능 조건이 발생하지 않도록 해야 적절한 안전 여유를 가진 적합한 생명 안전 성능을 제공합니다. (153.43 초)
+            </p>
+
+            <h3>7.2 핵심 설계 요소</h3>
+
+            <h4>7.2.1 피난 전 단계의 지배성</h4>
+            <p>
+                피난 전 기간은 총 RSET의 상당 부분을 차지하며, 조기 감지 및 효과적인 경보 시스템의 중요성을 강조합니다. 이 결과는 자동 감지 시스템을 갖춘 건물에서 통보 및 대응 지연이 일반적으로 피난 시간의 가장 큰 구성요소를 나타낸다는 연구와 일치합니다. (14.7% - 15.00/102.28 초)
+            </p>
+
+            <div class="highlight-box">
+                <h4>설계 영향</h4>
+                <p>
+                    개선된 감지 및 경보 시스템을 통한 피난 전 시간 단축은 RSET 감소를 위한 가장 중요한 기회를 제공합니다. 잠재적 개입 사항:
+                </p>
+                <ul>
+                    <li>감지기 감도 향상 및 배치 최적화 (t<sub>det</sub>에서 20-40% 감소 가능)</li>
+                    <li>명확한 피난 지시가 포함된 음성 경보 시스템 (t<sub>pre</sub>에서 15-30% 감소)</li>
+                    <li>재실자 훈련 및 피난 훈련 (t<sub>pre</sub>에서 10-25% 감소)</li>
+                    <li>고소음 지역의 시각 경보 시스템 (인식 시간 개선)</li>
+                </ul>
+            </div>
+
+            <h4>7.2.2 이동 시간 특성</h4>
+            <p>
+                계산된 이동 시간은 가장 긴 개별 피난 지속 시간을 나타내며, 다음을 시사합니다: (75.90 초)
+            </p>
+            <ul>
+                <li>
+                    <strong>이동 거리:</strong> 점유 공간에서 출구까지의 최대 거리
+                </li>
+                <li>
+                    <strong>유동 용량:</strong> 출구 용량은 심각한 혼잡 없이 재실자 부하를 처리하기에 적절해 보입니다
+                </li>
+                <li>
+                    <strong>경로 효율성:</strong> 피난 경로는 안전한 장소로 합리적으로 직접적인 경로를 제공합니다
+                </li>
+            </ul>
+
+            <h4>7.2.3 안전 계수 적정성</h4>
+            <p>
+                적용된 안전 계수는 다음에 대한 합리적인 대비책을 제공합니다: (15.0% - 11.38 초)
+            </p>
+            <ul>
+                <li>모델 불확실성 및 가정</li>
+                <li>인간 행동의 변동성</li>
+                <li>예기치 않은 장애물 또는 조건</li>
+                <li>인구 다양성 (연령, 이동성, 친숙도)</li>
+            </ul>
+
+            <h3>7.3 가정 및 제한사항</h3>
+
+            <div class="alert warning">
+                <div class="alert-title">⚠ 중요 가정</div>
+                이 RSET 분석은 실제 건물 조건에 대해 검증해야 하는 다음 주요 가정을 기반으로 합니다:
+                <ul style="margin-top: 0.8rem;">
+                    <li><strong>감지 시스템:</strong> 적절히 유지관리되고 기능하는 자동 화재 감지 시스템 가정</li>
+                    <li><strong>경보 시스템:</strong> 모든 통보 장치가 작동하고 건물 전체에서 들리거나 보이는 것으로 가정</li>
+                    <li><strong>재실자 특성:</strong> 건물 레이아웃에 익숙한 주의 깊고 이동 가능한 재실자 가정</li>
+                    <li><strong>환경 조건:</strong> 정상 조명, 가시성 및 피난 중 최소 연기 영향 가정</li>
+                    <li><strong>출구 가용성:</strong> 모든 출구가 피난 전체에 걸쳐 접근 가능하고 거주 가능한 상태로 유지되는 것으로 가정</li>
+                    <li><strong>시스템 고장 없음:</strong> 감지, 경보 또는 피난 시스템의 고장이 없는 것으로 가정</li>
+                </ul>
+            </div>
+
+            <h3>7.4 검증 및 확인</h3>
+            <p>
+                계산된 RSET은 다음을 통해 검증되어야 합니다:
+            </p>
+            <ol>
+                <li>
+                    <strong>비교 분석:</strong> 유사한 건물 유형 및 용도의 경험적 피난 데이터와 비교
+                </li>
+                <li>
+                    <strong>민감도 연구:</strong> 다양한 시나리오 및 매개변수 값에서 RSET 변동 평가
+                </li>
+                <li>
+                    <strong>전문가 검토:</strong> 자격을 갖춘 소방 엔지니어의 동료 검토
+                </li>
+                <li>
+                    <strong>피난 훈련:</strong> 가능한 경우 실제 측정된 피난 훈련과 비교
+                </li>
+            </ol>
+        </div>
+<div class="section">
+            <h1><span class="section-number">8.</span> 권고사항</h1>
+
+            <h3>8.1 설계 최적화 기회</h3>
+            <p>
+                RSET 분석 결과를 바탕으로 생명 안전 성능 향상을 위한 다음 권고사항을 제공합니다:
+            </p>
+<h3>8.2 시스템 유지보수 및 테스트</h3>
+            <div class="alert info">
+                <div class="alert-title">지속적 검증 요구사항</div>
+                <p>
+                    RSET 분석은 모든 화재 보호 시스템의 적절한 작동을 가정합니다. 정기적인 유지보수와 테스트가 필수적입니다:
+                </p>
+                <ul>
+                    <li>화재 감지: NFPA 72에 따른 분기별 기능 테스트</li>
+                    <li>경보 시스템: 모든 통보 장치의 연간 종합 테스트</li>
+                    <li>피난 훈련: 가정된 이동 전 시간을 확인하기 위한 반기별 훈련</li>
+                    <li>출구 유지관리: 모든 피난 경로 및 구성요소의 월별 점검</li>
+                </ul>
+            </div>
+
+            <h3>8.3 문서화 요구사항</h3>
+            <p>
+                다음을 포함한 종합적인 문서를 유지합니다:
+            </p>
+            <ul>
+                <li>모든 가정이 명확히 기술된 RSET 및 ASET 계산</li>
+                <li>피난 시뮬레이션 입력 파일 및 결과</li>
+                <li>시스템 테스트 및 유지보수 기록</li>
+                <li>피난 훈련 보고서 및 시간 측정 데이터</li>
+                <li>건물 레이아웃, 용도 또는 보호 시스템의 변경 사항</li>
+            </ul>
+
+            <h3>8.4 성능 모니터링</h3>
+            <p>
+                지속적인 성능 모니터링 프로그램 수립:
+            </p>
+            <ol>
+                <li>
+                    <strong>연간 RSET 검토:</strong> 건물 용도, 점유율 또는 보호 시스템에 중요한 변경이 발생하면 RSET 재평가
+                </li>
+                <li>
+                    <strong>점유 하중 확인:</strong> 실제 대 설계 재실자 하중 모니터링 및 초과 시 분석 업데이트
+                </li>
+                <li>
+                    <strong>시스템 성능 추적:</strong> 훈련 및 사고 중 실제 감지 및 경보 활성화 시간 문서화
+                </li>
+                <li>
+                    <strong>비교 분석:</strong> 가정을 검증하기 위해 훈련 피난 시간과 계산된 RSET 비교
+                </li>
+            </ol>
+        </div>
+<div class="section">
+            <h1><span class="section-number">9.</span> 참고문헌</h1>
+
+            <ul class="reference-list">
+                <li class="reference-item">
+                    NFPA 101, <em>Life Safety Code</em>, 2021 Edition. National Fire Protection Association,
+                    Quincy, MA. Chapter 5: Performance-Based Option.
+                </li>
+                <li class="reference-item">
+                    Society of Fire Protection Engineers (SFPE), <em>SFPE Handbook of Fire Protection Engineering</em>,
+                    5th Edition, 2016. Springer, New York. Section 3, Chapter 12: Movement of People.
+                </li>
+                <li class="reference-item">
+                    ISO/TR 16738:2009, <em>Fire Safety Engineering - Technical Information on Methods for
+                    Evaluating Behavior and Movement of People</em>. International Organization for Standardization,
+                    Geneva, Switzerland.
+                </li>
+                <li class="reference-item">
+                    ISO 13571:2012, <em>Life-threatening Components of Fire - Guidelines for the Estimation
+                    of Time to Compromised Tenability in Fires</em>. International Organization for Standardization.
+                </li>
+                <li class="reference-item">
+                    Hurley, M.J. et al., <em>SFPE Guide to Human Behavior in Fire</em>, 2nd Edition, 2019.
+                    Society of Fire Protection Engineers, Bethesda, MD.
+                </li>
+                <li class="reference-item">
+                    Chraibi, M., Seyfried, A., Schadschneider, A., "Generalized centrifugal-force model
+                    for pedestrian dynamics," <em>Physical Review E</em>, Vol. 82, No. 4, 2010.
+                </li>
+                <li class="reference-item">
+                    Gwynne, S.M.V., Rosenbaum, E.R., "Employing the Hydraulic Model in Assessing Emergency
+                    Movement," <em>SFPE Handbook of Fire Protection Engineering</em>, 5th Edition, 2016.
+                </li>
+                <li class="reference-item">
+                    Predtechenskii, V.M., Milinskii, A.I., <em>Planning for Foot Traffic Flow in Buildings</em>,
+                    Amerind Publishing, New Delhi, 1978. Translation of Russian edition (1969).
+                </li>
+                <li class="reference-item">
+                    Proulx, G., Fahy, R.F., "The Time Delay to Start Evacuation: Review of Five Case Studies,"
+                    <em>Proceedings of the 5th International Symposium on Human Behaviour in Fire</em>, 2012,
+                    pp. 361-372.
+                </li>
+                <li class="reference-item">
+                    Purser, D.A., "Quantification of Behaviour for Engineering Design Standards and Escape
+                    Time Calculations," <em>Safety Science</em>, Vol. 38, No. 2, 2001, pp. 157-182.
+                </li>
+                <li class="reference-item">
+                    Korhonen, T., Hostikka, S., Heliövaara, S., Ehtamo, H., "FDS+Evac: An Agent Based Fire
+                    Evacuation Model," <em>Fire Safety Science</em>, Vol. 9, 2008, pp. 109-120.
+                </li>
+                <li class="reference-item">
+                    NFPA 72, <em>National Fire Alarm and Signaling Code</em>, 2022 Edition. National Fire
+                    Protection Association, Quincy, MA.
+                </li>
+                <li class="reference-item">
+                    Kuligowski, E.D., <em>Human Behavior in Fire</em>, NIST Technical Note 1632, National
+                    Institute of Standards and Technology, Gaithersburg, MD, 2009.
+                </li>
+                <li class="reference-item">
+                    Nelson, H.E., Mowrer, F.W., "Emergency Movement," <em>SFPE Handbook of Fire Protection
+                    Engineering</em>, 2nd Edition, 1995, Section 3, Chapter 14.
+                </li>
+                <li class="reference-item">
+                    Pauls, J., "Movement of People," <em>SFPE Handbook of Fire Protection Engineering</em>,
+                    3rd Edition, 2002, Section 3, Chapter 13, pp. 3-263 to 3-285.
+                </li>
+            </ul>
+        </div>
+<div class="section">
+            <h1><span class="section-number">10.</span> 부록</h1>
+
+            <h3>부록 A: 상세 에이전트 출구 시간</h3>
+            <p>
+                검증 및 분석을 위한 개별 에이전트 피난 시간의 완전한 기록:
+            </p>
+<div class="table-caption">표 A.1: 개별 에이전트 피난 시간</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>에이전트 ID</th>
+                        <th>출구 도착 시간 (초)</th>
+                        <th>누적 %</th>
+                        <th>상태</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>에이전트 75</td>
+                        <td>7.50</td>
+                        <td>1.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 92</td>
+                        <td>8.70</td>
+                        <td>2.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 91</td>
+                        <td>10.30</td>
+                        <td>3.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 95</td>
+                        <td>12.50</td>
+                        <td>4.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 70</td>
+                        <td>12.70</td>
+                        <td>5.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 78</td>
+                        <td>12.80</td>
+                        <td>6.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 79</td>
+                        <td>13.40</td>
+                        <td>7.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 84</td>
+                        <td>13.40</td>
+                        <td>8.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 94</td>
+                        <td>15.10</td>
+                        <td>9.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 85</td>
+                        <td>15.40</td>
+                        <td>10.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 74</td>
+                        <td>16.50</td>
+                        <td>11.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 88</td>
+                        <td>16.50</td>
+                        <td>12.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 87</td>
+                        <td>16.80</td>
+                        <td>13.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 72</td>
+                        <td>17.20</td>
+                        <td>14.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 80</td>
+                        <td>17.50</td>
+                        <td>15.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 99</td>
+                        <td>17.80</td>
+                        <td>16.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 82</td>
+                        <td>18.00</td>
+                        <td>17.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 81</td>
+                        <td>18.30</td>
+                        <td>18.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 83</td>
+                        <td>18.90</td>
+                        <td>19.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 90</td>
+                        <td>19.30</td>
+                        <td>20.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 76</td>
+                        <td>20.50</td>
+                        <td>21.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 89</td>
+                        <td>21.70</td>
+                        <td>22.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 97</td>
+                        <td>22.40</td>
+                        <td>23.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 98</td>
+                        <td>24.90</td>
+                        <td>24.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 93</td>
+                        <td>25.40</td>
+                        <td>25.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 40</td>
+                        <td>26.30</td>
+                        <td>26.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 65</td>
+                        <td>26.30</td>
+                        <td>27.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 77</td>
+                        <td>28.20</td>
+                        <td>28.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 96</td>
+                        <td>28.30</td>
+                        <td>29.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 86</td>
+                        <td>28.50</td>
+                        <td>30.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 59</td>
+                        <td>28.80</td>
+                        <td>31.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 73</td>
+                        <td>29.10</td>
+                        <td>32.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 34</td>
+                        <td>29.60</td>
+                        <td>33.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 71</td>
+                        <td>31.40</td>
+                        <td>34.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 69</td>
+                        <td>34.50</td>
+                        <td>35.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 33</td>
+                        <td>38.00</td>
+                        <td>36.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 7</td>
+                        <td>38.30</td>
+                        <td>37.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 37</td>
+                        <td>39.30</td>
+                        <td>38.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 21</td>
+                        <td>39.90</td>
+                        <td>39.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 35</td>
+                        <td>40.70</td>
+                        <td>40.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 23</td>
+                        <td>41.20</td>
+                        <td>41.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 50</td>
+                        <td>42.00</td>
+                        <td>42.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 15</td>
+                        <td>42.40</td>
+                        <td>43.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 54</td>
+                        <td>43.30</td>
+                        <td>44.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 22</td>
+                        <td>44.10</td>
+                        <td>45.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 12</td>
+                        <td>44.30</td>
+                        <td>46.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 46</td>
+                        <td>44.70</td>
+                        <td>47.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 25</td>
+                        <td>45.30</td>
+                        <td>48.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 19</td>
+                        <td>45.60</td>
+                        <td>49.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                    <tr>
+                        <td>에이전트 56</td>
+                        <td>46.00</td>
+                        <td>50.0%</td>
+                        <td>피난 완료</td>
+                    </tr>
+                        <tr>
+                            <td colspan="4" style="text-align: center; font-style: italic;">
+                                ... 50 외 추가 에이전트 (전체 데이터는 소스 파일에서 확인 가능)
+                            </td>
+                        </tr>
+</tbody></table>
+
+            <h3>부록 B: 계산 매개변수 요약</h3>
+            <div class="table-caption">표 B.1: 전체 매개변수 목록</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>매개변수</th>
+                        <th>값</th>
+                        <th>단위</th>
+                        <th>출처/근거</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>감지 시간</td>
+                        <td>3.00</td>
+                        <td>초</td>
+                        <td>NFPA 72 감지기 응답 특성</td>
+                    </tr>
+                    <tr>
+                        <td>경보 시간</td>
+                        <td>5.00</td>
+                        <td>초</td>
+                        <td>시스템 처리 + 재실자 인식</td>
+                    </tr>
+                    <tr>
+                        <td>이동 전 시간</td>
+                        <td>7.00</td>
+                        <td>초</td>
+                        <td>SFPE 핸드북 - 주의 깊은 재실자, 익숙함</td>
+                    </tr>
+                    <tr>
+                        <td>이동 시간</td>
+                        <td>75.90</td>
+                        <td>초</td>
+                        <td>JuPedSim 시뮬레이션 - 최대 에이전트 시간</td>
+                    </tr>
+                    <tr>
+                        <td>안전 계수</td>
+                        <td>15.0</td>
+                        <td>%</td>
+                        <td>NFPA 101 성능 기반 요구사항</td>
+                    </tr>
+                    <tr>
+                        <td>안전 여유</td>
+                        <td>11.38</td>
+                        <td>초</td>
+                        <td>계산됨: 이동 시간 × 안전 계수</td>
+                    </tr>
+                    <tr>
+                        <td>총 인원</td>
+                        <td>100</td>
+                        <td>명</td>
+                        <td>설계 재실자 하중</td>
+                    </tr>
+                    <tr>
+                        <td>피난 완료 인원</td>
+                        <td>100</td>
+                        <td>명</td>
+                        <td>시뮬레이션 결과</td>
+                    </tr>
+                    <tr>
+                        <td>성공률</td>
+                        <td>100.0</td>
+                        <td>%</td>
+                        <td>피난 완료 / 총 × 100</td>
+                    </tr>
+                    <tr style="background: #e8f4f8; font-weight: 600;">
+                        <td><strong>총 RSET</strong></td>
+                        <td><strong>102.28</strong></td>
+                        <td><strong>초</strong></td>
+                        <td><strong>ISO/TR 16738에 따른 완전한 계산</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>부록 C: 규제 준수 체크리스트</h3>
+            <div class="table-caption">표 C.1: 표준 준수 확인</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>요구사항</th>
+                        <th>표준</th>
+                        <th>상태</th>
+                        <th>비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>RSET 계산 방법</td>
+                        <td>ISO/TR 16738:2009</td>
+                        <td style="color: var(--success-green); font-weight: 600;">✓ 준수</td>
+                        <td>표준 방법론 적용됨</td>
+                    </tr>
+                    <tr>
+                        <td>안전 계수</td>
+                        <td>NFPA 101 Ch. 5</td>
+                        <td style="color: var(--success-green); font-weight: 600;">✓ 준수</td>
+                        <td>15% 15% 여유 적용</td>
+                    </tr>
+                    <tr>
+                        <td>감지 시간</td>
+                        <td>NFPA 72</td>
+                        <td style="color: var(--success-green); font-weight: 600;">✓ 가정됨</td>
+                        <td>검증 필요</td>
+                    </tr>
+                    <tr>
+                        <td>재실자 특성</td>
+                        <td>SFPE Handbook</td>
+                        <td style="color: var(--success-green); font-weight: 600;">✓ 준수</td>
+                        <td>주의 깊은, 이동 가능한 인구</td>
+                    </tr>
+                    <tr>
+                        <td>이동 시간</td>
+                        <td>ISO/TR 16738</td>
+                        <td style="color: var(--success-green); font-weight: 600;">✓ 준수</td>
+                        <td>에이전트 기반 시뮬레이션</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>부록 D: 용어 정의</h3>
+            <dl style="margin-left: 2rem;">
+                <dt style="font-weight: 600; margin-top: 1rem;">ASET (가용 안전 피난 시간)</dt>
+                <dd>화재 발생부터 열, 연기 또는 유독 가스와 같은 화재 영향으로 인해 특정 위치의 조건이 거주 불가능해질 때까지의 시간 간격.</dd>
+
+                <dt style="font-weight: 600; margin-top: 1rem;">RSET (필요 안전 피난 시간)</dt>
+                <dd>화재 발생부터 감지, 경보, 이동 전 및 이동 단계를 포함하여 모든 건물 재실자가 안전한 장소에 도달할 때까지의 시간 간격.</dd>
+
+                <dt style="font-weight: 600; margin-top: 1rem;">이동 전 시간</dt>
+                <dd>재실자 통보와 의도적인 피난 이동 시작 사이의 시간 기간으로, 인식, 해석 및 의사 결정 단계를 포함.</dd>
+
+                <dt style="font-weight: 600; margin-top: 1rem;">안전 계수</dt>
+                <dd>계산, 모델링 가정 및 인간 행동의 변동성에서의 불확실성을 고려하기 위해 적용되는 추가 시간 여유.</dd>
+
+                <dt style="font-weight: 600; margin-top: 1rem;">거주 가능성</dt>
+                <dd>재실자가 생존하고 자가 구조 능력을 유지할 수 있는 조건으로, 일반적으로 온도, 가시성 및 유독 가스 농도 한계로 정의됨.</dd>
+            </dl>
+        </div>
+
+        <div class="report-footer">
+            <p><strong>보고서 끝</strong></p>
+            <p>BULC Fire Safety Analysis System | Version 1.0.7</p>
+            <p>Meteor Simulation Inc. | Professional Engineering Analysis</p>
+            <p style="margin-top: 1rem; font-size: 0.85rem;">
+                이 보고서는 고급 화재 안전 공학 분석 도구와 방법론을 사용하여 생성되었습니다.<br>
+                질문이나 설명이 필요하시면 화재 보호 엔지니어링 컨설턴트에게 문의하십시오.
+            </p>
+        </div>
+        </div>
+</body>
+</html>

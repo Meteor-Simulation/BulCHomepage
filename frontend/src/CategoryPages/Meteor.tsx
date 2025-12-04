@@ -1,24 +1,82 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './CategoryPages.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import MeteorAbout from './MeteorAbout';
+import MeteorSolutions from './MeteorSolutions';
+import MeteorAchievements from './MeteorAchievements';
 
 const SUB_NAV_ITEMS = [
-  { id: 'menu1', label: '메뉴1' },
-  { id: 'menu2', label: '메뉴2' },
-  { id: 'menu3', label: '메뉴3' },
-  { id: 'menu4', label: '메뉴4' },
+  { id: 'menu1', label: 'About' },
+  { id: 'menu2', label: 'Solutions' },
+  { id: 'menu3', label: 'Achievements' },
 ];
 
 const MeteorPage: React.FC = () => {
+  const [activeMenu, setActiveMenu] = useState<string>('menu1');
+  const menu1Ref = useRef<HTMLDivElement>(null);
+  const menu2Ref = useRef<HTMLDivElement>(null);
+  const menu3Ref = useRef<HTMLDivElement>(null);
+
+  // Handle sub-navigation clicks
+  const handleSubNavClick = (menuId: string) => {
+    setActiveMenu(menuId);
+
+    // Scroll to the corresponding section
+    let targetRef = null;
+    if (menuId === 'menu1') targetRef = menu1Ref;
+    else if (menuId === 'menu2') targetRef = menu2Ref;
+    else if (menuId === 'menu3') targetRef = menu3Ref;
+
+    if (targetRef?.current) {
+      const headerOffset = 140; // Account for fixed header height
+      const elementPosition = targetRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Update active menu based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200; // Offset for better UX
+
+      if (menu3Ref.current && scrollPosition >= menu3Ref.current.offsetTop) {
+        setActiveMenu('menu3');
+      } else if (menu2Ref.current && scrollPosition >= menu2Ref.current.offsetTop) {
+        setActiveMenu('menu2');
+      } else if (menu1Ref.current && scrollPosition >= menu1Ref.current.offsetTop) {
+        setActiveMenu('menu1');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="app">
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
+        activeSubNav={activeMenu}
+        onSubNavChange={handleSubNavClick}
       />
 
       <main className="main-content sub-page">
+        <div ref={menu1Ref}>
+          <MeteorAbout />
+        </div>
+        <div ref={menu2Ref}>
+          <MeteorSolutions />
+        </div>
+        <div ref={menu3Ref}>
+          <MeteorAchievements />
+        </div>
       </main>
 
       <Footer />
