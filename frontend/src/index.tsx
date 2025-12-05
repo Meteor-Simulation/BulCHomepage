@@ -50,12 +50,15 @@ const MainPage: React.FC = () => {
         <div className={`category-container ${phase === 'complete' ? 'visible' : ''}`}>
           <div className="category-card" onClick={() => navigate('/meteor')}>
             <span className="category-name">Meteor<br/>Simulation</span>
+            <span className="category-subtitle">AI-Physical Simulation Solutions</span>
           </div>
           <div className="category-card" onClick={() => navigate('/bulc')}>
             <span className="category-name">BUL:C</span>
+            <span className="category-subtitle">Fire-Evac Simulator</span>
           </div>
           <div className="category-card" onClick={() => navigate('/vr')}>
             <span className="category-name">VR</span>
+            <span className="category-subtitle">Real Fire Evac Education</span>
           </div>
         </div>
       </main>

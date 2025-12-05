@@ -255,6 +255,38 @@ body {
   border: 2px solid transparent;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+}
+
+.category-card:nth-child(1)::before {
+  background-image: url('../public/img/meteor-bg.png');
+  opacity: 0.15;
+}
+
+.category-card:nth-child(2)::before {
+  background-image: url('../public/img/bulc-bg.png');
+  opacity: 0.15;
+}
+
+.category-card:nth-child(3)::before {
+  background-image: url('../public/img/VR-bg.png');
+  opacity: 0.2;
 }
 
 .category-card:hover {
@@ -264,12 +296,32 @@ body {
   background: linear-gradient(to top, rgba(255, 180, 150, 0.5) 0%, rgba(255, 200, 170, 0.3) 50%, rgba(255, 255, 255, 1) 100%);
 }
 
+.category-card:nth-child(1):hover::before,
+.category-card:nth-child(2):hover::before,
+.category-card:nth-child(3):hover::before {
+  opacity: 0.3;
+}
+
 .category-name {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   text-align: center;
   line-height: 1.4;
   color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+.category-subtitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 8px;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
 }
 
 /* ========================================
@@ -288,7 +340,7 @@ body {
   }
 
   .category-name {
-    font-size: 22px;
+    font-size: 26px;
   }
 }
 
@@ -311,7 +363,8 @@ body {
 
   .category-container {
     grid-template-columns: 1fr;
-    max-width: 320px;
+    max-width: 80%;
+    width: 80%;
     gap: 20px;
     margin-top: 20px;
     padding: 20px;
@@ -323,7 +376,7 @@ body {
   }
 
   .category-name {
-    font-size: 20px;
+    font-size: 24px;
   }
 }
 
@@ -348,6 +401,6 @@ body {
   }
 
   .category-name {
-    font-size: 18px;
+    font-size: 22px;
   }
 }

@@ -985,6 +985,209 @@
 }
 
 /* ========================================
+   Responsive Design - Mobile
+======================================== */
+
+@media (max-width: 768px) {
+  /* Chart Section */
+  .chart-wrapper {
+    height: 300px;
+    margin-bottom: 32px;
+  }
+
+  /* AI Models Grid */
+  .models-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .model-card {
+    padding: 24px;
+  }
+
+  /* AI References */
+  .ai-references-section {
+    padding: 24px;
+  }
+
+  .reference-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .reference-label {
+    min-width: auto;
+  }
+
+  /* Tier Rows */
+  .tier-row {
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .tier-label-box {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .tier-content {
+    width: 100%;
+  }
+
+  .clients-list {
+    gap: 8px;
+  }
+
+  .client-chip {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .tier-metrics {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .metric-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .metric-divider {
+    display: none;
+  }
+
+  .metric-label {
+    font-size: 13px;
+  }
+
+  .metric-value {
+    font-size: 18px;
+  }
+
+  /* Marketing Timeline */
+  .timeline-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .month-card {
+    padding: 20px;
+  }
+
+  .month-title {
+    font-size: 18px;
+  }
+
+  .activities-grid {
+    gap: 12px;
+  }
+
+  .activity-item {
+    padding: 12px;
+  }
+
+  .category-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  .activity-content {
+    font-size: 13px;
+  }
+
+  /* Competitive Analysis */
+  .competitor-section {
+    margin-bottom: 32px;
+  }
+
+  .competitors-table {
+    font-size: 12px;
+  }
+
+  .competitors-table th,
+  .competitors-table td {
+    padding: 10px 8px;
+  }
+
+  /* Market Analysis */
+  .market-analysis-section {
+    padding: 24px;
+  }
+
+  .analysis-content {
+    gap: 16px;
+  }
+
+  .analysis-item {
+    padding: 16px;
+  }
+
+  /* Pivot Markets */
+  .pivot-market-card {
+    padding: 24px;
+  }
+
+  .pivot-content-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .characteristic-item {
+    font-size: 13px;
+    padding: 6px 0 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-wrapper {
+    height: 250px;
+  }
+
+  .section-subtitle {
+    font-size: 24px;
+  }
+
+  .tier-badge {
+    font-size: 11px;
+    padding: 6px 14px;
+  }
+
+  .tier-title {
+    font-size: 16px;
+  }
+
+  .client-chip {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+  }
+
+  .month-card {
+    padding: 16px;
+  }
+
+  .activity-item {
+    padding: 10px;
+  }
+
+  .competitors-table {
+    font-size: 11px;
+  }
+
+  .competitors-table th,
+  .competitors-table td {
+    padding: 8px 6px;
+  }
+}
+
+/* ========================================
    Pivot Markets Section
 ======================================== */
 
