@@ -432,6 +432,159 @@ INSERT INTO products (code, name, description, is_active) VALUES
     ('METEOR', 'Meteor Simulation', '화재 확산 예측 시뮬레이션', TRUE),
     ('VR_TRAINING', 'VR 안전 교육', 'VR 기반 화재 대피 훈련', TRUE);
 
+-- ===============================
+-- 17) 라이선스 플랜 (정책 템플릿): license_plans
+-- ===============================
+CREATE TABLE license_plans (
+    id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id              UUID NOT NULL,                  -- 제품 ID (products 테이블 참조)
+    code                    VARCHAR(64) NOT NULL,           -- 식별 코드 (ex: "TRIAL_7D", "PRO_SUB_1Y")
+    name                    VARCHAR(255) NOT NULL,          -- 표시 이름
+    description             TEXT NULL,                      -- 설명
+
+    license_type            VARCHAR(32) NOT NULL,           -- 'TRIAL', 'SUBSCRIPTION', 'PERPETUAL'
+    duration_days           INT NOT NULL,                   -- 기본 유효기간 (일)
+    grace_days              INT NOT NULL DEFAULT 0,         -- 유예기간 (EXPIRED_GRACE용)
+    max_activations         INT NOT NULL DEFAULT 1,         -- 최대 기기 수
+    max_concurrent_sessions INT NOT NULL DEFAULT 1,         -- 동시 세션 제한
+    allow_offline_days      INT NOT NULL DEFAULT 0,         -- 오프라인 허용 일수
+
+    is_active               BOOLEAN NOT NULL DEFAULT TRUE,  -- 활성 상태
+    is_deleted              BOOLEAN NOT NULL DEFAULT FALSE, -- 소프트 삭제
+
+    created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE license_plans IS '라이선스 플랜/정책 템플릿 (Admin UI에서 관리)';
+COMMENT ON COLUMN license_plans.code IS '사람이 읽기 쉬운 식별자, Admin UI에서 선택/표시할 값';
+COMMENT ON COLUMN license_plans.duration_days IS '기본 유효기간 (일 단위)';
+COMMENT ON COLUMN license_plans.grace_days IS 'EXPIRED_GRACE 상태로 전환 후 유예기간';
+COMMENT ON COLUMN license_plans.allow_offline_days IS '오프라인 허용 일수 (0이면 항상 온라인 필요)';
+
+-- ===============================
+-- 17-1) 라이선스 플랜 기능/권한: license_plan_entitlements
+-- ===============================
+CREATE TABLE license_plan_entitlements (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plan_id         UUID NOT NULL,
+    entitlement_key VARCHAR(100) NOT NULL,              -- 기능 키 (ex: "core-simulation", "export-csv")
+    CONSTRAINT fk_plan_entitlement_plan FOREIGN KEY (plan_id) REFERENCES license_plans(id) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE license_plan_entitlements IS '플랜별 활성화 기능 목록';
+COMMENT ON COLUMN license_plan_entitlements.entitlement_key IS '기능 식별자 (core-simulation, advanced-visualization 등)';
+
+-- ===============================
+-- 18) 라이선스: licenses
+-- ===============================
+CREATE TABLE licenses (
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    owner_type          VARCHAR(20) NOT NULL,           -- 'USER', 'ORG'
+    owner_id            UUID NOT NULL,                  -- users.id 또는 orgs.id (UUID로 참조)
+    product_id          UUID NOT NULL,                  -- 제품 ID (UUID)
+    plan_id             UUID NULL,                      -- 요금제 ID (선택)
+    license_type        VARCHAR(20) NOT NULL,           -- 'TRIAL', 'SUBSCRIPTION', 'PERPETUAL'
+    usage_category      VARCHAR(30) NOT NULL,           -- 'COMMERCIAL', 'RESEARCH_NON_COMMERCIAL', 'EDUCATION', 'INTERNAL_EVAL'
+    status              VARCHAR(20) NOT NULL,           -- 'PENDING', 'ACTIVE', 'EXPIRED_GRACE', 'EXPIRED_HARD', 'SUSPENDED', 'REVOKED'
+    issued_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valid_from          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valid_until         TIMESTAMP NULL,                 -- Perpetual인 경우 NULL
+    policy_snapshot     JSONB NULL,                     -- 정책 스냅샷 (maxActivations, gracePeriodDays 등)
+    license_key         VARCHAR(50) UNIQUE,             -- 외부 노출용 시리얼 키
+    source_order_id     UUID NULL,                      -- 주문 ID (Billing 연동)
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE licenses IS '라이선스 정보 (Licensing BC Aggregate Root)';
+COMMENT ON COLUMN licenses.owner_type IS '소유자 유형: USER(개인), ORG(조직)';
+COMMENT ON COLUMN licenses.usage_category IS '사용 용도: 상업용, 연구용, 교육용, 내부평가용';
+COMMENT ON COLUMN licenses.policy_snapshot IS '발급 시점의 정책 스냅샷 (JSON)';
+
+-- ===============================
+-- 18) 라이선스 활성화: license_activations
+-- ===============================
+CREATE TABLE license_activations (
+    id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    license_id              UUID NOT NULL,
+    device_fingerprint      VARCHAR(255) NOT NULL,      -- 기기 식별 해시
+    status                  VARCHAR(20) NOT NULL,       -- 'ACTIVE', 'STALE', 'DEACTIVATED', 'EXPIRED'
+    activated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    client_version          VARCHAR(50) NULL,
+    client_os               VARCHAR(100) NULL,
+    last_ip                 VARCHAR(45) NULL,           -- IPv6 지원
+    offline_token           VARCHAR(2000) NULL,         -- 오프라인 사용 토큰
+    offline_token_expires_at TIMESTAMP NULL,
+    created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_activation_license FOREIGN KEY (license_id) REFERENCES licenses(id) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE license_activations IS '기기 활성화 정보 (라이선스별 기기 슬롯)';
+COMMENT ON COLUMN license_activations.device_fingerprint IS 'HW ID, OS 등을 조합한 기기 식별 해시';
+COMMENT ON COLUMN license_activations.offline_token IS '오프라인 환경용 서명된 토큰';
+
+-- ===============================
+-- 19) 오프라인 토큰 무효화 목록: revoked_offline_tokens
+-- ===============================
+CREATE TABLE revoked_offline_tokens (
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    license_id          UUID NOT NULL,
+    activation_id       UUID NULL,
+    device_fingerprint  VARCHAR(255) NULL,
+    token_hash          VARCHAR(255) NOT NULL,          -- 무효화된 토큰의 해시
+    revoked_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reason              VARCHAR(255) NULL,
+    CONSTRAINT fk_revoked_token_license FOREIGN KEY (license_id) REFERENCES licenses(id) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE revoked_offline_tokens IS '무효화된 오프라인 토큰 목록 (탈취 대응)';
+
+-- ===============================
+-- 라이선싱 인덱스
+-- ===============================
+
+-- license_plans
+CREATE UNIQUE INDEX idx_license_plans_code ON license_plans(code) WHERE is_deleted = FALSE;
+CREATE INDEX idx_license_plans_product ON license_plans(product_id);
+CREATE INDEX idx_license_plans_active ON license_plans(is_active) WHERE is_deleted = FALSE;
+
+-- license_plan_entitlements
+CREATE UNIQUE INDEX idx_plan_entitlements_unique ON license_plan_entitlements(plan_id, entitlement_key);
+CREATE INDEX idx_plan_entitlements_plan ON license_plan_entitlements(plan_id);
+
+-- licenses
+CREATE INDEX idx_licenses_owner ON licenses(owner_type, owner_id);
+CREATE INDEX idx_licenses_product ON licenses(product_id);
+CREATE INDEX idx_licenses_status ON licenses(status);
+CREATE UNIQUE INDEX idx_licenses_key ON licenses(license_key);
+CREATE INDEX idx_licenses_source_order ON licenses(source_order_id);
+CREATE INDEX idx_licenses_valid_until ON licenses(valid_until) WHERE valid_until IS NOT NULL;
+
+-- license_activations
+CREATE INDEX idx_activations_license ON license_activations(license_id);
+CREATE INDEX idx_activations_device ON license_activations(license_id, device_fingerprint);
+CREATE INDEX idx_activations_status ON license_activations(status);
+CREATE INDEX idx_activations_last_seen ON license_activations(last_seen_at);
+
+-- revoked_offline_tokens
+CREATE INDEX idx_revoked_tokens_license ON revoked_offline_tokens(license_id);
+CREATE INDEX idx_revoked_tokens_hash ON revoked_offline_tokens(token_hash);
+
+-- ===============================
+-- 라이선싱 updated_at 트리거
+-- ===============================
+CREATE TRIGGER update_license_plans_updated_at BEFORE UPDATE ON license_plans
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_licenses_updated_at BEFORE UPDATE ON licenses
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_license_activations_updated_at BEFORE UPDATE ON license_activations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- 초기화 완료 메시지
 DO $$
 BEGIN
