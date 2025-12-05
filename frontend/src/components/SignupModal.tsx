@@ -1,0 +1,306 @@
+import React, { useState, useEffect } from 'react';
+import './SignupModal.css';
+
+interface SignupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSwitchToLogin: () => void;
+}
+
+const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  // 오버레이 마우스다운시 모달 닫기
+  const handleOverlayMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  // 전화번호 포맷팅
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/[^\d]/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhoneNumber(formatted);
+  };
+
+  // 복사/붙여넣기 방지 핸들러
+  const preventCopyPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+  };
+
+  // 회원가입 핸들러
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // 유효성 검사
+    if (!email.trim()) {
+      setError('이메일을 입력해주세요.');
+      return;
+    }
+    // 이메일 형식 검사
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+    if (email.length > 255) {
+      setError('이메일은 255자 이하여야 합니다.');
+      return;
+    }
+    if (!password) {
+      setError('비밀번호를 입력해주세요.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+    // 비밀번호 복잡성 검사
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password);
+    if (!hasLetter) {
+      setError('비밀번호에 영문자를 포함해야 합니다.');
+      return;
+    }
+    if (!hasDigit) {
+      setError('비밀번호에 숫자를 포함해야 합니다.');
+      return;
+    }
+    if (!hasSpecialChar) {
+      setError('비밀번호에 특수문자를 포함해야 합니다.');
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8080'
+        : `http://${window.location.hostname}:8080`;
+
+      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email,
+          password,
+          name: name.trim() || undefined,
+          phoneNumber: phoneNumber.replace(/-/g, '') || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('회원가입이 완료되었습니다. 로그인해주세요.');
+        // 입력 필드 초기화
+        setEmail('');
+        setPassword('');
+        setPasswordConfirm('');
+        setName('');
+        setPhoneNumber('');
+        onClose();
+        onSwitchToLogin();
+      } else {
+        setError(result.message || '회원가입에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
+      <div className="modal-content signup-modal">
+        <button className="modal-close-btn" onClick={onClose}>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+
+        <h2 className="modal-title">회원가입</h2>
+
+        <form className="modal-form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label className="input-label">이메일 <span className="required">*</span></label>
+            <input
+              type="email"
+              placeholder="example@email.com"
+              className="modal-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              maxLength={255}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">비밀번호 <span className="required">*</span></label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="8자 이상의 비밀번호"
+                className="modal-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onCopy={preventCopyPaste}
+                onPaste={preventCopyPaste}
+                onCut={preventCopyPaste}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+            <p className="input-hint">영문, 숫자, 특수문자를 포함한 8자 이상</p>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">비밀번호 확인 <span className="required">*</span></label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPasswordConfirm ? 'text' : 'password'}
+                placeholder="비밀번호를 다시 입력"
+                className="modal-input"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                onCopy={preventCopyPaste}
+                onPaste={preventCopyPaste}
+                onCut={preventCopyPaste}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                tabIndex={-1}
+              >
+                {showPasswordConfirm ? (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">이름</label>
+            <input
+              type="text"
+              placeholder="이름 (선택)"
+              className="modal-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onCopy={preventCopyPaste}
+              onPaste={preventCopyPaste}
+              onCut={preventCopyPaste}
+              disabled={isLoading}
+              maxLength={50}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">전화번호</label>
+            <input
+              type="tel"
+              placeholder="010-0000-0000 (선택)"
+              className="modal-input"
+              value={phoneNumber}
+              onChange={handlePhoneChange}
+              onCopy={preventCopyPaste}
+              onPaste={preventCopyPaste}
+              onCut={preventCopyPaste}
+              disabled={isLoading}
+              maxLength={13}
+            />
+          </div>
+
+          {error && <p className="modal-error">{error}</p>}
+
+          <button type="submit" className="modal-submit-btn" disabled={isLoading}>
+            {isLoading ? '가입 중...' : '회원가입'}
+          </button>
+        </form>
+
+        <div className="modal-login">
+          <span>이미 계정이 있으신가요?</span>
+          <button type="button" className="modal-login-link" onClick={onSwitchToLogin}>
+            로그인
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SignupModal;

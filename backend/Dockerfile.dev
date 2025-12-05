@@ -17,4 +17,6 @@ RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
 EXPOSE 8080
 
 # 개발 모드 실행 (spring-boot-devtools 활성화)
-CMD ["./gradlew", "bootRun", "--no-daemon"]
+# DNS 역방향 조회 비활성화로 외부 접속 시 지연 방지
+ENV JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=60 -Djava.security.egd=file:/dev/./urandom"
+CMD ["./gradlew", "bootRun", "--no-daemon", "-Dspring-boot.run.jvmArguments=-Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=60"]

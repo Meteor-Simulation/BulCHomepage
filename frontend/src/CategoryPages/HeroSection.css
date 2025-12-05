@@ -3,7 +3,6 @@
 ======================================== */
 .hero-section {
   position: relative;
-  min-height: calc(100vh - 140px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,19 +48,20 @@
 /* Hero Content Container */
 .hero-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
+  justify-content: center;
   width: 100%;
-  gap: 60px;
+  gap: 48px;
   position: relative;
   z-index: 1;
 }
 
-/* Left Content */
+/* Left Content (now Top Content) */
 .hero-left {
   flex: 1;
-  max-width: 560px;
+  /* max-width: 700px; */
+  text-align: center;
 }
 
 /* Badge */
@@ -127,6 +127,7 @@
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn-primary,
@@ -172,18 +173,19 @@
   height: 20px;
 }
 
-/* Right Content - Image */
+/* Right Content - Image (now Bottom Content) */
 .hero-right {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .hero-image-container {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
 }
 
 .hero-image-glow {
@@ -268,27 +270,16 @@
    Mobile Responsive
 ======================================== */
 @media (max-width: 1024px) {
-  .hero-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
   .hero-left {
     max-width: 100%;
   }
 
-  .hero-badge {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .hero-buttons {
-    justify-content: center;
-  }
-
   .hero-right {
-    width: 100%;
-    max-width: 400px;
+    max-width: 500px;
+  }
+
+  .hero-image-container {
+    max-width: 500px;
   }
 
   .stats-card {

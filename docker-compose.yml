@@ -38,6 +38,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${DB_NAME:-bulc_homepage_db}
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres123}
+      JWT_SECRET: ${JWT_SECRET:-BulcHomepageSecretKey2024VeryLongSecretKeyForJWT384BitSecurity}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-600000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:

@@ -1,0 +1,104 @@
+/* ========================================
+   SIGNUP MODAL - 회원가입 모달 스타일
+   LoginModal.css를 상속하여 추가 스타일 정의
+======================================== */
+
+/* 회원가입 모달 특화 스타일 */
+.signup-modal {
+  max-width: 420px;
+}
+
+.signup-modal .modal-title {
+  margin-bottom: 24px;
+}
+
+/* ========================================
+   INPUT GROUP
+======================================== */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.input-label .required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+/* ========================================
+   INPUT HINT (비밀번호 조건 등)
+======================================== */
+.input-hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 4px 0 0 2px;
+}
+
+/* ========================================
+   MODAL LOGIN LINK (로그인 전환 링크)
+======================================== */
+.modal-login {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-login-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+  font-size: 14px;
+  font-family: var(--font-main);
+  transition: color 0.2s ease;
+}
+
+.modal-login-link:hover {
+  color: #E85D04;
+  text-decoration: underline;
+}
+
+/* ========================================
+   FORM 간격 조정
+======================================== */
+.signup-modal .modal-form {
+  gap: 16px;
+}
+
+.signup-modal .modal-submit-btn {
+  margin-top: 8px;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE
+======================================== */
+@media (max-width: 480px) {
+  .signup-modal {
+    max-width: none;
+    margin: 16px;
+    padding: 28px 20px;
+  }
+
+  .signup-modal .modal-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .input-label {
+    font-size: 13px;
+  }
+
+  .signup-modal .modal-form {
+    gap: 14px;
+  }
+}

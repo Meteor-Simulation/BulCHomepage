@@ -3,7 +3,7 @@ import './HeroSection.css';
 
 const HeroSection: React.FC = () => {
   return (
-    <section className="hero-section">
+    <section className="hero-section" /* vr-section */>
       {/* Background Decorations */}
       <div className="hero-blur hero-blur-1"></div>
       <div className="hero-blur hero-blur-2"></div>
@@ -52,7 +52,7 @@ const HeroSection: React.FC = () => {
           <div className="hero-image-container">
             <div className="hero-image-glow"></div>
             <img
-              src="/hero-vr.png"
+              src="/img/VR1.png"
               alt="VR 화재 시뮬레이션 체험"
               className="hero-image"
             />

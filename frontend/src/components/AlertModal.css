@@ -1,0 +1,126 @@
+/* ========================================
+   ALERT MODAL - 알림 모달
+======================================== */
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: alertFadeIn 0.2s ease;
+}
+
+@keyframes alertFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.alert-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: alertSlideUp 0.3s ease;
+}
+
+@keyframes alertSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.alert-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.alert-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.alert-icon.success,
+.alert-icon.error,
+.alert-icon.warning,
+.alert-icon.info {
+  color: #C4320A;
+}
+
+.alert-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.alert-message {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.alert-close-btn {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 버튼 색상 - 로그인 버튼과 동일 */
+.alert-close-btn {
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  color: white;
+}
+
+.alert-close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(196, 50, 10, 0.4);
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .alert-modal {
+    margin: 20px;
+    padding: 24px;
+  }
+
+  .alert-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .alert-title {
+    font-size: 16px;
+  }
+
+  .alert-message {
+    font-size: 14px;
+  }
+}

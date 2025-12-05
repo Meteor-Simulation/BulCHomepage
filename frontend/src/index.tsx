@@ -2,18 +2,16 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import './index.css';
-import LoginPage from './Login/Login';
+import { AuthProvider } from './context/AuthContext';
+import Header from './components/Header';
 import MeteorPage from './CategoryPages/Meteor';
 import BulCPage from './CategoryPages/BulC';
 import VRPage from './CategoryPages/VR';
-import MorePage from './CategoryPages/More';
 
 // 메인 페이지 컴포넌트
 const MainPage: React.FC = () => {
   const [phase, setPhase] = useState<'slogan' | 'complete'>('slogan');
-  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const menuRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const completeTimer = setTimeout(() => {
@@ -25,72 +23,26 @@ const MainPage: React.FC = () => {
     };
   }, []);
 
-  // 메뉴 외부 클릭 감지
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+  // 클릭으로 애니메이션 스킵
+  const handleSkipAnimation = () => {
+    if (phase === 'slogan') {
+      setPhase('complete');
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  const handleLogoClick = () => {
-    navigate('/');
-    window.location.reload();
   };
 
   return (
-    <div className="app">
-      {/* 헤더 (처음부터 표시) */}
-      <header className="header visible">
-        <div className="header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-          <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
-          <span className="header-logo-text">METEOR</span>
-        </div>
-        <div className="header-right">
-          <div className="menu-container" ref={menuRef}>
-            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
-              <svg className="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {menuOpen && (
-              <div className="dropdown-menu">
-                <div className="dropdown-item" onClick={() => { navigate('/login'); setMenuOpen(false); }}>
-                  <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>로그인</span>
-                </div>
-                <div className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                  <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>언어 설정</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="app main-page" onClick={handleSkipAnimation}>
+      <Header />
 
-      {/* 문구 (2-4초: 페이드인 후 페이드아웃) */}
+      {/* 문구 (2-4초: 페이드인 후 페이드아웃) - 클릭 시 스킵 */}
       <div className={`slogan-overlay ${phase === 'slogan' ? 'visible' : ''}`}>
         <div className="slogan-content">
           <p><span className="text-accent">화재</span>를 예측하고</p>
           <p><span className="text-accent">생명</span>을 구합니다</p>
         </div>
+        {phase === 'slogan' && (
+          <p className="skip-hint">클릭하여 건너뛰기</p>
+        )}
       </div>
 
       {/* 메인 콘텐츠 영역 */}
@@ -100,13 +52,10 @@ const MainPage: React.FC = () => {
             <span className="category-name">Meteor<br/>Simulation</span>
           </div>
           <div className="category-card" onClick={() => navigate('/bulc')}>
-            <span className="category-name">BulC</span>
+            <span className="category-name">BUL:C</span>
           </div>
           <div className="category-card" onClick={() => navigate('/vr')}>
             <span className="category-name">VR</span>
-          </div>
-          <div className="category-card" onClick={() => navigate('/more')}>
-            <span className="category-name">More</span>
           </div>
         </div>
       </main>
@@ -117,16 +66,16 @@ const MainPage: React.FC = () => {
 // App 라우터
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/meteor" element={<MeteorPage />} />
-        <Route path="/bulc" element={<BulCPage />} />
-        <Route path="/vr" element={<VRPage />} />
-        <Route path="/more" element={<MorePage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/meteor" element={<MeteorPage />} />
+          <Route path="/bulc" element={<BulCPage />} />
+          <Route path="/vr" element={<VRPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
