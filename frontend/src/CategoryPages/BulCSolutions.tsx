@@ -1,117 +1,146 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './MeteorPages.css';
-import ReportModal from '../components/ReportModal';
 
 const BulCSolutions: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [reportType, setReportType] = useState<'ASET' | 'RSET' | null>(null);
-
-  const handleOpenReport = (type: 'ASET' | 'RSET') => {
-    setReportType(type);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setReportType(null);
-  };
-
   return (
     <>
     <section className="meteor-section meteor-solutions">
       <div className="meteor-container">
         <div className="section-header">
-          <div className="section-eyebrow">SOLUTIONS</div>
-          <h2 className="section-title">우리가 제공하는 솔루션</h2>
+          <div className="section-eyebrow">CORE FEATURES</div>
+          <h2 className="section-title">BULC 핵심 기능</h2>
           <p className="section-description">
-            시뮬레이션·설계·연구를 하나의 파이프라인으로 통합하여 효율적인 화재 안전 관리를 지원합니다.
+            AI 기반 자동화와 직관적인 인터페이스로 누구나 쉽게 전문적인 화재 시뮬레이션을 수행할 수 있습니다.
           </p>
         </div>
 
         <div className="solutions-grid">
           <div className="solution-card">
-            <h3 className="solution-title">화재 시뮬레이션</h3>
+            <h3 className="solution-title">화재-피난 시뮬레이션</h3>
             <p className="solution-description">
-              가시도, 온도, 일산화탄소, 열방출률, 유동 패턴 등 핵심 지표를 다각도로 분석하여 화재 위험을 정확하게 평가합니다.
+              가시도, 온도, 일산화탄소, 열방출률, 유동 패턴 등 핵심 지표를 다각도로 분석하여 화재 위험을 정확하게 평가합니다. 다양한 EVAC 모델을 이용해서 다층 건물의 대피 경로와 탈출 시간을 정확하게 계산합니다.
             </p>
+            <div className="solution-video">
+              <iframe
+                src="https://www.youtube.com/embed/SUwtGhU9mbc"
+                title="화재-피난 시뮬레이션"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              ></iframe>
+            </div>
             <div className="solution-tags">
               <span className="tag">초고층</span>
               <span className="tag">터널</span>
               <span className="tag">데이터센터</span>
               <span className="tag">물류창고</span>
               <span className="tag">ESS/배터리</span>
+              <span className="tag">EVAC</span>
             </div>
           </div>
 
           <div className="solution-card">
-            <h3 className="solution-title">성능위주 설계 (PBD)</h3>
+            <h3 className="solution-title">Drag & Drop</h3>
             <p className="solution-description">
-              RSET/ASET 분석, 피난 안전성 평가, 감지·제연·방화구획 성능 검토를 시각화 리포트로 제공합니다.
-            </p>
-            <div className="solution-tags">
-              <span className="tag">피난/가시도</span>
-              <span className="tag">온도/독성</span>
-              <span className="tag">제연/배연</span>
-              <span className="tag">시나리오 기반</span>
-            </div>
-          </div>
-
-          <div className="solution-card">
-            <h3 className="solution-title">소방 R&D</h3>
-            <p className="solution-description">
-              신규 소방 제품 및 시스템 평가, 실규모/모형 실험과 시뮬레이션 상호 검증, 과제 문서화를 지원합니다.
-            </p>
-            <div className="solution-tags">
-              <span className="tag">실험-시뮬 연계</span>
-              <span className="tag">데이터 대시보드</span>
-              <span className="tag">교육/훈련</span>
-            </div>
-          </div>
-
-          <div className="solution-card">
-            <h3 className="solution-title">배터리/전기차 화재</h3>
-            <p className="solution-description">
-              실험 기반 고정밀 열폭주 연소 모델로 배터리 화재의 특수성을 반영한 정확한 시뮬레이션을 제공합니다.
-            </p>
-            <div className="solution-tags">
-              <span className="tag">ESS</span>
-              <span className="tag">전기차</span>
-              <span className="tag">열폭주</span>
-              <span className="tag">PBD</span>
-            </div>
-          </div>
-
-          <div className="solution-card full-width">
-            <h3 className="solution-title">ASET+RSET 자동 보고서</h3>
-            <p className="solution-description">
-              Available Safe Egress Time과 Required Safe Egress Time을 자동으로 분석하여 화재 시 안전한 대피 가능 시간과 필요 시간을 정확하게 계산하고 보고서를 생성합니다.
+              복잡한 코딩 없이 마우스 드래그만으로 건물 구조, 화재원, 센서 등을 직관적으로 배치하고 시뮬레이션을 설정할 수 있습니다.
             </p>
             <div className="solution-video">
               <iframe
-                src="https://www.youtube.com/embed/vmM57d6DpcU"
-                title="ASET+RSET 소개"
+                src="https://www.youtube.com/embed/KwZUWgnw540"
+                title="Drag & Drop"
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               ></iframe>
             </div>
-            <div className="sample-buttons">
-              <button className="btn-sample" onClick={() => handleOpenReport('ASET')}>
-                ASET SAMPLE
-              </button>
-              <button className="btn-sample" onClick={() => handleOpenReport('RSET')}>
-                RSET SAMPLE
-              </button>
+            <div className="solution-tags">
+              <span className="tag">직관적 UI</span>
+              <span className="tag">빠른 설정</span>
+              <span className="tag">3D 미리보기</span>
+              <span className="tag">실시간 편집</span>
             </div>
           </div>
+
+          <div className="solution-card">
+            <h3 className="solution-title">Fire DB</h3>
+            <p className="solution-description">
+              실험 기반 검증된 화재 데이터베이스를 통해 다양한 가연물의 연소 특성을 정확하게 반영한 시뮬레이션을 수행합니다.
+            </p>
+            <div className="solution-video">
+              <iframe
+                src="https://www.youtube.com/embed/KwZUWgnw540"
+                title="Fire DB"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              ></iframe>
+            </div>
+            <div className="solution-tags">
+              <span className="tag">실험 데이터</span>
+              <span className="tag">배터리 화재</span>
+              <span className="tag">전기차</span>
+              <span className="tag">ESS</span>
+            </div>
+          </div>
+
+          <div className="solution-card">
+            <h3 className="solution-title">FDS-AmgX GPU 엔진(Beta)</h3>
+            <p className="solution-description">
+              GPU를 이용해서 대형 건축물과 공간을 실시간으로 계산하는 엔진입니다. 현재 데이터 전송 최적화 중입니다.
+            </p>
+            <div className="architecture-diagram">
+              <pre>
+{`┌─────────────────────────────────────────────────────────────┐
+│                    FDS Simulation (Fortran)                 │
+│                         main.f90                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Pressure Solver (pres.f90)                  │
+│                                                             │
+│    ┌─────────────┐                    ┌─────────────┐       │
+│    │  CPU Path   │                    │  GPU Path   │       │
+│    │ (FFT/ULMAT) │                    │   (AmgX)    │       │
+│    └─────────────┘                    └──────┬──────┘       │
+└──────────────────────────────────────────────┼──────────────┘
+                                               │
+                          ┌────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Fortran Interface (amgx_fortran.f90)           │
+│                      ISO_C_BINDING                          │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                C Wrapper (amgx_c_wrapper.c)                 │
+│           Zone Management, Matrix Conversion                │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    NVIDIA AmgX Library                      │
+│              FGMRES Solver + AMG Preconditioner             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      NVIDIA GPU (CUDA)                      │
+└─────────────────────────────────────────────────────────────┘`}
+              </pre>
+            </div>
+            <div className="solution-tags">
+              <span className="tag">GPU</span>
+              <span className="tag">실시간</span>
+              <span className="tag">고성능</span>
+              <span className="tag">Beta</span>
+            </div>
+            <div className="opensource-link">
+              Open source available: <a href="https://github.com/using76/GPU-FDS-AMGX" target="_blank" rel="noopener noreferrer">https://github.com/using76/GPU-FDS-AMGX</a>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
-
-    <ReportModal
-      isOpen={isModalOpen}
-      onClose={handleCloseModal}
-      reportType={reportType}
-    />
     </>
   );
 };
