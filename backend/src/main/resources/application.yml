@@ -26,6 +26,15 @@ spring:
 server:
   port: 8080
 
+# Mail Configuration (Gmail SMTP)
+mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:your-email@gmail.com}
+  password: ${MAIL_PASSWORD:your-app-password}
+  from: ${MAIL_FROM:BulC Homepage <your-email@gmail.com>}
+  enabled: ${MAIL_ENABLED:false}
+
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:BulcHomepageSecretKeyForJwtTokenGeneration2024VeryLongSecretKey}

@@ -18,6 +18,18 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 이메일 중복 체크 상태
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'available' | 'exists' | 'error'>('idle');
+  const [emailCheckMessage, setEmailCheckMessage] = useState('');
+
+  // 이메일 인증 상태
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+
   // ESC 키로 모달 닫기
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -57,6 +69,139 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     setPhoneNumber(formatted);
   };
 
+  // API Base URL
+  const getApiBaseUrl = () => {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8080'
+      : `http://${window.location.hostname}:8080`;
+  };
+
+  // 이메일 중복 체크
+  const checkEmailDuplicate = async (emailToCheck: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailToCheck)) {
+      setEmailCheckStatus('idle');
+      setEmailCheckMessage('');
+      return;
+    }
+
+    setEmailCheckStatus('checking');
+    setEmailCheckMessage('확인 중...');
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check-email?email=${encodeURIComponent(emailToCheck)}`);
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.exists) {
+          setEmailCheckStatus('exists');
+          setEmailCheckMessage('이미 가입된 이메일입니다');
+          // 이메일이 중복이면 인증 상태 초기화
+          setIsEmailVerified(false);
+          setCodeSent(false);
+          setVerificationCode('');
+          setVerificationMessage('');
+        } else {
+          setEmailCheckStatus('available');
+          setEmailCheckMessage('사용 가능한 이메일입니다');
+        }
+      } else {
+        setEmailCheckStatus('error');
+        setEmailCheckMessage('이메일 확인에 실패했습니다');
+      }
+    } catch (err) {
+      setEmailCheckStatus('error');
+      setEmailCheckMessage('이메일 확인 중 오류가 발생했습니다');
+    }
+  };
+
+  // 이메일 변경 핸들러
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    // 이메일이 변경되면 인증 상태 초기화
+    setIsEmailVerified(false);
+    setCodeSent(false);
+    setVerificationCode('');
+    setVerificationMessage('');
+    setEmailCheckStatus('idle');
+    setEmailCheckMessage('');
+  };
+
+  // 이메일 입력 완료 시 중복 체크 (blur)
+  const handleEmailBlur = () => {
+    if (email.trim()) {
+      checkEmailDuplicate(email);
+    }
+  };
+
+  // 인증 코드 발송
+  const sendVerificationCode = async () => {
+    if (emailCheckStatus !== 'available') {
+      setError('먼저 이메일 중복 확인을 해주세요.');
+      return;
+    }
+
+    setIsSendingCode(true);
+    setVerificationMessage('');
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/send-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setCodeSent(true);
+        setVerificationMessage('인증 코드가 발송되었습니다. (개발 환경: ' + result.data.code + ')');
+      } else {
+        setVerificationMessage(result.message || '인증 코드 발송에 실패했습니다.');
+      }
+    } catch (err) {
+      setVerificationMessage('인증 코드 발송 중 오류가 발생했습니다.');
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  // 인증 코드 확인
+  const verifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setVerificationMessage('6자리 인증 코드를 입력해주세요.');
+      return;
+    }
+
+    setIsVerifyingCode(true);
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/verify-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code: verificationCode }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data.verified) {
+        setIsEmailVerified(true);
+        setVerificationMessage('이메일 인증이 완료되었습니다.');
+      } else {
+        setVerificationMessage(result.message || '인증 코드가 올바르지 않습니다.');
+      }
+    } catch (err) {
+      setVerificationMessage('인증 확인 중 오류가 발생했습니다.');
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
   // 복사/붙여넣기 방지 핸들러
   const preventCopyPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -82,6 +227,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setError('이메일은 255자 이하여야 합니다.');
       return;
     }
+    if (emailCheckStatus === 'exists') {
+      setError('이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.');
+      return;
+    }
+    if (!isEmailVerified) {
+      setError('이메일 인증을 완료해주세요.');
+      return;
+    }
     if (!password) {
       setError('비밀번호를 입력해주세요.');
       return;
@@ -93,6 +246,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     // 비밀번호 복잡성 검사
     const hasLetter = /[a-zA-Z]/.test(password);
     const hasDigit = /[0-9]/.test(password);
+    // eslint-disable-next-line no-useless-escape
     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password);
     if (!hasLetter) {
       setError('비밀번호에 영문자를 포함해야 합니다.');
@@ -114,11 +268,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     setIsLoading(true);
 
     try {
-      const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:8080'
-        : `http://${window.location.hostname}:8080`;
-
-      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,6 +292,12 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setPasswordConfirm('');
         setName('');
         setPhoneNumber('');
+        setEmailCheckStatus('idle');
+        setEmailCheckMessage('');
+        setVerificationCode('');
+        setIsEmailVerified(false);
+        setCodeSent(false);
+        setVerificationMessage('');
         onClose();
         onSwitchToLogin();
       } else {
@@ -171,15 +327,81 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <label className="input-label">이메일 <span className="required">*</span></label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              className="modal-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              maxLength={255}
-            />
+            <div className="email-input-wrapper">
+              <input
+                type="email"
+                placeholder="example@email.com"
+                className={`modal-input ${emailCheckStatus === 'exists' ? 'input-error' : emailCheckStatus === 'available' ? 'input-success' : ''}`}
+                value={email}
+                onChange={handleEmailChange}
+                onBlur={handleEmailBlur}
+                disabled={isLoading || isEmailVerified}
+                maxLength={255}
+              />
+              {emailCheckStatus !== 'idle' && (
+                <span className={`email-check-status ${emailCheckStatus}`}>
+                  {emailCheckStatus === 'checking' && '...'}
+                  {emailCheckStatus === 'available' && '✓'}
+                  {emailCheckStatus === 'exists' && '✗'}
+                  {emailCheckStatus === 'error' && '!'}
+                </span>
+              )}
+            </div>
+            {emailCheckMessage && (
+              <p className={`input-message ${emailCheckStatus === 'exists' || emailCheckStatus === 'error' ? 'error' : 'success'}`}>
+                {emailCheckMessage}
+              </p>
+            )}
+
+            {/* 이메일 인증 영역 */}
+            {emailCheckStatus === 'available' && !isEmailVerified && (
+              <div className="email-verification-section">
+                {!codeSent ? (
+                  <button
+                    type="button"
+                    className="verification-btn"
+                    onClick={sendVerificationCode}
+                    disabled={isSendingCode || isLoading}
+                  >
+                    {isSendingCode ? '발송 중...' : '인증 코드 발송'}
+                  </button>
+                ) : (
+                  <div className="verification-code-wrapper">
+                    <input
+                      type="text"
+                      placeholder="6자리 인증 코드"
+                      className="verification-code-input"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                      disabled={isVerifyingCode || isLoading}
+                      maxLength={6}
+                    />
+                    <button
+                      type="button"
+                      className="verification-btn small"
+                      onClick={verifyCode}
+                      disabled={isVerifyingCode || isLoading || verificationCode.length !== 6}
+                    >
+                      {isVerifyingCode ? '확인 중...' : '확인'}
+                    </button>
+                    <button
+                      type="button"
+                      className="resend-btn"
+                      onClick={sendVerificationCode}
+                      disabled={isSendingCode || isLoading}
+                    >
+                      재발송
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {isEmailVerified && (
+              <p className="input-message success verified">이메일 인증이 완료되었습니다 ✓</p>
+            )}
+            {verificationMessage && !isEmailVerified && (
+              <p className="input-message info">{verificationMessage}</p>
+            )}
           </div>
 
           <div className="input-group">

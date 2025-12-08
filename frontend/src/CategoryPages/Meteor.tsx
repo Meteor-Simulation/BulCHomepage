@@ -16,6 +16,8 @@ const MeteorPage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
+        logoLink="/meteor"
+        logoText="METEOR"
       />
 
       <main className="main-content sub-page">

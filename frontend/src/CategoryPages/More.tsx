@@ -16,6 +16,7 @@ const MorePage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
+        logoLink="/more"
       />
 
       <main className="main-content sub-page">

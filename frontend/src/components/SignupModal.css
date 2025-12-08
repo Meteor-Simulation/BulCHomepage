@@ -80,6 +80,154 @@
 }
 
 /* ========================================
+   EMAIL INPUT WITH STATUS
+======================================== */
+.email-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.email-input-wrapper .modal-input {
+  padding-right: 36px;
+}
+
+.email-check-status {
+  position: absolute;
+  right: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.email-check-status.checking {
+  color: #6b7280;
+}
+
+.email-check-status.available {
+  color: #16a34a;
+}
+
+.email-check-status.exists,
+.email-check-status.error {
+  color: #dc2626;
+}
+
+/* Input 상태별 스타일 */
+.modal-input.input-error {
+  border-color: #dc2626 !important;
+}
+
+.modal-input.input-success {
+  border-color: #16a34a !important;
+}
+
+/* 메시지 스타일 */
+.input-message {
+  font-size: 12px;
+  margin: 4px 0 0 2px;
+}
+
+.input-message.error {
+  color: #dc2626;
+}
+
+.input-message.success {
+  color: #16a34a;
+}
+
+.input-message.info {
+  color: #2563eb;
+}
+
+.input-message.verified {
+  font-weight: 600;
+}
+
+/* ========================================
+   EMAIL VERIFICATION SECTION
+======================================== */
+.email-verification-section {
+  margin-top: 10px;
+}
+
+.verification-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font-main);
+}
+
+.verification-btn:hover:not(:disabled) {
+  background-color: #E85D04;
+}
+
+.verification-btn:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.verification-btn.small {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.verification-code-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.verification-code-input {
+  flex: 1;
+  max-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font-main);
+  letter-spacing: 4px;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.verification-code-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+}
+
+.verification-code-input:disabled {
+  background-color: #f9fafb;
+  cursor: not-allowed;
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: var(--font-main);
+  transition: color 0.2s ease;
+}
+
+.resend-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.resend-btn:disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* ========================================
    MOBILE RESPONSIVE
 ======================================== */
 @media (max-width: 480px) {
@@ -100,5 +248,22 @@
 
   .signup-modal .modal-form {
     gap: 14px;
+  }
+
+  .verification-code-wrapper {
+    flex-wrap: wrap;
+  }
+
+  .verification-code-input {
+    max-width: 120px;
+  }
+
+  .verification-btn.small {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .resend-btn {
+    font-size: 12px;
   }
 }

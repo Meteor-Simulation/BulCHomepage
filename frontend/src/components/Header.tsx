@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
@@ -15,6 +15,9 @@ interface HeaderProps {
   activeSubNav?: string;
   onSubNavChange?: (id: string) => void;
   contactLabel?: string;
+  logoLink?: string;
+  onLogoClick?: () => void;
+  logoText?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -22,19 +25,46 @@ const Header: React.FC<HeaderProps> = ({
   subNavItems = [],
   activeSubNav = '',
   onSubNavChange,
-  contactLabel = '체험 문의하기'
+  contactLabel = '체험 문의하기',
+  logoLink = '/',
+  onLogoClick,
+  logoText = 'METEOR'
 }) => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
   const [alertModal, setAlertModal] = useState<{
     isOpen: boolean;
     title?: string;
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   }>({ isOpen: false, message: '', type: 'info' });
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+
+    if (userMenuOpen || langMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userMenuOpen, langMenuOpen]);
 
   const handleSwitchToSignup = () => {
     setLoginModalOpen(false);
@@ -48,6 +78,7 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleLogout = () => {
     logout();
+    setUserMenuOpen(false);
     // 로그아웃 후 히스토리 정리 - 뒤로가기 시 로그인 상태 페이지로 가지 않도록
     window.history.replaceState({ loggedOut: true }, '', window.location.href);
     // 로그아웃 알림
@@ -57,6 +88,11 @@ const Header: React.FC<HeaderProps> = ({
       message: '로그아웃 되었습니다.',
       type: 'success',
     });
+  };
+
+  const handleMyInfo = () => {
+    setUserMenuOpen(false);
+    navigate('/mypage');
   };
 
   // 로그인 성공 콜백
@@ -75,7 +111,10 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   const handleLogoClick = () => {
-    navigate('/');
+    if (onLogoClick) {
+      onLogoClick();
+    }
+    navigate(logoLink);
   };
 
   return (
@@ -83,18 +122,67 @@ const Header: React.FC<HeaderProps> = ({
       <header className="header visible">
         <div className="header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
-          <span className="header-logo-text">METEOR</span>
+          <span className="header-logo-text">{logoText}</span>
         </div>
         <div className="header-right">
-          {isLoggedIn ? (
-            <button className="header-action-btn" onClick={handleLogout}>
+          {/* 언어 메뉴 */}
+          <div className="user-menu-container" ref={langMenuRef}>
+            <button className="header-action-btn" onClick={() => setLangMenuOpen(!langMenuOpen)}>
               <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="header-action-text">로그아웃</span>
+              <span className="header-action-text">언어</span>
             </button>
+            {langMenuOpen && (
+              <div className="user-menu-dropdown lang-menu-dropdown">
+                <div className="user-menu-item" onClick={() => setLangMenuOpen(false)}>
+                  <span>English</span>
+                </div>
+                <div className="user-menu-item" onClick={() => setLangMenuOpen(false)}>
+                  <span>한국어</span>
+                </div>
+                <div className="user-menu-item" onClick={() => setLangMenuOpen(false)}>
+                  <span>日本語</span>
+                </div>
+                <div className="user-menu-item" onClick={() => setLangMenuOpen(false)}>
+                  <span>中文</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 내 정보 / 로그인 메뉴 */}
+          {isLoggedIn ? (
+            <div className="user-menu-container" ref={userMenuRef}>
+              <button className="header-action-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+                <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="header-action-text">내 정보</span>
+              </button>
+              {userMenuOpen && (
+                <div className="user-menu-dropdown">
+                  <div className="user-menu-item" onClick={handleMyInfo}>
+                    <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>내 정보 보기</span>
+                  </div>
+                  <div className="user-menu-item" onClick={handleLogout}>
+                    <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>로그아웃</span>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
               <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,14 +192,6 @@ const Header: React.FC<HeaderProps> = ({
               <span className="header-action-text">로그인</span>
             </button>
           )}
-          <button className="header-action-btn">
-            <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="header-action-text">언어</span>
-          </button>
         </div>
       </header>
 

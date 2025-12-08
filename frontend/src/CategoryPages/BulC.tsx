@@ -16,6 +16,8 @@ const BulCPage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
+        logoLink="/bulc"
+        logoText="BUL:C"
       />
 
       <main className="main-content sub-page">
