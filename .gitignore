@@ -31,3 +31,4 @@ Thumbs.db
 # Docker 볼륨 데이터 (로컬)
 postgres_data/
 /참고용
+nul
