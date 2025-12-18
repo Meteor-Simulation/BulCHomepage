@@ -11,14 +11,6 @@ const SUB_NAV_ITEMS = [
   { id: 'menu4', label: '메뉴4' },
 ];
 
-// Meteor 메인 페이지
-const MeteorMainContent: React.FC = () => (
-  <div className="vr-content-section">
-    <h2>METEOR</h2>
-    <p>METEOR Simulation 메인페이지입니다.</p>
-  </div>
-);
-
 // 각 메뉴별 컨텐츠 컴포넌트
 const Menu1Content: React.FC = () => (
   <div className="vr-content-section">
@@ -50,17 +42,13 @@ const Menu4Content: React.FC = () => (
 
 const MeteorPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string>('menu1');
 
   const handleLogoClick = () => {
     navigate('/'); // 메인 페이지로 이동
   };
 
   const renderContent = () => {
-    if (activeMenu === null) {
-      return <MeteorMainContent />;
-    }
-
     switch (activeMenu) {
       case 'menu1':
         return <Menu1Content />;
@@ -71,7 +59,7 @@ const MeteorPage: React.FC = () => {
       case 'menu4':
         return <Menu4Content />;
       default:
-        return <MeteorMainContent />;
+        return <Menu1Content />;
     }
   };
 
@@ -80,7 +68,7 @@ const MeteorPage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
-        activeSubNav={activeMenu || ''}
+        activeSubNav={activeMenu}
         onSubNavChange={setActiveMenu}
         logoLink="/"
         onLogoClick={handleLogoClick}

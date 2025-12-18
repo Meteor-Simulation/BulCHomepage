@@ -11,14 +11,6 @@ const SUB_NAV_ITEMS = [
   { id: 'effectiveness', label: '효과검증' },
 ];
 
-// VR 메인 페이지 (인덱스)
-const VRMainContent: React.FC = () => (
-  <div className="vr-content-section">
-    <h2>VR 메인페이지</h2>
-    <p>http://localhost:3000/vr 의 첫 화면은 VR 메인페이지 입니다.</p>
-  </div>
-);
-
 // 각 메뉴별 컨텐츠 컴포넌트
 const VRExperienceContent: React.FC = () => (
   <div className="vr-content-section">
@@ -50,17 +42,13 @@ const EffectivenessContent: React.FC = () => (
 
 const VRPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string>('vr-experience');
 
   const handleLogoClick = () => {
     navigate('/'); // 메인 페이지로 이동
   };
 
   const renderContent = () => {
-    if (activeMenu === null) {
-      return <VRMainContent />;
-    }
-
     switch (activeMenu) {
       case 'vr-experience':
         return <VRExperienceContent />;
@@ -71,7 +59,7 @@ const VRPage: React.FC = () => {
       case 'effectiveness':
         return <EffectivenessContent />;
       default:
-        return <VRMainContent />;
+        return <VRExperienceContent />;
     }
   };
 
@@ -80,7 +68,7 @@ const VRPage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
-        activeSubNav={activeMenu || ''}
+        activeSubNav={activeMenu}
         onSubNavChange={setActiveMenu}
         logoLink="/"
         onLogoClick={handleLogoClick}

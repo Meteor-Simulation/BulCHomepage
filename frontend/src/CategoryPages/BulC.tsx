@@ -13,14 +13,6 @@ const SUB_NAV_ITEMS = [
   { id: 'download', label: 'Download' },
 ];
 
-// BulC 메인 페이지
-const BulCMainContent: React.FC = () => (
-  <div className="bulc-content-section">
-    <h2>BUL:C</h2>
-    <p>AI 기반 화재 시뮬레이션 솔루션</p>
-  </div>
-);
-
 // Intro 컨텐츠
 const IntroContent: React.FC = () => (
   <div className="bulc-content-section">
@@ -82,7 +74,7 @@ const DownloadContent: React.FC = () => (
 const BulCPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string>('intro');
 
   // location state에서 activeTab 읽어서 설정
   useEffect(() => {
@@ -99,10 +91,6 @@ const BulCPage: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (activeMenu === null) {
-      return <BulCMainContent />;
-    }
-
     switch (activeMenu) {
       case 'intro':
         return <IntroContent />;
@@ -115,7 +103,7 @@ const BulCPage: React.FC = () => {
       case 'download':
         return <DownloadContent />;
       default:
-        return <BulCMainContent />;
+        return <IntroContent />;
     }
   };
 
@@ -124,7 +112,7 @@ const BulCPage: React.FC = () => {
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}
-        activeSubNav={activeMenu || ''}
+        activeSubNav={activeMenu}
         onSubNavChange={setActiveMenu}
         logoLink="/"
         onLogoClick={handleLogoClick}
