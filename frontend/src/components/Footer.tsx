@@ -43,9 +43,9 @@ const Footer: React.FC = () => {
           <p>{info.company.description}</p>
         </div>
         <div className="footer-section footer-contact">
+          <h4>회사 안내</h4>
           <p>찾아오시는 길 : {info.address.full}</p>
-          <p>번호 : {info.contact.tel}</p>
-          <p>이메일 : {info.contact.email}</p>
+          <p>연락처 : {info.contact.tel}  /  {info.contact.email}</p>
         </div>
         <div className="footer-section">
           <h4>SNS</h4>

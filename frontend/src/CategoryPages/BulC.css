@@ -1,0 +1,160 @@
+/* ========================================
+   BulC PAGE - 화재 시뮬레이션 페이지
+======================================== */
+
+/* BulC Content Container (반응형 컨텐츠 영역) */
+.bulc-content-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  box-sizing: border-box;
+  min-height: calc(100vh - 280px);
+}
+
+.bulc-content-section {
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.bulc-content-section h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.bulc-content-section p {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.6;
+}
+
+/* ========================================
+   Download Section
+======================================== */
+.bulc-download-section {
+  width: 100%;
+  min-height: calc(100vh - 280px);
+  background: linear-gradient(135deg, rgba(255, 180, 150, 0.5) 0%, rgba(255, 200, 170, 0.3) 50%, rgba(255, 220, 200, 0.2) 100%);
+  border-radius: 12px;
+  padding: 80px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.download-title {
+  font-size: 56px;
+  font-weight: 800;
+  color: #1a1a1a;
+  text-align: center;
+  margin: 0 0 60px 0;
+}
+
+.download-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(196, 50, 10, 0.2);
+  border-radius: 16px;
+  text-decoration: none;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  transition: all 0.3s ease;
+}
+
+.download-btn:hover {
+  background: #C4320A;
+  border-color: #C4320A;
+  color: #ffffff;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(196, 50, 10, 0.3);
+}
+
+/* ========================================
+   Responsive Design
+======================================== */
+@media (max-width: 1024px) {
+  .bulc-content-container {
+    max-width: 100%;
+    padding: 32px 20px;
+  }
+
+  .bulc-content-section {
+    padding: 32px;
+  }
+
+  .bulc-content-section h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bulc-content-container {
+    padding: 24px 16px;
+    min-height: calc(100vh - 240px);
+  }
+
+  .bulc-content-section {
+    padding: 24px;
+    border-radius: 8px;
+  }
+
+  .bulc-content-section h2 {
+    font-size: 20px;
+  }
+
+  .bulc-content-section p {
+    font-size: 14px;
+  }
+
+  .bulc-download-section {
+    padding: 60px 24px;
+  }
+
+  .download-title {
+    font-size: 36px;
+    margin-bottom: 40px;
+  }
+
+  .download-buttons-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .download-btn {
+    padding: 28px 20px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bulc-content-container {
+    padding: 20px 12px;
+  }
+
+  .bulc-content-section {
+    padding: 20px;
+  }
+
+  .bulc-content-section h2 {
+    font-size: 18px;
+  }
+}

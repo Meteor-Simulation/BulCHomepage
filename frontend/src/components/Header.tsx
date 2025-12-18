@@ -18,6 +18,7 @@ interface HeaderProps {
   logoLink?: string;
   onLogoClick?: () => void;
   logoText?: string;
+  hideUserMenu?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -28,7 +29,8 @@ const Header: React.FC<HeaderProps> = ({
   contactLabel = '체험 문의하기',
   logoLink = '/',
   onLogoClick,
-  logoText = 'METEOR'
+  logoText = 'METEOR',
+  hideUserMenu = false
 }) => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
@@ -154,43 +156,45 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* 내 정보 / 로그인 메뉴 */}
-          {isLoggedIn ? (
-            <div className="user-menu-container" ref={userMenuRef}>
-              <button className="header-action-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+          {!hideUserMenu && (
+            isLoggedIn ? (
+              <div className="user-menu-container" ref={userMenuRef}>
+                <button className="header-action-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+                  <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="header-action-text">내 정보</span>
+                </button>
+                {userMenuOpen && (
+                  <div className="user-menu-dropdown">
+                    <div className="user-menu-item" onClick={handleMyInfo}>
+                      <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>내 정보 보기</span>
+                    </div>
+                    <div className="user-menu-item" onClick={handleLogout}>
+                      <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>로그아웃</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
                 <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="header-action-text">내 정보</span>
+                <span className="header-action-text">로그인</span>
               </button>
-              {userMenuOpen && (
-                <div className="user-menu-dropdown">
-                  <div className="user-menu-item" onClick={handleMyInfo}>
-                    <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span>내 정보 보기</span>
-                  </div>
-                  <div className="user-menu-item" onClick={handleLogout}>
-                    <svg className="user-menu-item-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span>로그아웃</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
-              <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="header-action-text">로그인</span>
-            </button>
+            )
           )}
         </div>
       </header>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CategoryPages.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -48,10 +49,11 @@ const EffectivenessContent: React.FC = () => (
 );
 
 const VRPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const handleLogoClick = () => {
-    setActiveMenu(null); // 메인 페이지로 돌아가기
+    navigate('/'); // 메인 페이지로 이동
   };
 
   const renderContent = () => {
@@ -80,7 +82,7 @@ const VRPage: React.FC = () => {
         subNavItems={SUB_NAV_ITEMS}
         activeSubNav={activeMenu || ''}
         onSubNavChange={setActiveMenu}
-        logoLink="/vr"
+        logoLink="/"
         onLogoClick={handleLogoClick}
         logoText="VR"
       />

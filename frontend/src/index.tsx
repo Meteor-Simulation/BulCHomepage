@@ -7,6 +7,7 @@ import Header from './components/Header';
 import MeteorPage from './CategoryPages/Meteor';
 import BulCPage from './CategoryPages/BulC';
 import VRPage from './CategoryPages/VR';
+import PaymentPage from './CategoryPages/Payment';
 
 // 메인 페이지 컴포넌트
 const MainPage: React.FC = () => {
@@ -73,6 +74,7 @@ const App: React.FC = () => {
           <Route path="/meteor" element={<MeteorPage />} />
           <Route path="/bulc" element={<BulCPage />} />
           <Route path="/vr" element={<VRPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
