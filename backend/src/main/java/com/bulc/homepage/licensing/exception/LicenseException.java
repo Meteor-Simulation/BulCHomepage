@@ -34,7 +34,12 @@ public class LicenseException extends RuntimeException {
         INVALID_ACTIVATION_STATE("잘못된 활성화 상태입니다"),
         PLAN_NOT_FOUND("플랜을 찾을 수 없습니다"),
         PLAN_CODE_DUPLICATE("플랜 코드가 중복됩니다"),
-        PLAN_NOT_AVAILABLE("사용할 수 없는 플랜입니다");
+        PLAN_NOT_AVAILABLE("사용할 수 없는 플랜입니다"),
+
+        // v1.1 추가
+        ACCESS_DENIED("접근 권한이 없습니다"),
+        LICENSE_NOT_FOUND_FOR_PRODUCT("해당 제품의 라이선스가 없습니다"),
+        LICENSE_SELECTION_REQUIRED("복수의 라이선스가 존재합니다. licenseId를 지정해주세요");
 
         private final String message;
 

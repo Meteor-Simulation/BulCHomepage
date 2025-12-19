@@ -2,24 +2,28 @@ package com.bulc.homepage.licensing.controller;
 
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.service.LicenseService;
+import com.bulc.homepage.entity.User;
+import com.bulc.homepage.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
  * 라이선스 클라이언트용 API Controller.
  *
- * 이 컨트롤러는 클라이언트 앱에서 필요한 검증/조회 API만 노출합니다.
+ * v1.1 변경사항:
+ * - 계정 기반 인증 API (Bearer token 필수)
+ * - /api/me/licenses 추가
+ * - /api/licenses/validate, /heartbeat 계정 기반으로 변경
  *
- * 발급(issue), 정지(suspend), 회수(revoke) 등의 관리 기능은
- * HTTP API로 노출하지 않으며, Billing 모듈에서 LicenseService를
- * 직접 호출하는 방식으로 트리거됩니다.
- *
- * @see LicenseService - 내부 발급/회수 로직은 Billing에서 직접 호출
+ * @see LicenseService
  */
 @RestController
 @RequestMapping("/api/licenses")
@@ -27,51 +31,81 @@ import java.util.UUID;
 public class LicenseController {
 
     private final LicenseService licenseService;
+    private final UserRepository userRepository;
 
     // ==========================================
-    // 클라이언트 앱용 API (검증/활성화)
+    // v1.1 계정 기반 API (Bearer token 필수)
     // ==========================================
 
     /**
-     * 라이선스 검증 및 기기 활성화.
-     * 클라이언트 앱이 실행 시 호출하여 라이선스 유효성을 확인하고 기기를 활성화합니다.
+     * 라이선스 검증 및 활성화 (v1.1 계정 기반).
+     * Bearer token 인증된 사용자의 라이선스를 검증합니다.
      *
-     * POST /api/licenses/{licenseKey}/validate
+     * POST /api/licenses/validate
+     * v1.1에서 추가됨 - 기존 /{licenseKey}/validate 대체.
+     *
+     * 응답:
+     * - 200 OK: 검증 성공
+     * - 403 Forbidden: 검증 실패 (만료, 정지 등)
+     * - 409 Conflict: 복수 라이선스 선택 필요 (candidates 포함)
      */
-    @PostMapping("/{licenseKey}/validate")
-    public ResponseEntity<ValidationResponse> validateAndActivate(
-            @PathVariable String licenseKey,
-            @Valid @RequestBody ActivationRequest request) {
-        ValidationResponse response = licenseService.validateAndActivate(licenseKey, request);
-        if (response.valid()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
+    @PostMapping("/validate")
+    public ResponseEntity<ValidationResponse> validateByUser(@Valid @RequestBody ValidateRequest request) {
+        UUID userId = getCurrentUserId();
+        ValidationResponse response = licenseService.validateAndActivateByUser(userId, request);
+        return buildValidationResponse(response);
     }
 
     /**
-     * Heartbeat - 활성화 상태 유지 및 LastSeenAt 갱신.
-     * 클라이언트 앱이 주기적으로 호출하여 활성 상태를 유지합니다.
+     * Heartbeat (v1.1 계정 기반).
+     * Bearer token 인증된 사용자의 활성화 상태를 갱신합니다.
      *
-     * POST /api/licenses/{licenseKey}/heartbeat
+     * POST /api/licenses/heartbeat
+     * v1.1에서 추가됨 - 기존 /{licenseKey}/heartbeat 대체.
+     *
+     * 응답:
+     * - 200 OK: 갱신 성공
+     * - 403 Forbidden: 갱신 실패 (만료, 정지 등)
+     * - 409 Conflict: 복수 라이선스 선택 필요 (candidates 포함)
      */
-    @PostMapping("/{licenseKey}/heartbeat")
-    public ResponseEntity<ValidationResponse> heartbeat(
-            @PathVariable String licenseKey,
-            @Valid @RequestBody ActivationRequest request) {
-        // heartbeat는 validate와 동일한 로직 (LastSeenAt 갱신)
-        ValidationResponse response = licenseService.validateAndActivate(licenseKey, request);
-        if (response.valid()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
+    @PostMapping("/heartbeat")
+    public ResponseEntity<ValidationResponse> heartbeatByUser(@Valid @RequestBody ValidateRequest request) {
+        UUID userId = getCurrentUserId();
+        ValidationResponse response = licenseService.heartbeatByUser(userId, request);
+        return buildValidationResponse(response);
     }
 
     /**
-     * 기기 비활성화 (사용자가 직접 기기 해제).
-     * 사용자가 특정 기기에서 라이선스를 해제할 때 사용합니다.
+     * ValidationResponse에 따른 HTTP 상태 코드 결정.
+     */
+    private ResponseEntity<ValidationResponse> buildValidationResponse(ValidationResponse response) {
+        if (response.valid()) {
+            return ResponseEntity.ok(response);
+        }
+        // LICENSE_SELECTION_REQUIRED → 409 Conflict
+        if ("LICENSE_SELECTION_REQUIRED".equals(response.errorCode())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+        // 기타 실패 → 403 Forbidden
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
+     * 라이선스 상세 조회 (v1.1 소유자 검증).
+     * 본인 소유의 라이선스만 조회 가능합니다.
+     *
+     * GET /api/licenses/{licenseId}
+     */
+    @GetMapping("/{licenseId}")
+    public ResponseEntity<LicenseResponse> getLicense(@PathVariable UUID licenseId) {
+        UUID userId = getCurrentUserId();
+        LicenseResponse response = licenseService.getLicenseWithOwnerCheck(userId, licenseId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 기기 비활성화 (v1.1 소유자 검증).
+     * 본인 소유의 라이선스의 기기만 비활성화 가능합니다.
      *
      * DELETE /api/licenses/{licenseId}/activations/{deviceFingerprint}
      */
@@ -79,54 +113,31 @@ public class LicenseController {
     public ResponseEntity<Void> deactivate(
             @PathVariable UUID licenseId,
             @PathVariable String deviceFingerprint) {
-        licenseService.deactivate(licenseId, deviceFingerprint);
+        UUID userId = getCurrentUserId();
+        licenseService.deactivateWithOwnerCheck(userId, licenseId, deviceFingerprint);
         return ResponseEntity.noContent().build();
     }
 
     // ==========================================
-    // 사용자 마이페이지용 API (조회)
+    // Private 헬퍼 메서드
     // ==========================================
 
     /**
-     * 라이선스 조회 (ID).
-     * 사용자가 자신의 라이선스 상세 정보를 조회합니다.
-     *
-     * GET /api/licenses/{licenseId}
-     *
-     * TODO: 인증된 사용자가 자신의 라이선스만 조회할 수 있도록 권한 체크 필요
+     * 현재 인증된 사용자의 ID를 UUID로 반환.
+     * User.email을 기반으로 결정적 UUID를 생성합니다.
      */
-    @GetMapping("/{licenseId}")
-    public ResponseEntity<LicenseResponse> getLicense(@PathVariable UUID licenseId) {
-        return ResponseEntity.ok(licenseService.getLicense(licenseId));
-    }
+    private UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("인증된 사용자가 없습니다");
+        }
 
-    /**
-     * 라이선스 조회 (라이선스 키).
-     * 라이선스 키로 라이선스 정보를 조회합니다.
-     *
-     * GET /api/licenses/key/{licenseKey}
-     */
-    @GetMapping("/key/{licenseKey}")
-    public ResponseEntity<LicenseResponse> getLicenseByKey(@PathVariable String licenseKey) {
-        return ResponseEntity.ok(licenseService.getLicenseByKey(licenseKey));
-    }
+        String email = authentication.getName();
+        // 사용자 존재 여부 확인
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + email));
 
-    // ==========================================
-    // 아래 API들은 의도적으로 제거됨
-    // ==========================================
-    //
-    // POST /api/licenses (발급)
-    //   → Billing 모듈에서 결제 완료 시 LicenseService.issueLicense() 직접 호출
-    //
-    // GET /api/licenses/owner/{ownerType}/{ownerId} (소유자별 조회)
-    //   → 마이페이지에서 필요 시 인증된 사용자 기준으로 별도 API 구성
-    //
-    // POST /api/licenses/{licenseId}/suspend (정지)
-    //   → 관리자 모듈에서 LicenseService.suspendLicense() 직접 호출
-    //
-    // POST /api/licenses/{licenseId}/revoke (회수)
-    //   → Billing 모듈에서 환불 시 LicenseService.revokeLicenseByOrderId() 직접 호출
-    //
-    // POST /api/licenses/{licenseId}/renew (갱신)
-    //   → Billing 모듈에서 구독 갱신 시 LicenseService.renewLicense() 직접 호출
+        // email을 기반으로 결정적 UUID 생성 (Type 3 UUID)
+        return UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
+    }
 }

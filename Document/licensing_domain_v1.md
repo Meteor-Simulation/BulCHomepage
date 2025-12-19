@@ -1,6 +1,17 @@
-# Licensing 도메인 설계 v1
+# Licensing 도메인 설계 v1.1
 
-본 문서는 상용 소프트웨어(예: 화재 시뮬레이션 관련 도구)의 **라이선싱 도메인 설계 v1**을 정의한다.  
+본 문서는 상용 소프트웨어(예: 화재 시뮬레이션 관련 도구)의 **라이선싱 도메인 설계**를 정의한다.
+
+## 변경 이력
+
+| 버전 | 날짜 | 변경 내용 |
+|-----|------|----------|
+| v1.0 | 2025-12-08 | 최초 작성 |
+| v1.1 | 2025-12-17 | 계정 기반 API 지원을 위한 도메인 메서드 추가 (IsOwnedBy) |
+
+> **Note:** Claim 기능(ClaimToUser, IsUnclaimed)은 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
+
+---  
 초기 릴리스에서는 **개인 라이선스 + 기본 Billing 연동**만 구현하며,  
 향후 **조직/교육기관(Organization) 라이선스**로 확장 가능한 형태를 목표로 한다.
 
@@ -96,10 +107,13 @@
   - 새로운 활성화 허용 여부 판단.
 - `Validate(deviceFingerprint, now)`  
   - 기간/상태/정책/Activation을 종합하여 유효성 판단.
-- `Suspend(reason)`, `Revoke(reason)`  
+- `Suspend(reason)`, `Revoke(reason)`
   - 라이선스 정지/회수.
-- `Renew(newValidUntil)`  
+- `Renew(newValidUntil)`
   - 구독 연장 등.
+- `IsOwnedBy(userId)` *(v1.1 추가)*
+  - 해당 라이선스가 특정 사용자 소유인지 확인.
+  - `OwnerType == 'user' && OwnerId == userId`일 때 true.
 
 ---
 
@@ -343,30 +357,41 @@ sequenceDiagram
     deactivate L
 
     B-->>U: 라이선스 정보 전달 (이메일/웹 UI 등)
-5.2 클라이언트 실행 → 라이선스 검증 및 활성화 (Validate/Activate)
-설명
+### 5.2 클라이언트 실행 → 라이선스 검증 및 활성화 (Validate/Activate)
+
+#### 설명
 
 사용자가 프로그램을 실행하면, 클라이언트는 서버에 라이선스 검증을 요청한다.
 
 서버는 License와 Activations를 확인 후:
+- 새 Activation 생성 또는 기존 갱신.
+- 정책 위반 시 오류 응답.
 
-새 Activation 생성 또는 기존 갱신.
+#### v1.1 변경사항
 
-정책 위반 시 오류 응답.
+v1.1부터 계정 기반 API가 권장된다:
+- 클라이언트는 **Bearer Token**으로 인증
+- 요청에 **licenseKey 대신 productId**만 포함
+- 서버가 **userId + productId**로 라이선스 자동 조회
 
-mermaid
-코드 복사
+#### 시퀀스 다이어그램 (v1.1 계정 기반)
+
+```mermaid
 sequenceDiagram
     actor U as User
     participant C as Client(App)
+    participant A as AuthService
     participant L as LicensingService
 
     U->>C: 프로그램 실행
     C->>C: DeviceFingerprint 계산
-    C->>L: ValidateLicense(licenseKey or accessToken, deviceFingerprint, clientInfo)
+    C->>A: Bearer Token으로 인증
+    A-->>C: 인증 성공 (userId 확인)
 
+    C->>L: POST /api/licenses/validate { productId, deviceFingerprint, clientInfo }
     activate L
-    L->>L: LicenseKey 또는 UserId 기반 License 조회
+
+    L->>L: userId + productId로 License 조회
     L->>L: 기간/상태/PolicySnapshot 검증
     L->>L: 활성 Activation 목록 조회
 
@@ -375,15 +400,18 @@ sequenceDiagram
         L-->>C: { valid: true, validUntil, entitlements, offlineToken, ... }
     else 정책 위반 (기기 수/동시 실행/기간 등)
         L-->>C: { valid: false, reason: "...", error_code: "LICENSE_EXCEEDED" }
+    else 라이선스 없음
+        L-->>C: 403 LICENSE_NOT_FOUND_FOR_PRODUCT
     end
     deactivate L
 
     C->>U: 결과에 따라 UI/기능 활성/제한
-추가 고려사항
+```
 
-offlineToken에 AllowOfflineDays까지 유효한 서명된 토큰 포함 가능.
+#### 추가 고려사항
 
-클라이언트는 주기적으로 heartbeat를 보내 LastSeenAt 갱신.
+- offlineToken에 AllowOfflineDays까지 유효한 서명된 토큰 포함 가능.
+- 클라이언트는 주기적으로 heartbeat를 보내 LastSeenAt 갱신.
 
 5.3 환불/취소 → 라이선스 회수 (OrderRefunded → Revoke)
 설명

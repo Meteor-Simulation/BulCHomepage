@@ -70,4 +70,70 @@ public interface LicenseRepository extends JpaRepository<License, UUID> {
      */
     @Query("SELECT l FROM License l WHERE l.status = 'ACTIVE' AND l.validUntil IS NOT NULL AND l.validUntil < :threshold")
     List<License> findExpiredLicenses(@Param("threshold") java.time.Instant threshold);
+
+    // ==========================================
+    // v1.1 추가 메서드
+    // ==========================================
+
+    /**
+     * 사용자의 특정 제품 라이선스 조회 (여러 상태).
+     * 계정 기반 validate에서 사용.
+     */
+    @Query("SELECT l FROM License l WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId AND l.productId = :productId AND l.status IN :statuses ORDER BY l.status ASC, l.createdAt DESC")
+    List<License> findByOwnerAndProductAndStatusIn(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("productId") UUID productId,
+            @Param("statuses") List<LicenseStatus> statuses
+    );
+
+    /**
+     * 사용자의 특정 제품 라이선스 조회 (비관적 락).
+     * 계정 기반 validate에서 동시성 제어에 사용.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM License l WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId AND l.productId = :productId AND l.status IN :statuses ORDER BY l.status ASC, l.createdAt DESC")
+    List<License> findByOwnerAndProductAndStatusInWithLock(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("productId") UUID productId,
+            @Param("statuses") List<LicenseStatus> statuses
+    );
+
+    /**
+     * 사용자의 라이선스 목록 조회 (특정 제품 필터 가능).
+     */
+    @Query("SELECT l FROM License l WHERE l.ownerType = 'USER' AND l.ownerId = :userId " +
+            "AND (:productId IS NULL OR l.productId = :productId) " +
+            "AND (:status IS NULL OR l.status = :status) " +
+            "ORDER BY l.createdAt DESC")
+    List<License> findByUserIdWithFilters(
+            @Param("userId") UUID userId,
+            @Param("productId") UUID productId,
+            @Param("status") LicenseStatus status
+    );
+
+    /**
+     * 사용자의 모든 라이선스 조회 (특정 상태, 제품 필터 없음).
+     * 복수 라이선스 선택 로직에서 사용.
+     */
+    @Query("SELECT l FROM License l WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId " +
+            "AND l.status IN :statuses ORDER BY l.status ASC, l.createdAt DESC")
+    List<License> findByOwnerAndStatusIn(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("statuses") List<LicenseStatus> statuses
+    );
+
+    /**
+     * 사용자의 모든 라이선스 조회 (비관적 락, 제품 필터 없음).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM License l WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId " +
+            "AND l.status IN :statuses ORDER BY l.status ASC, l.createdAt DESC")
+    List<License> findByOwnerAndStatusInWithLock(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("statuses") List<LicenseStatus> statuses
+    );
 }

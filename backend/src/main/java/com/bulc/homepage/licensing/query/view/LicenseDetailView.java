@@ -1,20 +1,12 @@
-package com.bulc.homepage.licensing.dto;
+package com.bulc.homepage.licensing.query.view;
 
 import com.bulc.homepage.licensing.domain.*;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-/**
- * 라이선스 응답 DTO.
- *
- * v1.1 변경: licenseKey 제거 (계정 기반 인증으로 전환)
- * - User API에서 licenseKey 노출 불필요
- * - 보안상 라이선스 키는 발급 시점에만 Billing 모듈에 전달
- */
-public record LicenseResponse(
+public record LicenseDetailView(
         UUID id,
         OwnerType ownerType,
         UUID ownerId,
@@ -26,13 +18,18 @@ public record LicenseResponse(
         Instant issuedAt,
         Instant validFrom,
         Instant validUntil,
-        Map<String, Object> policySnapshot,
-        List<ActivationResponse> activations,
+        String licenseKey,
+        PolicySnapshotView policySnapshot,
+        List<ActivationView> activations,
         Instant createdAt,
         Instant updatedAt
 ) {
-    public static LicenseResponse from(License license) {
-        return new LicenseResponse(
+    public static LicenseDetailView from(License license) {
+        List<ActivationView> activationViews = license.getActivations().stream()
+                .map(ActivationView::from)
+                .toList();
+
+        return new LicenseDetailView(
                 license.getId(),
                 license.getOwnerType(),
                 license.getOwnerId(),
@@ -44,8 +41,9 @@ public record LicenseResponse(
                 license.getIssuedAt(),
                 license.getValidFrom(),
                 license.getValidUntil(),
-                license.getPolicySnapshot(),
-                license.getActivations().stream().map(ActivationResponse::from).toList(),
+                license.getLicenseKey(),
+                PolicySnapshotView.from(license.getPolicySnapshot()),
+                activationViews,
                 license.getCreatedAt(),
                 license.getUpdatedAt()
         );

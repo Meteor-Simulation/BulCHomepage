@@ -1,18 +1,28 @@
 package com.bulc.homepage.licensing.service;
 
+import com.bulc.homepage.entity.Product;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
+import com.bulc.homepage.licensing.dto.ValidationResponse.LicenseCandidate;
 import com.bulc.homepage.licensing.exception.LicenseException;
 import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.ActivationRepository;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
+import com.bulc.homepage.licensing.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 라이선스 서비스.
@@ -35,13 +45,27 @@ import java.util.*;
  * 이러한 작업은 반드시 Billing 또는 Admin 모듈을 통해 트리거되어야 합니다.
  */
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class LicenseService {
 
     private final LicenseRepository licenseRepository;
     private final ActivationRepository activationRepository;
     private final LicensePlanRepository planRepository;
+    private final ProductRepository productRepository;
+    private final SecretKey offlineTokenKey;
+
+    public LicenseService(LicenseRepository licenseRepository,
+                          ActivationRepository activationRepository,
+                          LicensePlanRepository planRepository,
+                          ProductRepository productRepository,
+                          @org.springframework.beans.factory.annotation.Value("${jwt.secret}") String jwtSecret) {
+        this.licenseRepository = licenseRepository;
+        this.activationRepository = activationRepository;
+        this.planRepository = planRepository;
+        this.productRepository = productRepository;
+        // JWT secret을 offline token 서명에도 사용 (별도 secret 추가 가능)
+        this.offlineTokenKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
 
     // ==========================================
     // 내부 모듈용 메서드 (Billing, Admin에서 호출)
@@ -345,6 +369,279 @@ public class LicenseService {
     }
 
     // ==========================================
+    // v1.1 계정 기반 API 메서드
+    // ==========================================
+
+    /**
+     * 내 라이선스 목록 조회.
+     * 현재 로그인한 사용자의 라이선스 목록을 조회합니다.
+     *
+     * v1.1에서 추가됨.
+     */
+    public List<MyLicenseView> getMyLicenses(UUID userId, UUID productId, LicenseStatus status) {
+        List<License> licenses = licenseRepository.findByUserIdWithFilters(userId, productId, status);
+        return licenses.stream()
+                .map(MyLicenseView::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 계정 기반 라이선스 검증 및 활성화.
+     * Bearer token 인증된 사용자의 라이선스를 검증합니다.
+     *
+     * v1.1에서 추가됨.
+     *
+     * 복수 라이선스 선택 로직:
+     * - licenseId 지정: 해당 라이선스 사용 (소유자 검증)
+     * - licenseId 미지정:
+     *   - 후보 0개: LICENSE_NOT_FOUND_FOR_PRODUCT (404)
+     *   - 후보 1개: 자동 선택
+     *   - 후보 2개 이상: LICENSE_SELECTION_REQUIRED (409) + candidates 반환
+     *
+     * @param userId 인증된 사용자 ID
+     * @param request 검증 요청 (productId/productCode, deviceFingerprint 포함)
+     */
+    @Transactional
+    public ValidationResponse validateAndActivateByUser(UUID userId, ValidateRequest request) {
+        // productId 확인 (productCode → productId 변환 지원)
+        UUID productId = resolveProductId(request);
+
+        List<LicenseStatus> validStatuses = List.of(LicenseStatus.ACTIVE, LicenseStatus.EXPIRED_GRACE);
+
+        // licenseId가 지정된 경우: 해당 라이선스 직접 사용
+        if (request.licenseId() != null) {
+            License license = licenseRepository.findByIdWithLock(request.licenseId())
+                    .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND));
+
+            // 소유자 검증
+            if (!license.isOwnedBy(userId)) {
+                throw new LicenseException(ErrorCode.ACCESS_DENIED);
+            }
+
+            // 제품 검증 (지정된 productId와 일치해야 함)
+            if (productId != null && !license.getProductId().equals(productId)) {
+                throw new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT,
+                        "지정된 라이선스가 해당 제품에 속하지 않습니다");
+            }
+
+            return performValidation(license, request.deviceFingerprint(),
+                    request.clientVersion(), request.clientOs(), null, true);
+        }
+
+        // licenseId 미지정: 후보 검색
+        List<License> candidates;
+        if (productId != null) {
+            candidates = licenseRepository.findByOwnerAndProductAndStatusInWithLock(
+                    OwnerType.USER, userId, productId, validStatuses);
+        } else {
+            // productId도 없으면 사용자의 모든 유효 라이선스 조회
+            candidates = licenseRepository.findByOwnerAndStatusInWithLock(
+                    OwnerType.USER, userId, validStatuses);
+        }
+
+        // 후보 0개: LICENSE_NOT_FOUND_FOR_PRODUCT (404)
+        if (candidates.isEmpty()) {
+            throw new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT);
+        }
+
+        // 후보 1개: 자동 선택
+        if (candidates.size() == 1) {
+            return performValidation(candidates.get(0), request.deviceFingerprint(),
+                    request.clientVersion(), request.clientOs(), null, true);
+        }
+
+        // 후보 2개 이상: LICENSE_SELECTION_REQUIRED (409) + candidates 반환
+        List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+        return ValidationResponse.selectionRequired(candidateList);
+    }
+
+    /**
+     * 계정 기반 Heartbeat.
+     * Bearer token 인증된 사용자의 활성화 상태를 갱신합니다.
+     *
+     * v1.1에서 추가됨.
+     *
+     * Heartbeat은 validate와 달리:
+     * - 이미 활성화된 기기에서만 호출 가능
+     * - 새로운 기기 활성화는 불가
+     *
+     * @param userId 인증된 사용자 ID
+     * @param request 검증 요청 (productId/productCode, licenseId, deviceFingerprint 포함)
+     */
+    @Transactional
+    public ValidationResponse heartbeatByUser(UUID userId, ValidateRequest request) {
+        // productId 확인 (productCode → productId 변환 지원)
+        UUID productId = resolveProductId(request);
+
+        List<LicenseStatus> validStatuses = List.of(LicenseStatus.ACTIVE, LicenseStatus.EXPIRED_GRACE);
+
+        // licenseId가 지정된 경우: 해당 라이선스 직접 사용
+        if (request.licenseId() != null) {
+            License license = licenseRepository.findByIdWithLock(request.licenseId())
+                    .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND));
+
+            // 소유자 검증
+            if (!license.isOwnedBy(userId)) {
+                throw new LicenseException(ErrorCode.ACCESS_DENIED);
+            }
+
+            // Heartbeat은 기존 활성화만 갱신 (새 활성화 생성 안함)
+            return performValidation(license, request.deviceFingerprint(),
+                    request.clientVersion(), request.clientOs(), null, false);
+        }
+
+        // licenseId 미지정: 후보 검색
+        List<License> candidates;
+        if (productId != null) {
+            candidates = licenseRepository.findByOwnerAndProductAndStatusInWithLock(
+                    OwnerType.USER, userId, productId, validStatuses);
+        } else {
+            candidates = licenseRepository.findByOwnerAndStatusInWithLock(
+                    OwnerType.USER, userId, validStatuses);
+        }
+
+        // 후보 0개: LICENSE_NOT_FOUND_FOR_PRODUCT (404)
+        if (candidates.isEmpty()) {
+            throw new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT);
+        }
+
+        // 후보 1개: 자동 선택
+        if (candidates.size() == 1) {
+            return performValidation(candidates.get(0), request.deviceFingerprint(),
+                    request.clientVersion(), request.clientOs(), null, false);
+        }
+
+        // 후보 2개 이상: LICENSE_SELECTION_REQUIRED (409)
+        List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+        return ValidationResponse.selectionRequired(candidateList);
+    }
+
+    /**
+     * 기기 비활성화 (소유자 검증 포함).
+     * v1.1에서 추가됨 - 본인 소유 라이선스만 비활성화 가능.
+     */
+    @Transactional
+    public void deactivateWithOwnerCheck(UUID userId, UUID licenseId, String deviceFingerprint) {
+        License license = findLicenseOrThrow(licenseId);
+
+        // 소유자 검증
+        if (!license.isOwnedBy(userId)) {
+            throw new LicenseException(ErrorCode.ACCESS_DENIED);
+        }
+
+        Activation activation = activationRepository
+                .findByLicenseIdAndDeviceFingerprint(licenseId, deviceFingerprint)
+                .orElseThrow(() -> new LicenseException(ErrorCode.ACTIVATION_NOT_FOUND));
+
+        activation.deactivate();
+        activationRepository.save(activation);
+    }
+
+    /**
+     * 라이선스 상세 조회 (소유자 검증 포함).
+     * v1.1에서 추가됨 - 본인 소유 라이선스만 조회 가능.
+     */
+    public LicenseResponse getLicenseWithOwnerCheck(UUID userId, UUID licenseId) {
+        License license = findLicenseOrThrow(licenseId);
+
+        // 소유자 검증
+        if (!license.isOwnedBy(userId)) {
+            throw new LicenseException(ErrorCode.ACCESS_DENIED);
+        }
+
+        return LicenseResponse.from(license);
+    }
+
+    /**
+     * 검증 로직 공통 메서드.
+     */
+    private ValidationResponse performValidation(License license, String deviceFingerprint,
+                                                  String clientVersion, String clientOs, String clientIp,
+                                                  boolean allowNewActivation) {
+        Instant now = Instant.now();
+        LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
+
+        // 상태 검증
+        switch (effectiveStatus) {
+            case EXPIRED_HARD -> {
+                return ValidationResponse.failure(
+                        ErrorCode.LICENSE_EXPIRED.name(),
+                        ErrorCode.LICENSE_EXPIRED.getMessage()
+                );
+            }
+            case SUSPENDED -> {
+                return ValidationResponse.failure(
+                        ErrorCode.LICENSE_SUSPENDED.name(),
+                        ErrorCode.LICENSE_SUSPENDED.getMessage()
+                );
+            }
+            case REVOKED -> {
+                return ValidationResponse.failure(
+                        ErrorCode.LICENSE_REVOKED.name(),
+                        ErrorCode.LICENSE_REVOKED.getMessage()
+                );
+            }
+            case PENDING -> {
+                return ValidationResponse.failure(
+                        ErrorCode.INVALID_LICENSE_STATE.name(),
+                        "라이선스가 아직 활성화되지 않았습니다"
+                );
+            }
+            // ACTIVE, EXPIRED_GRACE는 계속 진행
+        }
+
+        // 기존 활성화 확인
+        boolean hasExistingActivation = license.getActivations().stream()
+                .anyMatch(a -> a.getDeviceFingerprint().equals(deviceFingerprint)
+                        && a.getStatus() == ActivationStatus.ACTIVE);
+
+        // Heartbeat 모드에서 기존 활성화 없으면 에러 (404 반환)
+        if (!allowNewActivation && !hasExistingActivation) {
+            throw new LicenseException(ErrorCode.ACTIVATION_NOT_FOUND);
+        }
+
+        // 활성화 가능 여부 확인
+        if (!license.canActivate(deviceFingerprint, now)) {
+            long activeCount = activationRepository.countByLicenseIdAndStatus(
+                    license.getId(), ActivationStatus.ACTIVE
+            );
+            if (activeCount >= license.getMaxConcurrentSessions()) {
+                return ValidationResponse.failure(
+                        ErrorCode.CONCURRENT_SESSION_LIMIT_EXCEEDED.name(),
+                        ErrorCode.CONCURRENT_SESSION_LIMIT_EXCEEDED.getMessage()
+                );
+            }
+            return ValidationResponse.failure(
+                    ErrorCode.ACTIVATION_LIMIT_EXCEEDED.name(),
+                    ErrorCode.ACTIVATION_LIMIT_EXCEEDED.getMessage()
+            );
+        }
+
+        // 활성화 추가/갱신
+        Activation activation = license.addActivation(deviceFingerprint, clientVersion, clientOs, clientIp);
+
+        // 오프라인 토큰 발급 (필요시)
+        if (!activation.hasValidOfflineToken(now)) {
+            int offlineDays = getOfflineTokenValidDays(license);
+            String offlineToken = generateOfflineToken(license, activation);
+            activation.issueOfflineToken(offlineToken, now.plusSeconds(offlineDays * 24L * 60 * 60));
+        }
+
+        licenseRepository.save(license);
+
+        List<String> entitlements = extractEntitlements(license);
+
+        return ValidationResponse.success(
+                license.getId(),
+                effectiveStatus,
+                license.getValidUntil(),
+                entitlements,
+                activation.getOfflineToken(),
+                activation.getOfflineTokenExpiresAt()
+        );
+    }
+
+    // ==========================================
     // 내부 모듈용 메서드 (Billing, Admin에서 호출)
     // HTTP API로 노출하지 않음
     // ==========================================
@@ -422,6 +719,63 @@ public class LicenseService {
                 .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND));
     }
 
+    /**
+     * productCode 또는 productId를 UUID로 변환.
+     * productCode가 있으면 Product 조회 후 Long id를 UUID로 변환.
+     */
+    private UUID resolveProductId(ValidateRequest request) {
+        if (request.productId() != null) {
+            return request.productId();
+        }
+        if (request.productCode() != null) {
+            Product product = productRepository.findByCodeAndIsActiveTrue(request.productCode())
+                    .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT,
+                            "제품을 찾을 수 없습니다: " + request.productCode()));
+            // Long id를 UUID로 변환 (least significant bits에 저장)
+            return new UUID(0, product.getId());
+        }
+        // 둘 다 없으면 null (모든 제품 대상 검색)
+        return null;
+    }
+
+    /**
+     * 라이선스 목록을 LicenseCandidate 목록으로 변환.
+     */
+    private List<LicenseCandidate> buildCandidateList(List<License> licenses) {
+        Instant now = Instant.now();
+        return licenses.stream()
+                .map(license -> {
+                    // planId로 플랜명 조회 (없으면 기본값)
+                    String planName = "기본 플랜";
+                    if (license.getPlanId() != null) {
+                        planName = planRepository.findById(license.getPlanId())
+                                .map(LicensePlan::getName)
+                                .orElse("알 수 없는 플랜");
+                    }
+
+                    // 활성 기기 수 계산
+                    int activeDevices = (int) license.getActivations().stream()
+                            .filter(a -> a.getStatus() == ActivationStatus.ACTIVE)
+                            .count();
+
+                    // 소유자 범위 표시
+                    String ownerScope = license.getOwnerType() == OwnerType.USER ? "개인" : "조직";
+
+                    return new LicenseCandidate(
+                            license.getId(),
+                            planName,
+                            license.getLicenseType().name(),
+                            license.calculateEffectiveStatus(now),
+                            license.getValidUntil(),
+                            ownerScope,
+                            activeDevices,
+                            license.getMaxActivations(),
+                            null  // 사용자 지정 라벨 (현재 미지원)
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
     private String generateLicenseKey() {
         // 형식: XXXX-XXXX-XXXX-XXXX
         String uuid = UUID.randomUUID().toString().replace("-", "").toUpperCase();
@@ -463,15 +817,36 @@ public class LicenseService {
         return List.of("core-simulation");
     }
 
+    /**
+     * JWS 서명된 오프라인 토큰 생성.
+     *
+     * 토큰 페이로드:
+     * - sub: licenseId
+     * - deviceFingerprint: 기기 고유 식별자
+     * - validUntil: 라이선스 만료일
+     * - maxActivations: 최대 기기 수
+     * - entitlements: 권한 목록
+     * - iat: 발급 시각
+     * - exp: 오프라인 토큰 만료 시각
+     *
+     * 클라이언트는 이 토큰을 로컬에서 검증하여 오프라인 실행 가능.
+     * 서명 검증 실패 시 온라인 재검증 필요.
+     */
     private String generateOfflineToken(License license, Activation activation) {
-        // TODO: 실제 구현에서는 JWT 또는 서명된 토큰 생성
-        // 현재는 간단한 Base64 인코딩으로 대체
-        String payload = String.format("%s:%s:%s:%d",
-                license.getId(),
-                activation.getDeviceFingerprint(),
-                license.getLicenseKey(),
-                Instant.now().toEpochMilli()
-        );
-        return Base64.getEncoder().encodeToString(payload.getBytes());
+        Instant now = Instant.now();
+        int offlineDays = getOfflineTokenValidDays(license);
+        Instant expiration = now.plusSeconds(offlineDays * 24L * 60 * 60);
+
+        return Jwts.builder()
+                .subject(license.getId().toString())
+                .claim("deviceFingerprint", activation.getDeviceFingerprint())
+                .claim("validUntil", license.getValidUntil() != null
+                        ? license.getValidUntil().toEpochMilli() : null)
+                .claim("maxActivations", license.getMaxActivations())
+                .claim("entitlements", extractEntitlements(license))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(offlineTokenKey)
+                .compact();
     }
 }

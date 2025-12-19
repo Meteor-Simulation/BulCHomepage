@@ -68,7 +68,7 @@ public class License {
 
     // === 정책 스냅샷 (JSON) ===
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "policy_snapshot", columnDefinition = "jsonb")
+    @Column(name = "policy_snapshot")
     private Map<String, Object> policySnapshot;
 
     // === 외부 참조 ===
@@ -156,6 +156,13 @@ public class License {
         this.validUntil = newValidUntil;
         this.status = LicenseStatus.ACTIVE;
         this.updatedAt = Instant.now();
+    }
+
+    /**
+     * 라이선스가 특정 사용자 소유인지 확인.
+     */
+    public boolean isOwnedBy(UUID userId) {
+        return this.ownerType == OwnerType.USER && this.ownerId.equals(userId);
     }
 
     /**

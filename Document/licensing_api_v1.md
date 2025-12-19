@@ -1,8 +1,21 @@
-# Licensing System API Documentation v1.0
+# Licensing System API Documentation v1.1
 
 ## 개요
 
 BulC Homepage 라이선스 시스템의 REST API 문서입니다.
+
+### v1.1 변경사항 (2025-12-18)
+
+**필수 변경:**
+- 계정 기반 API 추가 (Bearer token 인증)
+- 복수 라이선스 선택 로직 (`licenseId` 파라미터, `LICENSE_SELECTION_REQUIRED` 409)
+- `LicenseResponse`에서 `licenseKey` 필드 제거 (보안 강화)
+
+**개선:**
+- `productCode` 지원 추가 (UUID 대신 `"BULC_EVAC"` 문자열 코드)
+- Offline Token을 JWS 서명 토큰으로 변경
+- `serverTime` 필드 추가 (클라이언트 시간 조작 방어)
+- 에러 포맷 정리 및 새로운 에러 코드 추가
 
 ### 아키텍처 원칙
 
@@ -33,7 +46,7 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 
 ---
 
-## 1. Client License API
+## 1. Client License API (v1.1 계정 기반)
 
 클라이언트 애플리케이션에서 사용하는 라이선스 검증/활성화 API입니다.
 
@@ -42,7 +55,117 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 /api/licenses
 ```
 
-### 1.1 라이선스 검증 및 활성화
+### 인증
+모든 v1.1 API는 Bearer token 인증이 필요합니다.
+```http
+Authorization: Bearer {jwt-token}
+```
+
+### 1.1 라이선스 검증 및 활성화 (v1.1)
+
+인증된 사용자의 라이선스를 검증하고 기기를 활성화합니다.
+
+```http
+POST /api/licenses/validate
+Authorization: Bearer {jwt-token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "productCode": "BULC_EVAC",
+  "deviceFingerprint": "hw-hash-abc123",
+  "clientVersion": "1.0.0",
+  "clientOs": "Windows 11"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|-----|------|-----|------|
+| productCode | string | △ | 제품 코드 (예: "BULC_EVAC") - productId와 둘 중 하나 필수 |
+| productId | UUID | △ | 제품 ID - productCode와 둘 중 하나 필수 |
+| licenseId | UUID | X | 복수 라이선스 시 명시적 선택 |
+| deviceFingerprint | string | O | 기기 고유 식별 해시 |
+| clientVersion | string | X | 클라이언트 앱 버전 |
+| clientOs | string | X | 운영체제 정보 |
+
+**복수 라이선스 선택 로직:**
+- `licenseId` 지정: 해당 라이선스 사용 (소유자 검증)
+- `licenseId` 미지정:
+  - 후보 0개: `LICENSE_NOT_FOUND_FOR_PRODUCT` (404)
+  - 후보 1개: 자동 선택
+  - 후보 2개 이상: `LICENSE_SELECTION_REQUIRED` (409) + `candidates` 반환
+
+**Response (200 OK - 성공):**
+```json
+{
+  "valid": true,
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "ACTIVE",
+  "validUntil": "2025-12-31T23:59:59Z",
+  "entitlements": ["core-simulation", "export-csv"],
+  "offlineToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "offlineTokenExpiresAt": "2025-02-01T00:00:00Z",
+  "serverTime": "2025-12-18T12:00:00Z",
+  "errorCode": null,
+  "errorMessage": null,
+  "candidates": null
+}
+```
+
+**Response (409 Conflict - 복수 라이선스 선택 필요):**
+```json
+{
+  "valid": false,
+  "serverTime": "2025-12-18T12:00:00Z",
+  "errorCode": "LICENSE_SELECTION_REQUIRED",
+  "errorMessage": "복수의 라이선스가 존재합니다. licenseId를 지정해주세요",
+  "candidates": [
+    {
+      "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+      "planName": "Pro 연간 구독",
+      "licenseType": "SUBSCRIPTION",
+      "status": "ACTIVE",
+      "validUntil": "2025-12-31T23:59:59Z",
+      "ownerScope": "개인",
+      "activeDevices": 1,
+      "maxDevices": 3,
+      "label": null
+    },
+    {
+      "licenseId": "660f9500-f39c-52e5-b827-557766551111",
+      "planName": "Standard 월간 구독",
+      "licenseType": "SUBSCRIPTION",
+      "status": "ACTIVE",
+      "validUntil": "2025-01-31T23:59:59Z",
+      "ownerScope": "개인",
+      "activeDevices": 0,
+      "maxDevices": 1,
+      "label": null
+    }
+  ]
+}
+```
+
+> **Note:** `serverTime` 필드는 클라이언트 시간 조작 방어용입니다.
+> 클라이언트는 이 값을 기준으로 로컬 시간과 비교하여 시간 조작 여부를 감지할 수 있습니다.
+
+---
+
+### 1.2 Heartbeat (v1.1)
+
+```http
+POST /api/licenses/heartbeat
+Authorization: Bearer {jwt-token}
+Content-Type: application/json
+```
+
+**Request/Response:** `/validate`와 동일한 형식
+
+---
+
+### 1.3 (Legacy) 라이선스 검증 및 활성화
 
 클라이언트 앱 실행 시 라이선스 유효성을 확인하고 기기를 활성화합니다.
 
@@ -588,10 +711,13 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | 코드 | HTTP | 설명 |
 |-----|------|------|
 | LICENSE_NOT_FOUND | 404 | 라이선스 없음 |
+| LICENSE_NOT_FOUND_FOR_PRODUCT | 404 | 해당 제품의 라이선스 없음 (v1.1) |
+| LICENSE_SELECTION_REQUIRED | 409 | 복수 라이선스 선택 필요 (v1.1) |
 | LICENSE_EXPIRED | 403 | 라이선스 만료 |
 | LICENSE_SUSPENDED | 403 | 라이선스 정지 |
 | LICENSE_REVOKED | 403 | 라이선스 회수 |
 | LICENSE_ALREADY_EXISTS | 409 | 중복 라이선스 |
+| ACCESS_DENIED | 403 | 접근 권한 없음 (v1.1 - 타인 소유 라이선스 접근 시) |
 | ACTIVATION_NOT_FOUND | 404 | 활성화 정보 없음 |
 | ACTIVATION_LIMIT_EXCEEDED | 403 | 기기 수 초과 |
 | CONCURRENT_SESSION_LIMIT_EXCEEDED | 403 | 세션 수 초과 |
@@ -627,21 +753,39 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 네트워크 연결 없이도 일정 기간 라이선스를 사용할 수 있도록 하는 토큰입니다.
 
-### 토큰 형식
+### 토큰 형식 (v1.1 JWS)
 
-Offline Token은 **Opaque Token**입니다. 서버에서 생성한 고유 문자열이며,
-클라이언트는 토큰 내용을 해석하지 않고 만료 시간만 확인합니다.
+v1.1부터 Offline Token은 **JWS (JSON Web Signature)** 형식입니다.
+클라이언트는 공개키/공유키로 서명을 검증하여 토큰의 무결성을 확인합니다.
 
 ```
-abc123-opaque-token-xyz789-...
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJkZXZpY2VGaW5nZXJwcmludCI6ImRldmljZS0xMjMiLCJ2YWxpZFVudGlsIjoxNzM1Njg5NTk5MDAwLCJtYXhBY3RpdmF0aW9ucyI6MywiZW50aXRsZW1lbnRzIjpbImNvcmUtc2ltdWxhdGlvbiJdLCJpYXQiOjE3MDI0NTI4MDAsImV4cCI6MTcwNTA0NDgwMH0.xxxsignaturexxx
+```
+
+**JWS 페이로드:**
+```json
+{
+  "sub": "550e8400-e29b-41d4-a716-446655440000",  // licenseId
+  "deviceFingerprint": "device-123",
+  "validUntil": 1735689599000,  // 라이선스 만료일 (epoch ms)
+  "maxActivations": 3,
+  "entitlements": ["core-simulation"],
+  "iat": 1702452800,  // 발급 시각
+  "exp": 1705044800   // 토큰 만료 시각
+}
 ```
 
 | 구분 | 설명 |
 |-----|------|
-| 형식 | Opaque Token (서버에서 생성한 고유 문자열) |
-| 서버 저장 | 토큰 값을 DB에 저장 (온라인 복귀 시 검증용) |
-| 오프라인 검증 | 클라이언트가 `offlineTokenExpiresAt` 기준으로 만료 여부만 판단 |
+| 형식 | JWS (HS256 서명) |
+| 서명 검증 | 클라이언트가 서명 검증으로 토큰 위변조 감지 |
+| 만료 확인 | `exp` 클레임 또는 `offlineTokenExpiresAt` 확인 |
+| serverTime | 서버 시간 기준으로 클라이언트 시간 조작 감지 |
 | 갱신 | `/validate` 성공 시 새 토큰 발급 |
+
+> **v1.0 vs v1.1:**
+> - v1.0: Opaque Token (서버에서만 검증 가능)
+> - v1.1: JWS Token (클라이언트에서도 서명 검증 가능, 시간 조작 방어 강화)
 
 ### 발급 조건
 - `/validate` API 성공 시 자동 발급
@@ -714,3 +858,347 @@ curl -X POST http://localhost:8080/api/admin/license-plans \
 curl http://localhost:8080/api/admin/license-plans?activeOnly=true \
   -H "Authorization: Bearer {admin-token}"
 ```
+
+---
+
+## 8. Admin License Management API (M2 추가)
+
+관리자가 라이선스를 조회하고 검색하는 API입니다.
+
+### Base URL
+```
+/api/admin/licenses
+```
+
+### 인증/권한
+모든 엔드포인트는 인증 필요 (추후 `ROLE_ADMIN` 권한 적용 예정)
+
+---
+
+### 8.1 라이선스 검색
+
+다양한 조건으로 라이선스를 검색합니다.
+
+```http
+GET /api/admin/licenses
+GET /api/admin/licenses?status=ACTIVE
+GET /api/admin/licenses?ownerType=USER&ownerId={uuid}
+GET /api/admin/licenses?licenseKey=TEST
+GET /api/admin/licenses?page=0&size=20
+```
+
+**Query Parameters:**
+| 파라미터 | 타입 | 기본값 | 설명 |
+|---------|------|-------|------|
+| ownerType | enum | - | 소유자 유형 (USER, ORG) |
+| ownerId | UUID | - | 소유자 ID |
+| productId | UUID | - | 제품 ID |
+| status | enum | - | 라이선스 상태 |
+| licenseType | enum | - | 라이선스 유형 |
+| licenseKey | string | - | 라이선스 키 (부분 일치 검색) |
+| page | int | 0 | 페이지 번호 |
+| size | int | 20 | 페이지 크기 |
+
+**Response (200 OK):**
+```json
+{
+  "content": [
+    {
+      "id": "b4080bd4-3d55-46ba-bc1f-eaa8af0a3c64",
+      "ownerType": "USER",
+      "ownerId": "45c5b947-088e-40f3-bf3f-07e19b701c8a",
+      "productId": "1da850db-68db-4fe9-aa04-e1ee673f5f44",
+      "licenseType": "SUBSCRIPTION",
+      "usageCategory": "COMMERCIAL",
+      "status": "ACTIVE",
+      "validFrom": "2025-12-08T01:41:49.019242Z",
+      "validUntil": "2026-12-08T01:41:49.019242Z",
+      "licenseKey": "TEST-KEY-1234-ABCD",
+      "usedActivations": 1,
+      "maxActivations": 3,
+      "createdAt": "2025-12-08T01:41:49.019242Z"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 20
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+
+---
+
+### 8.2 소유자별 라이선스 목록
+
+특정 소유자(유저/조직)의 모든 라이선스를 조회합니다.
+
+```http
+GET /api/admin/licenses/owner/{ownerType}/{ownerId}
+```
+
+**Path Parameters:**
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| ownerType | enum | USER 또는 ORG |
+| ownerId | UUID | 소유자 ID |
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "b4080bd4-3d55-46ba-bc1f-eaa8af0a3c64",
+    "ownerType": "USER",
+    "ownerId": "45c5b947-088e-40f3-bf3f-07e19b701c8a",
+    "productId": "1da850db-68db-4fe9-aa04-e1ee673f5f44",
+    "licenseType": "SUBSCRIPTION",
+    "usageCategory": "COMMERCIAL",
+    "status": "ACTIVE",
+    "validFrom": "2025-12-08T01:41:49.019242Z",
+    "validUntil": "2026-12-08T01:41:49.019242Z",
+    "licenseKey": "TEST-KEY-1234-ABCD",
+    "usedActivations": 1,
+    "maxActivations": 3,
+    "createdAt": "2025-12-08T01:41:49.019242Z"
+  }
+]
+```
+
+---
+
+## 9. 실제 테스트 결과 (M2 구현 검증)
+
+### 9.1 정상 검증 시나리오
+
+**요청:**
+```bash
+curl -X POST http://localhost:8080/api/licenses/TEST-KEY-1234-ABCD/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceFingerprint": "device-test-001",
+    "clientVersion": "1.0.0",
+    "clientOs": "Windows 11",
+    "lastIp": "192.168.1.100"
+  }'
+```
+
+**응답:**
+```json
+{
+  "valid": true,
+  "licenseId": "b4080bd4-3d55-46ba-bc1f-eaa8af0a3c64",
+  "status": "ACTIVE",
+  "validUntil": "2026-12-08T01:41:49.019242Z",
+  "entitlements": ["core-simulation", "export-csv"],
+  "offlineToken": "YjQwODBiZDQtM2Q1NS00NmJhLWJjMWYtZWFhOGFmMGEzYzY0...",
+  "offlineTokenExpiresAt": "2026-01-07T01:42:18.251496600Z",
+  "errorCode": null,
+  "errorMessage": null
+}
+```
+
+### 9.2 정지된 라이선스 검증
+
+**응답:**
+```json
+{
+  "valid": false,
+  "licenseId": null,
+  "status": null,
+  "validUntil": null,
+  "entitlements": null,
+  "offlineToken": null,
+  "offlineTokenExpiresAt": null,
+  "errorCode": "LICENSE_SUSPENDED",
+  "errorMessage": "라이선스가 정지되었습니다"
+}
+```
+
+### 9.3 최대 활성화 초과
+
+**응답:**
+```json
+{
+  "valid": false,
+  "licenseId": null,
+  "status": null,
+  "validUntil": null,
+  "entitlements": null,
+  "offlineToken": null,
+  "offlineTokenExpiresAt": null,
+  "errorCode": "ACTIVATION_LIMIT_EXCEEDED",
+  "errorMessage": "최대 활성화 수에 도달했습니다"
+}
+```
+
+### 9.4 라이선스 키로 상세 조회
+
+**요청:**
+```bash
+curl http://localhost:8080/api/licenses/key/TEST-KEY-1234-ABCD
+```
+
+**응답:**
+```json
+{
+  "id": "b4080bd4-3d55-46ba-bc1f-eaa8af0a3c64",
+  "ownerType": "USER",
+  "ownerId": "45c5b947-088e-40f3-bf3f-07e19b701c8a",
+  "productId": "1da850db-68db-4fe9-aa04-e1ee673f5f44",
+  "planId": null,
+  "licenseType": "SUBSCRIPTION",
+  "usageCategory": "COMMERCIAL",
+  "status": "ACTIVE",
+  "issuedAt": "2025-12-08T01:41:49.019242Z",
+  "validFrom": "2025-12-08T01:41:49.019242Z",
+  "validUntil": "2026-12-08T01:41:49.019242Z",
+  "licenseKey": "TEST-KEY-1234-ABCD",
+  "policySnapshot": {
+    "maxActivations": 3,
+    "maxConcurrentSessions": 2,
+    "gracePeriodDays": 7,
+    "allowOfflineDays": 30,
+    "entitlements": ["core-simulation", "export-csv"]
+  },
+  "activations": [
+    {
+      "id": "ced50844-3453-4a46-9c72-0588594c0c9d",
+      "deviceFingerprint": "device-test-001",
+      "status": "ACTIVE",
+      "activatedAt": "2025-12-08T01:42:18.254750Z",
+      "lastSeenAt": "2025-12-08T01:42:24.226154Z",
+      "clientVersion": "1.0.0",
+      "clientOs": "Windows 11"
+    }
+  ],
+  "createdAt": "2025-12-08T01:41:49.019242Z",
+  "updatedAt": "2025-12-08T10:42:18.242197Z"
+}
+```
+
+---
+
+## 10. 인증/권한 설정
+
+### 현재 구현된 Security 설정
+
+| 엔드포인트 패턴 | 인증 | 설명 |
+|---------------|-----|------|
+| `/api/licenses/*/validate` | 불필요 | 클라이언트 앱 검증 |
+| `/api/licenses/*/heartbeat` | 불필요 | 클라이언트 앱 heartbeat |
+| `/api/licenses/key/*` | 불필요 | 라이선스 키로 조회 |
+| `/api/licenses/{id}` | **필요** | ID로 상세 조회 |
+| `/api/licenses/{id}/activations/*` | **필요** | 기기 비활성화 |
+| `/api/admin/licenses/**` | **필요** | 관리자 검색 API |
+| `/api/admin/license-plans/**` | **필요** | 플랜 관리 API |
+
+> **Note:** `/api/licenses/key/*`는 라이선스 키를 아는 클라이언트만 접근 가능하므로
+> 인증 없이 허용합니다. 키 자체가 인증 역할을 합니다.
+
+---
+
+## 11. 구현 현황
+
+### M1 - 도메인 레이어 (완료)
+- License Aggregate (Entity, Value Objects)
+- License Repository
+- License Service (Command 로직)
+- Exception Handling
+
+### M2 - Read 레이어 (완료)
+- Query Service (CQRS 패턴)
+- View DTOs (LicenseDetailView, LicenseSummaryView)
+- QueryDSL 기반 동적 검색
+- Admin Controller
+
+### 향후 계획
+- M3: License Plan Admin API
+- M4: Billing 연동
+- M5: 오프라인 토큰 고도화
+
+---
+
+## Appendix B: 구현 파일 구조
+
+```
+backend/src/main/java/com/bulc/homepage/licensing/
+├── controller/
+│   ├── LicenseController.java        # 클라이언트 API
+│   └── LicenseAdminController.java   # 관리자 API (M2)
+├── domain/
+│   ├── License.java                  # Aggregate Root
+│   ├── LicenseActivation.java        # 기기 활성화 Entity
+│   ├── LicenseStatus.java            # 상태 Enum
+│   ├── LicenseType.java              # 타입 Enum
+│   ├── UsageCategory.java            # 용도 Enum
+│   ├── OwnerType.java                # 소유자 유형 Enum
+│   └── ActivationStatus.java         # 활성화 상태 Enum
+├── dto/
+│   ├── ActivationRequest.java        # 검증 요청 DTO
+│   ├── ValidationResponse.java       # 검증 응답 DTO
+│   └── ApiResponse.java              # 공통 응답 DTO
+├── exception/
+│   ├── LicenseException.java         # 커스텀 예외
+│   └── LicenseExceptionHandler.java  # 예외 핸들러
+├── query/                            # (M2 추가)
+│   ├── LicenseQueryService.java      # Query 인터페이스
+│   ├── LicenseQueryServiceImpl.java  # Query 구현
+│   ├── LicenseQueryRepository.java   # Query Repository
+│   ├── LicenseQueryRepositoryImpl.java
+│   ├── LicenseSearchCond.java        # 검색 조건 DTO
+│   └── view/
+│       ├── LicenseDetailView.java    # 상세 조회 View
+│       ├── LicenseSummaryView.java   # 목록 조회 View
+│       ├── PolicySnapshotView.java   # 정책 스냅샷 View
+│       └── ActivationView.java       # 활성화 정보 View
+├── repository/
+│   └── LicenseRepository.java        # JPA Repository
+└── service/
+    └── LicenseService.java           # Command Service
+```
+
+---
+
+---
+
+## Appendix C: 보안 운영 체크리스트
+
+### JWT Secret 관리
+- [ ] 운영 환경에서 `JWT_SECRET` 환경변수로 강력한 비밀키 설정 (최소 32자)
+- [ ] 개발/운영 환경 간 다른 비밀키 사용
+- [ ] 비밀키 주기적 로테이션 계획 수립
+
+### API 보안
+- [ ] HTTPS 필수 적용 (TLS 1.2+)
+- [ ] Rate Limiting 설정 (`/validate`, `/heartbeat` 엔드포인트)
+- [ ] CORS 정책 적용 (운영 도메인만 허용)
+
+### 라이선스 키 보안
+- [ ] `LicenseResponse`에서 `licenseKey` 제거 확인 (v1.1)
+- [ ] 라이선스 키는 Billing 모듈에서만 발급 시점에 전달
+- [ ] Admin API에서만 라이선스 키 조회 가능
+
+### Offline Token 보안
+- [ ] JWS 서명 검증 로직 클라이언트 구현
+- [ ] `serverTime`과 클라이언트 시간 비교 (시간 조작 감지)
+- [ ] 오프라인 토큰 로컬 저장 시 암호화
+
+### 복수 라이선스 선택
+- [ ] `LICENSE_SELECTION_REQUIRED` (409) 응답 처리 구현
+- [ ] 클라이언트 UI에서 라이선스 선택 화면 구현
+- [ ] `licenseId` 파라미터 전달 로직 구현
+
+### 로깅 및 모니터링
+- [ ] 검증 실패 로그 모니터링 (LICENSE_NOT_FOUND, ACCESS_DENIED 등)
+- [ ] 비정상 패턴 감지 (동일 fingerprint 다수 계정, 급격한 요청 증가)
+- [ ] 라이선스 상태 변경 이력 감사 로그
+
+### 운영 시 주의사항
+- [ ] 기존 v1.0 클라이언트 호환성 확인 (key 기반 API 유지)
+- [ ] 신규 클라이언트는 v1.1 계정 기반 API 사용 권장
+- [ ] 라이선스 만료 전 갱신 안내 이메일 설정
+
+---
+
+*Last Updated: 2025-12-18 (M1.5 보안 개선 - 계정 기반 API, 복수 라이선스 선택, JWS Offline Token)*
