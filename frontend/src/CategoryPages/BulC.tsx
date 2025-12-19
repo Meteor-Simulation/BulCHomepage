@@ -14,10 +14,27 @@ const SUB_NAV_ITEMS = [
 ];
 
 // Intro 컨텐츠
-const IntroContent: React.FC = () => (
-  <div className="bulc-content-section">
-    <h2>Intro</h2>
-    <p>BUL:C 소개 컨텐츠 영역입니다.</p>
+interface IntroContentProps {
+  onNavigateToDownload: () => void;
+}
+
+const IntroContent: React.FC<IntroContentProps> = ({ onNavigateToDownload }) => (
+  <div className="bulc-intro-section">
+    <h1 className="intro-headline">
+      대규모 <span className="highlight">화재 시뮬레이션</span>의 압도적 <span className="highlight">속도</span>와 정확한 <span className="highlight">예측</span>
+    </h1>
+    <div className="intro-description">
+      <p>Fire-AmgX GPU 가속으로 기존 FDS 대비 10배 이상 빠른 데이터 생성.</p>
+      <p>Physical AI PINN/PIDON 기반으로 1초 내 실시간 화재 확산 예측을 실현합니다.</p>
+    </div>
+    <div className="intro-buttons">
+      <button className="intro-btn primary" onClick={onNavigateToDownload}>
+        다운로드
+      </button>
+      <button className="intro-btn secondary" onClick={onNavigateToDownload}>
+        상담하기
+      </button>
+    </div>
   </div>
 );
 
@@ -90,10 +107,14 @@ const BulCPage: React.FC = () => {
     navigate('/'); // 메인 페이지로 이동
   };
 
+  const handleNavigateToDownload = () => {
+    setActiveMenu('download');
+  };
+
   const renderContent = () => {
     switch (activeMenu) {
       case 'intro':
-        return <IntroContent />;
+        return <IntroContent onNavigateToDownload={handleNavigateToDownload} />;
       case 'bulc':
         return <BulCFeatureContent />;
       case 'ai-agent':
@@ -103,7 +124,7 @@ const BulCPage: React.FC = () => {
       case 'download':
         return <DownloadContent />;
       default:
-        return <IntroContent />;
+        return <IntroContent onNavigateToDownload={handleNavigateToDownload} />;
     }
   };
 
