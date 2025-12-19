@@ -10,13 +10,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. users (유저 테이블)
 -- ===============================
 CREATE TABLE users (
-    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    email           VARCHAR(255) NOT NULL UNIQUE,
+    email           VARCHAR(255) PRIMARY KEY,
+    email_verified  BOOLEAN NOT NULL DEFAULT FALSE,
     password_hash   VARCHAR(255) NULL,
-    name            VARCHAR(100) NULL,
-    phone_number    VARCHAR(50) NULL,
-    status          VARCHAR(20) NOT NULL DEFAULT 'active',
-    role_id         BIGINT NULL,
+    roles_code      VARCHAR(10) NOT NULL DEFAULT '002',
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -26,14 +23,12 @@ CREATE TABLE users (
 -- ===============================
 CREATE TABLE user_roles (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    code            VARCHAR(50) NOT NULL UNIQUE,
-    name            VARCHAR(100) NOT NULL,
-    description     TEXT NULL,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    role            VARCHAR(50) NOT NULL,
+    code            VARCHAR(10) NOT NULL UNIQUE
 );
 
--- users FK 추가
-ALTER TABLE users ADD CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES user_roles(id);
+-- users FK 추가 (roles_code -> user_roles.code)
+ALTER TABLE users ADD CONSTRAINT fk_users_role FOREIGN KEY (roles_code) REFERENCES user_roles(code);
 
 -- ===============================
 -- 3. products (상품 종류 테이블)
@@ -69,7 +64,7 @@ CREATE TABLE price_plans (
 -- ===============================
 CREATE TABLE subscriptions (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id         BIGINT NOT NULL,
+    user_email      VARCHAR(255) NOT NULL,
     product_id      BIGINT NOT NULL,
     price_plan_id   BIGINT NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'active',
@@ -78,7 +73,7 @@ CREATE TABLE subscriptions (
     auto_renew      BOOLEAN NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_email) REFERENCES users(email),
     CONSTRAINT fk_subscriptions_product FOREIGN KEY (product_id) REFERENCES products(id),
     CONSTRAINT fk_subscriptions_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
 );
@@ -88,7 +83,7 @@ CREATE TABLE subscriptions (
 -- ===============================
 CREATE TABLE payments (
     id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id             BIGINT NOT NULL,
+    user_email_fk       VARCHAR(255) NOT NULL,
     user_email          VARCHAR(255) NOT NULL,
     user_name           VARCHAR(100) NULL,
     subscription_id     BIGINT NULL,
@@ -105,7 +100,7 @@ CREATE TABLE payments (
     refund_reason       TEXT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_payments_user FOREIGN KEY (user_email_fk) REFERENCES users(email),
     CONSTRAINT fk_payments_subscription FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
     CONSTRAINT fk_payments_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
 );
@@ -115,7 +110,7 @@ CREATE TABLE payments (
 -- ===============================
 CREATE TABLE activity_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id         BIGINT NULL,
+    user_email      VARCHAR(255) NULL,
     action          VARCHAR(50) NOT NULL,
     target_type     VARCHAR(50) NULL,
     target_id       BIGINT NULL,
@@ -123,7 +118,7 @@ CREATE TABLE activity_logs (
     ip_address      VARCHAR(50) NULL,
     user_agent      TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_email) REFERENCES users(email)
 );
 
 -- ===============================
@@ -131,15 +126,15 @@ CREATE TABLE activity_logs (
 -- ===============================
 CREATE TABLE user_change_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id         BIGINT NOT NULL,
+    user_email      VARCHAR(255) NOT NULL,
     changed_field   VARCHAR(100) NOT NULL,
     old_value       TEXT NULL,
     new_value       TEXT NULL,
-    changed_by      BIGINT NULL,
+    changed_by_email VARCHAR(255) NULL,
     change_reason   TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_change_logs_user FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT fk_user_change_logs_changed_by FOREIGN KEY (changed_by) REFERENCES users(id)
+    CONSTRAINT fk_user_change_logs_user FOREIGN KEY (user_email) REFERENCES users(email),
+    CONSTRAINT fk_user_change_logs_changed_by FOREIGN KEY (changed_by_email) REFERENCES users(email)
 );
 
 -- ===============================
@@ -147,14 +142,14 @@ CREATE TABLE user_change_logs (
 -- ===============================
 CREATE TABLE admin_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    admin_id        BIGINT NOT NULL,
+    admin_email     VARCHAR(255) NOT NULL,
     action          VARCHAR(100) NOT NULL,
     target_type     VARCHAR(50) NOT NULL,
     target_id       BIGINT NULL,
     description     TEXT NULL,
     ip_address      VARCHAR(50) NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_admin_logs_admin FOREIGN KEY (admin_id) REFERENCES users(id)
+    CONSTRAINT fk_admin_logs_admin FOREIGN KEY (admin_email) REFERENCES users(email)
 );
 
 -- ===============================
@@ -162,9 +157,7 @@ CREATE TABLE admin_logs (
 -- ===============================
 
 -- users
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_status ON users(status);
-CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_roles_code ON users(roles_code);
 
 -- products
 CREATE INDEX idx_products_code ON products(code);
@@ -175,28 +168,28 @@ CREATE INDEX idx_price_plans_product_id ON price_plans(product_id);
 CREATE INDEX idx_price_plans_is_active ON price_plans(is_active);
 
 -- subscriptions
-CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX idx_subscriptions_user_email ON subscriptions(user_email);
 CREATE INDEX idx_subscriptions_product_id ON subscriptions(product_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX idx_subscriptions_end_date ON subscriptions(end_date);
 
 -- payments
-CREATE INDEX idx_payments_user_id ON payments(user_id);
+CREATE INDEX idx_payments_user_email ON payments(user_email_fk);
 CREATE INDEX idx_payments_subscription_id ON payments(subscription_id);
 CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_created_at ON payments(created_at);
 
 -- activity_logs
-CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX idx_activity_logs_user_email ON activity_logs(user_email);
 CREATE INDEX idx_activity_logs_action ON activity_logs(action);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
 
 -- user_change_logs
-CREATE INDEX idx_user_change_logs_user_id ON user_change_logs(user_id);
+CREATE INDEX idx_user_change_logs_user_email ON user_change_logs(user_email);
 CREATE INDEX idx_user_change_logs_created_at ON user_change_logs(created_at);
 
 -- admin_logs
-CREATE INDEX idx_admin_logs_admin_id ON admin_logs(admin_id);
+CREATE INDEX idx_admin_logs_admin_email ON admin_logs(admin_email);
 CREATE INDEX idx_admin_logs_action ON admin_logs(action);
 CREATE INDEX idx_admin_logs_created_at ON admin_logs(created_at);
 
@@ -231,10 +224,10 @@ CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
 -- ===============================
 
 -- 유저 등급 데이터
-INSERT INTO user_roles (code, name, description) VALUES
-    ('admin', '관리자', '전체 시스템 관리자'),
-    ('user', '일반 사용자', '일반 서비스 이용자'),
-    ('premium', '프리미엄', '유료 구독 사용자');
+INSERT INTO user_roles (role, code) VALUES
+    ('관리자', '000'),
+    ('일반 사용자', '002'),
+    ('프리미엄', '001');
 
 -- 상품 데이터
 INSERT INTO products (code, name, description, is_active) VALUES
