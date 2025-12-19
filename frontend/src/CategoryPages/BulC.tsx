@@ -15,13 +15,13 @@ const SUB_NAV_ITEMS = [
 
 // Intro 컨텐츠
 interface IntroContentProps {
-  onNavigateToDownload: () => void;
+  onNavigate: (menu: string) => void;
 }
 
-const IntroContent: React.FC<IntroContentProps> = ({ onNavigateToDownload }) => (
+const IntroContent: React.FC<IntroContentProps> = ({ onNavigate }) => (
   <div className="bulc-intro-section">
     <h1 className="intro-headline">
-      대규모 <span className="highlight">화재 시뮬레이션</span>의<br />
+      <span className="highlight">화재 시뮬레이션</span>의<br />
       압도적 <span className="highlight">속도</span>와<br />
       정확한 <span className="highlight">예측</span>
     </h1>
@@ -29,9 +29,18 @@ const IntroContent: React.FC<IntroContentProps> = ({ onNavigateToDownload }) => 
       <p>Fire-AmgX GPU 가속으로 기존 FDS 대비 10배 이상 빠른 데이터 생성.</p>
       <p>Physical AI PINN/PIDON 기반으로 1초 내 실시간 화재 확산 예측을 실현합니다.</p>
     </div>
-    <div className="intro-buttons">
-      <button className="intro-btn" onClick={onNavigateToDownload}>
-        다운로드
+    <div className="intro-buttons-grid">
+      <button className="intro-btn" onClick={() => onNavigate('bulc')}>
+        BULC
+      </button>
+      <button className="intro-btn" onClick={() => onNavigate('ai-agent')}>
+        AI Agent
+      </button>
+      <button className="intro-btn" onClick={() => onNavigate('tutorial')}>
+        Tutorial
+      </button>
+      <button className="intro-btn" onClick={() => onNavigate('download')}>
+        Download
       </button>
     </div>
   </div>
@@ -106,14 +115,14 @@ const BulCPage: React.FC = () => {
     navigate('/'); // 메인 페이지로 이동
   };
 
-  const handleNavigateToDownload = () => {
-    setActiveMenu('download');
+  const handleNavigate = (menu: string) => {
+    setActiveMenu(menu);
   };
 
   const renderContent = () => {
     switch (activeMenu) {
       case 'intro':
-        return <IntroContent onNavigateToDownload={handleNavigateToDownload} />;
+        return <IntroContent onNavigate={handleNavigate} />;
       case 'bulc':
         return <BulCFeatureContent />;
       case 'ai-agent':
@@ -123,7 +132,7 @@ const BulCPage: React.FC = () => {
       case 'download':
         return <DownloadContent />;
       default:
-        return <IntroContent onNavigateToDownload={handleNavigateToDownload} />;
+        return <IntroContent onNavigate={handleNavigate} />;
     }
   };
 

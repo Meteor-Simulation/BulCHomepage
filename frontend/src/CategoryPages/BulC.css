@@ -77,9 +77,12 @@
   margin-bottom: 0;
 }
 
-.intro-buttons {
-  display: flex;
-  gap: 16px;
+.intro-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 500px;
+  width: 100%;
 }
 
 .intro-btn {
@@ -212,6 +215,11 @@
 
   .intro-description p {
     font-size: 15px;
+  }
+
+  .intro-buttons-grid {
+    grid-template-columns: 1fr;
+    max-width: 280px;
   }
 
   .intro-btn {
