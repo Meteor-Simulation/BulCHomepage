@@ -5,27 +5,36 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(name = "payment_details")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product {
+public class PaymentDetail {
 
     @Id
-    @Column(nullable = false, length = 3)
-    private String code;
+    @Column(name = "payment_id")
+    private Long paymentId;
 
-    @Column(nullable = false, length = 255)
-    private String name;
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
 
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private Boolean isActive = true;
+    @Column(name = "payment_provider", length = 50)
+    private String paymentProvider;
+
+    // 토스페이먼츠 주문 ID
+    @Column(name = "order_id", length = 100)
+    private String orderId;
+
+    // 토스페이먼츠 결제 키
+    @Column(name = "payment_key", length = 255)
+    private String paymentKey;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

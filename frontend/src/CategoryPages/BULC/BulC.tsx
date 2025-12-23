@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import './CategoryPages.css';
+import '../Common/CategoryPages.css';
 import './BulC.css';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
 
 const SUB_NAV_ITEMS = [
   { id: 'intro', label: 'Intro' },

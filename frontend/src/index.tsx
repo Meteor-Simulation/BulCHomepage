@@ -4,10 +4,12 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
-import MeteorPage from './CategoryPages/Meteor';
-import BulCPage from './CategoryPages/BulC';
-import VRPage from './CategoryPages/VR';
-import PaymentPage from './CategoryPages/Payment';
+import MeteorPage from './CategoryPages/METEOR/Meteor';
+import BulCPage from './CategoryPages/BULC/BulC';
+import VRPage from './CategoryPages/VR/VR';
+import PaymentPage from './CategoryPages/Payment/Payment';
+import PaymentSuccess from './CategoryPages/Payment/PaymentSuccess';
+import PaymentFail from './CategoryPages/Payment/PaymentFail';
 
 // 메인 페이지 컴포넌트
 const MainPage: React.FC = () => {
@@ -75,6 +77,8 @@ const App: React.FC = () => {
           <Route path="/bulc" element={<BulCPage />} />
           <Route path="/vr" element={<VRPage />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

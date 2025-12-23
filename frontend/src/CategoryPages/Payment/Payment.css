@@ -568,6 +568,341 @@
 }
 
 /* ========================================
+   결제 수단 - 2개 옵션 스타일
+======================================== */
+.payment-methods.two-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.method-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.method-option-btn:hover {
+  border-color: rgba(196, 50, 10, 0.3);
+  background: #fff;
+}
+
+.method-option-btn.selected {
+  border-color: #C4320A;
+  background: linear-gradient(135deg, rgba(196, 50, 10, 0.03) 0%, rgba(232, 93, 4, 0.03) 100%);
+}
+
+.method-option-btn .method-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(196, 50, 10, 0.08);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.method-option-btn .method-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #C4320A;
+}
+
+.method-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.method-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.method-selected {
+  font-size: 13px;
+  color: #C4320A;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.method-option-btn:hover .arrow-icon {
+  color: #C4320A;
+}
+
+/* ========================================
+   결제 모달 스타일
+======================================== */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.payment-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: #eee;
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
+
+.modal-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 20px 0;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn.cancel {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #666;
+}
+
+.modal-btn.cancel:hover {
+  background: #eee;
+}
+
+.modal-btn.confirm {
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  color: #fff;
+}
+
+.modal-btn.confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.3);
+}
+
+.modal-btn.confirm:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* 카드 그리드 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.card-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-option:hover {
+  border-color: rgba(196, 50, 10, 0.3);
+  background: #fff;
+}
+
+.card-option.selected {
+  border-color: #C4320A;
+  background: linear-gradient(135deg, rgba(196, 50, 10, 0.03) 0%, rgba(232, 93, 4, 0.03) 100%);
+}
+
+.card-icon {
+  font-size: 24px;
+}
+
+.card-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.check-mark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #C4320A;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+/* 간편결제 리스트 */
+.easy-payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.easy-payment-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.easy-payment-option:hover {
+  border-color: rgba(196, 50, 10, 0.3);
+  background: #fff;
+}
+
+.easy-payment-option.selected {
+  border-color: #C4320A;
+  background: linear-gradient(135deg, rgba(196, 50, 10, 0.03) 0%, rgba(232, 93, 4, 0.03) 100%);
+}
+
+.option-icon {
+  font-size: 32px;
+  width: 48px;
+  text-align: center;
+}
+
+.option-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.option-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.easy-payment-option .check-mark {
+  position: static;
+  flex-shrink: 0;
+}
+
+/* ========================================
    Responsive Design
 ======================================== */
 @media (max-width: 1200px) {
@@ -608,7 +943,21 @@
     flex-direction: column;
   }
 
+  .payment-methods.two-options {
+    grid-template-columns: 1fr;
+  }
+
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-modal {
+    max-width: 100%;
+    max-height: 90vh;
+    margin: 0 10px;
+  }
+
+  .card-grid {
     grid-template-columns: 1fr;
   }
 }

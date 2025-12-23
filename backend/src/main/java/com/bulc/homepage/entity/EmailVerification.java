@@ -17,7 +17,7 @@ public class EmailVerification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "verification_code", nullable = false, length = 6)
@@ -25,10 +25,6 @@ public class EmailVerification {
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean verified = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

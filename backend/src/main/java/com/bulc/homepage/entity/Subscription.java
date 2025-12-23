@@ -24,17 +24,21 @@ public class Subscription {
     @JoinColumn(name = "user_email", referencedColumnName = "email", insertable = false, updatable = false)
     private User user;
 
+    @Column(name = "product_code", nullable = false, length = 3)
+    private String productCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_code", referencedColumnName = "code", insertable = false, updatable = false)
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "price_plan_id", nullable = false)
     private PricePlan pricePlan;
 
-    @Column(nullable = false, length = 20)
+    // A: Active(활성), E: Expired(만료), C: Canceled(취소)
+    @Column(nullable = false, length = 1)
     @Builder.Default
-    private String status = "active";
+    private String status = "A";
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;

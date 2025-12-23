@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CategoryPages.css';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import '../Common/CategoryPages.css';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
 
 const SUB_NAV_ITEMS = [
   { id: 'menu1', label: '메뉴1' },

@@ -44,6 +44,14 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
+# Toss Payments Configuration
+toss:
+  payments:
+    client-key: ${TOSS_CLIENT_KEY:test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP}
+    secret-key: ${TOSS_SECRET_KEY:test_sk_GePWvyJnrKK7xZb1lNdOrgLzN97E}
+    success-url: ${TOSS_SUCCESS_URL:http://localhost:3000/payment/success}
+    fail-url: ${TOSS_FAIL_URL:http://localhost:3000/payment/fail}
+
 # 개발 환경 설정
 ---
 spring:

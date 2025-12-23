@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header';
+import { loadTossPayments, TossPaymentsInstance } from '@tosspayments/payment-sdk';
+import { useAuth } from '../../context/AuthContext';
+import Header from '../../components/Header';
 import './Payment.css';
+
+// 토스페이먼츠 클라이언트 키
+const TOSS_CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
 
 // 상품 플랜 타입
 interface PricePlan {
@@ -31,6 +35,148 @@ interface CompanyInfo {
     email: string;
   };
 }
+
+// 카드사 목록
+const CARD_COMPANIES = [
+  { id: 'shinhan', name: '신한카드', icon: '💳' },
+  { id: 'samsung', name: '삼성카드', icon: '💳' },
+  { id: 'kb', name: 'KB국민카드', icon: '💳' },
+  { id: 'hyundai', name: '현대카드', icon: '💳' },
+  { id: 'lotte', name: '롯데카드', icon: '💳' },
+  { id: 'bc', name: 'BC카드', icon: '💳' },
+  { id: 'hana', name: '하나카드', icon: '💳' },
+  { id: 'woori', name: '우리카드', icon: '💳' },
+];
+
+// 간편결제 목록
+const EASY_PAYMENT_OPTIONS = [
+  { id: 'toss', name: '토스', icon: '🔵', description: '토스로 간편하게 결제' },
+  { id: 'bank', name: '계좌이체', icon: '🏦', description: '실시간 계좌이체' },
+  { id: 'vbank', name: '가상계좌', icon: '📋', description: '가상계좌 발급 후 입금' },
+];
+
+// 카드 결제 모달 컴포넌트
+interface CardPaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (cardId: string) => void;
+  selectedCard: string | null;
+}
+
+const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
+  isOpen,
+  onClose,
+  onSelect,
+  selectedCard,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="payment-modal-overlay" onClick={onClose}>
+      <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>카드 선택</h3>
+          <button className="modal-close" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="modal-body">
+          <p className="modal-description">결제하실 카드사를 선택해주세요.</p>
+          <div className="card-grid">
+            {CARD_COMPANIES.map((card) => (
+              <button
+                key={card.id}
+                className={`card-option ${selectedCard === card.id ? 'selected' : ''}`}
+                onClick={() => onSelect(card.id)}
+              >
+                <span className="card-icon">{card.icon}</span>
+                <span className="card-name">{card.name}</span>
+                {selectedCard === card.id && (
+                  <span className="check-mark">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="modal-btn cancel" onClick={onClose}>취소</button>
+          <button
+            className="modal-btn confirm"
+            onClick={onClose}
+            disabled={!selectedCard}
+          >
+            선택 완료
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 간편결제 모달 컴포넌트
+interface EasyPaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (optionId: string) => void;
+  selectedOption: string | null;
+}
+
+const EasyPaymentModal: React.FC<EasyPaymentModalProps> = ({
+  isOpen,
+  onClose,
+  onSelect,
+  selectedOption,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="payment-modal-overlay" onClick={onClose}>
+      <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>간편결제 선택</h3>
+          <button className="modal-close" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="modal-body">
+          <p className="modal-description">결제 방법을 선택해주세요.</p>
+          <div className="easy-payment-list">
+            {EASY_PAYMENT_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                className={`easy-payment-option ${selectedOption === option.id ? 'selected' : ''}`}
+                onClick={() => onSelect(option.id)}
+              >
+                <span className="option-icon">{option.icon}</span>
+                <div className="option-info">
+                  <span className="option-name">{option.name}</span>
+                  <span className="option-desc">{option.description}</span>
+                </div>
+                {selectedOption === option.id && (
+                  <span className="check-mark">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="modal-btn cancel" onClick={onClose}>취소</button>
+          <button
+            className="modal-btn confirm"
+            onClick={onClose}
+            disabled={!selectedOption}
+          >
+            선택 완료
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -90,16 +236,90 @@ const PaymentPage: React.FC = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('card');
 
+  // 모달 상태
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isEasyPaymentModalOpen, setIsEasyPaymentModalOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [selectedEasyPayment, setSelectedEasyPayment] = useState<string | null>(null);
+
   // 입력 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPaymentInfo(prev => ({ ...prev, [name]: value }));
   };
 
+  // 결제 수단 선택 핸들러
+  const handlePaymentMethodClick = (method: 'card' | 'easy') => {
+    setPaymentMethod(method);
+    if (method === 'card') {
+      setIsCardModalOpen(true);
+    } else {
+      setIsEasyPaymentModalOpen(true);
+    }
+  };
+
+  // 카드 선택 핸들러
+  const handleCardSelect = (cardId: string) => {
+    setSelectedCard(cardId);
+    setSelectedEasyPayment(null); // 간편결제 선택 초기화
+  };
+
+  // 간편결제 선택 핸들러
+  const handleEasyPaymentSelect = (optionId: string) => {
+    setSelectedEasyPayment(optionId);
+    setSelectedCard(null); // 카드 선택 초기화
+  };
+
+  // 선택된 결제 수단 표시 텍스트
+  const getSelectedPaymentText = () => {
+    if (selectedCard) {
+      const card = CARD_COMPANIES.find(c => c.id === selectedCard);
+      return card ? card.name : '';
+    }
+    if (selectedEasyPayment) {
+      const option = EASY_PAYMENT_OPTIONS.find(o => o.id === selectedEasyPayment);
+      return option ? option.name : '';
+    }
+    return '';
+  };
+
+  // 주문 ID 생성
+  const generateOrderId = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `BULC_${timestamp}_${random}`;
+  };
+
+  // 결제 수단 타입 매핑
+  type PaymentMethodType = '카드' | '토스페이' | '계좌이체' | '가상계좌';
+
+  const getPaymentMethodType = (): PaymentMethodType => {
+    if (selectedCard) {
+      return '카드';
+    }
+    if (selectedEasyPayment) {
+      switch (selectedEasyPayment) {
+        case 'toss':
+          return '토스페이';
+        case 'bank':
+          return '계좌이체';
+        case 'vbank':
+          return '가상계좌';
+        default:
+          return '카드';
+      }
+    }
+    return '카드';
+  };
+
   // 결제 처리
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedPlan) {
       alert('플랜을 선택해주세요.');
+      return;
+    }
+    if (!selectedCard && !selectedEasyPayment) {
+      alert('결제 수단을 선택해주세요.');
       return;
     }
     if (!paymentInfo.name || !paymentInfo.email || !paymentInfo.phone) {
@@ -111,14 +331,40 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    // TODO: 실제 PG 연동
-    console.log('결제 정보:', {
-      plan: selectedPlan,
-      paymentInfo,
-      paymentMethod,
-    });
+    try {
+      // 토스페이먼츠 SDK 로드
+      const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
 
-    alert('결제 기능은 준비 중입니다.\n\n선택하신 플랜: ' + selectedPlan.name + '\n금액: ' + selectedPlan.price.toLocaleString() + '원');
+      const orderId = generateOrderId();
+      const paymentMethodType = getPaymentMethodType();
+
+      // 결제 요청
+      await tossPayments.requestPayment(paymentMethodType, {
+        amount: selectedPlan.price,
+        orderId: orderId,
+        orderName: `BulC ${selectedPlan.name}`,
+        customerName: paymentInfo.name,
+        customerEmail: paymentInfo.email,
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+        // 카드 결제 시 카드사 지정
+        ...(selectedCard && {
+          cardCompany: selectedCard.toUpperCase(),
+        }),
+        // 가상계좌 옵션
+        ...(selectedEasyPayment === 'vbank' && {
+          validHours: 24, // 입금 유효 시간 (24시간)
+        }),
+      });
+    } catch (error) {
+      // 사용자가 결제창을 닫은 경우
+      if (error instanceof Error && error.message.includes('USER_CANCEL')) {
+        console.log('사용자가 결제를 취소했습니다.');
+        return;
+      }
+      console.error('결제 요청 오류:', error);
+      alert('결제 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   // 가격 포맷
@@ -199,57 +445,52 @@ const PaymentPage: React.FC = () => {
                 <span className="step-number">2</span>
                 결제 수단
               </h2>
-              <div className="payment-methods">
-                <label className={`method-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
+              <div className="payment-methods two-options">
+                <button
+                  className={`method-option-btn ${paymentMethod === 'card' && selectedCard ? 'selected' : ''}`}
+                  onClick={() => handlePaymentMethodClick('card')}
+                >
                   <div className="method-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                       <line x1="1" y1="10" x2="23" y2="10"/>
                     </svg>
                   </div>
-                  <span>신용/체크카드</span>
-                </label>
+                  <div className="method-text">
+                    <span className="method-name">신용/체크카드</span>
+                    {selectedCard && (
+                      <span className="method-selected">
+                        {CARD_COMPANIES.find(c => c.id === selectedCard)?.name}
+                      </span>
+                    )}
+                  </div>
+                  <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </button>
 
-                <label className={`method-option ${paymentMethod === 'bank' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="bank"
-                    checked={paymentMethod === 'bank'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
+                <button
+                  className={`method-option-btn ${paymentMethod === 'easy' && selectedEasyPayment ? 'selected' : ''}`}
+                  onClick={() => handlePaymentMethodClick('easy')}
+                >
                   <div className="method-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M8 12l2 2 4-4"/>
                     </svg>
                   </div>
-                  <span>계좌이체</span>
-                </label>
-
-                <label className={`method-option ${paymentMethod === 'vbank' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="vbank"
-                    checked={paymentMethod === 'vbank'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-                  <div className="method-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                      <line x1="8" y1="21" x2="16" y2="21"/>
-                      <line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
+                  <div className="method-text">
+                    <span className="method-name">간편결제</span>
+                    {selectedEasyPayment && (
+                      <span className="method-selected">
+                        {EASY_PAYMENT_OPTIONS.find(o => o.id === selectedEasyPayment)?.name}
+                      </span>
+                    )}
                   </div>
-                  <span>가상계좌</span>
-                </label>
+                  <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </button>
               </div>
             </section>
 
@@ -395,6 +636,22 @@ const PaymentPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 카드 결제 모달 */}
+      <CardPaymentModal
+        isOpen={isCardModalOpen}
+        onClose={() => setIsCardModalOpen(false)}
+        onSelect={handleCardSelect}
+        selectedCard={selectedCard}
+      />
+
+      {/* 간편결제 모달 */}
+      <EasyPaymentModal
+        isOpen={isEasyPaymentModalOpen}
+        onClose={() => setIsEasyPaymentModalOpen(false)}
+        onSelect={handleEasyPaymentSelect}
+        selectedOption={selectedEasyPayment}
+      />
     </div>
   );
 };

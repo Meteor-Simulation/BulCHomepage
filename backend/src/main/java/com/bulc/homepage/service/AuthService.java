@@ -44,7 +44,6 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .emailVerified(false)
                 .rolesCode("002")  // 기본값: 일반 사용자
                 .build();
 

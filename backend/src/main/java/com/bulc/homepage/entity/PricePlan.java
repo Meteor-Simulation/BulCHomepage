@@ -18,15 +18,15 @@ public class PricePlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "product_code", nullable = false, length = 3)
+    private String productCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_code", referencedColumnName = "code", insertable = false, updatable = false)
     private Product product;
 
     @Column(nullable = false, length = 100)
     private String name;
-
-    @Column(name = "duration_months", nullable = false)
-    private Integer durationMonths;
 
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal price;

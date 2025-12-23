@@ -7,16 +7,16 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 24px;
   box-sizing: border-box;
   min-height: calc(100vh - 280px);
 }
 
 .bulc-content-section {
   width: 100%;
-  background: #f8f9fa;
+  background: rgba(196, 50, 10, 0.2);
   border-radius: 12px;
-  padding: 40px;
+  padding: 0 40px 40px 40px;
   box-sizing: border-box;
 }
 
@@ -43,9 +43,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 40px;
+  padding: 0 40px 80px 40px;
   box-sizing: border-box;
   text-align: center;
+  background: rgba(196, 50, 10, 0.2);
+  border-radius: 12px;
 }
 
 .intro-headline {
@@ -114,9 +116,9 @@
 .bulc-download-section {
   width: 100%;
   min-height: calc(100vh - 280px);
-  background: linear-gradient(135deg, rgba(255, 180, 150, 0.5) 0%, rgba(255, 200, 170, 0.3) 50%, rgba(255, 220, 200, 0.2) 100%);
+  background: rgba(196, 50, 10, 0.2);
   border-radius: 12px;
-  padding: 80px 40px;
+  padding: 0 40px 80px 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -169,11 +171,11 @@
 @media (max-width: 1024px) {
   .bulc-content-container {
     max-width: 100%;
-    padding: 32px 20px;
+    padding: 0 20px 32px 20px;
   }
 
   .bulc-content-section {
-    padding: 32px;
+    padding: 0 32px 32px 32px;
   }
 
   .bulc-content-section h2 {
@@ -187,12 +189,12 @@
 
 @media (max-width: 768px) {
   .bulc-content-container {
-    padding: 24px 16px;
+    padding: 0 16px 24px 16px;
     min-height: calc(100vh - 240px);
   }
 
   .bulc-content-section {
-    padding: 24px;
+    padding: 0 24px 24px 24px;
     border-radius: 8px;
   }
 
@@ -205,7 +207,7 @@
   }
 
   .bulc-intro-section {
-    padding: 60px 24px;
+    padding: 0 24px 60px 24px;
   }
 
   .intro-headline {
@@ -228,7 +230,7 @@
   }
 
   .bulc-download-section {
-    padding: 60px 24px;
+    padding: 0 24px 60px 24px;
   }
 
   .download-title {
@@ -249,11 +251,11 @@
 
 @media (max-width: 480px) {
   .bulc-content-container {
-    padding: 20px 12px;
+    padding: 0 12px 20px 12px;
   }
 
   .bulc-content-section {
-    padding: 20px;
+    padding: 0 20px 20px 20px;
   }
 
   .bulc-content-section h2 {

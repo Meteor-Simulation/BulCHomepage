@@ -17,11 +17,7 @@ public class User {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(name = "email_verified", nullable = false)
-    @Builder.Default
-    private Boolean emailVerified = false;
-
-    @Column(name = "password_hash", length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
     @Column(name = "roles_code", nullable = false, length = 10)
@@ -31,6 +27,12 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roles_code", referencedColumnName = "code", insertable = false, updatable = false)
     private UserRole role;
+
+    @Column(length = 100)
+    private String name;
+
+    @Column(length = 20)
+    private String phone;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

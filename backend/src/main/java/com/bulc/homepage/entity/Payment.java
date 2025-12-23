@@ -36,7 +36,7 @@ public class Payment {
     private Subscription subscription;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "price_plan_id", nullable = false)
+    @JoinColumn(name = "price_plan_id")
     private PricePlan pricePlan;
 
     @Column(nullable = false, precision = 18, scale = 2)
@@ -46,18 +46,13 @@ public class Payment {
     @Builder.Default
     private String currency = "KRW";
 
-    @Column(nullable = false, length = 20)
+    // P: Pending(대기), C: Completed(완료), F: Failed(실패), R: Refunded(환불)
+    @Column(nullable = false, length = 1)
     @Builder.Default
-    private String status = "pending";
+    private String status = "P";
 
-    @Column(name = "payment_method", length = 50)
-    private String paymentMethod;
-
-    @Column(name = "payment_provider", length = 50)
-    private String paymentProvider;
-
-    @Column(name = "transaction_id", length = 255)
-    private String transactionId;
+    @Column(name = "order_name", length = 255)
+    private String orderName;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
@@ -70,6 +65,9 @@ public class Payment {
 
     @Column(name = "refund_reason", columnDefinition = "TEXT")
     private String refundReason;
+
+    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private PaymentDetail paymentDetail;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

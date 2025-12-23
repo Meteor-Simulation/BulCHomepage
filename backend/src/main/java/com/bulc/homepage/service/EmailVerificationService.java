@@ -43,16 +43,14 @@ public class EmailVerificationService {
         // 6자리 인증 코드 생성
         String code = generateVerificationCode();
 
-        // 기존 미인증 코드 삭제
-        emailVerificationRepository.findTopByEmailAndVerifiedFalseOrderByCreatedAtDesc(email)
-                .ifPresent(v -> emailVerificationRepository.delete(v));
+        // 기존 인증 코드 삭제 (email이 UNIQUE이므로)
+        emailVerificationRepository.deleteByEmail(email);
 
         // 새 인증 코드 저장
         EmailVerification verification = EmailVerification.builder()
                 .email(email)
                 .verificationCode(code)
                 .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES))
-                .verified(false)
                 .build();
 
         emailVerificationRepository.save(verification);
@@ -71,15 +69,15 @@ public class EmailVerificationService {
     @Transactional
     public boolean verifyCode(String email, String code) {
         EmailVerification verification = emailVerificationRepository
-                .findByEmailAndVerificationCodeAndVerifiedFalse(email, code)
+                .findByEmailAndVerificationCode(email, code)
                 .orElseThrow(() -> new RuntimeException("인증 코드가 올바르지 않습니다"));
 
         if (verification.isExpired()) {
             throw new RuntimeException("인증 코드가 만료되었습니다. 다시 요청해주세요.");
         }
 
-        verification.setVerified(true);
-        emailVerificationRepository.save(verification);
+        // 인증 완료 시 레코드 삭제
+        emailVerificationRepository.delete(verification);
 
         log.info("이메일 인증 완료 - 이메일: {}", email);
 
@@ -87,13 +85,11 @@ public class EmailVerificationService {
     }
 
     /**
-     * 이메일이 인증되었는지 확인
+     * 이메일 인증 대기 중인지 확인
+     * (인증 코드가 발송되었고 아직 인증되지 않은 상태)
      */
-    public boolean isEmailVerified(String email) {
-        return emailVerificationRepository
-                .findTopByEmailAndVerifiedFalseOrderByCreatedAtDesc(email)
-                .map(v -> v.getVerified())
-                .orElse(false);
+    public boolean hasPendingVerification(String email) {
+        return emailVerificationRepository.existsByEmail(email);
     }
 
     /**

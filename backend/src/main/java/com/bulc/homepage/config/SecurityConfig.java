@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/licenses/*/validate").permitAll()
                         .requestMatchers("/api/licenses/*/heartbeat").permitAll()
                         .requestMatchers("/api/licenses/key/*").permitAll()
+                        // 결제 API (결제 완료 후 리다이렉트에서 호출)
+                        .requestMatchers("/api/payments/**").permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
