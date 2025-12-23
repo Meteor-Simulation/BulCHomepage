@@ -67,7 +67,8 @@ COMMENT ON COLUMN users.phone IS '전화번호 (결제 시 입력)';
 
 -- 기본 관리자 계정 (비밀번호: test1234!)
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('msimul@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오');
+    ('msimul@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오'),
+    ('meteor@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오');
 
 -- =========================================================
 -- 3. email_verifications (이메일 인증 테이블)
