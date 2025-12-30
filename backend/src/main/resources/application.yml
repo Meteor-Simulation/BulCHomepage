@@ -44,6 +44,18 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
+# Licensing Session Token Configuration (v1.1.2)
+bulc:
+  licensing:
+    session-token:
+      # sessionToken TTL (분), 기본 15분
+      ttl-minutes: ${SESSION_TOKEN_TTL_MINUTES:15}
+      # 발급자 식별자
+      issuer: ${SESSION_TOKEN_ISSUER:bulc-license-server}
+      # RS256 개인키 (Base64 인코딩된 PKCS#8 형식, 또는 PEM 문자열)
+      # 운영 환경에서는 반드시 환경변수로 설정
+      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
+
 # Toss Payments Configuration
 toss:
   payments:

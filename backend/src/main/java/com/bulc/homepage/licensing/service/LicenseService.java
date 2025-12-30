@@ -53,17 +53,20 @@ public class LicenseService {
     private final ActivationRepository activationRepository;
     private final LicensePlanRepository planRepository;
     private final ProductRepository productRepository;
+    private final SessionTokenService sessionTokenService;
     private final SecretKey offlineTokenKey;
 
     public LicenseService(LicenseRepository licenseRepository,
                           ActivationRepository activationRepository,
                           LicensePlanRepository planRepository,
                           ProductRepository productRepository,
+                          SessionTokenService sessionTokenService,
                           @org.springframework.beans.factory.annotation.Value("${jwt.secret}") String jwtSecret) {
         this.licenseRepository = licenseRepository;
         this.activationRepository = activationRepository;
         this.planRepository = planRepository;
         this.productRepository = productRepository;
+        this.sessionTokenService = sessionTokenService;
         // JWT secret을 offline token 서명에도 사용 (별도 secret 추가 가능)
         this.offlineTokenKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
@@ -343,11 +346,17 @@ public class LicenseService {
         // Entitlements 추출
         List<String> entitlements = extractEntitlements(license);
 
+        // v1.1.2: sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
+        String productCode = resolveProductCode(license.getProductId());
+        SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
+                license.getId(), productCode, request.deviceFingerprint(), entitlements);
+
         return ValidationResponse.success(
                 license.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
+                sessionToken != null ? sessionToken.token() : null,
                 activation.getOfflineToken(),
                 activation.getOfflineTokenExpiresAt()
         );
@@ -622,11 +631,17 @@ public class LicenseService {
         LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
         List<String> entitlements = extractEntitlements(license);
 
+        // v1.1.2: sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
+        String productCode = resolveProductCode(license.getProductId());
+        SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
+                license.getId(), productCode, request.deviceFingerprint(), entitlements);
+
         return ValidationResponse.success(
                 license.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
+                sessionToken != null ? sessionToken.token() : null,
                 newActivation.getOfflineToken(),
                 newActivation.getOfflineTokenExpiresAt()
         );
@@ -800,11 +815,17 @@ public class LicenseService {
 
         List<String> entitlements = extractEntitlements(license);
 
+        // v1.1.2: sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
+        String productCode = resolveProductCode(license.getProductId());
+        SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
+                license.getId(), productCode, deviceFingerprint, entitlements);
+
         return ValidationResponse.success(
                 license.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
+                sessionToken != null ? sessionToken.token() : null,
                 activation.getOfflineToken(),
                 activation.getOfflineTokenExpiresAt()
         );
@@ -915,6 +936,21 @@ public class LicenseService {
         }
         // 둘 다 없으면 null (모든 제품 대상 검색)
         return null;
+    }
+
+    /**
+     * v1.1.2: productId를 productCode로 변환.
+     * sessionToken의 aud 클레임에 사용.
+     */
+    private String resolveProductCode(UUID productId) {
+        if (productId == null) {
+            return "UNKNOWN";
+        }
+        return productRepository.findAll().stream()
+                .filter(p -> UUID.nameUUIDFromBytes(p.getCode().getBytes()).equals(productId))
+                .findFirst()
+                .map(Product::getCode)
+                .orElse("PRODUCT_" + productId.toString().substring(0, 8));
     }
 
     /**

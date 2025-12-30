@@ -89,6 +89,7 @@ class LicenseControllerTest {
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),
+                    "mock-session-token",  // v1.1.2: sessionToken (만료는 exp 클레임으로 판단)
                     "offline-token-abc",
                     Instant.now().plus(30, ChronoUnit.DAYS)
             );
@@ -401,6 +402,7 @@ class LicenseControllerTest {
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),
+                    "mock-session-token",  // v1.1.2: sessionToken (만료는 exp 클레임으로 판단)
                     "offline-token-abc",
                     Instant.now().plus(30, ChronoUnit.DAYS)
             );

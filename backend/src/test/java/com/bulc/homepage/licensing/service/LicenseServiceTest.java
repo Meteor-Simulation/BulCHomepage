@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * LicenseService 유닛 테스트.
@@ -51,6 +52,9 @@ class LicenseServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private SessionTokenService sessionTokenService;
+
     private LicenseService licenseService;
 
     private static final UUID OWNER_ID = UUID.randomUUID();
@@ -66,8 +70,14 @@ class LicenseServiceTest {
                 activationRepository,
                 planRepository,
                 productRepository,
+                sessionTokenService,
                 TEST_JWT_SECRET
         );
+
+        // v1.1.2: sessionToken mock 기본 설정 (lenient - 모든 테스트에서 사용되지 않아도 OK)
+        // SessionToken은 이제 token만 포함 (exp는 토큰 내부 클레임으로 판단)
+        lenient().when(sessionTokenService.generateSessionToken(any(), any(), any(), any()))
+                .thenReturn(new SessionTokenService.SessionToken("mock-session-token"));
     }
 
     // ==========================================

@@ -1,4 +1,4 @@
-# Licensing System API Documentation v1.1.1
+# Licensing System API Documentation v1.1.2
 
 ## 개요
 
@@ -8,9 +8,66 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| v1.1.2 | 2025-12-29 | **sessionToken (JWS) 필수 추가**: validate/validate-force/heartbeat 성공 응답에 RS256 서명된 sessionToken 포함. CLI 바꿔치기/session.json 조작 방어. |
 | v1.1.1 | 2025-12-26 | 동시 세션 초과 처리(2-phase validate) 추가: validate 409 후보 반환 + validate/force로 기존 세션 비활성화 후 새 세션 활성화 |
 | v1.1 | 2025-12-18 | 계정 기반 API, 복수 라이선스 선택, JWS Offline Token |
 | v1.0 | 2025-12-05 | 최초 릴리즈 |
+
+### v1.1.2 변경사항 (2025-12-29)
+
+**sessionToken (JWS) 필수 추가:**
+
+CLI 모듈 인증을 위한 보안 강화입니다. CLI 바꿔치기, session.json 조작, stdout 조작 공격을 방어합니다.
+
+- `/validate`, `/validate/force`, `/heartbeat` **성공 응답에 sessionToken 필수 포함**
+- sessionToken은 **RS256 전용** (HS256 폴백 없음, 알고리즘 혼동 공격 방지)
+- 앱/CLI는 **내장 공개키로 서명 검증** 후 기능 unlock 여부 결정
+- `valid: true` 필드는 참고용이며, **sessionToken 검증이 최종 판단 기준**
+- **prod 환경에서 RS256 키 미설정 시 서버 부팅 실패** (fail-fast)
+
+**sessionToken 클레임 (고정):**
+
+| Claim | 타입 | 필수 | 설명 |
+|-------|------|------|------|
+| `iss` | string | O | 토큰 발급자 (`"bulc-license-server"`) |
+| `aud` | string | O | 제품 코드 (예: `"BULC_EVAC"`) - productCode 사용 |
+| `sub` | string | O | licenseId (UUID 문자열) |
+| `dfp` | string | O | deviceFingerprint (기기 바인딩) |
+| `ent` | string[] | O | entitlements 배열 |
+| `iat` | number | O | 발급 시각 (epoch seconds) |
+| `exp` | number | O | 만료 시각 (epoch seconds) |
+
+> **주의:** 응답에 `sessionTokenExpiresAt` 필드가 없습니다. 만료 시각은 토큰 내부 `exp` 클레임으로 판단해야 합니다.
+
+**sessionToken 만료 정책:**
+
+| 시나리오 | 만료 시간 | 갱신 방법 |
+|---------|----------|----------|
+| 온라인 세션 | 10~30분 (기본 15분) | heartbeat로 갱신 |
+| 오프라인 | offlineToken으로 대체 | 온라인 복귀 시 validate 재호출 |
+
+**클라이언트 필수 검증 규칙 (MANDATORY):**
+
+앱/CLI는 sessionToken 수신 후 아래를 **모두 검증**해야 합니다. 하나라도 실패하면 기능을 unlock하면 안 됩니다:
+
+| 순서 | 검증 항목 | 실패 시 처리 |
+|------|----------|-------------|
+| 1 | **RS256 서명 검증** (내장 공개키) | "무효한 세션" → 재로그인 유도 |
+| 2 | **alg == RS256** (헤더에서 확인) | 알고리즘 혼동 공격 차단 |
+| 3 | **aud == productCode** (대상 제품 일치) | "잘못된 제품" → 에러 표시 |
+| 4 | **dfp == 현재 기기 fingerprint** (기기 바인딩) | "다른 기기의 세션" → 재검증 유도 |
+| 5 | **exp > now** (만료되지 않음, ±2분 clock skew 허용) | "세션 만료" → heartbeat/재검증 |
+| 6 | **ent** 배열 확인 후 기능 unlock 결정 | 해당 기능 비활성화 |
+
+> **중요:** `valid: true` 같은 JSON 필드는 **참고로만** 사용합니다.
+> **최종 기능 unlock은 반드시 sessionToken 검증을 통과해야 합니다.**
+
+**공개키 배포:**
+- 공개키는 앱/CLI에 PEM 형식으로 **하드코딩**
+- JWKS endpoint fetch는 v1.1.2에서 미지원 (향후 v1.2에서 추가 가능)
+- 키 로테이션 시 앱/CLI 업데이트 필요
+
+---
 
 ### v1.1.1 변경사항 (2025-12-26)
 
@@ -139,14 +196,19 @@ Content-Type: application/json
   "status": "ACTIVE",
   "validUntil": "2025-12-31T23:59:59Z",
   "entitlements": ["core-simulation", "export-csv"],
+  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiZGZwIjoiaHctaGFzaC1hYmMxMjMiLCJlbnQiOlsiY29yZS1zaW11bGF0aW9uIiwiZXhwb3J0LWNzdiJdLCJpYXQiOjE3MzU1NTI4MDAsImV4cCI6MTczNTU1MzcwMH0.xxxsignaturexxx",
   "offlineToken": "eyJhbGciOiJIUzI1NiJ9...",
   "offlineTokenExpiresAt": "2025-02-01T00:00:00Z",
-  "serverTime": "2025-12-18T12:00:00Z",
+  "serverTime": "2025-12-30T12:00:00Z",
   "errorCode": null,
   "errorMessage": null,
   "candidates": null
 }
 ```
+
+> **v1.1.2 추가:** `sessionToken` 필드가 추가되었습니다.
+> 만료 시각은 토큰 내부 `exp` 클레임으로 판단합니다 (별도 필드 없음).
+> 클라이언트는 반드시 sessionToken의 서명과 클레임을 검증해야 합니다.
 
 **Response (409 Conflict - 복수 라이선스 선택 필요):**
 ```json
@@ -275,7 +337,7 @@ Content-Type: application/json
 
 **Response (200 OK - 성공):**
 
-`/validate` 성공과 동일한 형식 반환:
+`/validate` 성공과 동일한 형식 반환 (sessionToken 포함):
 
 ```json
 {
@@ -284,11 +346,16 @@ Content-Type: application/json
   "status": "ACTIVE",
   "validUntil": "2025-12-31T23:59:59Z",
   "entitlements": ["core-simulation", "export-csv"],
+  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "sessionTokenExpiresAt": "2025-12-26T02:30:30Z",
   "offlineToken": "eyJhbGciOiJIUzI1NiJ9...",
   "offlineTokenExpiresAt": "2025-02-01T00:00:00Z",
   "serverTime": "2025-12-26T02:15:30Z"
 }
 ```
+
+> **v1.1.2:** sessionToken은 새 기기의 deviceFingerprint로 바인딩됩니다.
+> 비활성화된 기존 세션은 다음 heartbeat에서 `SESSION_DEACTIVATED`를 받습니다.
 
 **Error Responses:**
 
@@ -327,11 +394,31 @@ Content-Type: application/json
 ```
 
 **Heartbeat 응답 규칙:**
-- activation이 `ACTIVE`면 `lastSeenAt` 갱신 후 200 OK (기존 형식)
+- activation이 `ACTIVE`면 `lastSeenAt` 갱신 후 200 OK (sessionToken 갱신)
 - activation이 `DEACTIVATED`면 403 반환 (세션 종료됨)
 - activation이 없으면 404 반환
 
-**Response (200 OK - 성공):** `/validate` 성공과 동일한 형식
+**Response (200 OK - 성공):**
+
+`/validate` 성공과 동일한 형식 (갱신된 sessionToken 포함):
+
+```json
+{
+  "valid": true,
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "ACTIVE",
+  "validUntil": "2025-12-31T23:59:59Z",
+  "entitlements": ["core-simulation", "export-csv"],
+  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "sessionTokenExpiresAt": "2025-12-26T02:35:00Z",
+  "offlineToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "offlineTokenExpiresAt": "2025-02-01T00:00:00Z",
+  "serverTime": "2025-12-26T02:20:00Z"
+}
+```
+
+> **v1.1.2:** heartbeat 성공 시 매번 새로운 sessionToken이 발급됩니다.
+> 클라이언트는 새 sessionToken으로 로컬 캐시를 업데이트해야 합니다.
 
 **Response (403 Forbidden - 세션 비활성화됨, v1.1.1):**
 
@@ -1488,4 +1575,94 @@ backend/src/main/java/com/bulc/homepage/licensing/
 
 ---
 
-*Last Updated: 2025-12-26 (v1.1.1 - 동시 세션 처리 2-Phase Validate, /validate/force 추가)*
+---
+
+## Appendix D: sessionToken 서버 구현 가이드 (v1.1.2)
+
+### 서버 측 요구사항
+
+| 항목 | 설명 |
+|------|------|
+| **알고리즘** | RS256 (RSA-SHA256) |
+| **키 관리** | 개인키는 서버에서 안전하게 보관, 공개키는 클라이언트에 배포 |
+| **토큰 만료** | 기본 15분 (설정 가능) |
+| **발급 시점** | validate, validate/force, heartbeat 성공 시 |
+
+### ValidationResponse DTO 변경 (v1.1.2)
+
+```java
+public record ValidationResponse(
+    boolean valid,
+    UUID licenseId,
+    String status,
+    Instant validUntil,
+    List<String> entitlements,
+
+    // v1.1.2 추가
+    String sessionToken,           // JWS (RS256 서명)
+    Instant sessionTokenExpiresAt, // sessionToken 만료 시각
+
+    String offlineToken,
+    Instant offlineTokenExpiresAt,
+    Instant serverTime,
+    String errorCode,
+    String errorMessage,
+    List<LicenseCandidate> candidates,
+    List<ActiveSessionInfo> activeSessions,
+    Integer maxConcurrentSessions
+) { }
+```
+
+### sessionToken 생성 로직 (의사 코드)
+
+```java
+public String generateSessionToken(License license, String deviceFingerprint, String productCode) {
+    Instant now = Instant.now();
+    Instant exp = now.plus(sessionTokenTtlMinutes, ChronoUnit.MINUTES);
+
+    return Jwts.builder()
+        .setIssuer("bulc-license-server")
+        .setAudience(productCode)
+        .setSubject(license.getId().toString())
+        .claim("dfp", deviceFingerprint)
+        .claim("ent", license.getEntitlements())
+        .setIssuedAt(Date.from(now))
+        .setExpiration(Date.from(exp))
+        .signWith(privateKey, SignatureAlgorithm.RS256)
+        .compact();
+}
+```
+
+### 키 생성 가이드 (RSA 2048-bit)
+
+```bash
+# 개인키 생성
+openssl genrsa -out private_key.pem 2048
+
+# 공개키 추출
+openssl rsa -in private_key.pem -pubout -out public_key.pem
+```
+
+### 설정 예시 (application.yml)
+
+```yaml
+bulc:
+  licensing:
+    session-token:
+      ttl-minutes: 15          # sessionToken 유효 시간 (분)
+      issuer: "bulc-license-server"
+      private-key-path: "classpath:keys/private_key.pem"
+```
+
+### 보안 체크리스트 (v1.1.2)
+
+- [ ] RS256 개인키 안전하게 보관 (환경변수 또는 Vault)
+- [ ] 개인키 파일 권한 제한 (600)
+- [ ] 공개키를 클라이언트 앱/CLI에 내장
+- [ ] sessionToken TTL 적절히 설정 (권장: 10~30분)
+- [ ] deviceFingerprint 바인딩 검증 로직 구현
+- [ ] 로그에 sessionToken 전체를 출력하지 않음
+
+---
+
+*Last Updated: 2025-12-29 (v1.1.2 - sessionToken JWS 필수 추가)*
