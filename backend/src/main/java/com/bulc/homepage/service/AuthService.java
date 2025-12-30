@@ -1,14 +1,18 @@
 package com.bulc.homepage.service;
 
 import com.bulc.homepage.dto.request.LoginRequest;
+import com.bulc.homepage.dto.request.OAuthSignupRequest;
 import com.bulc.homepage.dto.request.RefreshTokenRequest;
 import com.bulc.homepage.dto.request.SignupRequest;
 import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.User;
+import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.repository.ActivityLogRepository;
 import com.bulc.homepage.repository.UserRepository;
+import com.bulc.homepage.repository.UserSocialAccountRepository;
 import com.bulc.homepage.security.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserSocialAccountRepository socialAccountRepository;
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -173,6 +178,70 @@ public class AuthService {
                         .id(user.getEmail())
                         .email(user.getEmail())
                         .name(user.getEmail())
+                        .rolesCode(user.getRolesCode())
+                        .build())
+                .build();
+    }
+
+    /**
+     * OAuth 회원가입 완료 (비밀번호 설정)
+     */
+    @Transactional
+    public AuthResponse oauthSignup(OAuthSignupRequest request) {
+        // 임시 토큰 검증
+        if (!jwtTokenProvider.validateTempToken(request.getToken())) {
+            throw new RuntimeException("유효하지 않은 토큰입니다. 다시 시도해주세요.");
+        }
+
+        // 토큰에서 정보 추출
+        Claims claims = jwtTokenProvider.parseTempToken(request.getToken());
+        String email = claims.getSubject();
+        String provider = claims.get("provider", String.class);
+        String providerId = claims.get("providerId", String.class);
+
+        // 이미 가입된 이메일인지 확인
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("이미 가입된 이메일입니다.");
+        }
+
+        // 사용자 생성
+        User user = User.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
+                .phone(request.getPhone())
+                .rolesCode("002")  // 일반 사용자
+                .countryCode("KR")
+                .build();
+        user = userRepository.save(user);
+
+        // 소셜 계정 연동
+        UserSocialAccount socialAccount = UserSocialAccount.builder()
+                .userEmail(user.getEmail())
+                .provider(provider)
+                .providerId(providerId)
+                .build();
+        socialAccountRepository.save(socialAccount);
+
+        // 회원가입 로그 저장
+        saveActivityLog(user.getEmail(), "oauth_signup", "user", null,
+                "OAuth 회원가입 완료 - Provider: " + provider);
+
+        log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}", email, provider);
+
+        // JWT 토큰 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(accessTokenExpiration / 1000)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getEmail())
+                        .email(user.getEmail())
+                        .name(user.getName())
                         .rolesCode(user.getRolesCode())
                         .build())
                 .build();

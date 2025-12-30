@@ -21,4 +21,7 @@ public class PaymentConfirmRequest {
     @NotNull(message = "amount는 필수입니다")
     @Positive(message = "amount는 양수여야 합니다")
     private Integer amount;
+
+    @NotNull(message = "pricePlanId는 필수입니다")
+    private Long pricePlanId;
 }

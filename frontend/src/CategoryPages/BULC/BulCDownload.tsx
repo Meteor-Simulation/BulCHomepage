@@ -1,8 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './MeteorPages.css';
+
+interface CompanyInfo {
+  company: {
+    name: string;
+    nameEn: string;
+    description: string;
+  };
+  address: {
+    full: string;
+    zipCode: string;
+  };
+  contact: {
+    tel: string;
+    email: string;
+  };
+}
 
 const BulCDownload: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+
+  useEffect(() => {
+    fetch('/config/company.json')
+      .then(res => res.json())
+      .then(data => setCompanyInfo(data))
+      .catch(err => console.error('회사 정보 로드 실패:', err));
+  }, []);
 
   return (
     <>
@@ -44,9 +68,9 @@ const BulCDownload: React.FC = () => {
       <footer className="bulc-footer">
         <div className="footer-container">
           <div>
-            <div className="footer-brand">METEOR SIMULATION</div>
+            <div className="footer-brand">{companyInfo?.company.nameEn || 'METEOR SIMULATION'}</div>
             <p className="footer-description">
-              AI 기반 화재 시뮬레이션으로 더 안전한 미래를 만들어갑니다.
+              {companyInfo?.company.description || 'AI 기반 화재 시뮬레이션으로 더 안전한 미래를 만들어갑니다.'}
             </p>
           </div>
 
@@ -64,15 +88,15 @@ const BulCDownload: React.FC = () => {
           <div className="footer-section">
             <h4>Contact</h4>
             <ul className="footer-links">
-              <li><a href="mailto:simul@msimul.com">simul@msimul.com</a></li>
-              <li><a href="tel:010-2747-2056">010-2747-2056</a></li>
-              <li>강원도 원주시 마재2로 10<br/>강원미래산업진흥원 3층</li>
+              <li><a href={`mailto:${companyInfo?.contact.email || 'simul@msimul.com'}`}>{companyInfo?.contact.email || 'simul@msimul.com'}</a></li>
+              <li><a href={`tel:${companyInfo?.contact.tel || '010-2747-2056'}`}>{companyInfo?.contact.tel || '010-2747-2056'}</a></li>
+              <li>{companyInfo?.address.full || '강원도 원주시 마재2로 10, 강원미래산업진흥원 3층'}</li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          © {currentYear} Meteor Simulation. All rights reserved.
+          © {currentYear} {companyInfo?.company.nameEn || 'Meteor Simulation'}. All rights reserved.
         </div>
       </footer>
     </>

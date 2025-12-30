@@ -46,6 +46,48 @@ public class JwtTokenProvider {
         return generateToken(email, refreshTokenExpiration);
     }
 
+    /**
+     * OAuth 회원가입용 임시 토큰 생성 (10분 유효)
+     */
+    public String generateTempToken(String email, String provider, String providerId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 600000); // 10분
+
+        return Jwts.builder()
+                .subject(email)
+                .claim("provider", provider)
+                .claim("providerId", providerId)
+                .claim("type", "oauth_signup")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(secretKey)
+                .compact();
+    }
+
+    /**
+     * 임시 토큰에서 정보 추출
+     */
+    public Claims parseTempToken(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    /**
+     * 임시 토큰 유효성 검증
+     */
+    public boolean validateTempToken(String token) {
+        try {
+            Claims claims = parseTempToken(token);
+            return "oauth_signup".equals(claims.get("type", String.class));
+        } catch (Exception e) {
+            log.error("Invalid temp token: {}", e.getMessage());
+            return false;
+        }
+    }
+
     private String generateToken(String subject, long expiration) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);

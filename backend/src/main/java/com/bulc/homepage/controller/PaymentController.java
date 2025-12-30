@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -27,7 +29,15 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> confirmPayment(
             @Valid @RequestBody PaymentConfirmRequest request) {
         try {
-            Map<String, Object> result = paymentService.confirmPayment(request);
+            // 인증된 사용자 이메일 가져오기
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userEmail = null;
+            if (authentication != null && authentication.isAuthenticated()
+                    && !"anonymousUser".equals(authentication.getPrincipal())) {
+                userEmail = authentication.getName();
+            }
+
+            Map<String, Object> result = paymentService.confirmPayment(request, userEmail);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("결제 승인 실패: {}", e.getMessage());

@@ -307,11 +307,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="input-group">
-            <div className="input-with-label">
-              <span className="input-inner-label">아이디(이메일)</span>
+            <div className="input-wrapper">
               <input
                 type="email"
-                className={`modal-input with-label ${emailCheckStatus === 'exists' ? 'input-error' : emailCheckStatus === 'available' ? 'input-success' : ''}`}
+                className={`modal-input ${emailCheckStatus === 'exists' ? 'input-error' : emailCheckStatus === 'available' ? 'input-success' : ''}`}
+                placeholder="아이디(이메일)"
                 value={email}
                 onChange={handleEmailChange}
                 onBlur={handleEmailBlur}
@@ -385,11 +385,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           </div>
 
           <div className="input-group">
-            <div className="input-with-label">
-              <span className="input-inner-label">비밀번호</span>
+            <div className="input-wrapper">
               <input
                 type={showPassword ? 'text' : 'password'}
-                className="modal-input with-label"
+                className="modal-input"
+                placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onCopy={preventCopyPaste}
@@ -429,11 +429,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           </div>
 
           <div className="input-group">
-            <div className="input-with-label">
-              <span className="input-inner-label">비밀번호 확인</span>
+            <div className="input-wrapper">
               <input
                 type={showPasswordConfirm ? 'text' : 'password'}
-                className="modal-input with-label"
+                className="modal-input"
+                placeholder="비밀번호 확인"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 onCopy={preventCopyPaste}

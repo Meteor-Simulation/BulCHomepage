@@ -15,6 +15,10 @@ interface LoginModalProps {
   onSuccess?: () => void;
 }
 
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8080'
+  : `http://${window.location.hostname}:8080`;
+
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -22,6 +26,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 소셜 로그인 핸들러
+  const handleSocialLogin = (provider: string) => {
+    window.location.href = `${API_URL}/api/auth/oauth2/authorize/${provider}`;
+  };
 
   // ESC 키로 모달 닫기
   useEffect(() => {
@@ -145,6 +154,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           </button>
         </form>
 
+        <div className="modal-forgot-password">
+          <button type="button" className="modal-forgot-link">
+            비밀번호를 잊으셨나요?
+          </button>
+        </div>
+
         <div className="modal-divider">
           <span>또는</span>
         </div>
@@ -152,17 +167,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         <div className="modal-social">
           <p className="modal-social-title">간편 로그인</p>
           <div className="modal-social-btns">
-            <button type="button" className="social-btn naver">
+            <button type="button" className="social-btn naver" onClick={() => handleSocialLogin('naver')}>
               <svg viewBox="0 0 24 24" className="social-icon">
                 <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" fill="currentColor"/>
               </svg>
             </button>
-            <button type="button" className="social-btn kakao">
+            <button type="button" className="social-btn kakao" onClick={() => handleSocialLogin('kakao')} disabled>
               <svg viewBox="0 0 24 24" className="social-icon">
                 <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.722 1.8 5.108 4.5 6.454-.18.67-.65 2.428-.745 2.805-.118.47.172.463.362.337.15-.1 2.378-1.612 3.34-2.265.51.071 1.03.108 1.543.108 5.523 0 10-3.463 10-7.691S17.523 3 12 3z" fill="currentColor"/>
               </svg>
             </button>
-            <button type="button" className="social-btn google">
+            <button type="button" className="social-btn google" onClick={() => handleSocialLogin('google')} disabled>
               <svg viewBox="0 0 24 24" className="social-icon">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

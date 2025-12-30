@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   name?: string;
+  rolesCode?: string; // 000: admin, 001: manager, 002: user
 }
 
 interface LoginResult {
@@ -15,7 +16,9 @@ interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   isAuthReady: boolean; // 인증 상태 초기화 완료 여부
+  isAdmin: boolean; // 관리자 여부 (admin 또는 manager)
   login: (email: string, password: string) => Promise<LoginResult>;
+  loginWithToken: (accessToken: string, refreshToken: string) => Promise<LoginResult>;
   logout: () => void;
   sessionTimeLeft: number | null; // 남은 세션 시간 (초)
 }
@@ -190,6 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: userInfo.id,
           email: userInfo.email,
           name: userInfo.name || userInfo.email,
+          rolesCode: userInfo.rolesCode,
         };
 
         setUser(userData);
@@ -214,8 +218,64 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // OAuth 토큰으로 로그인 (소셜 로그인용)
+  const loginWithToken = async (accessToken: string, refreshToken: string): Promise<LoginResult> => {
+    try {
+      // 토큰 저장
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      // 토큰 만료 시간 저장
+      const expiration = getTokenExpiration(accessToken);
+      if (expiration) {
+        localStorage.setItem('tokenExpiration', expiration.toString());
+      }
+
+      // 백엔드에서 사용자 정보 조회
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('사용자 정보를 가져올 수 없습니다.');
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const userInfo = result.data;
+        const userData: User = {
+          id: userInfo.id,
+          email: userInfo.email,
+          name: userInfo.name || userInfo.email,
+          rolesCode: userInfo.rolesCode,
+        };
+
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        return { success: true };
+      }
+
+      return { success: false, message: result.message || '사용자 정보를 가져올 수 없습니다.' };
+    } catch (error) {
+      console.error('OAuth login error:', error);
+      // 실패 시 토큰 정리
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('tokenExpiration');
+      return { success: false, message: '로그인 중 오류가 발생했습니다.' };
+    }
+  };
+
+  // 관리자 여부 확인 (000: admin, 001: manager)
+  const isAdmin = user?.rolesCode === '000' || user?.rolesCode === '001';
+
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAuthReady, login, logout, sessionTimeLeft }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAuthReady, isAdmin, login, loginWithToken, logout, sessionTimeLeft }}>
       {children}
     </AuthContext.Provider>
   );

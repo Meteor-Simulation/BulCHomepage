@@ -17,7 +17,7 @@ public class User {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "roles_code", nullable = false, length = 10)
@@ -33,6 +33,10 @@ public class User {
 
     @Column(length = 20)
     private String phone;
+
+    @Column(name = "country_code", length = 10)
+    @Builder.Default
+    private String countryCode = "KR";
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

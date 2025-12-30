@@ -48,6 +48,10 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-BulC Homepage <noreply@bulc.com>}
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      # OAuth2 Configuration
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:

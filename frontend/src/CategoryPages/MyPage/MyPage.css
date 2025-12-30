@@ -1,0 +1,433 @@
+.mypage-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 100px 20px 40px;
+}
+
+.mypage-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* 되돌아가기 버튼 */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-bottom: 8px;
+}
+
+.back-btn:hover {
+  color: #C4320A;
+}
+
+.back-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.mypage-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+}
+
+.mypage-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+/* 메시지 */
+.message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+/* 세로 정렬 */
+.mypage-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 정보 카드 */
+.info-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* 정보 목록 */
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  width: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+/* 수정 버튼 */
+.edit-btn {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid #C4320A;
+  color: #C4320A;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: #C4320A;
+  color: #fff;
+}
+
+/* 폼 */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+.form-group input {
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #C4320A;
+}
+
+.form-group input.disabled {
+  background: #f5f5f5;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* 비밀번호 입력 필드 */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle-btn:hover {
+  color: #C4320A;
+}
+
+/* 비밀번호 변경 버튼 (프로필 내) */
+.password-change-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid #C4320A;
+  color: #C4320A;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.password-change-btn:hover {
+  background: #C4320A;
+  color: #fff;
+}
+
+/* 비밀번호 변경 섹션 */
+.password-edit-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.password-edit-header {
+  margin-bottom: 16px;
+}
+
+.password-edit-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.helper-text {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.form-error {
+  color: #c62828;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+/* 폼 액션 버튼 */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.save-btn {
+  padding: 10px 24px;
+  background: #C4320A;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover {
+  background: #a02a08;
+}
+
+.cancel-btn {
+  padding: 10px 24px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+
+/* 언어 설정 */
+.language-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.language-options {
+  display: flex;
+  gap: 12px;
+}
+
+.language-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-btn:hover {
+  border-color: #C4320A;
+  color: #C4320A;
+}
+
+.language-btn.active {
+  background: #C4320A;
+  border-color: #C4320A;
+  color: #fff;
+}
+
+/* 국가 선택 */
+.country-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.country-dropdown {
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.country-dropdown:focus {
+  outline: none;
+  border-color: #C4320A;
+}
+
+/* 로그아웃 */
+.logout-card {
+  padding: 0;
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 12px;
+}
+
+.logout-btn:hover {
+  background: #f5f5f5;
+  color: #c62828;
+}
+
+.logout-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .mypage-container {
+    padding: 80px 16px 24px;
+  }
+
+  .mypage-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .info-card {
+    padding: 20px;
+  }
+
+  .info-label {
+    width: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

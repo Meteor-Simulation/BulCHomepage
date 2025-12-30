@@ -51,6 +51,7 @@ public class ProductController {
                 .map(p -> new PricePlanResponse(
                         p.getId(),
                         p.getName(),
+                        p.getDescription(),
                         p.getPrice().longValue(),
                         p.getCurrency()
                 ))
@@ -61,5 +62,5 @@ public class ProductController {
 
     // Response DTOs
     public record ProductResponse(String code, String name, String description) {}
-    public record PricePlanResponse(Long id, String name, Long price, String currency) {}
+    public record PricePlanResponse(Long id, String name, String description, Long price, String currency) {}
 }

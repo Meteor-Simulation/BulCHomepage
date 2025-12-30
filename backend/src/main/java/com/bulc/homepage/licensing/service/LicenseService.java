@@ -142,6 +142,64 @@ public class LicenseService {
     }
 
     /**
+     * Plan 기반 라이선스 발급 (licenseKey 포함 반환).
+     *
+     * Billing 모듈에서 결제 완료(OrderPaid) 시 planId와 함께 호출합니다.
+     * 결제 성공 화면에 licenseKey를 표시해야 할 때 사용합니다.
+     *
+     * @return LicenseIssueResult (licenseKey 포함)
+     */
+    @Transactional
+    public LicenseIssueResult issueLicenseWithPlanForBilling(OwnerType ownerType, UUID ownerId,
+                                                              UUID planId, UUID sourceOrderId,
+                                                              UsageCategory usageCategory) {
+        // Plan 조회 (활성화되고 삭제되지 않은 플랜만)
+        LicensePlan plan = planRepository.findAvailableById(planId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        // 동일 제품에 대한 기존 라이선스 확인
+        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
+                ownerType, ownerId, plan.getProductId()
+        ).ifPresent(existing -> {
+            if (existing.getStatus() != LicenseStatus.REVOKED) {
+                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
+            }
+        });
+
+        // 라이선스 키 생성
+        String licenseKey = generateLicenseKey();
+
+        // Plan에서 PolicySnapshot 생성
+        Map<String, Object> policySnapshot = plan.toPolicySnapshot();
+
+        // 유효기간 계산
+        Instant now = Instant.now();
+        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
+                ? null
+                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+
+        License license = License.builder()
+                .ownerType(ownerType)
+                .ownerId(ownerId)
+                .productId(plan.getProductId())
+                .planId(planId)
+                .licenseType(plan.getLicenseType())
+                .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
+                .validFrom(now)
+                .validUntil(validUntil)
+                .policySnapshot(policySnapshot)
+                .licenseKey(licenseKey)
+                .sourceOrderId(sourceOrderId)
+                .build();
+
+        // 발급 즉시 활성화 (결제 완료된 경우)
+        license.activate();
+
+        License saved = licenseRepository.save(license);
+        return LicenseIssueResult.from(saved);
+    }
+
+    /**
      * Plan 기반 라이선스 발급.
      *
      * Billing 모듈에서 결제 완료(OrderPaid) 시 planId와 함께 호출합니다.

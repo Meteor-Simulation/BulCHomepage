@@ -7,7 +7,14 @@ import './Payment.css';
 
 // 토스페이먼츠 클라이언트 키
 const TOSS_CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
+// API URL - 동적으로 현재 호스트에 맞게 설정
+const getApiUrl = () => {
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8080'
+    : `http://${window.location.hostname}:8080`;
+};
+const API_URL = getApiUrl();
 
 // 상품 타입
 interface Product {
@@ -20,6 +27,7 @@ interface Product {
 interface PricePlan {
   id: number;
   name: string;
+  description: string;
   price: number;
   currency: string;
 }
@@ -29,7 +37,6 @@ interface PaymentInfo {
   name: string;
   email: string;
   phone: string;
-  company?: string;
 }
 
 // 회사 정보 타입
@@ -184,7 +191,7 @@ const EasyPaymentModal: React.FC<EasyPaymentModalProps> = ({
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAuthReady, token } = useAuth();
+  const { isLoggedIn, isAuthReady } = useAuth();
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const hasAlerted = useRef(false);
 
@@ -201,7 +208,6 @@ const PaymentPage: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    company: '',
   });
   const [userInfoLoaded, setUserInfoLoaded] = useState(false);
 
@@ -284,6 +290,7 @@ const PaymentPage: React.FC = () => {
 
   // 사용자 정보 로드
   useEffect(() => {
+    const token = localStorage.getItem('accessToken');
     if (!isLoggedIn || !token || userInfoLoaded) return;
 
     const fetchUserInfo = async () => {
@@ -309,7 +316,7 @@ const PaymentPage: React.FC = () => {
     };
 
     fetchUserInfo();
-  }, [isLoggedIn, token, userInfoLoaded]);
+  }, [isLoggedIn, userInfoLoaded]);
 
   // 입력 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,11 +352,11 @@ const PaymentPage: React.FC = () => {
     setSelectedCard(null);
   };
 
-  // 주문 ID 생성
-  const generateOrderId = () => {
+  // 주문 ID 생성 (pricePlanId 포함)
+  const generateOrderId = (planId: number) => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
-    return `BULC_${timestamp}_${random}`;
+    return `BULC_${planId}_${timestamp}_${random}`;
   };
 
   // 결제 수단 타입 매핑
@@ -372,6 +379,28 @@ const PaymentPage: React.FC = () => {
       }
     }
     return '카드';
+  };
+
+  // 구매자 정보 저장
+  const saveUserInfo = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      await fetch(`${API_URL}/api/users/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: paymentInfo.name,
+          phone: paymentInfo.phone,
+        }),
+      });
+    } catch (error) {
+      console.error('사용자 정보 저장 실패:', error);
+    }
   };
 
   // 결제 처리
@@ -397,10 +426,13 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
+    // 구매자 정보 저장
+    await saveUserInfo();
+
     try {
       const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
 
-      const orderId = generateOrderId();
+      const orderId = generateOrderId(selectedPlan.id);
       const paymentMethodType = getPaymentMethodType();
 
       await tossPayments.requestPayment(paymentMethodType, {
@@ -466,17 +498,6 @@ const PaymentPage: React.FC = () => {
                         <h3 className="product-name">{product.name}</h3>
                       </div>
                       <p className="product-description">{product.description}</p>
-                      <div className="product-select-indicator">
-                        {selectedProduct?.code === product.code ? (
-                          <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                        ) : (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                          </svg>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -506,18 +527,10 @@ const PaymentPage: React.FC = () => {
                       <div className="plan-header">
                         <h3 className="plan-name">{plan.name}</h3>
                       </div>
-                      <div className="plan-price">
+                      <div className="plan-price-row">
                         <span className="current-price">{formatPrice(plan.price)}</span>
-                      </div>
-                      <div className="plan-select-indicator">
-                        {selectedPlan?.id === plan.id ? (
-                          <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                        ) : (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                          </svg>
+                        {plan.description && (
+                          <span className="plan-duration">{plan.description}</span>
                         )}
                       </div>
                     </div>
@@ -551,9 +564,6 @@ const PaymentPage: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
                 </button>
 
                 <button
@@ -574,76 +584,57 @@ const PaymentPage: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
                 </button>
               </div>
             </section>
 
-            {/* Step 4: 구매자 정보 */}
-            <section className="payment-section">
-              <h2 className="section-title">
-                <span className="step-number">4</span>
-                구매자 정보
-              </h2>
-              <div className="buyer-form">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>이름 <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={paymentInfo.name}
-                      onChange={handleInputChange}
-                      placeholder="홍길동"
-                      readOnly={!!paymentInfo.name && userInfoLoaded}
-                      className={paymentInfo.name && userInfoLoaded ? 'readonly' : ''}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>회사명</label>
-                    <input
-                      type="text"
-                      name="company"
-                      value={paymentInfo.company}
-                      onChange={handleInputChange}
-                      placeholder="(주)회사명"
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>이메일 <span className="required">*</span></label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={paymentInfo.email}
-                      onChange={handleInputChange}
-                      placeholder="example@email.com"
-                      readOnly={!!paymentInfo.email && userInfoLoaded}
-                      className={paymentInfo.email && userInfoLoaded ? 'readonly' : ''}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>연락처 <span className="required">*</span></label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={paymentInfo.phone}
-                      onChange={handleInputChange}
-                      placeholder="010-1234-5678"
-                      readOnly={!!paymentInfo.phone && userInfoLoaded}
-                      className={paymentInfo.phone && userInfoLoaded ? 'readonly' : ''}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
           </div>
 
-          {/* 오른쪽: 결제 요약 */}
+          {/* 오른쪽: 구매자 정보 & 결제 요약 */}
           <div className="payment-right">
+            {/* 구매자 정보 */}
+            <div className="buyer-info-card">
+              <h3 className="buyer-info-title">구매자 정보</h3>
+              <div className="buyer-form-compact">
+                <div className="form-group">
+                  <label>이름 <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={paymentInfo.name}
+                    onChange={handleInputChange}
+                    placeholder="홍길동"
+                    readOnly={!!paymentInfo.name && userInfoLoaded}
+                    className={paymentInfo.name && userInfoLoaded ? 'readonly' : ''}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>이메일 <span className="required">*</span></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={paymentInfo.email}
+                    onChange={handleInputChange}
+                    placeholder="example@email.com"
+                    readOnly={!!paymentInfo.email && userInfoLoaded}
+                    className={paymentInfo.email && userInfoLoaded ? 'readonly' : ''}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>연락처 <span className="required">*</span></label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={paymentInfo.phone}
+                    onChange={handleInputChange}
+                    placeholder="010-1234-5678"
+                    readOnly={!!paymentInfo.phone && userInfoLoaded}
+                    className={paymentInfo.phone && userInfoLoaded ? 'readonly' : ''}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="order-summary">
               <h3 className="summary-title">주문 요약</h3>
 
@@ -707,16 +698,6 @@ const PaymentPage: React.FC = () => {
                   <path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
                 <span>안전한 결제 시스템</span>
-              </div>
-            </div>
-
-            {/* 고객 지원 */}
-            <div className="support-info">
-              <h4>도움이 필요하신가요?</h4>
-              <p>결제 관련 문의사항은 고객센터로 연락해주세요.</p>
-              <div className="support-contact">
-                <span>{companyInfo?.contact.email || 'simul@msimul.com'}</span>
-                <span>{companyInfo?.contact.tel || '010-2747-2056'}</span>
               </div>
             </div>
           </div>

@@ -33,61 +33,74 @@
 }
 
 /* ========================================
-   INPUT WITH INNER LABEL
+   INPUT WRAPPER (placeholder style)
 ======================================== */
-.input-with-label {
+.input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+.input-wrapper .modal-input {
+  width: 100%;
+  padding: 14px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+  font-size: 15px;
+  font-family: var(--font-main);
   background-color: #fff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.input-with-label:focus-within {
+.input-wrapper .modal-input:focus {
+  outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
 }
 
-.input-inner-label {
-  position: absolute;
-  left: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
-  pointer-events: none;
-  white-space: nowrap;
+.input-wrapper .modal-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
 }
 
-.modal-input.with-label {
-  border: none;
-  padding-left: 115px;
-  background: transparent;
-}
-
-.modal-input.with-label:focus {
-  box-shadow: none;
-}
-
-/* 이메일 입력 필드는 라벨이 더 길어서 패딩 조정 */
-.input-with-label .modal-input.with-label[type="email"] {
-  padding-left: 125px;
+.input-wrapper .modal-input:focus::placeholder {
+  color: #d1d5db;
 }
 
 /* 에러/성공 상태 */
-.input-with-label:has(.input-error) {
+.input-wrapper .modal-input.input-error {
   border-color: #dc2626 !important;
 }
 
-.input-with-label:has(.input-success) {
+.input-wrapper .modal-input.input-success {
   border-color: #16a34a !important;
 }
 
 /* 비밀번호 토글 버튼 위치 조정 */
-.input-with-label .password-toggle-btn {
+.input-wrapper .password-toggle-btn {
   position: absolute;
   right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.input-wrapper .password-toggle-btn:hover {
+  color: #6b7280;
+}
+
+.input-wrapper .password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 비밀번호 입력시 토글 버튼 공간 확보 */
+.input-wrapper .modal-input[type="password"],
+.input-wrapper .modal-input[type="text"]:has(~ .password-toggle-btn) {
+  padding-right: 44px;
 }
 
 /* ========================================
@@ -156,7 +169,7 @@
   font-weight: 600;
 }
 
-.input-with-label .modal-input.with-label[type="email"] {
+.input-wrapper .modal-input[type="email"] {
   padding-right: 36px;
 }
 

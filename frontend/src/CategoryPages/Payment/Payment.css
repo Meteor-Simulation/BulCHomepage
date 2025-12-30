@@ -166,10 +166,22 @@
   margin: 0 0 4px 0;
 }
 
+.plan-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .plan-duration {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #C4320A;
+  background-color: #fff2ec;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .plan-price {
@@ -335,6 +347,60 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* 구매자 정보 카드 */
+.buyer-info-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.buyer-info-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.buyer-form-compact .form-group {
+  margin-bottom: 12px;
+}
+
+.buyer-form-compact .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.buyer-form-compact label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.buyer-form-compact input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s, background-color 0.2s;
+  box-sizing: border-box;
+}
+
+.buyer-form-compact input:focus {
+  outline: none;
+  border-color: #C4320A;
+}
+
+.buyer-form-compact input.readonly {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
 }
 
 .order-summary {
@@ -965,6 +1031,10 @@
 @media (max-width: 480px) {
   .payment-section {
     padding: 24px 20px;
+  }
+
+  .buyer-info-card {
+    padding: 20px;
   }
 
   .order-summary {

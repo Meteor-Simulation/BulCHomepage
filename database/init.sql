@@ -24,7 +24,9 @@ DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS subscriptions CASCADE;
 DROP TABLE IF EXISTS price_plans CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS user_social_accounts CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS countries CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
 
 -- =========================================================
@@ -44,31 +46,79 @@ INSERT INTO user_roles (code, role) VALUES
     ('002', 'user');
 
 -- =========================================================
--- 2. users (유저 테이블)
+-- 2. countries (국가 테이블)
+-- =========================================================
+CREATE TABLE countries (
+    code            VARCHAR(10) PRIMARY KEY,
+    name            VARCHAR(50) NOT NULL,
+    currency        VARCHAR(10) NOT NULL DEFAULT 'USD',
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE countries IS '국가 테이블 - 지원 국가 목록 (통화, 언어 설정 등에 사용)';
+COMMENT ON COLUMN countries.code IS '국가 코드 (KR, US, JP 등)';
+COMMENT ON COLUMN countries.name IS '국가명';
+COMMENT ON COLUMN countries.currency IS '결제 통화 (KRW, USD)';
+
+-- 기본 국가 데이터
+INSERT INTO countries (code, name, currency) VALUES
+    ('KR', '대한민국', 'KRW'),
+    ('CN', '중국', 'USD'),
+    ('JP', '일본', 'USD'),
+    ('US', '미국', 'USD'),
+    ('EU', '유럽', 'USD'),
+    ('RU', '러시아', 'USD');
+
+-- =========================================================
+-- 3. users (유저 테이블)
 -- =========================================================
 CREATE TABLE users (
     email           VARCHAR(255) PRIMARY KEY,
-    password_hash   VARCHAR(255) NOT NULL,
+    password_hash   VARCHAR(255) NULL,
     roles_code      VARCHAR(10) NOT NULL DEFAULT '002',
     name            VARCHAR(100) NULL,
     phone           VARCHAR(20) NULL,
+    country_code    VARCHAR(10) NULL DEFAULT 'KR',
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_users_role FOREIGN KEY (roles_code) REFERENCES user_roles(code)
+    CONSTRAINT fk_users_role FOREIGN KEY (roles_code) REFERENCES user_roles(code),
+    CONSTRAINT fk_users_country FOREIGN KEY (country_code) REFERENCES countries(code)
 );
 
 COMMENT ON TABLE users IS '유저 테이블 - 사용자 기본 정보';
 COMMENT ON COLUMN users.email IS '이메일 (기본키, 로그인 ID)';
-COMMENT ON COLUMN users.password_hash IS '비밀번호 해시';
+COMMENT ON COLUMN users.password_hash IS '비밀번호 해시 (소셜 로그인 사용자는 NULL)';
 COMMENT ON COLUMN users.roles_code IS '역할 코드 (000:관리자, 001:매니저, 002:일반)';
 COMMENT ON COLUMN users.name IS '이름 (결제 시 입력)';
 COMMENT ON COLUMN users.phone IS '전화번호 (결제 시 입력)';
+COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
 
 -- 기본 관리자 계정 (비밀번호: test1234!)
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
     ('msimul@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오'),
     ('meteor@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오');
+
+-- =========================================================
+-- 3-1. user_social_accounts (소셜 계정 연동 테이블)
+-- =========================================================
+CREATE TABLE user_social_accounts (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_email      VARCHAR(255) NOT NULL,
+    provider        VARCHAR(20) NOT NULL,
+    provider_id     VARCHAR(255) NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_social_accounts_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE,
+    CONSTRAINT uk_social_accounts_provider UNIQUE (provider, provider_id)
+);
+
+COMMENT ON TABLE user_social_accounts IS '소셜 계정 연동 테이블 - OAuth 제공자별 사용자 ID 저장';
+COMMENT ON COLUMN user_social_accounts.provider IS '소셜 로그인 제공자 (NAVER, KAKAO, GOOGLE)';
+COMMENT ON COLUMN user_social_accounts.provider_id IS '소셜 플랫폼에서 제공하는 사용자 고유 ID';
+
+CREATE INDEX idx_social_accounts_user ON user_social_accounts(user_email);
+CREATE INDEX idx_social_accounts_provider ON user_social_accounts(provider, provider_id);
 
 -- =========================================================
 -- 3. email_verifications (이메일 인증 테이블)
@@ -101,7 +151,7 @@ COMMENT ON COLUMN products.code IS '상품 코드 (000~999), PK';
 
 -- 기본 상품 데이터
 INSERT INTO products (code, name, description) VALUES
-    ('001', 'BULC', '화재시뮬레이션');
+    ('001', 'BUL:C', '화재시뮬레이션');
 
 -- =========================================================
 -- 5. price_plans (상품 가격 테이블)
@@ -110,6 +160,7 @@ CREATE TABLE price_plans (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     product_code    VARCHAR(3) NOT NULL,
     name            VARCHAR(100) NOT NULL,
+    description     VARCHAR(100) NULL,
     price           DECIMAL(18,2) NOT NULL,
     currency        VARCHAR(10) NOT NULL DEFAULT 'KRW',
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -120,13 +171,14 @@ CREATE TABLE price_plans (
 );
 
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
+COMMENT ON COLUMN price_plans.description IS '요금제 설명 (예: 1년, 6개월 등)';
 
 -- 기본 요금제 데이터
-INSERT INTO price_plans (product_code, name, price, currency) VALUES
-    ('001', 'BUL:C PRO', 4000000, 'KRW'),
-    ('001', 'BUL:C PRO', 2700, 'USD'),
-    ('001', 'BUL:C 3D Premium', 5100000, 'KRW'),
-    ('001', 'BUL:C 3D Premium', 3500, 'USD');
+INSERT INTO price_plans (product_code, name, description, price, currency) VALUES
+    ('001', 'BUL:C PRO', '1년/365일', 4000000, 'KRW'),
+    ('001', 'BUL:C PRO', '1년/365일', 2700, 'USD'),
+    ('001', 'BUL:C 3D Premium', '1년/365일', 5100000, 'KRW'),
+    ('001', 'BUL:C 3D Premium', '1년/365일', 3500, 'USD');
 
 -- =========================================================
 -- 6. subscriptions (유저 구독 관리 테이블)

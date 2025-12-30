@@ -8,6 +8,8 @@ interface PaymentResult {
   amount: number;
   paymentKey: string;
   orderName?: string;
+  licenseKey?: string;
+  licenseValidUntil?: string;
 }
 
 const PaymentSuccess: React.FC = () => {
@@ -47,16 +49,27 @@ const PaymentSuccess: React.FC = () => {
       }
 
       try {
+        // orderId에서 pricePlanId 추출 (형식: BULC_{planId}_{timestamp}_{random})
+        const orderIdParts = orderId.split('_');
+        const pricePlanId = orderIdParts.length >= 2 ? parseInt(orderIdParts[1]) : null;
+
+        if (!pricePlanId) {
+          throw new Error('잘못된 주문 ID 형식입니다.');
+        }
+
         // 백엔드에 결제 승인 요청
+        const token = localStorage.getItem('accessToken');
         const response = await fetch('/api/payments/confirm', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
           body: JSON.stringify({
             paymentKey,
             orderId,
             amount: parseInt(amount),
+            pricePlanId,
           }),
         });
 
@@ -76,6 +89,8 @@ const PaymentSuccess: React.FC = () => {
           amount: parseInt(amount),
           paymentKey,
           orderName: result.orderName,
+          licenseKey: result.licenseKey,
+          licenseValidUntil: result.licenseValidUntil,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : '결제 처리 중 오류가 발생했습니다.');
@@ -154,6 +169,18 @@ const PaymentSuccess: React.FC = () => {
                 <span className="label">결제금액</span>
                 <span className="value">{paymentResult.amount.toLocaleString()}원</span>
               </div>
+              {paymentResult.licenseKey && (
+                <div className="detail-row license-key">
+                  <span className="label">라이선스 키</span>
+                  <span className="value license">{paymentResult.licenseKey}</span>
+                </div>
+              )}
+              {paymentResult.licenseValidUntil && (
+                <div className="detail-row">
+                  <span className="label">유효기간</span>
+                  <span className="value">{new Date(paymentResult.licenseValidUntil).toLocaleDateString('ko-KR')}</span>
+                </div>
+              )}
             </div>
           )}
 

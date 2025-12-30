@@ -4,7 +4,13 @@ import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
 import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
+import com.bulc.homepage.entity.PricePlan;
+import com.bulc.homepage.licensing.domain.OwnerType;
+import com.bulc.homepage.licensing.domain.UsageCategory;
+import com.bulc.homepage.licensing.dto.LicenseIssueResult;
+import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.repository.PaymentRepository;
+import com.bulc.homepage.repository.PricePlanRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +34,8 @@ import java.util.Map;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final PricePlanRepository pricePlanRepository;
+    private final LicenseService licenseService;
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -35,8 +44,20 @@ public class PaymentService {
      * 토스페이먼츠 결제 승인
      */
     @Transactional
-    public Map<String, Object> confirmPayment(PaymentConfirmRequest request) {
-        log.info("결제 승인 요청: orderId={}, amount={}", request.getOrderId(), request.getAmount());
+    public Map<String, Object> confirmPayment(PaymentConfirmRequest request, String userEmail) {
+        log.info("결제 승인 요청: orderId={}, amount={}, userEmail={}", request.getOrderId(), request.getAmount(), userEmail);
+
+        if (userEmail == null || userEmail.isBlank()) {
+            throw new RuntimeException("사용자 인증이 필요합니다.");
+        }
+
+        // 요금제 조회
+        PricePlan pricePlan = pricePlanRepository.findById(request.getPricePlanId())
+                .orElseThrow(() -> new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId()));
+
+        if (pricePlan.getLicensePlanId() == null) {
+            throw new RuntimeException("해당 요금제에 연결된 라이선스 플랜이 없습니다.");
+        }
 
         // 토스페이먼츠 API 호출
         String url = TossPaymentsConfig.TOSS_API_URL + "/confirm";
@@ -57,15 +78,21 @@ public class PaymentService {
                 JsonNode responseBody = objectMapper.readTree(response.getBody());
 
                 // 결제 정보 저장
-                savePaymentInfo(request, responseBody);
+                Payment payment = savePaymentInfo(request, responseBody, userEmail, pricePlan);
+
+                // 라이선스 발급
+                LicenseIssueResult licenseResult = issueLicense(userEmail, pricePlan, payment.getId());
 
                 Map<String, Object> result = new HashMap<>();
                 result.put("success", true);
                 result.put("orderId", request.getOrderId());
                 result.put("orderName", responseBody.path("orderName").asText());
                 result.put("amount", request.getAmount());
+                result.put("licenseKey", licenseResult.licenseKey());
+                result.put("licenseValidUntil", licenseResult.validUntil());
 
-                log.info("결제 승인 성공: orderId={}", request.getOrderId());
+                log.info("결제 승인 및 라이선스 발급 성공: orderId={}, licenseKey={}",
+                        request.getOrderId(), licenseResult.licenseKey());
                 return result;
             } else {
                 throw new RuntimeException("결제 승인 실패");
@@ -77,15 +104,45 @@ public class PaymentService {
     }
 
     /**
+     * 라이선스 발급
+     */
+    private LicenseIssueResult issueLicense(String userEmail, PricePlan pricePlan, Long paymentId) {
+        // 사용자 이메일을 기반으로 deterministic UUID 생성
+        UUID userId = UUID.nameUUIDFromBytes(userEmail.getBytes(StandardCharsets.UTF_8));
+
+        // 결제 ID를 기반으로 sourceOrderId 생성
+        UUID sourceOrderId = UUID.nameUUIDFromBytes(("payment-" + paymentId).getBytes(StandardCharsets.UTF_8));
+
+        log.info("라이선스 발급 시작: userEmail={}, userId={}, licensePlanId={}",
+                userEmail, userId, pricePlan.getLicensePlanId());
+
+        LicenseIssueResult result = licenseService.issueLicenseWithPlanForBilling(
+                OwnerType.USER,
+                userId,
+                pricePlan.getLicensePlanId(),
+                sourceOrderId,
+                UsageCategory.COMMERCIAL
+        );
+
+        log.info("라이선스 발급 완료: licenseId={}, licenseKey={}, validUntil={}",
+                result.id(), result.licenseKey(), result.validUntil());
+
+        return result;
+    }
+
+    /**
      * 결제 정보 저장
      */
-    private void savePaymentInfo(PaymentConfirmRequest request, JsonNode responseBody) {
+    private Payment savePaymentInfo(PaymentConfirmRequest request, JsonNode responseBody,
+                                     String userEmail, PricePlan pricePlan) {
         // Payment 엔티티 생성
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(request.getAmount()))
                 .orderName(responseBody.path("orderName").asText())
                 .status("C")  // C: Completed (완료)
-                .userEmail(responseBody.path("receipt").path("url").asText()) // 임시 - 실제 구현 시 세션에서 가져옴
+                .userEmail(userEmail)
+                .userEmailFk(userEmail)
+                .pricePlan(pricePlan)
                 .paidAt(LocalDateTime.now())
                 .build();
 
@@ -101,8 +158,10 @@ public class PaymentService {
         // 양방향 관계 설정
         payment.setPaymentDetail(paymentDetail);
 
-        paymentRepository.save(payment);
-        log.info("결제 정보 저장 완료: orderId={}", request.getOrderId());
+        Payment savedPayment = paymentRepository.save(payment);
+        log.info("결제 정보 저장 완료: orderId={}, paymentId={}", request.getOrderId(), savedPayment.getId());
+
+        return savedPayment;
     }
 
     /**

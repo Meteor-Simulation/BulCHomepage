@@ -160,6 +160,28 @@
   cursor: not-allowed;
 }
 
+/* ========================================
+   FORGOT PASSWORD LINK
+======================================== */
+.modal-forgot-password {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.modal-forgot-link {
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-forgot-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
 
 /* ========================================
    PASSWORD INPUT WITH TOGGLE
@@ -302,6 +324,17 @@ input[type="password"]::-ms-clear {
 .modal-social-btns .social-icon {
   width: 22px;
   height: 22px;
+}
+
+.modal-social-btns .social-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-social-btns .social-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /* ========================================
