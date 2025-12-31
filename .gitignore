@@ -4,6 +4,16 @@
 .env.local
 .env.*.local
 
+# 보안 키 파일 (sessionToken 개인키)
+secrets/
+*.pem
+*.key
+!keys/session_token_public_key.pem
+
+# 로컬 개발용 설정 파일 (개인키 포함)
+**/application-dev-local.yml
+**/application-local.yml
+
 # IDE
 .idea/
 *.iml

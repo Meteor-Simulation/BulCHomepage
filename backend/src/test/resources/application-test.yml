@@ -25,3 +25,10 @@ jwt:
 
 mail:
   enabled: false
+
+bulc:
+  licensing:
+    session-token:
+      ttl-minutes: 15
+      issuer: bulc-license-server
+      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
