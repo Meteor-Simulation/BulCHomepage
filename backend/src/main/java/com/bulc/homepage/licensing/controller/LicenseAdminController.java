@@ -1,13 +1,18 @@
 package com.bulc.homepage.licensing.controller;
 
+import com.bulc.homepage.licensing.domain.License;
 import com.bulc.homepage.licensing.domain.LicenseStatus;
 import com.bulc.homepage.licensing.domain.LicenseType;
 import com.bulc.homepage.licensing.domain.OwnerType;
 import com.bulc.homepage.licensing.domain.UsageCategory;
+import com.bulc.homepage.licensing.dto.AdminLicenseIssueRequest;
+import com.bulc.homepage.licensing.dto.AdminLicenseIssueResponse;
 import com.bulc.homepage.licensing.query.LicenseQueryService;
 import com.bulc.homepage.licensing.query.LicenseSearchCond;
 import com.bulc.homepage.licensing.query.view.LicenseDetailView;
 import com.bulc.homepage.licensing.query.view.LicenseSummaryView;
+import com.bulc.homepage.licensing.service.LicenseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +26,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 관리자용 라이선스 조회 API Controller.
+ * 관리자용 라이선스 API Controller.
  *
- * 라이선스 검색, 목록 조회 등 관리자 기능을 제공합니다.
+ * 라이선스 검색, 목록 조회, 수동 발급 등 관리자 기능을 제공합니다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/licenses")
@@ -32,6 +37,7 @@ import java.util.UUID;
 public class LicenseAdminController {
 
     private final LicenseQueryService licenseQueryService;
+    private final LicenseService licenseService;
 
     /**
      * 라이선스 검색 (페이징).
@@ -84,5 +90,24 @@ public class LicenseAdminController {
     @GetMapping("/{licenseId}")
     public ResponseEntity<LicenseDetailView> getLicense(@PathVariable UUID licenseId) {
         return ResponseEntity.ok(licenseQueryService.getById(licenseId));
+    }
+
+    /**
+     * 라이선스 수동 발급 (관리자용).
+     *
+     * 관리자가 결제 없이 사용자에게 직접 라이선스를 발급합니다.
+     *
+     * POST /api/admin/licenses
+     */
+    @PostMapping
+    public ResponseEntity<AdminLicenseIssueResponse> issueLicense(
+            @Valid @RequestBody AdminLicenseIssueRequest request) {
+        License license = licenseService.issueLicenseByAdmin(
+                request.userId(),
+                request.planId(),
+                request.usageCategoryOrDefault(),
+                request.memo()
+        );
+        return ResponseEntity.ok(AdminLicenseIssueResponse.from(license));
     }
 }

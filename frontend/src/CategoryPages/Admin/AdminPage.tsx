@@ -2,9 +2,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
+import { formatPhoneNumber } from '../../utils/phoneUtils';
 import './AdminPage.css';
 
 interface User {
+  id: string;
   email: string;
   name: string;
   phone: string;
@@ -17,6 +19,7 @@ interface Product {
   code: string;
   name: string;
   description: string;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -28,6 +31,7 @@ interface PricePlan {
   price: number;
   currency: string;
   isActive: boolean;
+  licensePlanId: string | null;
   createdAt: string;
 }
 
@@ -41,17 +45,46 @@ interface License {
   createdAt: string;
 }
 
+interface LicensePlan {
+  id: string;
+  productId: string;
+  code: string;
+  name: string;
+  description: string;
+  licenseType: string;
+  durationDays: number;
+  maxActivations: number;
+  active: boolean;
+}
+
 interface Payment {
   id: number;
   userEmail: string;
+  userName: string | null;
   orderId: string;
   amount: number;
   currency: string;
   status: string;
+  paymentMethod: string | null;
   createdAt: string;
 }
 
-type TabType = 'users' | 'licenses' | 'payments' | 'products';
+interface Promotion {
+  id: number;
+  code: string;
+  name: string;
+  discountType: number;
+  discountValue: number;
+  productCode: string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+type TabType = 'users' | 'licenses' | 'payments' | 'products' | 'promotions';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -61,9 +94,15 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAdmin, isAuthReady } = useAuth();
+  const { isLoggedIn, isAdmin, isAuthReady, user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('users');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 시스템 관리자 여부 (000만 사용자 권한 수정, 라이선스 수동 발급 가능)
+  const isSystemAdmin = user?.rolesCode === '000';
+
+  // 프로모션/상품 관리 가능 여부 (000, 001 모두 가능)
+  const canManagePromotions = user?.rolesCode === '000' || user?.rolesCode === '001';
 
   // 데이터 상태
   const [users, setUsers] = useState<User[]>([]);
@@ -71,6 +110,66 @@ const AdminPage: React.FC = () => {
   const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+
+  // 프로모션 모달 상태
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [promotionForm, setPromotionForm] = useState({
+    code: '',
+    name: '',
+    discountType: 10,
+    discountValue: 0,
+    productCode: '',
+    usageLimit: '',
+    validFrom: '',
+    validUntil: '',
+    isActive: true,
+  });
+
+  // 상품 모달 상태
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productForm, setProductForm] = useState({
+    code: '',
+    name: '',
+    description: '',
+    isActive: true,
+  });
+
+  // 요금제 모달 상태
+  const [isPricePlanModalOpen, setIsPricePlanModalOpen] = useState(false);
+  const [editingPricePlan, setEditingPricePlan] = useState<PricePlan | null>(null);
+  const [pricePlanForm, setPricePlanForm] = useState({
+    productCode: '',
+    name: '',
+    description: '',
+    price: 0,
+    currency: 'KRW',
+    licensePlanId: '',
+    isActive: true,
+  });
+
+  // 라이선스 발급 모달 상태
+  const [licensePlans, setLicensePlans] = useState<LicensePlan[]>([]);
+  const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
+  const [licenseForm, setLicenseForm] = useState({
+    userId: '',
+    planId: '',
+    memo: '',
+  });
+  const [licenseIssueResult, setLicenseIssueResult] = useState<{
+    success: boolean;
+    licenseKey?: string;
+    message?: string;
+  } | null>(null);
+  const [isIssuingLicense, setIsIssuingLicense] = useState(false);
+
+  // 사용자 권한 수정 모달 상태
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   // 검색 상태
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,8 +218,10 @@ const AdminPage: React.FC = () => {
     const query = appliedSearch.toLowerCase();
     return payments.filter(payment =>
       payment.userEmail.toLowerCase().includes(query) ||
+      (payment.userName && payment.userName.toLowerCase().includes(query)) ||
       payment.orderId.toLowerCase().includes(query) ||
-      payment.status.toLowerCase().includes(query)
+      payment.status.toLowerCase().includes(query) ||
+      (payment.paymentMethod && payment.paymentMethod.toLowerCase().includes(query))
     );
   }, [payments, appliedSearch]);
 
@@ -141,6 +242,15 @@ const AdminPage: React.FC = () => {
       plan.productCode.toLowerCase().includes(query)
     );
   }, [pricePlans, appliedSearch]);
+
+  const filteredPromotions = useMemo(() => {
+    if (!appliedSearch) return promotions;
+    const query = appliedSearch.toLowerCase();
+    return promotions.filter(promo =>
+      promo.code.toLowerCase().includes(query) ||
+      promo.name.toLowerCase().includes(query)
+    );
+  }, [promotions, appliedSearch]);
 
   // 페이징 계산
   const getPaginatedData = <T,>(data: T[]): T[] => {
@@ -186,6 +296,8 @@ const AdminPage: React.FC = () => {
             break;
           case 'licenses':
             await fetchLicenses(token);
+            await fetchUsers(token);  // 라이선스 발급 시 사용자 선택용
+            await fetchLicensePlans(token);  // 라이선스 발급 시 플랜 선택용
             break;
           case 'payments':
             await fetchPayments(token);
@@ -193,6 +305,11 @@ const AdminPage: React.FC = () => {
           case 'products':
             await fetchProducts(token);
             await fetchPricePlans(token);
+            await fetchLicensePlans(token);  // 요금제에 라이선스 플랜 연결용
+            break;
+          case 'promotions':
+            await fetchPromotions(token);
+            await fetchProducts(token);
             break;
         }
       } catch (error) {
@@ -255,6 +372,488 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  const fetchPromotions = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/promotions`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setPromotions(data);
+    }
+  };
+
+  const fetchLicensePlans = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/license-plans?activeOnly=true`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      // Page 응답에서 content 추출
+      setLicensePlans(data.content || data);
+    }
+  };
+
+  // 프로모션 CRUD 함수들
+  const openPromotionModal = (promotion?: Promotion) => {
+    if (promotion) {
+      setEditingPromotion(promotion);
+      setPromotionForm({
+        code: promotion.code,
+        name: promotion.name,
+        discountType: promotion.discountType,
+        discountValue: promotion.discountValue,
+        productCode: promotion.productCode || '',
+        usageLimit: promotion.usageLimit?.toString() || '',
+        validFrom: promotion.validFrom ? promotion.validFrom.slice(0, 16) : '',
+        validUntil: promotion.validUntil ? promotion.validUntil.slice(0, 16) : '',
+        isActive: promotion.isActive,
+      });
+    } else {
+      setEditingPromotion(null);
+      setPromotionForm({
+        code: '',
+        name: '',
+        discountType: 10,
+        discountValue: 0,
+        productCode: '',
+        usageLimit: '',
+        validFrom: '',
+        validUntil: '',
+        isActive: true,
+      });
+    }
+    setIsPromotionModalOpen(true);
+  };
+
+  const closePromotionModal = () => {
+    setIsPromotionModalOpen(false);
+    setEditingPromotion(null);
+  };
+
+  const handlePromotionSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const payload = {
+      code: promotionForm.code.toUpperCase(),
+      name: promotionForm.name,
+      discountType: promotionForm.discountType,
+      discountValue: promotionForm.discountValue,
+      productCode: promotionForm.productCode || null,
+      usageLimit: promotionForm.usageLimit ? parseInt(promotionForm.usageLimit) : null,
+      validFrom: promotionForm.validFrom ? promotionForm.validFrom + ':00' : null,
+      validUntil: promotionForm.validUntil ? promotionForm.validUntil + ':00' : null,
+      isActive: promotionForm.isActive,
+    };
+
+    try {
+      const url = editingPromotion
+        ? `${API_URL}/api/promotions/${editingPromotion.id}`
+        : `${API_URL}/api/promotions`;
+      const method = editingPromotion ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closePromotionModal();
+        await fetchPromotions(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('프로모션 저장 실패:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDeletePromotion = async (id: number) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/promotions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchPromotions(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('프로모션 삭제 실패:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleTogglePromotion = async (id: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/promotions/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchPromotions(token);
+      }
+    } catch (error) {
+      console.error('프로모션 토글 실패:', error);
+    }
+  };
+
+  // 상품 CRUD 함수들
+  const openProductModal = (product?: Product) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        code: product.code,
+        name: product.name,
+        description: product.description || '',
+        isActive: product.isActive,
+      });
+    } else {
+      setEditingProduct(null);
+      setProductForm({
+        code: '',
+        name: '',
+        description: '',
+        isActive: true,
+      });
+    }
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleProductSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const payload = {
+      code: productForm.code.toUpperCase(),
+      name: productForm.name,
+      description: productForm.description || null,
+      isActive: productForm.isActive,
+    };
+
+    try {
+      const url = editingProduct
+        ? `${API_URL}/api/admin/products/${editingProduct.code}`
+        : `${API_URL}/api/admin/products`;
+      const method = editingProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closeProductModal();
+        await fetchProducts(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('상품 저장 실패:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDeleteProduct = async (code: string) => {
+    if (!window.confirm('정말 삭제(비활성화)하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/products/${code}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchProducts(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('상품 삭제 실패:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleToggleProduct = async (code: string) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/products/${code}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchProducts(token);
+      }
+    } catch (error) {
+      console.error('상품 토글 실패:', error);
+    }
+  };
+
+  // 요금제 CRUD 함수들
+  const openPricePlanModal = (plan?: PricePlan) => {
+    if (plan) {
+      setEditingPricePlan(plan);
+      setPricePlanForm({
+        productCode: plan.productCode,
+        name: plan.name,
+        description: plan.description || '',
+        price: plan.price,
+        currency: plan.currency,
+        licensePlanId: plan.licensePlanId || '',
+        isActive: plan.isActive,
+      });
+    } else {
+      setEditingPricePlan(null);
+      setPricePlanForm({
+        productCode: products.length > 0 ? products[0].code : '',
+        name: '',
+        description: '',
+        price: 0,
+        currency: 'KRW',
+        licensePlanId: '',
+        isActive: true,
+      });
+    }
+    setIsPricePlanModalOpen(true);
+  };
+
+  const closePricePlanModal = () => {
+    setIsPricePlanModalOpen(false);
+    setEditingPricePlan(null);
+  };
+
+  const handlePricePlanSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const payload = {
+      productCode: pricePlanForm.productCode,
+      name: pricePlanForm.name,
+      description: pricePlanForm.description || null,
+      price: pricePlanForm.price,
+      currency: pricePlanForm.currency,
+      licensePlanId: pricePlanForm.licensePlanId || null,
+      isActive: pricePlanForm.isActive,
+    };
+
+    try {
+      const url = editingPricePlan
+        ? `${API_URL}/api/admin/price-plans/${editingPricePlan.id}`
+        : `${API_URL}/api/admin/price-plans`;
+      const method = editingPricePlan ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closePricePlanModal();
+        await fetchPricePlans(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('요금제 저장 실패:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDeletePricePlan = async (id: number) => {
+    if (!window.confirm('정말 삭제(비활성화)하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/price-plans/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchPricePlans(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('요금제 삭제 실패:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleTogglePricePlan = async (id: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/price-plans/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchPricePlans(token);
+      }
+    } catch (error) {
+      console.error('요금제 토글 실패:', error);
+    }
+  };
+
+  // 라이선스 발급 모달 함수들
+  const openLicenseModal = () => {
+    setLicenseForm({ userId: '', planId: '', memo: '' });
+    setLicenseIssueResult(null);
+    setIsLicenseModalOpen(true);
+  };
+
+  const closeLicenseModal = () => {
+    setIsLicenseModalOpen(false);
+    setLicenseIssueResult(null);
+  };
+
+  const handleLicenseIssue = async () => {
+    if (!licenseForm.userId || !licenseForm.planId) {
+      alert('사용자와 플랜을 선택해주세요.');
+      return;
+    }
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setIsIssuingLicense(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/licenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: licenseForm.userId,
+          planId: licenseForm.planId,
+          usageCategory: 'COMMERCIAL',
+          memo: licenseForm.memo || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setLicenseIssueResult({
+          success: true,
+          licenseKey: data.licenseKey,
+          message: data.message,
+        });
+        // 라이선스 목록 새로고침
+        await fetchLicenses(token);
+      } else {
+        setLicenseIssueResult({
+          success: false,
+          message: data.message || '라이선스 발급에 실패했습니다.',
+        });
+      }
+    } catch (error) {
+      console.error('라이선스 발급 실패:', error);
+      setLicenseIssueResult({
+        success: false,
+        message: '라이선스 발급 중 오류가 발생했습니다.',
+      });
+    } finally {
+      setIsIssuingLicense(false);
+    }
+  };
+
+  // 사용자 권한 수정 모달 함수들
+  const openRoleModal = (userToEdit: User) => {
+    setEditingUser(userToEdit);
+    setSelectedRole(userToEdit.rolesCode);
+    setIsRoleModalOpen(true);
+  };
+
+  const closeRoleModal = () => {
+    setIsRoleModalOpen(false);
+    setEditingUser(null);
+    setSelectedRole('');
+  };
+
+  const handleUpdateRole = async () => {
+    if (!editingUser || !selectedRole) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setIsUpdatingRole(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users/${editingUser.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rolesCode: selectedRole }),
+      });
+
+      if (response.ok) {
+        // 사용자 목록 새로고침
+        await fetchUsers(token);
+        closeRoleModal();
+        alert('권한이 변경되었습니다.');
+      } else {
+        const error = await response.json();
+        alert(error.message || '권한 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('권한 변경 실패:', error);
+      alert('권한 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
+
   const getRoleName = (code: string) => {
     switch (code) {
       case '000': return '관리자';
@@ -280,6 +879,34 @@ const AdminPage: React.FC = () => {
       return price.toLocaleString('ko-KR') + '원';
     }
     return '$' + price.toLocaleString('en-US');
+  };
+
+  const formatPaymentMethod = (method: string | null) => {
+    if (!method) return '-';
+
+    // 간편결제 제공자 매핑
+    const easyPayProviders: { [key: string]: string } = {
+      'EASY_PAY_TOSS': '간편결제(토스)',
+      'EASY_PAY_NAVER': '간편결제(네이버)',
+      'EASY_PAY_KAKAO': '간편결제(카카오)',
+      'EASY_PAY_SAMSUNG': '간편결제(삼성)',
+      'EASY_PAY_APPLE': '간편결제(애플)',
+      'EASY_PAY_PAYCO': '간편결제(페이코)',
+    };
+
+    if (method.startsWith('EASY_PAY_')) {
+      return easyPayProviders[method] || `간편결제(${method.replace('EASY_PAY_', '')})`;
+    }
+
+    const methodMap: { [key: string]: string } = {
+      'CARD': '카드',
+      'VIRTUAL_ACCOUNT': '가상계좌',
+      'EASY_PAY': '간편결제',
+      'TRANSFER': '계좌이체',
+      'MOBILE': '휴대폰',
+      'GIFT_CARD': '상품권',
+    };
+    return methodMap[method] || method;
   };
 
   // 페이지네이션 컴포넌트
@@ -409,12 +1036,6 @@ const AdminPage: React.FC = () => {
               사용자 관리
             </button>
             <button
-              className={`admin-tab ${activeTab === 'licenses' ? 'active' : ''}`}
-              onClick={() => setActiveTab('licenses')}
-            >
-              라이선스 관리
-            </button>
-            <button
               className={`admin-tab ${activeTab === 'payments' ? 'active' : ''}`}
               onClick={() => setActiveTab('payments')}
             >
@@ -425,6 +1046,18 @@ const AdminPage: React.FC = () => {
               onClick={() => setActiveTab('products')}
             >
               상품 관리
+            </button>
+            <button
+              className={`admin-tab ${activeTab === 'licenses' ? 'active' : ''}`}
+              onClick={() => setActiveTab('licenses')}
+            >
+              라이선스 관리
+            </button>
+            <button
+              className={`admin-tab ${activeTab === 'promotions' ? 'active' : ''}`}
+              onClick={() => setActiveTab('promotions')}
+            >
+              프로모션 관리
             </button>
           </div>
 
@@ -454,27 +1087,38 @@ const AdminPage: React.FC = () => {
                             <th>권한</th>
                             <th>국가</th>
                             <th>가입일</th>
+                            {isSystemAdmin && <th>관리</th>}
                           </tr>
                         </thead>
                         <tbody>
                           {filteredUsers.length > 0 ? (
-                            getPaginatedData(filteredUsers).map((user) => (
-                              <tr key={user.email}>
-                                <td>{user.email}</td>
-                                <td>{user.name || '-'}</td>
-                                <td>{user.phone || '-'}</td>
+                            getPaginatedData(filteredUsers).map((userData) => (
+                              <tr key={userData.email}>
+                                <td>{userData.email}</td>
+                                <td>{userData.name || '-'}</td>
+                                <td>{formatPhoneNumber(userData.phone) || '-'}</td>
                                 <td>
-                                  <span className={`role-badge role-${user.rolesCode}`}>
-                                    {getRoleName(user.rolesCode)}
+                                  <span className={`role-badge role-${userData.rolesCode}`}>
+                                    {getRoleName(userData.rolesCode)}
                                   </span>
                                 </td>
-                                <td>{user.countryCode || '-'}</td>
-                                <td>{formatDate(user.createdAt)}</td>
+                                <td>{userData.countryCode || '-'}</td>
+                                <td>{formatDate(userData.createdAt)}</td>
+                                {isSystemAdmin && (
+                                  <td>
+                                    <button
+                                      className="action-btn edit"
+                                      onClick={() => openRoleModal(userData)}
+                                    >
+                                      권한수정
+                                    </button>
+                                  </td>
+                                )}
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={6} className="empty-row">
+                              <td colSpan={isSystemAdmin ? 7 : 6} className="empty-row">
                                 {appliedSearch ? '검색 결과가 없습니다.' : '등록된 사용자가 없습니다.'}
                               </td>
                             </tr>
@@ -492,9 +1136,16 @@ const AdminPage: React.FC = () => {
                     <SearchBar placeholder="라이선스 키, 소유자 ID, 상태로 검색" />
                     <div className="admin-section-header">
                       <h2>라이선스 목록</h2>
-                      <span className="admin-count">
-                        {appliedSearch ? `${filteredLicenses.length}개 / 전체 ${licenses.length}개` : `${licenses.length}개`}
-                      </span>
+                      <div className="admin-header-actions">
+                        <span className="admin-count">
+                          {appliedSearch ? `${filteredLicenses.length}개 / 전체 ${licenses.length}개` : `${licenses.length}개`}
+                        </span>
+                        {isSystemAdmin && (
+                          <button className="admin-add-btn" onClick={openLicenseModal}>
+                            + 라이선스 발급
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="admin-table-wrapper">
                       <table className="admin-table">
@@ -543,7 +1194,7 @@ const AdminPage: React.FC = () => {
                 {/* 결제 관리 */}
                 {activeTab === 'payments' && (
                   <div className="admin-section">
-                    <SearchBar placeholder="사용자 이메일, 주문번호, 상태로 검색" />
+                    <SearchBar placeholder="이름, 이메일, 주문번호, 결제수단, 상태로 검색" />
                     <div className="admin-section-header">
                       <h2>결제 내역</h2>
                       <span className="admin-count">
@@ -556,7 +1207,9 @@ const AdminPage: React.FC = () => {
                           <tr>
                             <th>ID</th>
                             <th>주문번호</th>
-                            <th>사용자</th>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>결제수단</th>
                             <th>금액</th>
                             <th>상태</th>
                             <th>결제일</th>
@@ -568,7 +1221,9 @@ const AdminPage: React.FC = () => {
                               <tr key={payment.id}>
                                 <td>{payment.id}</td>
                                 <td>{payment.orderId}</td>
+                                <td>{payment.userName || '-'}</td>
                                 <td>{payment.userEmail}</td>
+                                <td>{formatPaymentMethod(payment.paymentMethod)}</td>
                                 <td>{formatPrice(payment.amount, payment.currency)}</td>
                                 <td>
                                   <span className={`status-badge status-${payment.status?.toLowerCase()}`}>
@@ -580,7 +1235,7 @@ const AdminPage: React.FC = () => {
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={6} className="empty-row">
+                              <td colSpan={8} className="empty-row">
                                 {appliedSearch ? '검색 결과가 없습니다.' : '결제 내역이 없습니다.'}
                               </td>
                             </tr>
@@ -599,9 +1254,16 @@ const AdminPage: React.FC = () => {
                     <div className="admin-section">
                       <div className="admin-section-header">
                         <h2>상품 목록</h2>
-                        <span className="admin-count">
-                          {appliedSearch ? `${filteredProducts.length}개 / 전체 ${products.length}개` : `${products.length}개`}
-                        </span>
+                        <div className="admin-header-actions">
+                          <span className="admin-count">
+                            {appliedSearch ? `${filteredProducts.length}개 / 전체 ${products.length}개` : `${products.length}개`}
+                          </span>
+                          {canManagePromotions && (
+                            <button className="admin-add-btn" onClick={() => openProductModal()}>
+                              + 상품 추가
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="admin-table-wrapper">
                         <table className="admin-table">
@@ -610,7 +1272,9 @@ const AdminPage: React.FC = () => {
                               <th>코드</th>
                               <th>상품명</th>
                               <th>설명</th>
+                              <th>상태</th>
                               <th>생성일</th>
+                              {canManagePromotions && <th>관리</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -620,12 +1284,44 @@ const AdminPage: React.FC = () => {
                                   <td>{product.code}</td>
                                   <td>{product.name}</td>
                                   <td>{product.description || '-'}</td>
+                                  <td>
+                                    {canManagePromotions ? (
+                                      <button
+                                        className={`status-toggle-btn ${product.isActive ? 'active' : 'inactive'}`}
+                                        onClick={() => handleToggleProduct(product.code)}
+                                      >
+                                        {product.isActive ? '활성' : '비활성'}
+                                      </button>
+                                    ) : (
+                                      <span className={`status-badge ${product.isActive ? 'status-active' : 'status-inactive'}`}>
+                                        {product.isActive ? '활성' : '비활성'}
+                                      </span>
+                                    )}
+                                  </td>
                                   <td>{formatDate(product.createdAt)}</td>
+                                  {canManagePromotions && (
+                                    <td>
+                                      <div className="action-buttons">
+                                        <button
+                                          className="action-btn edit"
+                                          onClick={() => openProductModal(product)}
+                                        >
+                                          수정
+                                        </button>
+                                        <button
+                                          className="action-btn delete"
+                                          onClick={() => handleDeleteProduct(product.code)}
+                                        >
+                                          삭제
+                                        </button>
+                                      </div>
+                                    </td>
+                                  )}
                                 </tr>
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={4} className="empty-row">
+                                <td colSpan={canManagePromotions ? 6 : 5} className="empty-row">
                                   {appliedSearch ? '검색 결과가 없습니다.' : '등록된 상품이 없습니다.'}
                                 </td>
                               </tr>
@@ -638,9 +1334,16 @@ const AdminPage: React.FC = () => {
                     <div className="admin-section">
                       <div className="admin-section-header">
                         <h2>요금제 목록</h2>
-                        <span className="admin-count">
-                          {appliedSearch ? `${filteredPricePlans.length}개 / 전체 ${pricePlans.length}개` : `${pricePlans.length}개`}
-                        </span>
+                        <div className="admin-header-actions">
+                          <span className="admin-count">
+                            {appliedSearch ? `${filteredPricePlans.length}개 / 전체 ${pricePlans.length}개` : `${pricePlans.length}개`}
+                          </span>
+                          {canManagePromotions && (
+                            <button className="admin-add-btn" onClick={() => openPricePlanModal()}>
+                              + 요금제 추가
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="admin-table-wrapper">
                         <table className="admin-table">
@@ -651,8 +1354,10 @@ const AdminPage: React.FC = () => {
                               <th>요금제명</th>
                               <th>설명</th>
                               <th>가격</th>
-                              <th>활성화</th>
+                              <th>라이선스 플랜</th>
+                              <th>상태</th>
                               <th>생성일</th>
+                              {canManagePromotions && <th>관리</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -665,16 +1370,53 @@ const AdminPage: React.FC = () => {
                                   <td>{plan.description || '-'}</td>
                                   <td>{formatPrice(plan.price, plan.currency)}</td>
                                   <td>
-                                    <span className={`status-badge ${plan.isActive ? 'status-active' : 'status-inactive'}`}>
-                                      {plan.isActive ? '활성' : '비활성'}
-                                    </span>
+                                    {plan.licensePlanId ? (
+                                      (() => {
+                                        const lp = licensePlans.find(p => p.id === plan.licensePlanId);
+                                        return lp ? `${lp.name}` : plan.licensePlanId;
+                                      })()
+                                    ) : (
+                                      <span className="text-muted">-</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {canManagePromotions ? (
+                                      <button
+                                        className={`status-toggle-btn ${plan.isActive ? 'active' : 'inactive'}`}
+                                        onClick={() => handleTogglePricePlan(plan.id)}
+                                      >
+                                        {plan.isActive ? '활성' : '비활성'}
+                                      </button>
+                                    ) : (
+                                      <span className={`status-badge ${plan.isActive ? 'status-active' : 'status-inactive'}`}>
+                                        {plan.isActive ? '활성' : '비활성'}
+                                      </span>
+                                    )}
                                   </td>
                                   <td>{formatDate(plan.createdAt)}</td>
+                                  {canManagePromotions && (
+                                    <td>
+                                      <div className="action-buttons">
+                                        <button
+                                          className="action-btn edit"
+                                          onClick={() => openPricePlanModal(plan)}
+                                        >
+                                          수정
+                                        </button>
+                                        <button
+                                          className="action-btn delete"
+                                          onClick={() => handleDeletePricePlan(plan.id)}
+                                        >
+                                          삭제
+                                        </button>
+                                      </div>
+                                    </td>
+                                  )}
                                 </tr>
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={7} className="empty-row">
+                                <td colSpan={canManagePromotions ? 9 : 8} className="empty-row">
                                   {appliedSearch ? '검색 결과가 없습니다.' : '등록된 요금제가 없습니다.'}
                                 </td>
                               </tr>
@@ -686,11 +1428,581 @@ const AdminPage: React.FC = () => {
                     </div>
                   </>
                 )}
+
+                {/* 프로모션 관리 */}
+                {activeTab === 'promotions' && (
+                  <div className="admin-section">
+                    <SearchBar placeholder="쿠폰 코드, 프로모션명으로 검색" />
+                    <div className="admin-section-header">
+                      <h2>프로모션 목록</h2>
+                      <div className="admin-header-actions">
+                        <span className="admin-count">
+                          {appliedSearch ? `${filteredPromotions.length}개 / 전체 ${promotions.length}개` : `${promotions.length}개`}
+                        </span>
+                        {canManagePromotions && (
+                          <button className="admin-add-btn" onClick={() => openPromotionModal()}>
+                            + 프로모션 추가
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="admin-table-wrapper">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>쿠폰 코드</th>
+                            <th>프로모션명</th>
+                            <th>할인율</th>
+                            <th>할인금액</th>
+                            <th>상품</th>
+                            <th>사용 현황</th>
+                            <th>유효 기간</th>
+                            <th>상태</th>
+                            {canManagePromotions && <th>관리</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredPromotions.length > 0 ? (
+                            getPaginatedData(filteredPromotions).map((promo) => (
+                              <tr key={promo.id}>
+                                <td>{promo.id}</td>
+                                <td className="coupon-code">{promo.code}</td>
+                                <td>{promo.name}</td>
+                                <td>{promo.discountType}%</td>
+                                <td>{promo.discountValue.toLocaleString()}원</td>
+                                <td>{promo.productCode || '전체'}</td>
+                                <td>
+                                  {promo.usageCount} / {promo.usageLimit || '∞'}
+                                </td>
+                                <td>
+                                  {promo.validFrom && promo.validUntil ? (
+                                    <>
+                                      {formatDate(promo.validFrom).split(' ')[0]}<br/>
+                                      ~ {formatDate(promo.validUntil).split(' ')[0]}
+                                    </>
+                                  ) : promo.validFrom ? (
+                                    `${formatDate(promo.validFrom).split(' ')[0]} ~`
+                                  ) : promo.validUntil ? (
+                                    `~ ${formatDate(promo.validUntil).split(' ')[0]}`
+                                  ) : (
+                                    '제한 없음'
+                                  )}
+                                </td>
+                                <td>
+                                  {canManagePromotions ? (
+                                    <button
+                                      className={`status-toggle-btn ${promo.isActive ? 'active' : 'inactive'}`}
+                                      onClick={() => handleTogglePromotion(promo.id)}
+                                    >
+                                      {promo.isActive ? '활성' : '비활성'}
+                                    </button>
+                                  ) : (
+                                    <span className={`status-badge ${promo.isActive ? 'status-active' : 'status-inactive'}`}>
+                                      {promo.isActive ? '활성' : '비활성'}
+                                    </span>
+                                  )}
+                                </td>
+                                {canManagePromotions && (
+                                  <td>
+                                    <div className="action-buttons">
+                                      <button
+                                        className="action-btn edit"
+                                        onClick={() => openPromotionModal(promo)}
+                                      >
+                                        수정
+                                      </button>
+                                      <button
+                                        className="action-btn delete"
+                                        onClick={() => handleDeletePromotion(promo.id)}
+                                      >
+                                        삭제
+                                      </button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={canManagePromotions ? 10 : 9} className="empty-row">
+                                {appliedSearch ? '검색 결과가 없습니다.' : '등록된 프로모션이 없습니다.'}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination totalItems={promotions.length} filteredCount={filteredPromotions.length} />
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
       </div>
+
+      {/* 프로모션 모달 */}
+      {isPromotionModalOpen && (
+        <div className="modal-overlay" onClick={closePromotionModal}>
+          <div className="modal-content promotion-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingPromotion ? '프로모션 수정' : '프로모션 추가'}</h3>
+              <button className="modal-close-btn" onClick={closePromotionModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>쿠폰 코드 <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={promotionForm.code}
+                  onChange={(e) => setPromotionForm({ ...promotionForm, code: e.target.value.toUpperCase() })}
+                  placeholder="예: SUMMER2024"
+                  maxLength={50}
+                />
+              </div>
+              <div className="form-group">
+                <label>프로모션 이름 <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={promotionForm.name}
+                  onChange={(e) => setPromotionForm({ ...promotionForm, name: e.target.value })}
+                  placeholder="예: 여름 할인 이벤트"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>할인율 (%) <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={promotionForm.discountType}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, discountType: parseInt(e.target.value) || 0 })}
+                    min={0}
+                    max={100}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>할인 금액 (원)</label>
+                  <input
+                    type="number"
+                    value={promotionForm.discountValue}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, discountValue: parseInt(e.target.value) || 0 })}
+                    min={0}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>적용 상품</label>
+                  <select
+                    value={promotionForm.productCode}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, productCode: e.target.value })}
+                  >
+                    <option value="">전체 상품</option>
+                    {products.map((product) => (
+                      <option key={product.code} value={product.code}>
+                        {product.name} ({product.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>사용 횟수 제한</label>
+                  <input
+                    type="number"
+                    value={promotionForm.usageLimit}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, usageLimit: e.target.value })}
+                    placeholder="무제한"
+                    min={0}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>시작일</label>
+                  <input
+                    type="datetime-local"
+                    value={promotionForm.validFrom}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, validFrom: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>종료일</label>
+                  <input
+                    type="datetime-local"
+                    value={promotionForm.validUntil}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, validUntil: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={promotionForm.isActive}
+                    onChange={(e) => setPromotionForm({ ...promotionForm, isActive: e.target.checked })}
+                  />
+                  활성화
+                </label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closePromotionModal}>취소</button>
+              <button className="btn-submit" onClick={handlePromotionSubmit}>
+                {editingPromotion ? '수정' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 라이선스 발급 모달 */}
+      {isLicenseModalOpen && (
+        <div className="modal-overlay" onClick={closeLicenseModal}>
+          <div className="modal-content license-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>라이선스 수동 발급</h3>
+              <button className="modal-close-btn" onClick={closeLicenseModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              {licenseIssueResult ? (
+                // 발급 결과 표시
+                <div className={`issue-result ${licenseIssueResult.success ? 'success' : 'error'}`}>
+                  {licenseIssueResult.success ? (
+                    <>
+                      <div className="result-icon success">✓</div>
+                      <h4>라이선스가 발급되었습니다</h4>
+                      <div className="license-key-display">
+                        <label>라이선스 키</label>
+                        <div className="key-value">
+                          <code>{licenseIssueResult.licenseKey}</code>
+                          <button
+                            className="copy-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(licenseIssueResult.licenseKey || '');
+                              alert('라이선스 키가 복사되었습니다.');
+                            }}
+                          >
+                            복사
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="result-icon error">✕</div>
+                      <h4>발급 실패</h4>
+                      <p className="error-message">{licenseIssueResult.message}</p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                // 발급 폼
+                <>
+                  <div className="form-group">
+                    <label>사용자 <span className="required">*</span></label>
+                    <select
+                      value={licenseForm.userId}
+                      onChange={(e) => setLicenseForm({ ...licenseForm, userId: e.target.value })}
+                    >
+                      <option value="">사용자를 선택하세요</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.email} {user.name ? `(${user.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>라이선스 플랜 <span className="required">*</span></label>
+                    <select
+                      value={licenseForm.planId}
+                      onChange={(e) => setLicenseForm({ ...licenseForm, planId: e.target.value })}
+                    >
+                      <option value="">플랜을 선택하세요</option>
+                      {licensePlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.name} ({plan.licenseType}, {plan.durationDays}일)
+                        </option>
+                      ))}
+                    </select>
+                    {licenseForm.planId && (
+                      <div className="plan-info">
+                        {(() => {
+                          const selectedPlan = licensePlans.find(p => p.id === licenseForm.planId);
+                          if (!selectedPlan) return null;
+                          return (
+                            <p>
+                              유형: {selectedPlan.licenseType === 'PERPETUAL' ? '영구' : '구독형'} |
+                              기간: {selectedPlan.durationDays}일 |
+                              최대 기기: {selectedPlan.maxActivations}대
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>메모 (발급 사유)</label>
+                    <textarea
+                      value={licenseForm.memo}
+                      onChange={(e) => setLicenseForm({ ...licenseForm, memo: e.target.value })}
+                      placeholder="예: 프로모션 지급, 테스트 목적 등"
+                      rows={2}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              {licenseIssueResult ? (
+                <button className="btn-submit" onClick={closeLicenseModal}>
+                  확인
+                </button>
+              ) : (
+                <>
+                  <button className="btn-cancel" onClick={closeLicenseModal}>취소</button>
+                  <button
+                    className="btn-submit"
+                    onClick={handleLicenseIssue}
+                    disabled={isIssuingLicense}
+                  >
+                    {isIssuingLicense ? '발급 중...' : '발급'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 사용자 권한 수정 모달 */}
+      {isRoleModalOpen && editingUser && (
+        <div className="modal-overlay" onClick={closeRoleModal}>
+          <div className="modal-content role-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>사용자 권한 수정</h3>
+              <button className="modal-close-btn" onClick={closeRoleModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="user-info-summary">
+                <div className="info-item">
+                  <label>이메일</label>
+                  <span>{editingUser.email}</span>
+                </div>
+                <div className="info-item">
+                  <label>이름</label>
+                  <span>{editingUser.name || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>현재 권한</label>
+                  <span className={`role-badge role-${editingUser.rolesCode}`}>
+                    {getRoleName(editingUser.rolesCode)}
+                  </span>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>변경할 권한 <span className="required">*</span></label>
+                <div className="role-options">
+                  <button
+                    type="button"
+                    className={`role-option-btn ${selectedRole === '000' ? 'selected' : ''}`}
+                    onClick={() => setSelectedRole('000')}
+                  >
+                    <span className="role-badge role-000">관리자</span>
+                    <span className="role-desc">전체 기능 접근 가능</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`role-option-btn ${selectedRole === '001' ? 'selected' : ''}`}
+                    onClick={() => setSelectedRole('001')}
+                  >
+                    <span className="role-badge role-001">매니저</span>
+                    <span className="role-desc">관리자 페이지 조회만 가능</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`role-option-btn ${selectedRole === '002' ? 'selected' : ''}`}
+                    onClick={() => setSelectedRole('002')}
+                  >
+                    <span className="role-badge role-002">일반</span>
+                    <span className="role-desc">일반 사용자 권한</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closeRoleModal}>취소</button>
+              <button
+                className="btn-submit"
+                onClick={handleUpdateRole}
+                disabled={isUpdatingRole || selectedRole === editingUser.rolesCode}
+              >
+                {isUpdatingRole ? '변경 중...' : '권한 변경'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 상품 모달 */}
+      {isProductModalOpen && (
+        <div className="modal-overlay" onClick={closeProductModal}>
+          <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingProduct ? '상품 수정' : '상품 추가'}</h3>
+              <button className="modal-close-btn" onClick={closeProductModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>상품 코드 <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={productForm.code}
+                  onChange={(e) => setProductForm({ ...productForm, code: e.target.value.toUpperCase() })}
+                  placeholder="예: BLC"
+                  maxLength={3}
+                  disabled={!!editingProduct}
+                />
+                {!editingProduct && <small>영문 대문자 3자 이하</small>}
+              </div>
+              <div className="form-group">
+                <label>상품명 <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  placeholder="예: BUL:C"
+                />
+              </div>
+              <div className="form-group">
+                <label>설명</label>
+                <textarea
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  placeholder="상품 설명을 입력하세요"
+                  rows={3}
+                />
+              </div>
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={productForm.isActive}
+                    onChange={(e) => setProductForm({ ...productForm, isActive: e.target.checked })}
+                  />
+                  활성화
+                </label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closeProductModal}>취소</button>
+              <button className="btn-submit" onClick={handleProductSubmit}>
+                {editingProduct ? '수정' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 요금제 모달 */}
+      {isPricePlanModalOpen && (
+        <div className="modal-overlay" onClick={closePricePlanModal}>
+          <div className="modal-content price-plan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingPricePlan ? '요금제 수정' : '요금제 추가'}</h3>
+              <button className="modal-close-btn" onClick={closePricePlanModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>상품 <span className="required">*</span></label>
+                <select
+                  value={pricePlanForm.productCode}
+                  onChange={(e) => setPricePlanForm({ ...pricePlanForm, productCode: e.target.value })}
+                  disabled={!!editingPricePlan}
+                >
+                  <option value="">상품을 선택하세요</option>
+                  {products.map((product) => (
+                    <option key={product.code} value={product.code}>
+                      {product.name} ({product.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>요금제명 <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={pricePlanForm.name}
+                  onChange={(e) => setPricePlanForm({ ...pricePlanForm, name: e.target.value })}
+                  placeholder="예: Basic Plan"
+                />
+              </div>
+              <div className="form-group">
+                <label>설명</label>
+                <textarea
+                  value={pricePlanForm.description}
+                  onChange={(e) => setPricePlanForm({ ...pricePlanForm, description: e.target.value })}
+                  placeholder="요금제 설명을 입력하세요"
+                  rows={2}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>가격 <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={pricePlanForm.price}
+                    onChange={(e) => setPricePlanForm({ ...pricePlanForm, price: parseInt(e.target.value) || 0 })}
+                    min={0}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>통화</label>
+                  <select
+                    value={pricePlanForm.currency}
+                    onChange={(e) => setPricePlanForm({ ...pricePlanForm, currency: e.target.value })}
+                  >
+                    <option value="KRW">KRW (원)</option>
+                    <option value="USD">USD ($)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>라이선스 플랜</label>
+                <select
+                  value={pricePlanForm.licensePlanId}
+                  onChange={(e) => setPricePlanForm({ ...pricePlanForm, licensePlanId: e.target.value })}
+                >
+                  <option value="">선택 안함 (라이선스 미발급)</option>
+                  {licensePlans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name} ({plan.licenseType === 'SUBSCRIPTION' ? '구독형' : plan.licenseType === 'PERPETUAL' ? '영구' : plan.licenseType}, {plan.durationDays}일, 최대 {plan.maxActivations}대)
+                    </option>
+                  ))}
+                </select>
+                <small>결제 완료 시 자동 발급될 라이선스 플랜을 선택하세요</small>
+              </div>
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={pricePlanForm.isActive}
+                    onChange={(e) => setPricePlanForm({ ...pricePlanForm, isActive: e.target.checked })}
+                  />
+                  활성화
+                </label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closePricePlanModal}>취소</button>
+              <button className="btn-submit" onClick={handlePricePlanSubmit}>
+                {editingPricePlan ? '수정' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

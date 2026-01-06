@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { usePreventRefresh } from '../hooks/useNavigationGuard';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -27,6 +28,10 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
   const [codeSent, setCodeSent] = useState(false);
+
+  // 새로고침 방지 - 모달이 열려있고 입력값이 있을 때만 활성화
+  const hasUserInput = email.length > 0 || password.length > 0 || passwordConfirm.length > 0;
+  usePreventRefresh(isOpen && hasUserInput);
 
   // ESC 키로 모달 닫기
   useEffect(() => {

@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
+import ErrorBoundary from './components/ErrorBoundary';
+import ErrorPage from './components/ErrorPage';
 import MeteorPage from './CategoryPages/METEOR/Meteor';
 import BulCPage from './CategoryPages/BULC/BulC';
 import VRPage from './CategoryPages/VR/VR';
@@ -70,26 +72,38 @@ const MainPage: React.FC = () => {
   );
 };
 
+// 404 페이지 래퍼 컴포넌트
+const NotFoundPage: React.FC = () => {
+  const notFoundError = new Error('요청하신 페이지를 찾을 수 없습니다.');
+  (notFoundError as any).code = 404;
+  return <ErrorPage error={notFoundError} />;
+};
+
 // App 라우터
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainPage />} />
-          <Route path="/meteor" element={<MeteorPage />} />
-          <Route path="/bulc" element={<BulCPage />} />
-          <Route path="/vr" element={<VRPage />} />
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/payment/success" element={<PaymentSuccess />} />
-          <Route path="/payment/fail" element={<PaymentFail />} />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
-          <Route path="/oauth/setup-password" element={<OAuthSetupPassword />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/meteor" element={<MeteorPage />} />
+            <Route path="/bulc" element={<BulCPage />} />
+            <Route path="/vr" element={<VRPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/fail" element={<PaymentFail />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/oauth/setup-password" element={<OAuthSetupPassword />} />
+            <Route path="/error" element={<ErrorPage />} />
+            {/* 404 - 매칭되지 않는 모든 경로 */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

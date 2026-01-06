@@ -14,6 +14,10 @@ interface NavigationGuardOptions {
   guestOnly?: boolean;
   // 뒤로가기 방지 여부
   preventBack?: boolean;
+  // 새로고침 방지 여부
+  preventRefresh?: boolean;
+  // 새로고침 방지 활성화 조건 (true일 때만 방지)
+  shouldPreventRefresh?: boolean;
   // 리다이렉트할 경로
   redirectTo?: string;
 }
@@ -27,6 +31,8 @@ export const useNavigationGuard = (options: NavigationGuardOptions = {}) => {
     requireAuth = false,
     guestOnly = false,
     preventBack = false,
+    preventRefresh = false,
+    shouldPreventRefresh = true,
     redirectTo = '/',
   } = options;
 
@@ -53,6 +59,24 @@ export const useNavigationGuard = (options: NavigationGuardOptions = {}) => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [preventBack, location.pathname]);
+
+  // 새로고침 방지 이벤트 핸들러
+  useEffect(() => {
+    if (!preventRefresh || !shouldPreventRefresh) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // 대부분의 브라우저에서 커스텀 메시지는 무시되지만, 표준을 위해 설정
+      e.returnValue = '작성 중인 내용이 있습니다. 페이지를 떠나시겠습니까?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [preventRefresh, shouldPreventRefresh]);
 
   // 인증 상태에 따른 리다이렉트
   useEffect(() => {
@@ -109,6 +133,29 @@ export const useAuthNavigation = () => {
     navigateAfterSignup,
     navigateAfterPayment,
   };
+};
+
+/**
+ * 새로고침 방지 전용 훅
+ * Router 의존성 없이 단순히 beforeunload 이벤트만 처리
+ * 모달 등 Router 컨텍스트 외부에서 사용 가능
+ */
+export const usePreventRefresh = (shouldPrevent: boolean = true) => {
+  useEffect(() => {
+    if (!shouldPrevent) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '작성 중인 내용이 있습니다. 페이지를 떠나시겠습니까?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [shouldPrevent]);
 };
 
 export default useNavigationGuard;

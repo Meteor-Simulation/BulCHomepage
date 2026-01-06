@@ -62,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
                         // 상품/요금제 API (공개)
                         .requestMatchers("/api/products/**").permitAll()
+                        // 프로모션 쿠폰 검증 API (공개)
+                        .requestMatchers("/api/promotions/validate").permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )

@@ -9,7 +9,7 @@ import java.util.Optional;
  * Product 조회용 Repository (licensing 모듈에서 사용).
  * productCode로 productId를 조회할 때 사용합니다.
  */
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, String> {
 
     /**
      * 제품 코드로 조회.

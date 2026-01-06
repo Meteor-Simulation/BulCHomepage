@@ -306,23 +306,23 @@
   gap: 16px;
 }
 
-.form-group {
+.payment-page .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.payment-page .form-group label {
   font-size: 14px;
   font-weight: 500;
   color: #333;
 }
 
-.form-group .required {
+.payment-page .form-group .required {
   color: #C4320A;
 }
 
-.form-group input {
+.payment-page .form-group input {
   padding: 14px 16px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -330,13 +330,13 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-group input:focus {
+.payment-page .form-group input:focus {
   outline: none;
   border-color: #C4320A;
   box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
 }
 
-.form-group input::placeholder {
+.payment-page .form-group input::placeholder {
   color: #aaa;
 }
 
@@ -1126,13 +1126,357 @@
 }
 
 /* 읽기 전용 입력 필드 */
-.form-group input.readonly {
+.payment-page .form-group input.readonly {
   background: #f5f5f7;
   color: #666;
   cursor: not-allowed;
 }
 
-.form-group input.readonly:focus {
+.payment-page .form-group input.readonly:focus {
   border-color: #e0e0e0;
   box-shadow: none;
+}
+
+/* ========================================
+   쿠폰 섹션 스타일
+======================================== */
+.coupon-section {
+  padding: 24px 32px;
+}
+
+.coupon-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coupon-input-row {
+  display: flex;
+  gap: 12px;
+}
+
+.coupon-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.coupon-input:focus {
+  outline: none;
+  border-color: #C4320A;
+  box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
+}
+
+.coupon-input.error {
+  border-color: #dc2626;
+}
+
+.coupon-input::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+  color: #aaa;
+}
+
+.coupon-input:disabled {
+  background: #f5f5f7;
+  cursor: not-allowed;
+}
+
+.apply-coupon-btn {
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.apply-coupon-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.3);
+}
+
+.apply-coupon-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.coupon-error {
+  font-size: 13px;
+  color: #dc2626;
+  margin: 0;
+  padding-left: 4px;
+}
+
+/* 적용된 쿠폰 표시 */
+.applied-coupon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+}
+
+.coupon-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coupon-tag {
+  font-size: 24px;
+}
+
+.coupon-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coupon-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.coupon-discount {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.remove-coupon-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 50%;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-coupon-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #dc2626;
+}
+
+/* 할인 row 스타일 */
+.summary-row.discount {
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+  .coupon-input-row {
+    flex-direction: column;
+  }
+
+  .apply-coupon-btn {
+    width: 100%;
+  }
+
+  .applied-coupon {
+    padding: 12px 16px;
+  }
+
+  .coupon-tag {
+    font-size: 20px;
+  }
+}
+
+/* ========================================
+   이용약관/개인정보처리방침 모달 스타일
+======================================== */
+.terms-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.terms-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.terms-modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.terms-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #374151;
+}
+
+.terms-modal-content h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 24px 0 12px;
+}
+
+.terms-modal-content h3:first-child {
+  margin-top: 0;
+}
+
+.terms-modal-content p {
+  margin: 0 0 16px;
+  color: #4b5563;
+}
+
+.terms-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+}
+
+.terms-cancel-btn {
+  padding: 12px 24px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.terms-cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.terms-agree-btn {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.terms-agree-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.3);
+}
+
+/* 약관 링크 버튼 */
+.terms-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.terms-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  color: #C4320A;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.terms-link:hover {
+  color: #a02a08;
+}
+
+.agreed-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  background: #10b981;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 640px) {
+  .terms-modal {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .terms-modal-header {
+    padding: 20px;
+  }
+
+  .terms-modal-content {
+    padding: 20px;
+  }
+
+  .terms-modal-footer {
+    padding: 16px 20px;
+    border-radius: 0;
+  }
+
+  .terms-cancel-btn,
+  .terms-agree-btn {
+    flex: 1;
+    text-align: center;
+  }
 }

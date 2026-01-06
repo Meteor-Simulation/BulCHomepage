@@ -11,6 +11,7 @@ import com.bulc.homepage.licensing.dto.LicenseIssueResult;
 import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.repository.PaymentRepository;
 import com.bulc.homepage.repository.PricePlanRepository;
+import com.bulc.homepage.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PricePlanRepository pricePlanRepository;
+    private final UserRepository userRepository;
     private final LicenseService licenseService;
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
@@ -135,6 +137,11 @@ public class PaymentService {
      */
     private Payment savePaymentInfo(PaymentConfirmRequest request, JsonNode responseBody,
                                      String userEmail, PricePlan pricePlan) {
+        // 사용자 이름 조회
+        String userName = userRepository.findByEmail(userEmail)
+                .map(user -> user.getName())
+                .orElse(null);
+
         // Payment 엔티티 생성
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(request.getAmount()))
@@ -142,16 +149,20 @@ public class PaymentService {
                 .status("C")  // C: Completed (완료)
                 .userEmail(userEmail)
                 .userEmailFk(userEmail)
+                .userName(userName)
                 .pricePlan(pricePlan)
                 .paidAt(LocalDateTime.now())
                 .build();
 
         // PaymentDetail 엔티티 생성
+        String method = responseBody.path("method").asText();
+        String paymentMethodCode = convertMethodToCode(method, responseBody);
+
         PaymentDetail paymentDetail = PaymentDetail.builder()
                 .payment(payment)
                 .orderId(request.getOrderId())
                 .paymentKey(request.getPaymentKey())
-                .paymentMethod(responseBody.path("method").asText())
+                .paymentMethod(paymentMethodCode)
                 .paymentProvider("TOSS")
                 .build();
 
@@ -182,5 +193,45 @@ public class PaymentService {
     public Payment getPaymentByOrderId(String orderId) {
         return paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("결제 정보를 찾을 수 없습니다: " + orderId));
+    }
+
+    /**
+     * 토스페이먼츠 결제 수단 한글 → 영문 코드 변환
+     */
+    private String convertMethodToCode(String method, JsonNode responseBody) {
+        if (method == null) return null;
+
+        // 간편결제인 경우 제공자 정보 추가
+        if ("간편결제".equals(method)) {
+            String provider = responseBody.path("easyPay").path("provider").asText();
+            if (provider != null && !provider.isEmpty()) {
+                return "EASY_PAY_" + convertProviderToCode(provider);
+            }
+            return "EASY_PAY";
+        }
+
+        return switch (method) {
+            case "카드" -> "CARD";
+            case "가상계좌" -> "VIRTUAL_ACCOUNT";
+            case "계좌이체" -> "TRANSFER";
+            case "휴대폰" -> "MOBILE";
+            case "문화상품권", "도서문화상품권", "게임문화상품권" -> "GIFT_CARD";
+            default -> method;
+        };
+    }
+
+    /**
+     * 간편결제 제공자 한글 → 영문 코드 변환
+     */
+    private String convertProviderToCode(String provider) {
+        return switch (provider) {
+            case "토스페이" -> "TOSS";
+            case "네이버페이" -> "NAVER";
+            case "카카오페이" -> "KAKAO";
+            case "삼성페이" -> "SAMSUNG";
+            case "애플페이" -> "APPLE";
+            case "페이코" -> "PAYCO";
+            default -> provider.toUpperCase().replace(" ", "_");
+        };
     }
 }

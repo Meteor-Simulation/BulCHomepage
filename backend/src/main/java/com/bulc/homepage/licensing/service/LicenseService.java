@@ -289,6 +289,70 @@ public class LicenseService {
         return issueLicenseWithPlan(ownerType, ownerId, plan.getId(), sourceOrderId, usageCategory);
     }
 
+    /**
+     * 관리자용 라이선스 수동 발급.
+     *
+     * 관리자가 결제 없이 사용자에게 직접 라이선스를 발급합니다.
+     * sourceOrderId 없이 발급되며, 발급 즉시 활성화됩니다.
+     *
+     * @param userId 사용자 ID
+     * @param planId 플랜 ID
+     * @param usageCategory 사용 카테고리 (null이면 COMMERCIAL)
+     * @param memo 관리자 메모 (발급 사유 등)
+     * @return 발급된 라이선스 정보
+     */
+    @Transactional
+    public License issueLicenseByAdmin(UUID userId, UUID planId, UsageCategory usageCategory, String memo) {
+        // Plan 조회 (활성화되고 삭제되지 않은 플랜만)
+        LicensePlan plan = planRepository.findAvailableById(planId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        // 동일 제품에 대한 기존 라이선스 확인
+        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
+                OwnerType.USER, userId, plan.getProductId()
+        ).ifPresent(existing -> {
+            if (existing.getStatus() != LicenseStatus.REVOKED) {
+                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
+            }
+        });
+
+        // 라이선스 키 생성
+        String licenseKey = generateLicenseKey();
+
+        // Plan에서 PolicySnapshot 생성
+        Map<String, Object> policySnapshot = plan.toPolicySnapshot();
+        // 관리자 메모 추가
+        if (memo != null && !memo.isEmpty()) {
+            policySnapshot.put("adminMemo", memo);
+            policySnapshot.put("issuedByAdmin", true);
+        }
+
+        // 유효기간 계산
+        Instant now = Instant.now();
+        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
+                ? null
+                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+
+        License license = License.builder()
+                .ownerType(OwnerType.USER)
+                .ownerId(userId)
+                .productId(plan.getProductId())
+                .planId(planId)
+                .licenseType(plan.getLicenseType())
+                .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
+                .validFrom(now)
+                .validUntil(validUntil)
+                .policySnapshot(policySnapshot)
+                .licenseKey(licenseKey)
+                .sourceOrderId(null)  // 관리자 발급은 주문 없음
+                .build();
+
+        // 발급 즉시 활성화
+        license.activate();
+
+        return licenseRepository.save(license);
+    }
+
     // ==========================================
     // 클라이언트 API용 메서드 (Controller에서 호출)
     // ==========================================

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
+import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import './MyPage.css';
 
 interface UserInfo {
@@ -9,6 +10,20 @@ interface UserInfo {
   name: string;
   phone: string;
   country: string;
+}
+
+interface License {
+  id: string;
+  productId: string;
+  productName: string | null;
+  planName: string | null;
+  licenseType: string;
+  status: string;
+  validFrom: string;
+  validUntil: string;
+  entitlements: string[];
+  usedActivations: number;
+  maxActivations: number;
 }
 
 const COUNTRIES = [
@@ -31,11 +46,18 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAuthReady, logout } = useAuth();
+  const { isLoggedIn, isAuthReady, logout, user } = useAuth();
+
+  // 관리자 여부 (rolesCode '000'만)
+  const isSystemAdmin = user?.rolesCode === '000';
 
   // 사용자 정보
   const [userInfo, setUserInfo] = useState<UserInfo>({ email: '', name: '', phone: '', country: 'KR' });
   const [isLoading, setIsLoading] = useState(true);
+
+  // 라이선스 정보
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [isLoadingLicenses, setIsLoadingLicenses] = useState(false);
 
   // 프로필 수정 모드
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -68,6 +90,9 @@ const MyPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 개발자 미리보기 (관리자 전용)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   // 로그인 체크
   useEffect(() => {
     if (isAuthReady && !isLoggedIn) {
@@ -91,7 +116,8 @@ const MyPage: React.FC = () => {
           const data = await response.json();
           setUserInfo(data);
           setEditName(data.name || '');
-          setEditPhone(data.phone || '');
+          // 전화번호를 포맷팅하여 표시
+          setEditPhone(formatPhoneNumber(data.phone) || '');
           setSelectedCountry(data.country || 'KR');
         }
       } catch (error) {
@@ -103,6 +129,35 @@ const MyPage: React.FC = () => {
 
     if (isLoggedIn) {
       fetchUserInfo();
+    }
+  }, [isLoggedIn]);
+
+  // 라이선스 정보 로드
+  useEffect(() => {
+    const fetchLicenses = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      setIsLoadingLicenses(true);
+      try {
+        const response = await fetch(`${API_URL}/api/me/licenses`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setLicenses(data.licenses || []);
+        }
+      } catch (error) {
+        console.error('라이선스 정보 로드 실패:', error);
+      } finally {
+        setIsLoadingLicenses(false);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchLicenses();
     }
   }, [isLoggedIn]);
 
@@ -137,7 +192,8 @@ const MyPage: React.FC = () => {
         },
         body: JSON.stringify({
           name: editName,
-          phone: editPhone,
+          // 저장할 때는 숫자만 추출하여 저장
+          phone: cleanPhoneNumber(editPhone),
           country: userInfo.country,
         }),
       });
@@ -245,7 +301,11 @@ const MyPage: React.FC = () => {
         setNewPassword('');
         setConfirmPassword('');
         setPasswordError('');
-        showSuccess('비밀번호가 변경되었습니다.');
+        // 비밀번호 변경 후 로그아웃
+        alert('비밀번호가 변경되었습니다. 보안을 위해 다시 로그인해주세요.');
+        logout();
+        navigate('/');
+        return;
       } else {
         setPasswordError(data.message || '비밀번호 변경에 실패했습니다.');
       }
@@ -256,7 +316,7 @@ const MyPage: React.FC = () => {
 
   const handleCancelProfile = () => {
     setEditName(userInfo.name || '');
-    setEditPhone(userInfo.phone || '');
+    setEditPhone(formatPhoneNumber(userInfo.phone) || '');
     setIsEditingProfile(false);
   };
 
@@ -340,21 +400,24 @@ const MyPage: React.FC = () => {
                   </div>
                   <div className="form-group">
                     <label>이메일</label>
-                    <input
-                      type="email"
-                      value={userInfo.email}
-                      disabled
-                      className="disabled"
-                    />
-                    <span className="helper-text">이메일은 변경할 수 없습니다.</span>
+                    <div className="input-wrapper">
+                      <input
+                        type="email"
+                        value={userInfo.email}
+                        disabled
+                        className="disabled"
+                      />
+                      <span className="helper-text">이메일은 변경할 수 없습니다.</span>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label>전화번호</label>
                     <input
                       type="tel"
                       value={editPhone}
-                      onChange={(e) => setEditPhone(e.target.value)}
+                      onChange={(e) => setEditPhone(formatPhoneNumberOnInput(e.target.value))}
                       placeholder="010-0000-0000"
+                      maxLength={13}
                     />
                   </div>
                   <div className="form-actions">
@@ -374,7 +437,7 @@ const MyPage: React.FC = () => {
                   </div>
                   <div className="info-row">
                     <span className="info-label">전화번호</span>
-                    <span className="info-value">{userInfo.phone || '-'}</span>
+                    <span className="info-value">{formatPhoneNumber(userInfo.phone) || '-'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">비밀번호</span>
@@ -524,20 +587,22 @@ const MyPage: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label>국가</label>
-                  <select
-                    value={tempCountry}
-                    onChange={(e) => setTempCountry(e.target.value)}
-                    className="country-dropdown"
-                  >
-                    {COUNTRIES.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="helper-text">
-                    적용 통화: {COUNTRIES.find(c => c.code === tempCountry)?.name} - {COUNTRIES.find(c => c.code === tempCountry)?.currency}
-                  </span>
+                  <div className="input-wrapper">
+                    <select
+                      value={tempCountry}
+                      onChange={(e) => setTempCountry(e.target.value)}
+                      className="country-dropdown"
+                    >
+                      {COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="helper-text">
+                      적용 통화: {COUNTRIES.find(c => c.code === tempCountry)?.name} - {COUNTRIES.find(c => c.code === tempCountry)?.currency}
+                    </span>
+                  </div>
                 </div>
                 <div className="form-actions">
                   <button className="save-btn" onClick={handleSaveSettings}>저장</button>
@@ -562,6 +627,153 @@ const MyPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* 라이선스 정보 */}
+          <div className="info-card license-card">
+            <div className="card-header">
+              <h2 className="card-title">라이선스 정보</h2>
+            </div>
+            {isLoadingLicenses ? (
+              <div className="loading-text">라이선스 정보를 불러오는 중...</div>
+            ) : licenses.length === 0 ? (
+              <div className="empty-licenses">
+                <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <p>보유한 라이선스가 없습니다.</p>
+                <button className="purchase-btn" onClick={() => navigate('/payment')}>
+                  라이선스 구매하기
+                </button>
+              </div>
+            ) : (
+              <div className="license-list">
+                {licenses.map((license) => (
+                  <div key={license.id} className={`license-item ${license.status.toLowerCase()}`}>
+                    <div className="license-header">
+                      <span className="license-product">
+                        {license.productName || license.planName || 'BUL:C'}
+                      </span>
+                      <span className={`license-status status-${license.status.toLowerCase()}`}>
+                        {license.status === 'ACTIVE' ? '활성' :
+                         license.status === 'PENDING' ? '대기' :
+                         license.status === 'EXPIRED_GRACE' ? '만료 유예' :
+                         license.status === 'EXPIRED_HARD' ? '만료됨' :
+                         license.status === 'SUSPENDED' ? '정지됨' :
+                         license.status === 'REVOKED' ? '취소됨' : license.status}
+                      </span>
+                    </div>
+                    <div className="license-details">
+                      <div className="license-detail-row">
+                        <span className="detail-label">라이선스 유형</span>
+                        <span className="detail-value">
+                          {license.licenseType === 'SUBSCRIPTION' ? '구독형' :
+                           license.licenseType === 'PERPETUAL' ? '영구' :
+                           license.licenseType === 'TRIAL' ? '체험판' : license.licenseType}
+                        </span>
+                      </div>
+                      <div className="license-detail-row">
+                        <span className="detail-label">유효 기간</span>
+                        <span className="detail-value">
+                          {license.validFrom ? new Date(license.validFrom).toLocaleDateString('ko-KR') : '-'}
+                          {' ~ '}
+                          {license.validUntil ? new Date(license.validUntil).toLocaleDateString('ko-KR') : '무제한'}
+                        </span>
+                      </div>
+                      <div className="license-detail-row">
+                        <span className="detail-label">기기 등록</span>
+                        <span className="detail-value">
+                          {license.usedActivations} / {license.maxActivations}대
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 개발자 미리보기 (관리자 전용) */}
+          {isSystemAdmin && (
+            <div className="info-card dev-preview-card">
+              <div className="card-header">
+                <h2 className="card-title">
+                  <svg className="dev-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 18L22 12L16 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8 6L2 12L8 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  페이지 미리보기
+                </h2>
+                <button
+                  className={`preview-toggle-btn ${isPreviewOpen ? 'open' : ''}`}
+                  onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              {isPreviewOpen && (
+                <div className="preview-menu">
+                  <div className="preview-section">
+                    <h4 className="preview-section-title">오류 페이지 미리보기</h4>
+                    <div className="preview-buttons">
+                      <button
+                        className="preview-btn error-btn-400"
+                        onClick={() => navigate('/error', { state: { errorCode: 400 } })}
+                      >
+                        400 잘못된 요청
+                      </button>
+                      <button
+                        className="preview-btn error-btn-401"
+                        onClick={() => navigate('/error', { state: { errorCode: 401 } })}
+                      >
+                        401 인증 필요
+                      </button>
+                      <button
+                        className="preview-btn error-btn-403"
+                        onClick={() => navigate('/error', { state: { errorCode: 403 } })}
+                      >
+                        403 접근 거부
+                      </button>
+                      <button
+                        className="preview-btn error-btn-404"
+                        onClick={() => navigate('/error', { state: { errorCode: 404 } })}
+                      >
+                        404 페이지 없음
+                      </button>
+                      <button
+                        className="preview-btn error-btn-500"
+                        onClick={() => navigate('/error', { state: { errorCode: 500 } })}
+                      >
+                        500 서버 오류
+                      </button>
+                      <button
+                        className="preview-btn error-btn-502"
+                        onClick={() => navigate('/error', { state: { errorCode: 502 } })}
+                      >
+                        502 연결 실패
+                      </button>
+                      <button
+                        className="preview-btn error-btn-503"
+                        onClick={() => navigate('/error', { state: { errorCode: 503 } })}
+                      >
+                        503 서비스 불가
+                      </button>
+                    </div>
+                  </div>
+                  <div className="preview-note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>이 메뉴는 관리자에게만 표시됩니다.</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 로그아웃 */}
           <div className="info-card logout-card">
