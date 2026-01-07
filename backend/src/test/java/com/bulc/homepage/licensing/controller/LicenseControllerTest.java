@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * LicenseController 슬라이스 테스트 (v1.1).
+ * LicenseController 슬라이스 테스트 (v0.2.0).
  *
  * @WebMvcTest로 Controller 레이어만 테스트.
  * LicenseService는 mock으로 처리하여 API 계약(contract)만 검증.
@@ -68,11 +68,11 @@ class LicenseControllerTest {
     private static final String TEST_USER_EMAIL = "user";
 
     // ==========================================
-    // v1.1 라이선스 검증/활성화 API 테스트
+    // v0.2.0 라이선스 검증/활성화 API 테스트
     // ==========================================
 
     @Nested
-    @DisplayName("POST /api/licenses/validate")
+    @DisplayName("POST /api/v1/licenses/validate")
     class ValidateEndpoint {
 
         @Test
@@ -89,7 +89,7 @@ class LicenseControllerTest {
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),
-                    "mock-session-token",  // v1.1.2: sessionToken (만료는 exp 클레임으로 판단)
+                    "mock-session-token",  // v0.2.2: sessionToken (만료는 exp 클레임으로 판단)
                     "offline-token-abc",
                     Instant.now().plus(30, ChronoUnit.DAYS)
             );
@@ -105,11 +105,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows 11",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -140,11 +140,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -168,7 +168,7 @@ class LicenseControllerTest {
                     """;
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidRequest))
@@ -191,7 +191,7 @@ class LicenseControllerTest {
                     """.formatted(PRODUCT_ID);
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidRequest))
@@ -222,11 +222,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -237,14 +237,14 @@ class LicenseControllerTest {
 
         @Test
         @WithMockUser(username = TEST_USER_EMAIL)
-        @DisplayName("동시 세션 초과 시 409 Conflict + CONCURRENT_SESSION_LIMIT_EXCEEDED 반환 (v1.1.1)")
+        @DisplayName("동시 세션 초과 시 409 Conflict + CONCURRENT_SESSION_LIMIT_EXCEEDED 반환 (v0.2.1)")
         void shouldReturn409WhenConcurrentSessionLimitExceeded() throws Exception {
             // given
             User mockUser = User.builder().email(TEST_USER_EMAIL).build();
             given(userRepository.findByEmail(TEST_USER_EMAIL)).willReturn(Optional.of(mockUser));
 
             UUID userIdAsUUID = UUID.nameUUIDFromBytes(TEST_USER_EMAIL.getBytes(StandardCharsets.UTF_8));
-            // v1.1.1: 동시 세션 초과 시 activeSessions 목록과 함께 반환
+            // v0.2.1: 동시 세션 초과 시 activeSessions 목록과 함께 반환
             ValidationResponse response = ValidationResponse.concurrentSessionLimitExceeded(
                     LICENSE_ID,
                     List.of(),  // 활성 세션 목록
@@ -261,15 +261,15 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isConflict())  // v1.1.1: 409 Conflict
+                    .andExpect(status().isConflict())  // v0.2.1: 409 Conflict
                     .andExpect(jsonPath("$.valid").value(false))
                     .andExpect(jsonPath("$.errorCode").value("CONCURRENT_SESSION_LIMIT_EXCEEDED"))
                     .andExpect(jsonPath("$.maxConcurrentSessions").value(2));
@@ -299,11 +299,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -336,11 +336,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -373,11 +373,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -388,11 +388,11 @@ class LicenseControllerTest {
     }
 
     // ==========================================
-    // v1.1 Heartbeat API 테스트
+    // v0.2.0 Heartbeat API 테스트
     // ==========================================
 
     @Nested
-    @DisplayName("POST /api/licenses/heartbeat")
+    @DisplayName("POST /api/v1/licenses/heartbeat")
     class HeartbeatEndpoint {
 
         @Test
@@ -409,7 +409,7 @@ class LicenseControllerTest {
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),
-                    "mock-session-token",  // v1.1.2: sessionToken (만료는 exp 클레임으로 판단)
+                    "mock-session-token",  // v0.2.2: sessionToken (만료는 exp 클레임으로 판단)
                     "offline-token-abc",
                     Instant.now().plus(30, ChronoUnit.DAYS)
             );
@@ -425,11 +425,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows 11",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/heartbeat")
+            mockMvc.perform(post("/api/v1/licenses/heartbeat")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -457,11 +457,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/heartbeat")
+            mockMvc.perform(post("/api/v1/licenses/heartbeat")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -489,11 +489,11 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
             // when & then
-            mockMvc.perform(post("/api/licenses/heartbeat")
+            mockMvc.perform(post("/api/v1/licenses/heartbeat")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -517,7 +517,7 @@ class LicenseControllerTest {
                     """.formatted(PRODUCT_ID);
 
             // when & then
-            mockMvc.perform(post("/api/licenses/heartbeat")
+            mockMvc.perform(post("/api/v1/licenses/heartbeat")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidRequest))
@@ -530,7 +530,7 @@ class LicenseControllerTest {
     // ==========================================
 
     @Nested
-    @DisplayName("DELETE /api/licenses/{licenseId}/activations/{deviceFingerprint}")
+    @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint}")
     class DeactivateEndpoint {
 
         @Test
@@ -545,7 +545,7 @@ class LicenseControllerTest {
             doNothing().when(licenseService).deactivateWithOwnerCheck(userIdAsUUID, LICENSE_ID, "device-123");
 
             // when & then
-            mockMvc.perform(delete("/api/licenses/{licenseId}/activations/{deviceFingerprint}",
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
                             LICENSE_ID, "device-123")
                             .with(csrf()))
                     .andExpect(status().isNoContent());
@@ -564,7 +564,7 @@ class LicenseControllerTest {
                     .when(licenseService).deactivateWithOwnerCheck(eq(userIdAsUUID), any(UUID.class), eq("device-123"));
 
             // when & then
-            mockMvc.perform(delete("/api/licenses/{licenseId}/activations/{deviceFingerprint}",
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
                             UUID.randomUUID(), "device-123")
                             .with(csrf()))
                     .andExpect(status().is4xxClientError());
@@ -583,7 +583,7 @@ class LicenseControllerTest {
                     .when(licenseService).deactivateWithOwnerCheck(eq(userIdAsUUID), any(UUID.class), eq("device-123"));
 
             // when & then
-            mockMvc.perform(delete("/api/licenses/{licenseId}/activations/{deviceFingerprint}",
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
                             UUID.randomUUID(), "device-123")
                             .with(csrf()))
                     .andExpect(status().isForbidden());
@@ -595,7 +595,7 @@ class LicenseControllerTest {
     // ==========================================
 
     @Nested
-    @DisplayName("GET /api/licenses/{licenseId}")
+    @DisplayName("GET /api/v1/licenses/{licenseId}")
     class GetLicenseByIdEndpoint {
 
         @Test
@@ -612,7 +612,7 @@ class LicenseControllerTest {
                     .willReturn(licenseResponse);
 
             // when & then
-            mockMvc.perform(get("/api/licenses/{licenseId}", LICENSE_ID))
+            mockMvc.perform(get("/api/v1/licenses/{licenseId}", LICENSE_ID))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(LICENSE_ID.toString()))
                     .andExpect(jsonPath("$.status").value("ACTIVE"));
@@ -631,7 +631,7 @@ class LicenseControllerTest {
                     .willThrow(new LicenseException(ErrorCode.LICENSE_NOT_FOUND));
 
             // when & then
-            mockMvc.perform(get("/api/licenses/{licenseId}", UUID.randomUUID()))
+            mockMvc.perform(get("/api/v1/licenses/{licenseId}", UUID.randomUUID()))
                     .andExpect(status().is4xxClientError());
         }
 
@@ -648,7 +648,7 @@ class LicenseControllerTest {
                     .willThrow(new LicenseException(ErrorCode.ACCESS_DENIED));
 
             // when & then
-            mockMvc.perform(get("/api/licenses/{licenseId}", UUID.randomUUID()))
+            mockMvc.perform(get("/api/v1/licenses/{licenseId}", UUID.randomUUID()))
                     .andExpect(status().isForbidden());
         }
     }
@@ -662,7 +662,7 @@ class LicenseControllerTest {
     class AuthenticationRequired {
 
         @Test
-        @DisplayName("POST /api/licenses/validate - 인증 없이 호출 시 401 반환")
+        @DisplayName("POST /api/v1/licenses/validate - 인증 없이 호출 시 401 반환")
         void validateShouldReturn401WhenNoAuth() throws Exception {
             ValidateRequest request = new ValidateRequest(
                     null,  // productCode
@@ -672,10 +672,10 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
-            mockMvc.perform(post("/api/licenses/validate")
+            mockMvc.perform(post("/api/v1/licenses/validate")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -683,7 +683,7 @@ class LicenseControllerTest {
         }
 
         @Test
-        @DisplayName("POST /api/licenses/heartbeat - 인증 없이 호출 시 401 반환")
+        @DisplayName("POST /api/v1/licenses/heartbeat - 인증 없이 호출 시 401 반환")
         void heartbeatShouldReturn401WhenNoAuth() throws Exception {
             ValidateRequest request = new ValidateRequest(
                     null,  // productCode
@@ -693,10 +693,10 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v1.1.3)
+                    null   // strategy (v0.2.3)
             );
 
-            mockMvc.perform(post("/api/licenses/heartbeat")
+            mockMvc.perform(post("/api/v1/licenses/heartbeat")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -704,16 +704,16 @@ class LicenseControllerTest {
         }
 
         @Test
-        @DisplayName("GET /api/licenses/{licenseId} - 인증 없이 호출 시 401 반환")
+        @DisplayName("GET /api/v1/licenses/{licenseId} - 인증 없이 호출 시 401 반환")
         void getLicenseShouldReturn401WhenNoAuth() throws Exception {
-            mockMvc.perform(get("/api/licenses/{licenseId}", LICENSE_ID))
+            mockMvc.perform(get("/api/v1/licenses/{licenseId}", LICENSE_ID))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @DisplayName("DELETE /api/licenses/{licenseId}/activations/{deviceFingerprint} - 인증 없이 호출 시 401 반환")
+        @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint} - 인증 없이 호출 시 401 반환")
         void deactivateShouldReturn401WhenNoAuth() throws Exception {
-            mockMvc.perform(delete("/api/licenses/{licenseId}/activations/{deviceFingerprint}",
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
                             LICENSE_ID, "device-123")
                             .with(csrf()))
                     .andExpect(status().isUnauthorized());
