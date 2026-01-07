@@ -11,17 +11,11 @@ import com.bulc.homepage.licensing.repository.ActivationRepository;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.licensing.repository.ProductRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +39,7 @@ import java.util.stream.Collectors;
  * 주의: 발급/정지/회수/갱신은 HTTP API로 노출하지 않습니다.
  * 이러한 작업은 반드시 Billing 또는 Admin 모듈을 통해 트리거되어야 합니다.
  */
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class LicenseService {
@@ -54,21 +49,20 @@ public class LicenseService {
     private final LicensePlanRepository planRepository;
     private final ProductRepository productRepository;
     private final SessionTokenService sessionTokenService;
-    private final SecretKey offlineTokenKey;
+    private final OfflineTokenService offlineTokenService;
 
     public LicenseService(LicenseRepository licenseRepository,
                           ActivationRepository activationRepository,
                           LicensePlanRepository planRepository,
                           ProductRepository productRepository,
                           SessionTokenService sessionTokenService,
-                          @org.springframework.beans.factory.annotation.Value("${jwt.secret}") String jwtSecret) {
+                          OfflineTokenService offlineTokenService) {
         this.licenseRepository = licenseRepository;
         this.activationRepository = activationRepository;
         this.planRepository = planRepository;
         this.productRepository = productRepository;
         this.sessionTokenService = sessionTokenService;
-        // JWT secret을 offline token 서명에도 사용 (별도 secret 추가 가능)
-        this.offlineTokenKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        this.offlineTokenService = offlineTokenService;
     }
 
     // ==========================================
@@ -334,11 +328,12 @@ public class LicenseService {
                 request.clientIp()
         );
 
-        // 오프라인 토큰 발급 (필요시)
-        if (!activation.hasValidOfflineToken(now)) {
-            int offlineDays = getOfflineTokenValidDays(license);
-            String offlineToken = generateOfflineToken(license, activation);
-            activation.issueOfflineToken(offlineToken, now.plusSeconds(offlineDays * 24L * 60 * 60));
+        // v1.1.3: 오프라인 토큰 발급 (갱신 임계값 정책 적용)
+        if (shouldRenewOfflineToken(activation, license)) {
+            OfflineTokenService.OfflineToken offlineToken = generateOfflineToken(license, activation);
+            if (offlineToken != null) {
+                activation.issueOfflineToken(offlineToken.token(), offlineToken.expiresAt());
+            }
         }
 
         licenseRepository.save(license);
@@ -460,9 +455,32 @@ public class LicenseService {
                     request.clientVersion(), request.clientOs(), null, true, request.deviceDisplayName());
         }
 
-        // 후보 2개 이상: LICENSE_SELECTION_REQUIRED (409) + candidates 반환
-        List<LicenseCandidate> candidateList = buildCandidateList(candidates);
-        return ValidationResponse.selectionRequired(candidateList);
+        // 후보 2개 이상: v1.1.3 strategy에 따라 처리
+        LicenseSelectionStrategy strategy = request.getEffectiveStrategy();
+
+        switch (strategy) {
+            case AUTO_PICK_BEST -> {
+                // ACTIVE > EXPIRED_GRACE > 최신 validUntil
+                License best = selectBestLicense(candidates);
+                return performValidation(best, request.deviceFingerprint(),
+                        request.clientVersion(), request.clientOs(), null, true, request.deviceDisplayName());
+            }
+            case AUTO_PICK_LATEST -> {
+                // 가장 최근 validUntil인 라이선스
+                License latest = selectLatestLicense(candidates);
+                return performValidation(latest, request.deviceFingerprint(),
+                        request.clientVersion(), request.clientOs(), null, true, request.deviceDisplayName());
+            }
+            case FAIL_ON_MULTIPLE -> {
+                // 기본: 409 + candidates 반환
+                List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+                return ValidationResponse.selectionRequired(candidateList);
+            }
+            default -> {
+                List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+                return ValidationResponse.selectionRequired(candidateList);
+            }
+        }
     }
 
     /**
@@ -521,9 +539,29 @@ public class LicenseService {
                     request.clientVersion(), request.clientOs(), null, false);
         }
 
-        // 후보 2개 이상: LICENSE_SELECTION_REQUIRED (409)
-        List<LicenseCandidate> candidateList = buildCandidateList(candidates);
-        return ValidationResponse.selectionRequired(candidateList);
+        // 후보 2개 이상: v1.1.3 strategy에 따라 처리
+        LicenseSelectionStrategy strategy = request.getEffectiveStrategy();
+
+        switch (strategy) {
+            case AUTO_PICK_BEST -> {
+                License best = selectBestLicense(candidates);
+                return performValidation(best, request.deviceFingerprint(),
+                        request.clientVersion(), request.clientOs(), null, false);
+            }
+            case AUTO_PICK_LATEST -> {
+                License latest = selectLatestLicense(candidates);
+                return performValidation(latest, request.deviceFingerprint(),
+                        request.clientVersion(), request.clientOs(), null, false);
+            }
+            case FAIL_ON_MULTIPLE -> {
+                List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+                return ValidationResponse.selectionRequired(candidateList);
+            }
+            default -> {
+                List<LicenseCandidate> candidateList = buildCandidateList(candidates);
+                return ValidationResponse.selectionRequired(candidateList);
+            }
+        }
     }
 
     // ==========================================
@@ -619,11 +657,12 @@ public class LicenseService {
                 request.deviceDisplayName()
         );
 
-        // 오프라인 토큰 발급
-        if (!newActivation.hasValidOfflineToken(now)) {
-            int offlineDays = getOfflineTokenValidDays(license);
-            String offlineToken = generateOfflineToken(license, newActivation);
-            newActivation.issueOfflineToken(offlineToken, now.plusSeconds(offlineDays * 24L * 60 * 60));
+        // v1.1.3: 오프라인 토큰 발급 (갱신 임계값 정책 적용)
+        if (shouldRenewOfflineToken(newActivation, license)) {
+            OfflineTokenService.OfflineToken offlineToken = generateOfflineToken(license, newActivation);
+            if (offlineToken != null) {
+                newActivation.issueOfflineToken(offlineToken.token(), offlineToken.expiresAt());
+            }
         }
 
         licenseRepository.save(license);
@@ -804,11 +843,12 @@ public class LicenseService {
         Activation activation = license.addActivation(deviceFingerprint, clientVersion,
                                                        clientOs, clientIp, deviceDisplayName);
 
-        // 오프라인 토큰 발급 (필요시)
-        if (!activation.hasValidOfflineToken(now)) {
-            int offlineDays = getOfflineTokenValidDays(license);
-            String offlineToken = generateOfflineToken(license, activation);
-            activation.issueOfflineToken(offlineToken, now.plusSeconds(offlineDays * 24L * 60 * 60));
+        // v1.1.3: 오프라인 토큰 발급 (갱신 임계값 정책 적용)
+        if (shouldRenewOfflineToken(activation, license)) {
+            OfflineTokenService.OfflineToken offlineToken = generateOfflineToken(license, activation);
+            if (offlineToken != null) {
+                activation.issueOfflineToken(offlineToken.token(), offlineToken.expiresAt());
+            }
         }
 
         licenseRepository.save(license);
@@ -1034,35 +1074,70 @@ public class LicenseService {
     }
 
     /**
-     * JWS 서명된 오프라인 토큰 생성.
+     * v1.1.3: RS256 서명된 오프라인 토큰 생성.
      *
-     * 토큰 페이로드:
-     * - sub: licenseId
-     * - deviceFingerprint: 기기 고유 식별자
-     * - validUntil: 라이선스 만료일
-     * - maxActivations: 최대 기기 수
-     * - entitlements: 권한 목록
-     * - iat: 발급 시각
-     * - exp: 오프라인 토큰 만료 시각
-     *
-     * 클라이언트는 이 토큰을 로컬에서 검증하여 오프라인 실행 가능.
-     * 서명 검증 실패 시 온라인 재검증 필요.
+     * OfflineTokenService에 위임하여 RS256 서명된 토큰 생성.
+     * Claims (v1.1.3 통일): iss, aud, sub, typ, dfp, ent, iat, exp
+     * absolute cap: exp ≤ licenseValidUntil
      */
-    private String generateOfflineToken(License license, Activation activation) {
-        Instant now = Instant.now();
+    private OfflineTokenService.OfflineToken generateOfflineToken(License license, Activation activation) {
+        String productCode = resolveProductCode(license.getProductId());
+        List<String> entitlements = extractEntitlements(license);
         int offlineDays = getOfflineTokenValidDays(license);
-        Instant expiration = now.plusSeconds(offlineDays * 24L * 60 * 60);
 
-        return Jwts.builder()
-                .subject(license.getId().toString())
-                .claim("deviceFingerprint", activation.getDeviceFingerprint())
-                .claim("validUntil", license.getValidUntil() != null
-                        ? license.getValidUntil().toEpochMilli() : null)
-                .claim("maxActivations", license.getMaxActivations())
-                .claim("entitlements", extractEntitlements(license))
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .signWith(offlineTokenKey)
-                .compact();
+        return offlineTokenService.generateOfflineToken(
+                license.getId(),
+                productCode,
+                activation.getDeviceFingerprint(),
+                entitlements,
+                offlineDays,
+                license.getValidUntil()  // absolute cap
+        );
+    }
+
+    /**
+     * v1.1.3: 갱신 임계값에 따라 offlineToken 갱신 필요 여부 확인.
+     */
+    private boolean shouldRenewOfflineToken(Activation activation, License license) {
+        int offlineDays = getOfflineTokenValidDays(license);
+        return offlineTokenService.shouldRenew(activation.getOfflineTokenExpiresAt(), offlineDays);
+    }
+
+    /**
+     * v1.1.3: AUTO_PICK_BEST 전략 - 최적의 라이선스 선택.
+     * 우선순위: ACTIVE > EXPIRED_GRACE > 최신 validUntil
+     */
+    private License selectBestLicense(List<License> candidates) {
+        Instant now = Instant.now();
+
+        // ACTIVE 상태 우선
+        Optional<License> active = candidates.stream()
+                .filter(l -> l.calculateEffectiveStatus(now) == LicenseStatus.ACTIVE)
+                .max(Comparator.comparing(l -> l.getValidUntil() != null ? l.getValidUntil() : Instant.MAX));
+
+        if (active.isPresent()) {
+            return active.get();
+        }
+
+        // EXPIRED_GRACE 상태
+        Optional<License> grace = candidates.stream()
+                .filter(l -> l.calculateEffectiveStatus(now) == LicenseStatus.EXPIRED_GRACE)
+                .max(Comparator.comparing(l -> l.getValidUntil() != null ? l.getValidUntil() : Instant.MAX));
+
+        if (grace.isPresent()) {
+            return grace.get();
+        }
+
+        // 그 외: 가장 최근 validUntil
+        return selectLatestLicense(candidates);
+    }
+
+    /**
+     * v1.1.3: AUTO_PICK_LATEST 전략 - 가장 최근 validUntil인 라이선스 선택.
+     */
+    private License selectLatestLicense(List<License> candidates) {
+        return candidates.stream()
+                .max(Comparator.comparing(l -> l.getValidUntil() != null ? l.getValidUntil() : Instant.MAX))
+                .orElse(candidates.get(0));
     }
 }

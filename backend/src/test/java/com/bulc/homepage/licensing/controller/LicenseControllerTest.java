@@ -104,7 +104,8 @@ class LicenseControllerTest {
                     "device-fingerprint-123",
                     "1.0.0",
                     "Windows 11",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -138,7 +139,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -219,7 +221,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -257,7 +260,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -294,7 +298,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -330,7 +335,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -366,7 +372,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -417,7 +424,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows 11",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -448,7 +456,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -479,7 +488,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             // when & then
@@ -661,7 +671,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             mockMvc.perform(post("/api/licenses/validate")
@@ -681,7 +692,8 @@ class LicenseControllerTest {
                     "device-123",
                     "1.0.0",
                     "Windows",
-                    null   // deviceDisplayName
+                    null,  // deviceDisplayName
+                    null   // strategy (v1.1.3)
             );
 
             mockMvc.perform(post("/api/licenses/heartbeat")
