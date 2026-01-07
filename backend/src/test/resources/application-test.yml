@@ -31,36 +31,9 @@ bulc:
     session-token:
       ttl-minutes: 15
       issuer: bulc-license-server
-      # Test-only RSA private key - DO NOT USE IN PRODUCTION
-      private-key: |
-        -----BEGIN PRIVATE KEY-----
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        ***REMOVED***
-        -----END PRIVATE KEY-----
+      # 테스트에서는 TestKeyConfig가 런타임에 키를 생성합니다.
+      # private-key는 설정하지 않습니다 (보안 개선).
+      private-key:
     offline-token:
       issuer: bulc-license-server
       renewal-threshold-ratio: 0.5

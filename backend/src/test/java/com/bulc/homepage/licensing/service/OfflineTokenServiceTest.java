@@ -1,10 +1,10 @@
 package com.bulc.homepage.licensing.service;
 
+import com.bulc.homepage.licensing.config.TestSigningKeyProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -16,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * OfflineTokenService 유닛 테스트.
  *
+ * 보안 개선: 런타임에 RSA 키를 생성하여 테스트합니다.
+ * 레포지토리에 private key가 커밋되지 않습니다.
+ *
  * 필수 보안 테스트:
  * - T-05: Absolute Cap (offlineToken exp ≤ license.validUntil)
  * - 갱신 임계값 정책 테스트
@@ -23,49 +26,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OfflineTokenServiceTest {
 
     private OfflineTokenService offlineTokenService;
-
-    // 테스트용 RSA 개인키 (PEM 형식)
-    private static final String TEST_PRIVATE_KEY = """
-            -----BEGIN PRIVATE KEY-----
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            ***REMOVED***
-            -----END PRIVATE KEY-----
-            """;
+    private SigningKeyProvider keyProvider;
 
     @BeforeEach
     void setUp() {
+        // 런타임에 RSA 키 생성 (레포에 키 커밋 불필요)
+        keyProvider = new TestSigningKeyProvider();
+
         offlineTokenService = new OfflineTokenService(
                 "bulc-license-server",
-                TEST_PRIVATE_KEY,
-                "test",
+                keyProvider,
                 0.5,  // renewalThresholdRatio
                 3     // renewalThresholdDays
         );
-        offlineTokenService.init();
     }
 
     // ==========================================
@@ -248,19 +221,39 @@ class OfflineTokenServiceTest {
         }
 
         @Test
-        @DisplayName("키가 없으면 null 반환 (dev 환경)")
+        @DisplayName("keyId가 test-로 시작함")
+        void shouldHaveTestKeyId() {
+            assertThat(offlineTokenService.getKeyId()).startsWith("test-");
+        }
+    }
+
+    // ==========================================
+    // 키 비활성화 테스트
+    // ==========================================
+
+    @Nested
+    @DisplayName("키 비활성화 테스트")
+    class DisabledKeyTest {
+
+        @Test
+        @DisplayName("키가 없으면 null 반환")
         void shouldReturnNullWhenNoKey() {
-            // given - 키 없이 초기화
-            OfflineTokenService noKeyService = new OfflineTokenService(
+            // given - 비활성화된 키 제공자
+            SigningKeyProvider disabledProvider = new SigningKeyProvider() {
+                @Override public java.security.PrivateKey signingKey() { return null; }
+                @Override public java.security.PublicKey verifyKey() { return null; }
+                @Override public String keyId() { return "disabled"; }
+                @Override public boolean isEnabled() { return false; }
+            };
+
+            OfflineTokenService disabledService = new OfflineTokenService(
                     "bulc-license-server",
-                    "",  // 빈 키
-                    "dev",
+                    disabledProvider,
                     0.5, 3
             );
-            noKeyService.init();
 
             // when
-            OfflineTokenService.OfflineToken token = noKeyService.generateOfflineToken(
+            OfflineTokenService.OfflineToken token = disabledService.generateOfflineToken(
                     UUID.randomUUID(), "BULC_EVAC", "device-123",
                     List.of("core"), 30, Instant.now().plus(30, ChronoUnit.DAYS)
             );

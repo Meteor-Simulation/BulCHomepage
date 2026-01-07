@@ -1,5 +1,6 @@
 package com.bulc.homepage.licensing.integration;
 
+import com.bulc.homepage.licensing.config.TestKeyConfig;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.exception.LicenseException;
@@ -9,6 +10,7 @@ import com.bulc.homepage.licensing.service.LicenseService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestKeyConfig.class)
 @Transactional
 class LicenseSecurityTest {
 
