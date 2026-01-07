@@ -31,4 +31,37 @@ bulc:
     session-token:
       ttl-minutes: 15
       issuer: bulc-license-server
-      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
+      # Test-only RSA private key - DO NOT USE IN PRODUCTION
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        ***REMOVED***
+        -----END PRIVATE KEY-----
+    offline-token:
+      issuer: bulc-license-server
+      renewal-threshold-ratio: 0.5
+      renewal-threshold-days: 3

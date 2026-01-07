@@ -1,4 +1,4 @@
-# Licensing System API Documentation v1.1.2
+# Licensing System API Documentation v1.1.3
 
 ## 변경 이력
 
@@ -6,7 +6,26 @@
 |-----|------|----------|
 | v1.0 | 2025-12-08 | 최초 작성 (M1, M2 구현) |
 | v1.1 | 2025-12-17 | M1.5 보안 개선 - 계정 기반 인증으로 전환 |
+| v1.1.1 | 2025-12-23 | 동시 세션 관리 UX 개선 - force-validate, 세션 선택 UI 지원 |
 | v1.1.2 | 2025-12-30 | sessionToken (RS256 JWS) 추가 - CLI 위/변조 방어 |
+| v1.1.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
+
+### v1.1.3 주요 변경사항
+
+1. **토큰 구조 통일**: sessionToken/offlineToken 모두 RS256 JWS로 통일 (오프라인 검증 가능)
+2. **offlineToken 스펙 정비**: claims 통일(iss, aud, typ, dfp, ent), absolute cap(`exp ≤ validUntil`)
+3. **오프라인 보안 강화**: 시스템 시간 조작 방어 가이드라인 추가
+4. **ValidateRequest 필드 추가**: `productCode`, `licenseId`, `deviceDisplayName`, `strategy` 문서화
+5. **409 Conflict 응답 문서화**: 다중 라이선스/동시 세션 초과 시 응답 형식
+6. **force-validate 정교화**: DEACTIVATED 마킹 및 경쟁 조건 방어 명시
+7. **운영 가이드 추가**: Heartbeat write-behind, 개인정보 처리 정책
+
+### v1.1.1 주요 변경사항
+
+1. **force-validate 엔드포인트 추가**: 동시 세션 초과 시 기존 세션 강제 해제 후 활성화
+2. **세션 선택 UI 지원**: 동시 세션 초과 시 활성 세션 목록 반환 (409 Conflict)
+3. **라이선스 선택 UI 지원**: 다중 라이선스 존재 시 후보 목록 반환 (409 Conflict)
+4. **deviceDisplayName 필드**: 기기 표시명 지원 (UX 개선)
 
 ### v1.1.2 주요 변경사항
 
@@ -133,24 +152,40 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "productId": "550e8400-e29b-41d4-a716-446655440000",
+  "productCode": "BULC_EVAC",
   "deviceFingerprint": "hw-hash-abc123",
   "clientVersion": "1.0.0",
-  "clientOs": "Windows 11"
+  "clientOs": "Windows 11",
+  "deviceDisplayName": "John's Work PC"
 }
 ```
 
 | 필드 | 타입 | 필수 | 설명 |
 |-----|------|-----|------|
-| productId | UUID | O | 검증할 제품 ID |
+| productCode | string | △ | 제품 코드 (예: "BULC_EVAC"). productId 또는 productCode 중 하나 필수 |
+| productId | UUID | △ | 제품 ID (UUID). productCode 권장 |
+| licenseId | UUID | X | 명시적 라이선스 선택 (다중 라이선스 시 사용) |
 | deviceFingerprint | string | O | 기기 고유 식별 해시 |
 | clientVersion | string | X | 클라이언트 앱 버전 |
 | clientOs | string | X | 운영체제 정보 |
+| deviceDisplayName | string | X | 기기 표시명 (UX용, 예: "John's Work PC") |
+| strategy | enum | X | 다중 라이선스 선택 전략 (기본: `FAIL_ON_MULTIPLE`) |
+
+**Strategy 옵션:**
+| 값 | 설명 |
+|---|------|
+| `FAIL_ON_MULTIPLE` | (기본) 다중 라이선스 시 409 반환, 클라이언트가 선택 |
+| `AUTO_PICK_BEST` | 서버가 자동 선택: ACTIVE > GRACE > 최신 validUntil 순 |
+| `AUTO_PICK_LATEST` | 가장 최근 validUntil인 라이선스 자동 선택 |
+
+> **CLI/Headless 환경:** `strategy=AUTO_PICK_BEST`로 요청하면 409 없이 서버가 자동 선택하여 200 반환
 
 > **라이선스 선택 로직 (서버):**
-> 1. `token.userId` + `productId`로 사용자의 해당 제품 라이선스 조회
-> 2. 여러 개인 경우 우선순위: ACTIVE > EXPIRED_GRACE > 최신 발급순
-> 3. 선택된 라이선스로 검증 및 Activation 처리
+> 1. `licenseId`가 있으면 해당 라이선스 직접 사용
+> 2. 없으면 `token.userId` + `productCode/productId`로 사용자의 해당 제품 라이선스 조회
+> 3. 여러 개인 경우:
+>    - `strategy=FAIL_ON_MULTIPLE`: 409 Conflict로 후보 목록 반환
+>    - `strategy=AUTO_*`: 서버가 자동 선택하여 200 반환
 
 **Response (200 OK - 성공):**
 ```json
@@ -158,12 +193,12 @@ Content-Type: application/json
   "valid": true,
   "licenseId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "ACTIVE",
-  "validUntil": "2025-12-31T23:59:59Z",
+  "validUntil": "2026-12-31T23:59:59Z",
   "entitlements": ["core-simulation", "export-csv"],
-  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiZGZwIjoiaHctaGFzaC1hYmMxMjMiLCJlbnQiOlsiY29yZS1zaW11bGF0aW9uIiwiZXhwb3J0LWNzdiJdLCJpYXQiOjE3MzUyMDAwMDAsImV4cCI6MTczNTIwMDkwMH0.signature",
-  "offlineToken": "abc123-opaque-token-xyz789",
-  "offlineTokenExpiresAt": "2025-02-01T00:00:00Z",
-  "serverTime": "2025-12-30T05:00:00Z"
+  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiZGZwIjoiaHctaGFzaC1hYmMxMjMiLCJlbnQiOlsiY29yZS1zaW11bGF0aW9uIiwiZXhwb3J0LWNzdiJdLCJpYXQiOjE3MzYyNDAwMDAsImV4cCI6MTczNjI0MDkwMH0.signature",
+  "offlineToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwidHlwIjoib2ZmbGluZSIsImRmcCI6Imh3LWhhc2gtYWJjMTIzIiwiZW50IjpbImNvcmUtc2ltdWxhdGlvbiIsImV4cG9ydC1jc3YiXSwiaWF0IjoxNzM2MjQwMDAwLCJleHAiOjE3Mzg4MzIwMDB9.signature",
+  "offlineTokenExpiresAt": "2026-02-06T00:00:00Z",
+  "serverTime": "2026-01-07T10:00:00Z"
 }
 ```
 
@@ -186,6 +221,61 @@ Content-Type: application/json
 }
 ```
 
+**Response (409 Conflict - 다중 라이선스 선택 필요):** *(v1.1.1)*
+```json
+{
+  "valid": false,
+  "errorCode": "MULTIPLE_LICENSES_FOUND",
+  "errorMessage": "여러 라이선스가 발견되었습니다. 하나를 선택해주세요.",
+  "candidates": [
+    {
+      "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+      "planName": "Pro 연간 구독",
+      "licenseType": "SUBSCRIPTION",
+      "status": "ACTIVE",
+      "validUntil": "2025-12-31T23:59:59Z",
+      "ownerScope": "개인",
+      "activeDevices": 1,
+      "maxDevices": 3,
+      "label": null
+    }
+  ]
+}
+```
+
+> **클라이언트 UX:** 후보 목록을 UI에 표시하고, 사용자가 선택한 `licenseId`를 재요청 시 포함
+
+**Response (409 Conflict - 동시 세션 초과):** *(v1.1.1)*
+```json
+{
+  "valid": false,
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "errorCode": "CONCURRENT_SESSION_LIMIT_EXCEEDED",
+  "errorMessage": "동시 세션 제한(2개)을 초과했습니다",
+  "maxConcurrentSessions": 2,
+  "activeSessions": [
+    {
+      "activationId": "act-uuid-1",
+      "deviceDisplayName": "Office Desktop",
+      "deviceFingerprint": "abc***xyz",
+      "lastSeenAt": "2025-01-07T10:30:00Z",
+      "clientOs": "Windows 11",
+      "clientVersion": "1.0.0"
+    },
+    {
+      "activationId": "act-uuid-2",
+      "deviceDisplayName": "Home Laptop",
+      "deviceFingerprint": "def***uvw",
+      "lastSeenAt": "2025-01-07T09:00:00Z",
+      "clientOs": "macOS 14",
+      "clientVersion": "1.0.0"
+    }
+  ]
+}
+```
+
+> **클라이언트 UX:** 활성 세션 목록을 표시하고, 비활성화할 세션을 선택 후 `/validate/force` 호출
+
 **Error Codes:**
 | 코드 | HTTP Status | 설명 |
 |-----|-------------|------|
@@ -194,7 +284,8 @@ Content-Type: application/json
 | LICENSE_SUSPENDED | 403 | 라이선스 정지됨 |
 | LICENSE_REVOKED | 403 | 라이선스 회수됨 |
 | ACTIVATION_LIMIT_EXCEEDED | 403 | 최대 기기 수 초과 |
-| CONCURRENT_SESSION_LIMIT_EXCEEDED | 403 | 동시 세션 제한 초과 |
+| CONCURRENT_SESSION_LIMIT_EXCEEDED | 409 | 동시 세션 제한 초과 (activeSessions 포함) |
+| MULTIPLE_LICENSES_FOUND | 409 | 다중 라이선스 발견 (candidates 포함) |
 
 ---
 
@@ -210,15 +301,7 @@ Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
 
-**Request Body:**
-```json
-{
-  "productId": "550e8400-e29b-41d4-a716-446655440000",
-  "deviceFingerprint": "hw-hash-abc123",
-  "clientVersion": "1.0.0",
-  "clientOs": "Windows 11"
-}
-```
+**Request Body:** `/validate`와 동일한 형식
 
 **Response:** `/validate`와 동일한 형식
 
@@ -231,6 +314,81 @@ Content-Type: application/json
 | **lastSeenAt 갱신** | O | O |
 | **호출 시점** | 앱 시작, 재인증 필요 시 | 5~15분 주기 권장 |
 | **미등록 기기 응답** | 새 Activation 생성 | `ACTIVATION_NOT_FOUND` 에러 |
+
+#### 운영/성능 참고 (Write-behind)
+
+Heartbeat는 `lastSeenAt` UPDATE를 빈번하게 발생시켜 DB 부하를 유발할 수 있습니다.
+
+**초기 (소규모):** RDB에 직접 UPDATE OK
+
+**트래픽 증가 시 (권장 아키텍처):**
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│  Client     │ ───> │  Redis      │ ───> │  PostgreSQL │
+│  Heartbeat  │      │  lastSeenAt │      │  Bulk UPDATE│
+└─────────────┘      └─────────────┘      └─────────────┘
+                           │
+                     배치 스케줄러
+                     (N분 주기)
+```
+
+- Heartbeat는 Redis에 `activation:{id}:lastSeenAt` 갱신 (TTL 포함)
+- 배치/스케줄러가 N분마다 Redis → RDB bulk update
+- DB lock 경합 및 I/O 감소, 동시 세션 판단은 Redis 기준으로 수행
+
+---
+
+### 1.3.1 Force Validate (동시 세션 강제 해제) *(v1.1.1 신규)*
+
+동시 세션 제한 초과 시 기존 세션을 강제 비활성화하고 현재 기기를 활성화합니다.
+
+> **사용 시나리오:** `/validate`에서 `CONCURRENT_SESSION_LIMIT_EXCEEDED` (409) 응답 시,
+> 사용자가 비활성화할 세션을 선택한 후 이 엔드포인트 호출
+
+```http
+POST /api/licenses/validate/force
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "deviceFingerprint": "hw-hash-abc123",
+  "deactivateActivationIds": ["act-uuid-1", "act-uuid-2"],
+  "clientVersion": "1.0.0",
+  "clientOs": "Windows 11",
+  "deviceDisplayName": "New Device"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|-----|------|-----|------|
+| licenseId | UUID | O | 활성화할 라이선스 ID |
+| deviceFingerprint | string | O | 현재 기기 fingerprint |
+| deactivateActivationIds | UUID[] | O | 비활성화할 세션 ID 목록 (최소 1개) |
+| clientVersion | string | X | 클라이언트 앱 버전 |
+| clientOs | string | X | 운영체제 정보 |
+| deviceDisplayName | string | X | 기기 표시명 |
+
+**Response (200 OK):** `/validate` 성공 응답과 동일
+
+**서버 처리 규칙:**
+1. `deactivateActivationIds`의 각 activation을 **DEACTIVATED** 상태로 마킹
+2. 해제된 activation으로 들어오는 이후 heartbeat/validate 요청은 즉시 거부
+3. 현재 기기에 대해 새 activation 생성 또는 기존 activation 갱신
+4. 트랜잭션 내 pessimistic lock으로 경쟁 조건 방어
+
+**Error Codes:**
+| 코드 | HTTP Status | 설명 |
+|-----|-------------|------|
+| INVALID_ACTIVATION_IDS | 400 | 비활성화 대상 ID가 유효하지 않음 |
+| ACCESS_DENIED | 403 | 본인 소유 라이선스가 아님 |
+| ACTIVATION_DEACTIVATED | 403 | 해당 activation은 force-validate로 종료됨 |
+
+> **Note:** 기존 세션의 클라이언트는 다음 heartbeat에서 `ACTIVATION_DEACTIVATED`를 받고
+> "다른 기기에서 로그인되어 세션이 종료되었습니다" 안내 후 종료해야 합니다.
 
 ---
 
@@ -724,12 +882,20 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 | 상태 | 설명 | 검증 결과 |
 |-----|------|----------|
-| PENDING | 발급 대기 | 실패 |
+| PENDING | 발급 대기 (결제 확인 중, 관리자 승인 대기 등) | 실패 |
 | ACTIVE | 정상 사용 가능 | 성공 |
 | EXPIRED_GRACE | 유예 기간 (제한적 사용) | 성공 (경고) |
 | EXPIRED_HARD | 완전 만료 | 실패 |
 | SUSPENDED | 관리자 정지 | 실패 |
 | REVOKED | 회수됨 (환불 등) | 실패 |
+
+**PENDING 상태가 되는 경우:**
+- 무통장 입금 대기 (결제 확인 전)
+- 관리자 승인형 플랜 (기관 구매 프로세스)
+- 비동기 결제 처리 중 (PG 응답 대기)
+
+> **Note:** 일반적인 카드/실시간 결제는 즉시 ACTIVE로 전환됩니다.
+> PENDING은 "결제 완료 전" 또는 "승인 프로세스가 있는 플랜"에서만 사용됩니다.
 
 ### 5.2 License Type
 
@@ -782,8 +948,11 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | LICENSE_REVOKED | 403 | 라이선스 회수 |
 | ACCESS_DENIED | 403 | 권한 없음 |
 | ACTIVATION_NOT_FOUND | 404 | 활성화 정보 없음 |
+| ACTIVATION_DEACTIVATED | 403 | force-validate로 종료된 세션 |
 | ACTIVATION_LIMIT_EXCEEDED | 403 | 기기 수 초과 |
-| CONCURRENT_SESSION_LIMIT_EXCEEDED | 403 | 세션 수 초과 |
+| CONCURRENT_SESSION_LIMIT_EXCEEDED | 409 | 세션 수 초과 (activeSessions 포함) |
+| MULTIPLE_LICENSES_FOUND | 409 | 다중 라이선스 발견 (candidates 포함) |
+| INVALID_ACTIVATION_IDS | 400 | 비활성화 대상 ID가 유효하지 않음 |
 | INVALID_LICENSE_STATE | 400 | 잘못된 상태 |
 | PLAN_NOT_FOUND | 404 | 플랜 없음 |
 | PLAN_CODE_DUPLICATE | 409 | 플랜 코드 중복 |
@@ -812,44 +981,181 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ---
 
-## 8. Offline Token
+## 8. 토큰 구조 (v1.1.3 정리)
 
-네트워크 연결 없이도 일정 기간 라이선스를 사용할 수 있도록 하는 토큰입니다.
+라이선스 시스템은 **두 종류의 토큰**을 사용합니다:
 
-### 토큰 형식
+| 토큰 | 용도 | 알고리즘 | TTL | 발급 시점 |
+|-----|------|---------|-----|----------|
+| **sessionToken** | 온라인 세션, 앱 기능 unlock | RS256 (RSA) | 10~30분 (기본 15분) | Validate/Heartbeat 매번 |
+| **offlineToken** | 오프라인 허용 (Offline Grant) | RS256 (RSA) | `allowOfflineDays` 기반 | Validate/Heartbeat 갱신 |
 
-Offline Token은 **Opaque Token**입니다. 서버에서 생성한 고유 문자열이며,
-클라이언트는 토큰 내용을 해석하지 않고 만료 시간만 확인합니다.
+> **왜 둘 다 RS256인가?**
+> - 클라이언트가 오프라인에서 토큰을 검증하려면 **비대칭키(RS256)** 필수
+> - HS256은 secret 공유 필요 → 유출 시 공격자가 토큰 위조 가능
+> - 동일한 RSA 키 쌍으로 두 토큰 모두 서명/검증 가능 (운영 단순화)
 
-| 구분 | 설명 |
+### 8.1 sessionToken (온라인 세션 토큰)
+
+**RS256 서명된 JWS** 형식의 짧은 TTL 토큰입니다. CLI 바꿔치기, session.json 조작 방어용.
+
+**특징:**
+- 서버 개인키(RS256)로 서명 → 클라이언트 내장 공개키로 검증
+- 짧은 TTL (15분) → 탈취되어도 빠르게 무효화
+- Validate/Heartbeat **매번 새로 발급** (단순한 구조)
+
+**Claims:**
+| Claim | 타입 | 의미 |
+|-------|------|------|
+| `iss` | string | 발급자 (`bulc-license-server`) |
+| `aud` | string | 제품 코드 (`BULC_EVAC`) |
+| `sub` | string | licenseId |
+| `dfp` | string | deviceFingerprint (기기 바인딩) |
+| `ent` | string[] | entitlements 배열 |
+| `iat` | number | 발급 시각 (epoch seconds) |
+| `exp` | number | 만료 시각 (epoch seconds) |
+
+**클라이언트 검증 (필수):**
+1. RS256 서명 검증 (내장 공개키)
+2. `aud` == productCode
+3. `dfp` == 현재 기기 fingerprint
+4. `exp` > now (±2분 clock skew 허용)
+5. `ent` 기반 기능 unlock
+
+**sessionToken 만료 시 Soft Fail (권장):**
+
+네트워크 끊김으로 sessionToken이 만료되어도 즉시 앱을 종료하지 마세요:
+
+1. 백그라운드에서 heartbeat 재시도 (Exponential backoff: 1s → 2s → 4s → ... 최대 60s)
+2. 일정 유예 시간(예: 최대 1시간) 동안 기존 기능 유지
+3. 유예 시간 내 복구 실패 시:
+   - offlineToken이 유효하면 오프라인 모드로 전환
+   - 작업 중인 데이터 저장 유도 후 앱 종료
+4. 복구 성공 시 정상 운영 재개
+
+> **왜 Soft Fail인가?** 일시적 네트워크 장애로 사용자의 작업 데이터가 손실되면 UX가 매우 나빠집니다.
+> offlineToken과 조합하여 graceful degradation을 구현하세요.
+
+### 8.2 offlineToken (오프라인 허용 토큰)
+
+**RS256 서명된 JWS** 형식의 긴 TTL 토큰입니다. 오프라인 환경에서 라이선스 사용 허용.
+
+**특징:**
+- 서버 개인키(RS256)로 서명 → 클라이언트 내장 공개키로 오프라인 검증
+- TTL: `policySnapshot.allowOfflineDays` 기반 (예: 7/30/90일)
+- Validate에서 **필수 발급**, Heartbeat에서 **갱신 (sliding)**
+- **Absolute cap**: `exp`는 `license.validUntil`을 초과할 수 없음
+
+**Claims (sessionToken과 통일):**
+| Claim | 타입 | 의미 |
+|-------|------|------|
+| `iss` | string | 발급자 (`bulc-license-server`) |
+| `aud` | string | 제품 코드 (`BULC_EVAC`) |
+| `sub` | string | licenseId |
+| `typ` | string | 토큰 타입 (`"offline"`) |
+| `dfp` | string | deviceFingerprint (기기 바인딩) |
+| `ent` | string[] | entitlements 배열 |
+| `iat` | number | 발급 시각 (epoch seconds) |
+| `exp` | number | 오프라인 허용 만료 시각 (epoch seconds) |
+
+> **sliding 갱신 정책:**
+> - Heartbeat 성공 시 `exp = now + allowOfflineDays` 로 갱신
+> - 단, `exp`는 `license.validUntil`을 초과할 수 없음 (absolute cap)
+> - 라이선스 만료 후에는 오프라인 사용도 불가
+
+**갱신 임계값 (서버 CPU 최적화):**
+
+offlineToken 갱신은 RS256 서명 연산을 수반하므로, 매 Heartbeat마다 갱신하지 않습니다:
+
+```
+갱신 조건 (둘 중 하나 만족 시):
+1. 남은 기간 < 전체 TTL의 50%
+2. exp - now < thresholdDays (예: 3일)
+```
+
+| 설정 | 기본값 | 설명 |
+|-----|-------|------|
+| `renewal-threshold-ratio` | 0.5 | 남은 기간이 50% 미만일 때 갱신 |
+| `renewal-threshold-days` | 3 | 또는 남은 기간이 3일 미만일 때 갱신 |
+
+> **예시:** allowOfflineDays=30일, 현재 남은 기간 20일 → 갱신 안 함
+> 남은 기간 14일(< 50%) → 갱신 수행
+
+### 8.3 발급 조건
+
+| 토큰 | 발급 조건 |
+|-----|----------|
+| sessionToken | RS256 키 설정 시 항상 발급 (미설정 시 null) |
+| offlineToken | `allowOfflineDays > 0`일 때 발급 |
+
+### 8.4 클라이언트 사용 흐름
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 1. 온라인 상태 (앱 시작)                                           │
+│    └─ POST /validate 호출                                        │
+│    └─ sessionToken + offlineToken 수신                           │
+│    └─ sessionToken 검증 → 앱 기능 unlock                         │
+│    └─ offlineToken 로컬 저장 (오프라인 대비)                       │
+├──────────────────────────────────────────────────────────────────┤
+│ 2. 온라인 상태 (실행 중)                                           │
+│    └─ POST /heartbeat 주기적 호출 (5~15분)                        │
+│    └─ 새 sessionToken 수신 → 기존 토큰 교체                       │
+│    └─ offlineToken 갱신 (sliding window)                         │
+├──────────────────────────────────────────────────────────────────┤
+│ 3. 오프라인 상태                                                   │
+│    └─ offlineToken.exp > now → 앱 사용 허용 (제한적)              │
+│    └─ offlineToken.exp <= now → 앱 사용 차단                      │
+├──────────────────────────────────────────────────────────────────┤
+│ 4. 온라인 복귀                                                     │
+│    └─ POST /validate 재호출 → 서버가 최종 상태 확인                │
+│    └─ 새 sessionToken + offlineToken 발급                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 8.5 방어되는 공격
+
+| 공격 | sessionToken 방어 | offlineToken 방어 |
+|------|------------------|-------------------|
+| CLI 바꿔치기 | RS256 개인키 없이 위조 불가 | RS256 개인키 없이 위조 불가 |
+| session.json 조작 | 서명 검증 실패 | 서명 검증 실패 |
+| 다른 PC 복사 | `dfp` 불일치로 거부 | `dfp` 불일치로 거부 |
+| 토큰 재사용 | 15분 TTL로 제한 | allowOfflineDays TTL + absolute cap |
+| 오프라인 무기한 연장 | - | `exp ≤ license.validUntil` 제한 |
+| 시스템 시간 조작 | - | 8.6 참조 |
+
+---
+
+### 8.6 오프라인 모드 보안 - 시스템 시간 조작 방어
+
+offlineToken은 `exp` claim으로 만료를 검증하지만, 사용자가 시스템 시간을 과거로 되돌리면 우회할 수 있습니다.
+
+**클라이언트 필수 구현사항:**
+
+1. **lastKnownServerTime 저장**
+   - Secure Storage(KeyChain/Credential Manager)에 `lastKnownServerTime` (epoch seconds) 저장
+   - `/validate`, `/heartbeat` 성공 응답의 `serverTime`으로 갱신
+
+2. **시간 역행 감지**
+   ```
+   allowedSkew = 120  // 2분 허용
+   if (systemTime < lastKnownServerTime - allowedSkew) {
+       // 시간 조작 감지 → 앱 실행 차단
+       showError("시스템 시간이 올바르지 않습니다. 네트워크 연결 후 재시도하세요.")
+       // 온라인 복귀 시 /validate로 시간 동기화 유도
+   }
+   ```
+
+3. **Monotonic Clock 병행 (권장)**
+   - 부팅 이후 경과 시간(monotonic)과 wall-clock을 함께 저장
+   - 앱 재시작 시 두 값의 변화량 비교로 시간 조작 추가 감지
+
+**클라이언트 로컬 에러:**
+| 코드 | 설명 |
 |-----|------|
-| 형식 | Opaque Token (서버에서 생성한 고유 문자열) |
-| 서버 저장 | 토큰 값을 DB에 저장 (온라인 복귀 시 검증용) |
-| 오프라인 검증 | 클라이언트가 `offlineTokenExpiresAt` 기준으로 만료 여부만 판단 |
-| 갱신 | `/validate` 성공 시 새 토큰 발급 |
+| `LOCAL_CLOCK_TAMPER_DETECTED` | 시스템 시간 역행 감지 (클라이언트 내부 처리) |
 
-### 발급 조건
-- `/validate` API 성공 시 자동 발급
-- `allowOfflineDays > 0` 인 경우에만 발급
-- 유효 기간: `allowOfflineDays` 일
-
-### 클라이언트 사용 흐름
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. 온라인 상태                                               │
-│    └─ /validate 호출 → offlineToken + offlineTokenExpiresAt │
-│                        수신 후 로컬 저장                     │
-├─────────────────────────────────────────────────────────────┤
-│ 2. 오프라인 상태                                             │
-│    └─ 현재시간 < offlineTokenExpiresAt → 앱 사용 허용        │
-│    └─ 현재시간 >= offlineTokenExpiresAt → 앱 사용 차단       │
-├─────────────────────────────────────────────────────────────┤
-│ 3. 온라인 복귀                                               │
-│    └─ /validate 재호출 → 서버가 토큰 유효성 최종 확인        │
-│    └─ 새 offlineToken 발급                                  │
-└─────────────────────────────────────────────────────────────┘
-```
+> **Note:** 이 에러는 서버에 전송되지 않으며, 클라이언트가 로컬에서 판단하여 앱 실행을 차단합니다.
 
 ---
 
@@ -882,6 +1188,19 @@ GET  /api/licenses/key/{licenseKey}         → GET  /api/me/licenses 또는 /ap
 1. 모든 API 호출에 `Authorization: Bearer {accessToken}` 헤더 추가
 2. validate/heartbeat 요청에 `productId` 필드 추가
 3. 라이선스 키 입력 UX는 Claim API로 대체
+
+### 인증(Bearer) vs 토큰 검증 책임 분리
+
+| 구분 | 책임 | 검증 주체 |
+|-----|------|----------|
+| **Bearer Token (accessToken)** | "요청자(user)가 누구인가" 인증 | 서버 |
+| **sessionToken / offlineToken** | "클라이언트가 기능을 unlock해도 되는가" 판단 | 클라이언트 |
+| **정책 강제 (activation/concurrency/status)** | 최종 권위 | 서버 |
+
+> **왜 서버에서 "클라이언트 검증"을 하지 않는가?**
+> - Bearer는 "요청자 신원"을 확인할 뿐, 클라이언트 앱의 진위 여부를 보장하지 않음
+> - sessionToken/offlineToken은 **클라이언트가 RS256 서명을 검증**하여 "서버가 승인한 세션인가" 판단
+> - 서버는 라이선스 상태, 기기 수, 동시 세션 등 **정책을 최종 강제**하고, 클라이언트는 토큰 검증으로 **기능 unlock 여부를 결정**
 
 ---
 
@@ -964,62 +1283,34 @@ curl -X POST http://localhost:8080/api/admin/license-plans \
 
 ---
 
-## Appendix A: sessionToken (JWS) 스펙 (v1.1.2)
+## Appendix B: 토큰 상세 스펙 (참조)
 
-### 개요
+> **Note:** sessionToken과 offlineToken의 상세 스펙은 **섹션 8. 토큰 구조**를 참조하세요.
 
-v1.1.2에서 추가된 sessionToken은 **RS256 서명된 JWS** 형식의 토큰입니다.
-CLI 바꿔치기, session.json 조작 등의 공격을 방어하기 위해 도입되었습니다.
+### Backend 설정
 
-### 형식
+```yaml
+bulc:
+  licensing:
+    # RS256 키 쌍 (sessionToken + offlineToken 공용)
+    rsa-keys:
+      private-key: ${LICENSE_RSA_PRIVATE_KEY:}  # Base64 PKCS#8 또는 PEM
+      public-key: ${LICENSE_RSA_PUBLIC_KEY:}    # 클라이언트 배포용
 
-- **Compact JWS** (JWT 형태)
-- **알고리즘**: RS256 (RSA-SHA256) 전용
-  - 서버 개인키로 서명
-  - 클라이언트는 내장 공개키로 검증
+    session-token:
+      ttl-minutes: 15              # sessionToken 만료 시간 (온라인)
+      issuer: bulc-license-server
 
-### 필수 클레임 (Claims)
-
-| Claim | 타입 | 필수 | 의미 |
-|-------|------|------|------|
-| `iss` | string | O | 토큰 발급자 (bulc-license-server) |
-| `aud` | string | O | 제품 코드 (예: BULC_EVAC) |
-| `sub` | string | O | licenseId |
-| `dfp` | string | O | deviceFingerprint (기기 바인딩) |
-| `ent` | string[] | O | entitlements 배열 |
-| `iat` | number | O | issued at (epoch seconds) |
-| `exp` | number | O | expiry (epoch seconds) |
-
-### 만료 정책
-
-- **온라인 세션 토큰**: 10~15분 (기본 15분)
-- **갱신 방법**: 앱은 exp 만료 전에 heartbeat로 갱신
-
-### 클라이언트 검증 규칙 (필수)
-
-앱/CLI는 `session.json`을 읽은 뒤 **아래를 모두 검증**해야 함:
-
-```
-1. RS256 서명 검증 성공 (내장 공개키)
-2. aud == productCode
-3. dfp == 현재 기기 fingerprint
-4. exp > now (유효, ±2분 clock skew 허용)
-5. entitlements 기반 기능 unlock
+    offline-token:
+      issuer: bulc-license-server
+      # TTL은 policySnapshot.allowOfflineDays 기반 (플랜별 설정)
+      renewal-threshold-ratio: 0.5  # 남은 기간이 50% 미만일 때만 갱신
 ```
 
-> **중요**: `"valid": true` 같은 필드는 **참고로만** 사용 가능.
-> **최종 unlock은 sessionToken 검증을 통과해야 한다.**
+> **Note:** sessionToken과 offlineToken은 동일한 RSA 키 쌍을 사용합니다.
+> 클라이언트는 공개키 하나만 내장하면 두 토큰 모두 검증 가능합니다.
 
-### 방어되는 공격
-
-| 공격 | 방어 메커니즘 |
-|------|--------------|
-| CLI 바꿔치기 | 서버 개인키 없이 유효한 sessionToken 생성 불가 |
-| session.json 조작 | 파일 수정 시 서명 검증 실패 |
-| stdout 응답 조작 | 서버 서명 없는 응답 거부 |
-| 다른 PC 세션 복사 | dfp (deviceFingerprint) 불일치로 거부 |
-
-### 예시 토큰 (디코딩)
+### 예시 sessionToken (디코딩)
 
 **Header:**
 ```json
@@ -1042,31 +1333,57 @@ CLI 바꿔치기, session.json 조작 등의 공격을 방어하기 위해 도�
 }
 ```
 
-**Signature:**
-```
-RS256 서명 (서버 개인키)
-```
+---
 
-### 설정 (Backend)
+## Appendix C: 개인정보 처리 정책
 
-```yaml
-bulc:
-  licensing:
-    session-token:
-      ttl-minutes: 15  # sessionToken 만료 시간
-      issuer: bulc-license-server
-      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}  # RS256 개인키 (Base64 PKCS#8)
-```
+라이선스 시스템에서 수집하는 정보와 처리 방침입니다.
+
+### 수집 항목
+
+| 항목 | 수집 여부 | 목적 | 보관 기간 |
+|-----|:--------:|------|---------|
+| deviceFingerprint | O | 기기 식별, 활성화 제한 | 라이선스 유효 기간 + 1년 |
+| clientVersion | O | 버전 호환성 확인 | 라이선스 유효 기간 |
+| clientOs | O | 통계, 호환성 확인 | 라이선스 유효 기간 |
+| IP 주소 | △ | Rate limiting, 부정 사용 탐지 | **저장 안 함** 또는 마스킹 |
+| Region | △ | 통계 (선택적) | coarse region만 (국가 수준) |
+
+### 수집 최소화 원칙
+
+**IP 주소:**
+- 기본: 저장하지 않음 (메모리에서만 처리)
+- 저장 시: `/24` 마스킹 (예: `192.168.1.xxx`) 또는 해시+salt
+- 보관 기간: 최대 30일
+
+**Region:**
+- IP 기반 GeoIP 추정 시 개인정보 성격 가능
+- coarse region만 저장 (국가/대륙 수준)
+- 또는 opt-in 방식으로 사용자 동의 후 수집
+
+**deviceFingerprint:**
+- 원본 하드웨어 ID는 클라이언트에서 해시 처리
+- 서버에는 해시값만 전송/저장
+- 역추적 불가능한 one-way hash 사용
+
+### 약관 동의
+
+라이선스 활성화 시 아래 내용에 대한 동의가 필요합니다:
+- 서비스 제공을 위한 기기 식별 정보 수집
+- 부정 사용 방지를 위한 접속 정보 처리
+
+> **Note:** 약관 동의만으로 끝나지 않습니다.
+> 수집 최소화 + 마스킹 + 보관기간 제한을 기술적으로 구현해야 합니다.
 
 ---
 
-## Appendix B: 구현 현황
+## Appendix D: 구현 현황
 
 ### M1 - 도메인 레이어 (완료)
-- License Aggregate (Entity, Value Objects)
-- License Repository
-- License Service (Command 로직)
-- Exception Handling
+- [x] License Aggregate (Entity, Value Objects)
+- [x] License Repository
+- [x] License Service (Command 로직)
+- [x] Exception Handling
 
 ### M1.5 - 보안 개선 (완료)
 - [x] `/api/me/licenses` 엔드포인트 추가
@@ -1074,68 +1391,106 @@ bulc:
 - [x] `/api/licenses/key/*` 공개 접근 제거
 - [x] Security 설정 변경
 
+### M1.5.1 - 동시 세션 관리 UX (v1.1.1 완료)
+- [x] `/api/licenses/validate/force` 엔드포인트 추가
+- [x] 409 Conflict 응답 (candidates, activeSessions) 구현
+- [x] ForceValidateRequest DTO 구현
+- [x] LicenseCandidate, ActiveSessionInfo DTO 구현
+- [x] deviceDisplayName 필드 지원
+
 ### M1.6 - sessionToken 추가 (v1.1.2 완료)
 - [x] SessionTokenService 구현 (RS256 JWS)
 - [x] ValidationResponse에 sessionToken 필드 추가
 - [x] validate/heartbeat/force-validate에서 sessionToken 발급
 - [x] CLI 위/변조 방어 설계 문서화
 
+### M1.7 - offlineToken 정비 (v1.1.3 진행중)
+- [ ] **offlineToken RS256 전환** (현재 HS256 → RS256 변경 필요)
+- [ ] offlineToken claims 통일 (iss, aud, typ, dfp, ent 추가)
+- [ ] absolute cap 적용 (`exp ≤ license.validUntil`)
+- [ ] 갱신 임계값 적용 (ratio 50% 또는 3일 미만)
+- [x] Heartbeat에서 offlineToken 갱신 (sliding window)
+- [x] 토큰 구조 문서화 (sessionToken vs offlineToken)
+
+### M1.8 - v1.1.3 추가 기능 (진행중)
+- [ ] strategy 파라미터 (FAIL_ON_MULTIPLE, AUTO_PICK_BEST)
+- [ ] ACTIVATION_DEACTIVATED ErrorCode 추가
+- [ ] Force Validate 경쟁 조건 방어 (pessimistic lock)
+
 > **Note:** Claim 기능은 추후 Redeem 기능으로 별도 구현 예정
 
 ### M2 - Read 레이어 (완료)
-- Query Service (CQRS 패턴)
-- View DTOs (LicenseDetailView, LicenseSummaryView)
-- QueryDSL 기반 동적 검색
-- Admin Controller
+- [x] Query Service (CQRS 패턴)
+- [x] View DTOs (LicenseDetailView, LicenseSummaryView)
+- [x] QueryDSL 기반 동적 검색
+- [x] Admin Controller
+
+### M3 - License Plan Admin API (완료)
+- [x] LicensePlanAdminController 구현
+- [x] LicensePlanAdminService 구현
+- [x] Plan CRUD + activate/deactivate 엔드포인트
+- [x] Soft delete 지원
 
 ### 향후 계획
-- M3: License Plan Admin API
 - M4: Billing 연동
+- M5: Redeem (라이선스 키 귀속) 기능
 - M5: 오프라인 토큰 고도화
 
 ---
 
-## Appendix C: 구현 파일 구조
+## Appendix E: 구현 파일 구조
 
 ```
 backend/src/main/java/com/bulc/homepage/licensing/
 ├── controller/
-│   ├── LicenseController.java        # 사용자 API (v1.1 변경)
-│   └── LicenseAdminController.java   # 관리자 API
+│   ├── LicenseController.java           # 사용자 API (v1.1 변경)
+│   ├── MyLicenseController.java         # /api/me/licenses 엔드포인트
+│   ├── LicenseAdminController.java      # 관리자 API
+│   └── LicensePlanAdminController.java  # 플랜 관리 API
 ├── domain/
-│   ├── License.java                  # Aggregate Root
-│   ├── LicenseActivation.java        # 기기 활성화 Entity
-│   ├── LicenseStatus.java            # 상태 Enum
-│   ├── LicenseType.java              # 타입 Enum
-│   ├── UsageCategory.java            # 용도 Enum
-│   ├── OwnerType.java                # 소유자 유형 Enum
-│   └── ActivationStatus.java         # 활성화 상태 Enum
+│   ├── License.java                     # Aggregate Root
+│   ├── LicenseActivation.java           # 기기 활성화 Entity
+│   ├── LicensePlan.java                 # 라이선스 플랜 Entity
+│   ├── LicenseStatus.java               # 상태 Enum
+│   ├── LicenseType.java                 # 타입 Enum
+│   ├── UsageCategory.java               # 용도 Enum
+│   ├── OwnerType.java                   # 소유자 유형 Enum
+│   └── ActivationStatus.java            # 활성화 상태 Enum
 ├── dto/
-│   ├── ActivationRequest.java        # 검증 요청 DTO
-│   ├── ValidationResponse.java       # 검증 응답 DTO (v1.1.2: sessionToken 추가)
-│   ├── ValidateRequest.java          # v1.1 검증 요청 DTO
-│   └── ApiResponse.java              # 공통 응답 DTO
+│   ├── ActivationRequest.java           # 검증 요청 DTO (v1.0 레거시)
+│   ├── ValidateRequest.java             # v1.1 검증 요청 DTO
+│   ├── ForceValidateRequest.java        # v1.1.1 강제 검증 요청 DTO
+│   ├── ValidationResponse.java          # 검증 응답 DTO (sessionToken, candidates, activeSessions)
+│   ├── MyLicensesResponse.java          # 내 라이선스 목록 응답
+│   ├── LicenseCandidate.java            # 다중 라이선스 후보
+│   ├── ActiveSessionInfo.java           # 활성 세션 정보
+│   └── ApiResponse.java                 # 공통 응답 DTO
 ├── exception/
-│   ├── LicenseException.java         # 커스텀 예외
-│   └── LicenseExceptionHandler.java  # 예외 핸들러
+│   ├── LicenseException.java            # 커스텀 예외
+│   ├── ErrorCode.java                   # 에러 코드 Enum
+│   └── LicenseExceptionHandler.java     # 예외 핸들러
 ├── query/
-│   ├── LicenseQueryService.java      # Query 인터페이스
-│   ├── LicenseQueryServiceImpl.java  # Query 구현
-│   ├── LicenseQueryRepository.java   # Query Repository
+│   ├── LicenseQueryService.java         # Query 인터페이스
+│   ├── LicenseQueryServiceImpl.java     # Query 구현
+│   ├── LicenseQueryRepository.java      # Query Repository
 │   ├── LicenseQueryRepositoryImpl.java
-│   ├── LicenseSearchCond.java        # 검색 조건 DTO
+│   ├── LicenseSearchCond.java           # 검색 조건 DTO
 │   └── view/
-│       ├── LicenseDetailView.java    # 상세 조회 View
-│       ├── LicenseSummaryView.java   # 목록 조회 View
-│       ├── PolicySnapshotView.java   # 정책 스냅샷 View
-│       └── ActivationView.java       # 활성화 정보 View
+│       ├── LicenseDetailView.java       # 상세 조회 View
+│       ├── LicenseSummaryView.java      # 목록 조회 View
+│       ├── MyLicenseView.java           # 내 라이선스 View
+│       ├── PolicySnapshotView.java      # 정책 스냅샷 View
+│       └── ActivationView.java          # 활성화 정보 View
 ├── repository/
-│   └── LicenseRepository.java        # JPA Repository
+│   ├── LicenseRepository.java           # JPA Repository
+│   ├── ActivationRepository.java        # 활성화 Repository
+│   └── LicensePlanRepository.java       # 플랜 Repository
 └── service/
-    ├── LicenseService.java           # Command Service
-    └── SessionTokenService.java      # v1.1.2: sessionToken (JWS) 발급 서비스
+    ├── LicenseService.java              # Command Service
+    ├── LicensePlanAdminService.java     # 플랜 관리 Service
+    └── SessionTokenService.java         # v1.1.2: sessionToken (JWS) 발급 서비스
 ```
 
 ---
 
-*Last Updated: 2025-12-30 (v1.1.2 sessionToken 추가 - CLI 위/변조 방어)*
+*Last Updated: 2026-01-07 (v1.1.3 토큰 구조 명확화, 문서 정비)*

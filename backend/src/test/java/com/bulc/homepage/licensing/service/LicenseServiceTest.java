@@ -55,13 +55,15 @@ class LicenseServiceTest {
     @Mock
     private SessionTokenService sessionTokenService;
 
+    @Mock
+    private OfflineTokenService offlineTokenService;
+
     private LicenseService licenseService;
 
     private static final UUID OWNER_ID = UUID.randomUUID();
     private static final UUID PRODUCT_ID = UUID.randomUUID();
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final String LICENSE_KEY = "TEST-1234-5678-ABCD";
-    private static final String TEST_JWT_SECRET = "TestSecretKeyForUnitTestsMustBeAtLeast32Characters";
 
     @BeforeEach
     void setUp() {
@@ -71,13 +73,18 @@ class LicenseServiceTest {
                 planRepository,
                 productRepository,
                 sessionTokenService,
-                TEST_JWT_SECRET
+                offlineTokenService
         );
 
         // v1.1.2: sessionToken mock 기본 설정 (lenient - 모든 테스트에서 사용되지 않아도 OK)
         // SessionToken은 이제 token만 포함 (exp는 토큰 내부 클레임으로 판단)
         lenient().when(sessionTokenService.generateSessionToken(any(), any(), any(), any()))
                 .thenReturn(new SessionTokenService.SessionToken("mock-session-token"));
+
+        // v1.1.3: offlineToken mock 기본 설정
+        lenient().when(offlineTokenService.shouldRenew(any(), anyInt())).thenReturn(true);
+        lenient().when(offlineTokenService.generateOfflineToken(any(), any(), any(), any(), anyInt(), any()))
+                .thenReturn(new OfflineTokenService.OfflineToken("mock-offline-token", Instant.now().plusSeconds(86400)));
     }
 
     // ==========================================
@@ -599,7 +606,7 @@ class LicenseServiceTest {
                     .willAnswer(inv -> inv.getArgument(0));
 
             ValidateRequest request = new ValidateRequest(
-                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null
+                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null, null
             );
 
             // when
@@ -620,7 +627,7 @@ class LicenseServiceTest {
                     .willReturn(List.of());
 
             ValidateRequest request = new ValidateRequest(
-                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null
+                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null, null
             );
 
             // when & then
@@ -651,7 +658,7 @@ class LicenseServiceTest {
                     .willReturn(List.of(license));
 
             ValidateRequest request = new ValidateRequest(
-                    null, PRODUCT_ID, null, "unregistered-device", "1.0.0", "Windows", null
+                    null, PRODUCT_ID, null, "unregistered-device", "1.0.0", "Windows", null, null
             );
 
             // when & then
@@ -676,7 +683,7 @@ class LicenseServiceTest {
                     .willAnswer(inv -> inv.getArgument(0));
 
             ValidateRequest request = new ValidateRequest(
-                    null, PRODUCT_ID, null, "registered-device", "2.0.0", "Windows 11", null
+                    null, PRODUCT_ID, null, "registered-device", "2.0.0", "Windows 11", null, null
             );
 
             // when
@@ -696,7 +703,7 @@ class LicenseServiceTest {
                     .willReturn(List.of());
 
             ValidateRequest request = new ValidateRequest(
-                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null
+                    null, PRODUCT_ID, null, "device-123", "1.0.0", "Windows", null, null
             );
 
             // when & then
