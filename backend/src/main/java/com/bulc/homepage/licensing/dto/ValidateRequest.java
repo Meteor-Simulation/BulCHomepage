@@ -17,7 +17,10 @@ import java.util.UUID;
  * - licenseId 미지정:
  *   - 후보 0개: 404 LICENSE_NOT_FOUND_FOR_PRODUCT
  *   - 후보 1개: 자동 선택
- *   - 후보 2개 이상: 409 LICENSE_SELECTION_REQUIRED + candidates 반환
+ *   - 후보 2개 이상: strategy에 따라 처리 (v1.1.3)
+ *
+ * v1.1.3 추가:
+ * - strategy: 다중 라이선스 선택 전략
  */
 public record ValidateRequest(
         // 제품 식별 (둘 중 하나 필수)
@@ -36,12 +39,22 @@ public record ValidateRequest(
         String clientOs,
 
         // v1.1.1: 기기 표시 이름 (선택) - UX용
-        String deviceDisplayName
+        String deviceDisplayName,
+
+        // v1.1.3: 다중 라이선스 선택 전략 (기본: FAIL_ON_MULTIPLE)
+        LicenseSelectionStrategy strategy
 ) {
     /**
      * 제품 식별자가 유효한지 검증.
      */
     public boolean hasProductIdentifier() {
         return productCode != null || productId != null;
+    }
+
+    /**
+     * 전략 반환 (null이면 기본값 FAIL_ON_MULTIPLE).
+     */
+    public LicenseSelectionStrategy getEffectiveStrategy() {
+        return strategy != null ? strategy : LicenseSelectionStrategy.FAIL_ON_MULTIPLE;
     }
 }

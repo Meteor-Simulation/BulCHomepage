@@ -31,4 +31,37 @@ bulc:
     session-token:
       ttl-minutes: 15
       issuer: bulc-license-server
-      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
+      # Test-only RSA private key - DO NOT USE IN PRODUCTION
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCZnC6Cx6Oftfly
+        CtpM3lvxmQ3oA4zQWviz7ECseunpkP0Hk7gB12y4DSIhqXy/V+YUhx2muMDeMxuW
+        ePJsRgP8/fDf8KIIqGm+VnFoFTnAp77YndDNw40zc0lZplYGhiebEIy9Yar3hrxD
+        QEcMRNVvJoIUePpt/Xlpyd6MghrznHyaa/vKGl9OHDnfyGTRBQ1FczCdmFUEWAIo
+        GPewsQSUXWCj7ZkHloUjaQWLzxcyGE75slfohdPJMUh9bZL7aNRxHfU9wm+zgScA
+        DexZZpazUMh1lMYuQb8Jf7zV68jAXJLimllEUvP18olIzQ5JaLAj0+OMrWgoyLxk
+        A3qjBNsRAgMBAAECggEAA0eCTATlSVqwTCfdYTTzYYwhKMLcayuidV+JXl4sDnI5
+        9KaQ5U6AflgQi1zC7suzX4d7zh/R05c5D41QH5iCnUlj54BvLgOxhVXWp7zafQCl
+        /tLDPRMYjtQwIgZFtv3w3hIo0pP6UKBDS8GVUO+DtEvDfrcPWn8bQVbomWH75qWx
+        BJzS+16qJiuFspIdaWFvR89WpGbzH/D8tGwYdwFOA0C94KaQBT/BO64FB8n8Dj0S
+        VaCkgu6cqdzZx6uNeI4LBsp4l1EvFccdZIQWBWvamJUlFM76XIkbxmW2E2RDAyCe
+        NM+oTMWKzDqFfjXph2E6q+nfYFrqk519PPv69yXIwQKBgQDG8SXJXTdhVuVxY87S
+        hSNFdXNEbw3/AtJCpTNIjecYzwVfp7b/LzmD7rCBpVHkp2qXtlPjgV9f40ly48X3
+        tXWp05L29ZIgtX00V8rGgAZRb+G8+ehLdzZfFMDtvDi3vMzlYuNeGVPDeTbPgW5V
+        3p0vf2Xqc7EF48Jgyu29DA8kZwKBgQDFqqUXjcO7DEu0/aK5LddpvWLEdos8WT9z
+        DiLBwqsTmQHr6YKYVaO08tMPCSZLD1oDNiNZZpQl574ujUtCscos+9iGP+T40Z40
+        MElaG2QrutxxbZgjYikU58mJxnyMPxMsqwsbswkwfQ+o5IK2T3RGnReogcveJZ9p
+        S5tHltKZxwKBgQCMaQEBaTBAHGOeLxJ3VQ565JVxVGxtcuFRtmVGrRjRUrP5OlcX
+        Lo6Khnm/Vx5AosTBxSbaKKJW/AUH+Kjt1v3v2esdMF9thIqU2e29Qfizm6KYjU2d
+        jcsrOmucnz7st21p7OyKqpeLHE9KD5D/PDp2npUg73yeqoyzYiZ/SjaZuwKBgBnY
+        Uxe+UH5PgEKc+z7NMKJBwf1AJrpwTOyFR6QgCPBaDDdFY+75G5uYOGJ55sjfq/xJ
+        gtu4ntxJ7cL2dIW262FwWIJNLmoeNlpKify/IhzZpOMr2j2eIxL5r49VJYnM4Xvw
+        rVYk1anCYF7L6g9eWiy1c5dzyS01rB8/ZIE6xjSXAoGBAJCeaLWaxr6L+CgOsBEW
+        me3YPwfTdIQHHendMkz7jrx8Yp3fKnFsYvJk0d/9Uxu3d/ImXMRS7FYogBtW0XtN
+        rQ4KBgw7qyGraXRaBIs0t2FyvqphfxNGGrpt3aBSJ5seq8eElBH1Wt8sXXcYxmr2
+        hGkPXAWWyeRdRjspkimo/o74
+        -----END PRIVATE KEY-----
+    offline-token:
+      issuer: bulc-license-server
+      renewal-threshold-ratio: 0.5
+      renewal-threshold-days: 3

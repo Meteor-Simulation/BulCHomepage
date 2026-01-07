@@ -44,7 +44,10 @@ public class LicenseException extends RuntimeException {
         // v1.1.1 추가
         SESSION_DEACTIVATED("세션이 다른 기기에서 비활성화되었습니다"),
         INVALID_REQUEST("잘못된 요청입니다"),
-        INVALID_ACTIVATION_OWNERSHIP("비활성화 대상 세션이 해당 라이선스에 속하지 않습니다");
+        INVALID_ACTIVATION_OWNERSHIP("비활성화 대상 세션이 해당 라이선스에 속하지 않습니다"),
+
+        // v1.1.3 추가
+        ACTIVATION_DEACTIVATED("활성화가 다른 기기에 의해 비활성화되었습니다. 재인증이 필요합니다");
 
         private final String message;
 
