@@ -126,6 +126,37 @@ public class UserController {
     }
 
     /**
+     * 계정 비활성화 (탈퇴)
+     */
+    @PostMapping("/me/deactivate")
+    public ResponseEntity<ApiResponse> deactivateAccount() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(401).body(new ApiResponse(false, "인증이 필요합니다."));
+        }
+
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body(new ApiResponse(false, "사용자를 찾을 수 없습니다."));
+        }
+
+        // 이미 비활성화된 계정인지 확인
+        if (!user.getIsActive()) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "이미 비활성화된 계정입니다."));
+        }
+
+        // 계정 비활성화
+        user.setIsActive(false);
+        user.setDeactivatedAt(java.time.LocalDateTime.now());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new ApiResponse(true, "계정이 비활성화되었습니다."));
+    }
+
+    /**
      * 비밀번호 유효성 검사
      */
     private String validatePassword(String password) {

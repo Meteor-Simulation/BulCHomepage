@@ -66,6 +66,19 @@ interface Payment {
   currency: string;
   status: string;
   paymentMethod: string | null;
+  // 카드 결제 정보
+  cardCompany: string | null;
+  cardNumber: string | null;
+  installmentMonths: number | null;
+  approveNo: string | null;
+  // 간편결제 정보
+  easyPayProvider: string | null;
+  // 가상계좌/계좌이체 정보
+  bankName: string | null;
+  accountNumber: string | null;
+  dueDate: string | null;
+  depositorName: string | null;
+  settlementStatus: string | null;
   createdAt: string;
 }
 
@@ -905,8 +918,25 @@ const AdminPage: React.FC = () => {
       'TRANSFER': '계좌이체',
       'MOBILE': '휴대폰',
       'GIFT_CARD': '상품권',
+      'UNKNOWN': '알 수 없음',
     };
-    return methodMap[method] || method;
+
+    // 정확한 매칭
+    if (methodMap[method]) {
+      return methodMap[method];
+    }
+
+    // 깨진 한글이나 알 수 없는 값에 대한 fallback 처리
+    const lowerMethod = method.toLowerCase();
+    if (lowerMethod.includes('가상') || lowerMethod.includes('virtual')) return '가상계좌';
+    if (lowerMethod.includes('카드') || lowerMethod.includes('card')) return '카드';
+    if (lowerMethod.includes('계좌이체') || lowerMethod.includes('transfer')) return '계좌이체';
+    if (lowerMethod.includes('휴대폰') || lowerMethod.includes('mobile')) return '휴대폰';
+    if (lowerMethod.includes('상품권') || lowerMethod.includes('gift')) return '상품권';
+    if (lowerMethod.includes('간편') || lowerMethod.includes('easy')) return '간편결제';
+
+    // 최종 fallback - 알 수 없는 값은 '기타'로 표시
+    return method.length > 20 ? '기타' : method;
   };
 
   // 페이지네이션 컴포넌트
@@ -1223,7 +1253,48 @@ const AdminPage: React.FC = () => {
                                 <td>{payment.orderId}</td>
                                 <td>{payment.userName || '-'}</td>
                                 <td>{payment.userEmail}</td>
-                                <td>{formatPaymentMethod(payment.paymentMethod)}</td>
+                                <td>
+                                  <div className="payment-method-cell">
+                                    <span>{formatPaymentMethod(payment.paymentMethod)}</span>
+                                    {/* 카드 결제 상세 정보 */}
+                                    {payment.paymentMethod === 'CARD' && payment.cardCompany && (
+                                      <div className="payment-detail-info">
+                                        <span className="card-info">{payment.cardCompany}</span>
+                                        {payment.cardNumber && <span className="card-num">{payment.cardNumber}</span>}
+                                        {payment.installmentMonths !== null && payment.installmentMonths > 0 && (
+                                          <span className="installment">{payment.installmentMonths}개월</span>
+                                        )}
+                                        {payment.installmentMonths === 0 && <span className="installment">일시불</span>}
+                                        {payment.approveNo && <span className="approve-no">승인: {payment.approveNo}</span>}
+                                      </div>
+                                    )}
+                                    {/* 간편결제 상세 정보 */}
+                                    {payment.paymentMethod?.startsWith('EASY_PAY') && (
+                                      <div className="payment-detail-info">
+                                        {payment.easyPayProvider && <span className="easy-pay-provider">{payment.easyPayProvider}</span>}
+                                        {payment.cardCompany && <span className="card-info">{payment.cardCompany}</span>}
+                                        {payment.cardNumber && <span className="card-num">{payment.cardNumber}</span>}
+                                        {payment.approveNo && <span className="approve-no">승인: {payment.approveNo}</span>}
+                                      </div>
+                                    )}
+                                    {/* 가상계좌 상세 정보 */}
+                                    {payment.paymentMethod === 'VIRTUAL_ACCOUNT' && payment.bankName && (
+                                      <div className="payment-detail-info">
+                                        <span className="bank-info">{payment.bankName}</span>
+                                        {payment.accountNumber && <span className="account-num">{payment.accountNumber}</span>}
+                                        {payment.dueDate && <span className="due-date">입금기한: {formatDate(payment.dueDate)}</span>}
+                                        {payment.depositorName && <span className="depositor">입금자: {payment.depositorName}</span>}
+                                      </div>
+                                    )}
+                                    {/* 계좌이체 상세 정보 */}
+                                    {payment.paymentMethod === 'TRANSFER' && payment.bankName && (
+                                      <div className="payment-detail-info">
+                                        <span className="bank-info">{payment.bankName}</span>
+                                        {payment.settlementStatus && <span className="settlement">정산: {payment.settlementStatus}</span>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
                                 <td>{formatPrice(payment.amount, payment.currency)}</td>
                                 <td>
                                   <span className={`status-badge status-${payment.status?.toLowerCase()}`}>

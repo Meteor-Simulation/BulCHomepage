@@ -634,12 +634,18 @@
 }
 
 /* ========================================
-   결제 수단 - 2개 옵션 스타일
+   결제 수단 - 옵션 스타일
 ======================================== */
 .payment-methods.two-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.payment-methods.three-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
 }
 
 .method-option-btn {
@@ -699,6 +705,12 @@
   font-size: 13px;
   color: #C4320A;
   font-weight: 500;
+}
+
+.method-description {
+  font-size: 12px;
+  color: #888;
+  font-weight: 400;
 }
 
 .arrow-icon {
@@ -984,7 +996,7 @@
 
   .payment-right {
     position: static;
-    order: -1;
+    /* 모바일에서 주문요약이 하단에 표시되도록 order 제거 */
   }
 
   .plans-grid {
@@ -1009,7 +1021,8 @@
     flex-direction: column;
   }
 
-  .payment-methods.two-options {
+  .payment-methods.two-options,
+  .payment-methods.three-options {
     grid-template-columns: 1fr;
   }
 

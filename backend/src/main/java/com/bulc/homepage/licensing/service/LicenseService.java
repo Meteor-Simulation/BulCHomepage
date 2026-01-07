@@ -108,14 +108,7 @@ public class LicenseService {
      */
     @Transactional
     public LicenseResponse issueLicense(LicenseIssueRequest request) {
-        // 동일 제품에 대한 기존 라이선스 확인
-        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
-                request.ownerType(), request.ownerId(), request.productId()
-        ).ifPresent(existing -> {
-            if (existing.getStatus() != LicenseStatus.REVOKED) {
-                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
-            }
-        });
+        // 1인 다중 라이선스 허용 - 중복 체크 제거
 
         // 라이선스 키 생성
         String licenseKey = generateLicenseKey();
@@ -157,14 +150,7 @@ public class LicenseService {
         LicensePlan plan = planRepository.findAvailableById(planId)
                 .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
 
-        // 동일 제품에 대한 기존 라이선스 확인
-        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
-                ownerType, ownerId, plan.getProductId()
-        ).ifPresent(existing -> {
-            if (existing.getStatus() != LicenseStatus.REVOKED) {
-                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
-            }
-        });
+        // 1인 다중 라이선스 허용 - 중복 체크 제거
 
         // 라이선스 키 생성
         String licenseKey = generateLicenseKey();
@@ -232,14 +218,7 @@ public class LicenseService {
         LicensePlan plan = planRepository.findAvailableById(planId)
                 .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
 
-        // 동일 제품에 대한 기존 라이선스 확인
-        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
-                ownerType, ownerId, plan.getProductId()
-        ).ifPresent(existing -> {
-            if (existing.getStatus() != LicenseStatus.REVOKED) {
-                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
-            }
-        });
+        // 1인 다중 라이선스 허용 - 중복 체크 제거
 
         // 라이선스 키 생성
         String licenseKey = generateLicenseKey();
@@ -307,14 +286,7 @@ public class LicenseService {
         LicensePlan plan = planRepository.findAvailableById(planId)
                 .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
 
-        // 동일 제품에 대한 기존 라이선스 확인
-        licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
-                OwnerType.USER, userId, plan.getProductId()
-        ).ifPresent(existing -> {
-            if (existing.getStatus() != LicenseStatus.REVOKED) {
-                throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
-            }
-        });
+        // 1인 다중 라이선스 허용 - 중복 체크 제거
 
         // 라이선스 키 생성
         String licenseKey = generateLicenseKey();

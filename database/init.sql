@@ -79,12 +79,16 @@ CREATE TABLE users (
     name            VARCHAR(100) NULL,
     phone           VARCHAR(20) NULL,
     country_code    VARCHAR(10) NULL DEFAULT 'KR',
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    deactivated_at  TIMESTAMP NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_users_role FOREIGN KEY (roles_code) REFERENCES user_roles(code),
     CONSTRAINT fk_users_country FOREIGN KEY (country_code) REFERENCES countries(code)
 );
+
+CREATE INDEX idx_users_is_active ON users(is_active);
 
 COMMENT ON TABLE users IS '유저 테이블 - 사용자 기본 정보';
 COMMENT ON COLUMN users.email IS '이메일 (기본키, 로그인 ID)';
@@ -93,6 +97,8 @@ COMMENT ON COLUMN users.roles_code IS '역할 코드 (000:관리자, 001:매니�
 COMMENT ON COLUMN users.name IS '이름 (결제 시 입력)';
 COMMENT ON COLUMN users.phone IS '전화번호 (결제 시 입력)';
 COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
+COMMENT ON COLUMN users.is_active IS '계정 활성화 상태 (기본: true)';
+COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 
 -- 기본 관리자 계정 (비밀번호: test1234!)
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
@@ -241,6 +247,20 @@ CREATE TABLE payment_details (
     payment_provider    VARCHAR(50) NULL,
     order_id            VARCHAR(100) NULL,
     payment_key         VARCHAR(255) NULL,
+    -- 카드 결제 상세 정보
+    card_company        VARCHAR(50) NULL,
+    card_number         VARCHAR(50) NULL,
+    installment_months  INT NULL,
+    approve_no          VARCHAR(50) NULL,
+    -- 간편결제 제공자
+    easy_pay_provider   VARCHAR(50) NULL,
+    -- 가상계좌/계좌이체 상세 정보
+    bank_code           VARCHAR(20) NULL,
+    bank_name           VARCHAR(50) NULL,
+    account_number      VARCHAR(50) NULL,
+    due_date            TIMESTAMP NULL,
+    depositor_name      VARCHAR(100) NULL,
+    settlement_status   VARCHAR(20) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -250,6 +270,17 @@ CREATE TABLE payment_details (
 COMMENT ON TABLE payment_details IS '결제 상세 테이블 - PG사 연동 정보';
 COMMENT ON COLUMN payment_details.order_id IS '토스페이먼츠 주문 ID';
 COMMENT ON COLUMN payment_details.payment_key IS '토스페이먼츠 결제 키';
+COMMENT ON COLUMN payment_details.card_company IS '카드사명';
+COMMENT ON COLUMN payment_details.card_number IS '마스킹된 카드번호';
+COMMENT ON COLUMN payment_details.installment_months IS '할부 개월수 (0: 일시불)';
+COMMENT ON COLUMN payment_details.approve_no IS '카드 승인번호';
+COMMENT ON COLUMN payment_details.easy_pay_provider IS '간편결제 제공자 (토스페이, 네이버페이, 카카오페이 등)';
+COMMENT ON COLUMN payment_details.bank_code IS '은행 코드 (가상계좌/계좌이체)';
+COMMENT ON COLUMN payment_details.bank_name IS '은행명';
+COMMENT ON COLUMN payment_details.account_number IS '가상계좌 번호';
+COMMENT ON COLUMN payment_details.due_date IS '입금 기한 (가상계좌)';
+COMMENT ON COLUMN payment_details.depositor_name IS '입금자명 (가상계좌)';
+COMMENT ON COLUMN payment_details.settlement_status IS '정산 상태 (계좌이체)';
 
 -- =========================================================
 -- 9. activity_logs (활동 로그 테이블)

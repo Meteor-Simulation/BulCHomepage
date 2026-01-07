@@ -100,42 +100,6 @@ export const useNavigationGuard = (options: NavigationGuardOptions = {}) => {
 };
 
 /**
- * 로그인/로그아웃 후 히스토리 정리 훅
- * 로그인 성공 또는 로그아웃 후 호출하여 이전 히스토리를 정리
- */
-export const useAuthNavigation = () => {
-  const navigate = useNavigate();
-
-  // 로그인 성공 후 호출 - 히스토리를 대체하여 뒤로가기 시 로그인 페이지로 가지 않도록
-  const navigateAfterLogin = useCallback((path: string = '/') => {
-    navigate(path, { replace: true });
-  }, [navigate]);
-
-  // 로그아웃 후 호출 - 히스토리를 대체하여 뒤로가기 시 인증 페이지로 가지 않도록
-  const navigateAfterLogout = useCallback((path: string = '/') => {
-    navigate(path, { replace: true });
-  }, [navigate]);
-
-  // 회원가입 완료 후 호출
-  const navigateAfterSignup = useCallback((path: string = '/') => {
-    navigate(path, { replace: true });
-  }, [navigate]);
-
-  // 결제 완료 후 호출 - 결제 페이지로 뒤로가기 방지
-  const navigateAfterPayment = useCallback((path: string = '/') => {
-    // 결제 완료 페이지로 이동하면서 히스토리 대체
-    navigate(path, { replace: true });
-  }, [navigate]);
-
-  return {
-    navigateAfterLogin,
-    navigateAfterLogout,
-    navigateAfterSignup,
-    navigateAfterPayment,
-  };
-};
-
-/**
  * 새로고침 방지 전용 훅
  * Router 의존성 없이 단순히 beforeunload 이벤트만 처리
  * 모달 등 Router 컨텍스트 외부에서 사용 가능

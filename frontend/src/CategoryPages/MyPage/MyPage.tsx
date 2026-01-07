@@ -93,6 +93,11 @@ const MyPage: React.FC = () => {
   // 개발자 미리보기 (관리자 전용)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+  // 계정 삭제
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // 로그인 체크
   useEffect(() => {
     if (isAuthReady && !isLoggedIn) {
@@ -337,6 +342,40 @@ const MyPage: React.FC = () => {
     navigate('/');
   };
 
+  // 계정 삭제
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== '계정삭제') {
+      showError('확인 문구를 정확히 입력해주세요.');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_URL}/api/users/me/deactivate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        logout();
+        navigate('/', { state: { message: '계정이 삭제되었습니다.' } });
+      } else {
+        const errorData = await response.json();
+        showError(errorData.message || '계정 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      showError('계정 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteConfirmText('');
+    }
+  };
+
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(''), 3000);
@@ -390,15 +429,6 @@ const MyPage: React.FC = () => {
               {isEditingProfile ? (
                 <div className="edit-form">
                   <div className="form-group">
-                    <label>이름</label>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="이름 입력"
-                    />
-                  </div>
-                  <div className="form-group">
                     <label>이메일</label>
                     <div className="input-wrapper">
                       <input
@@ -409,6 +439,15 @@ const MyPage: React.FC = () => {
                       />
                       <span className="helper-text">이메일은 변경할 수 없습니다.</span>
                     </div>
+                  </div>
+                  <div className="form-group">
+                    <label>이름</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="이름 입력"
+                    />
                   </div>
                   <div className="form-group">
                     <label>전화번호</label>
@@ -428,12 +467,12 @@ const MyPage: React.FC = () => {
               ) : (
                 <div className="info-list">
                   <div className="info-row">
-                    <span className="info-label">이름</span>
-                    <span className="info-value">{userInfo.name || '-'}</span>
-                  </div>
-                  <div className="info-row">
                     <span className="info-label">이메일</span>
                     <span className="info-value">{userInfo.email}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">이름</span>
+                    <span className="info-value">{userInfo.name || '-'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">전화번호</span>
@@ -557,10 +596,10 @@ const MyPage: React.FC = () => {
               )}
           </div>
 
-          {/* 설정 (언어/국가) */}
+          {/* 계정 정보 (언어/국가) */}
           <div className="info-card">
             <div className="card-header">
-              <h2 className="card-title">설정</h2>
+              <h2 className="card-title">계정 정보</h2>
               {!isEditingSettings && (
                 <button className="edit-btn" onClick={handleStartEditSettings}>
                   수정
@@ -626,6 +665,20 @@ const MyPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* 계정 삭제 섹션 */}
+            <div className="delete-account-section">
+              <div className="delete-account-info">
+                <span className="delete-label">계정 삭제</span>
+                <span className="delete-description">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</span>
+              </div>
+              <button
+                className="delete-account-btn"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                계정 삭제
+              </button>
+            </div>
           </div>
 
           {/* 라이선스 정보 */}
@@ -789,6 +842,59 @@ const MyPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* 계정 삭제 확인 모달 */}
+    {isDeleteModalOpen && (
+      <div className="delete-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-modal-header">
+            <svg className="warning-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V13M12 17H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <h3>계정 삭제</h3>
+          </div>
+          <div className="delete-modal-body">
+            <p className="warning-text">
+              정말로 계정을 삭제하시겠습니까?<br />
+              이 작업은 되돌릴 수 없습니다.
+            </p>
+            <ul className="delete-warning-list">
+              <li>모든 개인 정보가 삭제됩니다</li>
+              <li>보유한 라이선스가 모두 비활성화됩니다</li>
+              <li>결제 내역은 법적 보관 기간 동안 유지됩니다</li>
+            </ul>
+            <div className="confirm-input-group">
+              <label>확인을 위해 <strong>'계정삭제'</strong>를 입력해주세요</label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="계정삭제"
+                className="confirm-input"
+              />
+            </div>
+          </div>
+          <div className="delete-modal-footer">
+            <button
+              className="cancel-btn"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDeleteConfirmText('');
+              }}
+            >
+              취소
+            </button>
+            <button
+              className="confirm-delete-btn"
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== '계정삭제' || isDeleting}
+            >
+              {isDeleting ? '삭제 중...' : '계정 삭제'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };

@@ -899,3 +899,72 @@
   font-size: 12px;
   color: #666;
 }
+
+/* 결제 수단 상세 정보 (가상계좌/계좌이체) */
+.payment-method-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.payment-detail-info .bank-info {
+  font-weight: 500;
+  color: #1a73e8;
+}
+
+.payment-detail-info .account-num {
+  font-family: 'Consolas', monospace;
+  color: #333;
+}
+
+.payment-detail-info .due-date {
+  color: #e65100;
+}
+
+.payment-detail-info .depositor {
+  color: #555;
+}
+
+.payment-detail-info .settlement {
+  color: #2e7d32;
+}
+
+/* 카드 결제 정보 스타일 */
+.payment-detail-info .card-info {
+  font-weight: 500;
+  color: #1565c0;
+}
+
+.payment-detail-info .card-num {
+  font-family: 'Consolas', monospace;
+  color: #333;
+  font-size: 10px;
+}
+
+.payment-detail-info .installment {
+  color: #7b1fa2;
+  font-weight: 500;
+}
+
+.payment-detail-info .approve-no {
+  color: #666;
+  font-size: 10px;
+}
+
+/* 간편결제 정보 스타일 */
+.payment-detail-info .easy-pay-provider {
+  font-weight: 500;
+  color: #00897b;
+}

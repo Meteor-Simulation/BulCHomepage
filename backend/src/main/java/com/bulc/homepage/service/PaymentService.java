@@ -158,13 +158,77 @@ public class PaymentService {
         String method = responseBody.path("method").asText();
         String paymentMethodCode = convertMethodToCode(method, responseBody);
 
-        PaymentDetail paymentDetail = PaymentDetail.builder()
+        PaymentDetail.PaymentDetailBuilder detailBuilder = PaymentDetail.builder()
                 .payment(payment)
                 .orderId(request.getOrderId())
                 .paymentKey(request.getPaymentKey())
                 .paymentMethod(paymentMethodCode)
-                .paymentProvider("TOSS")
-                .build();
+                .paymentProvider("TOSS");
+
+        // 카드 결제 정보 파싱
+        if ("CARD".equals(paymentMethodCode)) {
+            JsonNode card = responseBody.path("card");
+            if (!card.isMissingNode()) {
+                detailBuilder.cardCompany(card.path("company").asText(null));
+                detailBuilder.cardNumber(card.path("number").asText(null));
+                detailBuilder.installmentMonths(card.path("installmentPlanMonths").asInt(0));
+                detailBuilder.approveNo(card.path("approveNo").asText(null));
+            }
+        }
+
+        // 간편결제 정보 파싱
+        if (paymentMethodCode != null && paymentMethodCode.startsWith("EASY_PAY")) {
+            JsonNode easyPay = responseBody.path("easyPay");
+            if (!easyPay.isMissingNode()) {
+                detailBuilder.easyPayProvider(easyPay.path("provider").asText(null));
+                // 간편결제 내 카드 결제인 경우 카드 정보도 저장
+                JsonNode card = responseBody.path("card");
+                if (!card.isMissingNode()) {
+                    detailBuilder.cardCompany(card.path("company").asText(null));
+                    detailBuilder.cardNumber(card.path("number").asText(null));
+                    detailBuilder.installmentMonths(card.path("installmentPlanMonths").asInt(0));
+                    detailBuilder.approveNo(card.path("approveNo").asText(null));
+                }
+            }
+        }
+
+        // 가상계좌 정보 파싱
+        if ("VIRTUAL_ACCOUNT".equals(paymentMethodCode)) {
+            JsonNode virtualAccount = responseBody.path("virtualAccount");
+            if (!virtualAccount.isMissingNode()) {
+                detailBuilder.bankCode(virtualAccount.path("bankCode").asText(null));
+                detailBuilder.bankName(getBankName(virtualAccount.path("bankCode").asText(null)));
+                detailBuilder.accountNumber(virtualAccount.path("accountNumber").asText(null));
+                detailBuilder.depositorName(virtualAccount.path("customerName").asText(null));
+                String dueDate = virtualAccount.path("dueDate").asText(null);
+                if (dueDate != null && !dueDate.isEmpty()) {
+                    try {
+                        // ISO 8601 형식 (timezone offset 포함) 파싱
+                        java.time.OffsetDateTime odt = java.time.OffsetDateTime.parse(dueDate);
+                        detailBuilder.dueDate(odt.toLocalDateTime());
+                    } catch (Exception e) {
+                        // fallback: Z 제거 후 LocalDateTime 파싱 시도
+                        try {
+                            detailBuilder.dueDate(LocalDateTime.parse(dueDate.replace("Z", "")));
+                        } catch (Exception e2) {
+                            log.warn("dueDate 파싱 실패: {}", dueDate);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 계좌이체 정보 파싱
+        if ("TRANSFER".equals(paymentMethodCode)) {
+            JsonNode transfer = responseBody.path("transfer");
+            if (!transfer.isMissingNode()) {
+                detailBuilder.bankCode(transfer.path("bankCode").asText(null));
+                detailBuilder.bankName(getBankName(transfer.path("bankCode").asText(null)));
+                detailBuilder.settlementStatus(transfer.path("settlementStatus").asText(null));
+            }
+        }
+
+        PaymentDetail paymentDetail = detailBuilder.build();
 
         // 양방향 관계 설정
         payment.setPaymentDetail(paymentDetail);
@@ -196,42 +260,132 @@ public class PaymentService {
     }
 
     /**
-     * 토스페이먼츠 결제 수단 한글 → 영문 코드 변환
+     * 토스페이먼츠 결제 수단 판별 (응답 필드 기반으로 안정적 판단)
+     * 한글 비교 대신 응답 JSON의 필드 존재 여부로 결제 수단 판단
      */
     private String convertMethodToCode(String method, JsonNode responseBody) {
-        if (method == null) return null;
+        // 응답 JSON의 필드 존재 여부로 결제 수단 판단 (인코딩 문제 방지)
 
-        // 간편결제인 경우 제공자 정보 추가
-        if ("간편결제".equals(method)) {
-            String provider = responseBody.path("easyPay").path("provider").asText();
+        // 간편결제 체크 (easyPay 필드 존재)
+        JsonNode easyPay = responseBody.path("easyPay");
+        if (!easyPay.isMissingNode() && easyPay.has("provider")) {
+            String provider = easyPay.path("provider").asText();
             if (provider != null && !provider.isEmpty()) {
                 return "EASY_PAY_" + convertProviderToCode(provider);
             }
             return "EASY_PAY";
         }
 
-        return switch (method) {
-            case "카드" -> "CARD";
-            case "가상계좌" -> "VIRTUAL_ACCOUNT";
-            case "계좌이체" -> "TRANSFER";
-            case "휴대폰" -> "MOBILE";
-            case "문화상품권", "도서문화상품권", "게임문화상품권" -> "GIFT_CARD";
-            default -> method;
-        };
+        // 가상계좌 체크 (virtualAccount 필드 존재)
+        JsonNode virtualAccount = responseBody.path("virtualAccount");
+        if (!virtualAccount.isMissingNode() && virtualAccount.has("accountNumber")) {
+            return "VIRTUAL_ACCOUNT";
+        }
+
+        // 계좌이체 체크 (transfer 필드 존재)
+        JsonNode transfer = responseBody.path("transfer");
+        if (!transfer.isMissingNode() && transfer.has("bankCode")) {
+            return "TRANSFER";
+        }
+
+        // 휴대폰 결제 체크 (mobilePhone 필드 존재)
+        JsonNode mobilePhone = responseBody.path("mobilePhone");
+        if (!mobilePhone.isMissingNode()) {
+            return "MOBILE";
+        }
+
+        // 상품권 결제 체크 (giftCertificate 필드 존재)
+        JsonNode giftCertificate = responseBody.path("giftCertificate");
+        if (!giftCertificate.isMissingNode()) {
+            return "GIFT_CARD";
+        }
+
+        // 카드 결제 체크 (card 필드 존재) - 기본값
+        JsonNode card = responseBody.path("card");
+        if (!card.isMissingNode() && card.has("company")) {
+            return "CARD";
+        }
+
+        // fallback: method 문자열 기반 판단 (한글 포함 가능)
+        if (method != null) {
+            String lowerMethod = method.toLowerCase();
+            if (lowerMethod.contains("카드") || lowerMethod.contains("card")) return "CARD";
+            if (lowerMethod.contains("가상") || lowerMethod.contains("virtual")) return "VIRTUAL_ACCOUNT";
+            if (lowerMethod.contains("계좌이체") || lowerMethod.contains("transfer")) return "TRANSFER";
+            if (lowerMethod.contains("휴대폰") || lowerMethod.contains("mobile")) return "MOBILE";
+            if (lowerMethod.contains("상품권") || lowerMethod.contains("gift")) return "GIFT_CARD";
+            if (lowerMethod.contains("간편") || lowerMethod.contains("easy")) return "EASY_PAY";
+        }
+
+        // 최종 fallback
+        log.warn("알 수 없는 결제 수단: method={}", method);
+        return method != null ? method : "UNKNOWN";
     }
 
     /**
-     * 간편결제 제공자 한글 → 영문 코드 변환
+     * 간편결제 제공자 → 영문 코드 변환 (인코딩 안전)
      */
     private String convertProviderToCode(String provider) {
-        return switch (provider) {
-            case "토스페이" -> "TOSS";
-            case "네이버페이" -> "NAVER";
-            case "카카오페이" -> "KAKAO";
-            case "삼성페이" -> "SAMSUNG";
-            case "애플페이" -> "APPLE";
-            case "페이코" -> "PAYCO";
-            default -> provider.toUpperCase().replace(" ", "_");
+        if (provider == null || provider.isEmpty()) {
+            return "UNKNOWN";
+        }
+
+        // 영문 코드가 이미 있는 경우 그대로 반환
+        String upper = provider.toUpperCase();
+        if (upper.equals("TOSS") || upper.equals("TOSSPAY")) return "TOSS";
+        if (upper.equals("NAVER") || upper.equals("NAVERPAY")) return "NAVER";
+        if (upper.equals("KAKAO") || upper.equals("KAKAOPAY")) return "KAKAO";
+        if (upper.equals("SAMSUNG") || upper.equals("SAMSUNGPAY")) return "SAMSUNG";
+        if (upper.equals("APPLE") || upper.equals("APPLEPAY")) return "APPLE";
+        if (upper.equals("PAYCO")) return "PAYCO";
+
+        // 한글 포함 여부로 판단 (인코딩 문제 방지)
+        String lower = provider.toLowerCase();
+        if (lower.contains("토스") || lower.contains("toss")) return "TOSS";
+        if (lower.contains("네이버") || lower.contains("naver")) return "NAVER";
+        if (lower.contains("카카오") || lower.contains("kakao")) return "KAKAO";
+        if (lower.contains("삼성") || lower.contains("samsung")) return "SAMSUNG";
+        if (lower.contains("애플") || lower.contains("apple")) return "APPLE";
+        if (lower.contains("페이코") || lower.contains("payco")) return "PAYCO";
+
+        // fallback
+        log.warn("알 수 없는 간편결제 제공자: {}", provider);
+        return upper.replace(" ", "_");
+    }
+
+    /**
+     * 은행 코드 → 은행명 변환
+     */
+    private String getBankName(String bankCode) {
+        if (bankCode == null) return null;
+        return switch (bankCode) {
+            case "39" -> "경남은행";
+            case "34" -> "광주은행";
+            case "12" -> "단위농협";
+            case "32" -> "부산은행";
+            case "45" -> "새마을금고";
+            case "64" -> "산림조합";
+            case "88" -> "신한은행";
+            case "48" -> "신협";
+            case "27" -> "씨티은행";
+            case "20" -> "우리은행";
+            case "71" -> "우체국";
+            case "50" -> "저축은행";
+            case "37" -> "전북은행";
+            case "35" -> "제주은행";
+            case "90" -> "카카오뱅크";
+            case "89" -> "케이뱅크";
+            case "92" -> "토스뱅크";
+            case "81" -> "하나은행";
+            case "54" -> "HSBC";
+            case "03" -> "IBK기업은행";
+            case "06" -> "KB국민은행";
+            case "31" -> "DGB대구은행";
+            case "02" -> "KDB산업은행";
+            case "11" -> "NH농협은행";
+            case "23" -> "SC제일은행";
+            case "07" -> "Sh수협은행";
+            default -> bankCode;
         };
     }
 }

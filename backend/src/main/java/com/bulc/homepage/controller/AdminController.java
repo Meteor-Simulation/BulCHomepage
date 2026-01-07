@@ -61,7 +61,7 @@ public class AdminController {
     }
 
     /**
-     * 사용자 목록 조회
+     * 사용자 목록 조회 (활성 사용자만)
      */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getUsers() {
@@ -70,6 +70,7 @@ public class AdminController {
         }
 
         List<UserResponse> users = userRepository.findAll().stream()
+                .filter(user -> user.getIsActive() != null && user.getIsActive()) // 비활성화된 계정 필터링
                 .map(user -> new UserResponse(
                         user.getEmail(),  // email이 PK
                         user.getEmail(),
@@ -77,6 +78,7 @@ public class AdminController {
                         user.getPhone(),
                         user.getRolesCode(),
                         user.getCountryCode(),
+                        user.getIsActive(),
                         user.getCreatedAt() != null ? user.getCreatedAt().toString() : null
                 ))
                 .collect(Collectors.toList());
@@ -115,6 +117,7 @@ public class AdminController {
                             user.getPhone(),
                             user.getRolesCode(),
                             user.getCountryCode(),
+                            user.getIsActive(),
                             user.getCreatedAt() != null ? user.getCreatedAt().toString() : null
                     ));
                 })
@@ -466,28 +469,80 @@ public class AdminController {
                     };
 
                     // 사용자 정보 조회 (우선순위: User 관계 > userEmailFk > userName 필드)
+                    // 비활성화된 계정은 "탈퇴한 사용자"로 표시
                     String userName = null;
                     String userEmail = null;
+                    boolean isDeactivated = false;
 
                     // 1. User 관계가 있으면 사용
                     if (payment.getUser() != null) {
-                        userName = payment.getUser().getName();
-                        userEmail = payment.getUser().getEmail();
+                        if (payment.getUser().getIsActive() != null && !payment.getUser().getIsActive()) {
+                            isDeactivated = true;
+                        } else {
+                            userName = payment.getUser().getName();
+                            userEmail = payment.getUser().getEmail();
+                        }
                     }
                     // 2. userEmailFk로 조회
                     else if (payment.getUserEmailFk() != null && !payment.getUserEmailFk().isBlank()) {
                         var userOpt = userRepository.findByEmail(payment.getUserEmailFk());
                         if (userOpt.isPresent()) {
-                            userName = userOpt.get().getName();
-                            userEmail = userOpt.get().getEmail();
+                            var user = userOpt.get();
+                            if (user.getIsActive() != null && !user.getIsActive()) {
+                                isDeactivated = true;
+                            } else {
+                                userName = user.getName();
+                                userEmail = user.getEmail();
+                            }
                         }
                     }
-                    // 3. Payment에 저장된 값 사용
-                    if (userName == null) {
-                        userName = payment.getUserName();
+
+                    // 비활성화된 사용자 처리
+                    if (isDeactivated) {
+                        userName = "탈퇴한 사용자";
+                        userEmail = "(탈퇴)";
                     }
-                    if (userEmail == null) {
-                        userEmail = payment.getUserEmailFk() != null ? payment.getUserEmailFk() : payment.getUserEmail();
+                    // 3. Payment에 저장된 값 사용 (비활성화가 아닌 경우만)
+                    else {
+                        if (userName == null) {
+                            userName = payment.getUserName();
+                        }
+                        if (userEmail == null) {
+                            userEmail = payment.getUserEmailFk() != null ? payment.getUserEmailFk() : payment.getUserEmail();
+                        }
+                    }
+
+                    // 카드 결제 정보
+                    String cardCompany = null;
+                    String cardNumber = null;
+                    Integer installmentMonths = null;
+                    String approveNo = null;
+
+                    // 간편결제 정보
+                    String easyPayProvider = null;
+
+                    // 가상계좌/계좌이체 추가 정보
+                    String bankName = null;
+                    String accountNumber = null;
+                    String dueDate = null;
+                    String depositorName = null;
+                    String settlementStatus = null;
+
+                    if (payment.getPaymentDetail() != null) {
+                        var detail = payment.getPaymentDetail();
+                        // 카드 정보
+                        cardCompany = detail.getCardCompany();
+                        cardNumber = detail.getCardNumber();
+                        installmentMonths = detail.getInstallmentMonths();
+                        approveNo = detail.getApproveNo();
+                        // 간편결제 정보
+                        easyPayProvider = detail.getEasyPayProvider();
+                        // 가상계좌/계좌이체 정보
+                        bankName = detail.getBankName();
+                        accountNumber = detail.getAccountNumber();
+                        dueDate = detail.getDueDate() != null ? detail.getDueDate().toString() : null;
+                        depositorName = detail.getDepositorName();
+                        settlementStatus = detail.getSettlementStatus();
                     }
 
                     return new PaymentResponse(
@@ -499,6 +554,16 @@ public class AdminController {
                             payment.getCurrency(),
                             statusText,
                             paymentMethod,
+                            cardCompany,
+                            cardNumber,
+                            installmentMonths,
+                            approveNo,
+                            easyPayProvider,
+                            bankName,
+                            accountNumber,
+                            dueDate,
+                            depositorName,
+                            settlementStatus,
                             payment.getCreatedAt() != null ? payment.getCreatedAt().toString() : null
                     );
                 })
@@ -508,13 +573,13 @@ public class AdminController {
     }
 
     // DTOs
-    public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, String createdAt) {}
+    public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
     public record ProductResponse(String code, String name, String description, Boolean isActive, String createdAt) {}
     public record ProductRequest(String code, String name, String description, Boolean isActive) {}
     public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String licensePlanId, String createdAt) {}
     public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive, String licensePlanId) {}
     public record LicenseResponse(String id, String licenseKey, String ownerType, String ownerId, String status, String validUntil, String createdAt) {}
-    public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String createdAt) {}
+    public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt) {}
     public record RoleUpdateRequest(String rolesCode) {}
     public record ErrorResponse(String message) {}
 }

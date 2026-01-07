@@ -86,6 +86,12 @@ public class AuthService {
             throw new RuntimeException("존재하지 않는 이메일입니다.");
         }
 
+        // 비활성화된 계정인지 확인
+        if (!user.getIsActive()) {
+            log.warn("로그인 실패 - 비활성화된 계정: {}, IP: {}", request.getEmail(), ipAddress);
+            throw new RuntimeException("비활성화된 계정입니다. 고객센터에 문의해주세요.");
+        }
+
         try {
             // 인증 (비밀번호 확인)
             Authentication authentication = authenticationManager.authenticate(
@@ -161,6 +167,11 @@ public class AuthService {
         // 사용자 조회
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+
+        // 비활성화된 계정인지 확인
+        if (!user.getIsActive()) {
+            throw new RuntimeException("비활성화된 계정입니다. 고객센터에 문의해주세요.");
+        }
 
         // 새로운 Access Token 생성
         String newAccessToken = jwtTokenProvider.generateAccessToken(email);
