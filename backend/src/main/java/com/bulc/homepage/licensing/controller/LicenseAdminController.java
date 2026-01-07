@@ -26,7 +26,7 @@ import java.util.UUID;
  * 라이선스 검색, 목록 조회 등 관리자 기능을 제공합니다.
  */
 @RestController
-@RequestMapping("/api/admin/licenses")
+@RequestMapping("/api/v1/admin/licenses")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class LicenseAdminController {
@@ -36,7 +36,7 @@ public class LicenseAdminController {
     /**
      * 라이선스 검색 (페이징).
      *
-     * GET /api/admin/licenses?ownerType=USER&ownerId={uuid}&status=ACTIVE&...
+     * GET /api/v1/admin/licenses?ownerType=USER&ownerId={uuid}&status=ACTIVE&...
      */
     @GetMapping
     public ResponseEntity<Page<LicenseSummaryView>> searchLicenses(
@@ -67,7 +67,7 @@ public class LicenseAdminController {
     /**
      * 소유자별 라이선스 목록 조회.
      *
-     * GET /api/admin/licenses/owner/{ownerType}/{ownerId}
+     * GET /api/v1/admin/licenses/owner/{ownerType}/{ownerId}
      */
     @GetMapping("/owner/{ownerType}/{ownerId}")
     public ResponseEntity<List<LicenseSummaryView>> getLicensesByOwner(
@@ -79,7 +79,7 @@ public class LicenseAdminController {
     /**
      * 라이선스 상세 조회 (관리자용).
      *
-     * GET /api/admin/licenses/{licenseId}
+     * GET /api/v1/admin/licenses/{licenseId}
      */
     @GetMapping("/{licenseId}")
     public ResponseEntity<LicenseDetailView> getLicense(@PathVariable UUID licenseId) {
