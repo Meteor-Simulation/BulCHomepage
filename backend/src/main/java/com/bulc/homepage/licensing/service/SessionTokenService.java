@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * v1.1.2: Session Token 서비스.
+ * v0.2.2: Session Token 서비스.
  *
  * validate/validate-force/heartbeat 성공 시 RS256 서명된 sessionToken을 생성합니다.
  * sessionToken은 CLI/앱에서 서명 검증 후 기능 unlock 여부를 결정하는 최종 기준입니다.

@@ -559,7 +559,7 @@ bulc-cli/
 | 컴포넌트 | 책임 |
 |---------|------|
 | `DeviceFingerprintProvider` | 안정적 입력 기반 해시 생성 (최소 구현부터) |
-| `LicensingApiClient` | `/api/me/licenses`, `/api/licenses/validate`, `/api/licenses/validate/force`, `/api/licenses/heartbeat` |
+| `LicensingApiClient` | `/api/v1/me/licenses`, `/api/v1/licenses/validate`, `/api/v1/licenses/validate/force`, `/api/v1/licenses/heartbeat` |
 | `SessionWriter` | session.json schemaVersion=1 고정, `--out` 우선, 없으면 표준 경로 |
 
 ### 에러/상태 매핑 (실무용 고정 규칙)

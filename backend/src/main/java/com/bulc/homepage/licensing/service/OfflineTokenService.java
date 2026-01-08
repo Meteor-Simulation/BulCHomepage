@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * v1.1.3: Offline Token 서비스.
+ * v0.2.3: Offline Token 서비스.
  *
  * 오프라인 실행 허용 기간 동안 클라이언트가 서버 연결 없이 라이선스를 검증할 수 있도록
  * RS256 서명된 offlineToken을 생성합니다.
  *
  * sessionToken과 동일하게 RS256을 사용하며, 클라이언트는 공개키로 검증합니다.
  *
- * Claims (v1.1.3 통일):
+ * Claims (v0.2.3 통일):
  * - iss: 발급자 (bulc-license-server)
  * - aud: 대상 제품 코드 (예: BULC_EVAC)
  * - sub: licenseId
@@ -30,7 +30,7 @@ import java.util.UUID;
  * - iat: 발급 시각 (epoch seconds)
  * - exp: 만료 시각 (epoch seconds) - **absolute cap: exp ≤ validUntil**
  *
- * 갱신 정책 (v1.1.3):
+ * 갱신 정책 (v0.2.3):
  * - 갱신 임계값: 남은 기간이 50% 미만 또는 3일 미만일 때만 갱신
  * - absolute cap: offlineToken.exp는 license.validUntil을 초과할 수 없음
  */
@@ -76,7 +76,7 @@ public class OfflineTokenService {
         Instant now = Instant.now();
         Instant baseExp = now.plus(allowOfflineDays, ChronoUnit.DAYS);
 
-        // v1.1.3: Absolute cap - exp는 licenseValidUntil을 초과할 수 없음
+        // v0.2.3: Absolute cap - exp는 licenseValidUntil을 초과할 수 없음
         Instant exp;
         if (licenseValidUntil != null && baseExp.isAfter(licenseValidUntil)) {
             exp = licenseValidUntil;
@@ -85,7 +85,7 @@ public class OfflineTokenService {
             exp = baseExp;
         }
 
-        // v1.1.3: 통일된 claims 구조 + kid 추가
+        // v0.2.3: 통일된 claims 구조 + kid 추가
         String token = Jwts.builder()
                 .header()
                     .add("alg", "RS256")
@@ -109,7 +109,7 @@ public class OfflineTokenService {
     /**
      * offlineToken 갱신 필요 여부 확인.
      *
-     * 갱신 조건 (v1.1.3):
+     * 갱신 조건 (v0.2.3):
      * - 남은 기간이 전체의 50% 미만
      * - 또는 남은 기간이 3일 미만
      *

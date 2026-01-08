@@ -1449,7 +1449,7 @@ bulc:
 ```
 backend/src/main/java/com/bulc/homepage/licensing/
 ├── controller/
-│   ├── LicenseController.java           # 사용자 API (v1.1 변경)
+│   ├── LicenseController.java           # 사용자 API (v0.2.0 변경)
 │   ├── MyLicenseController.java         # /api/me/licenses 엔드포인트
 │   ├── LicenseAdminController.java      # 관리자 API
 │   └── LicensePlanAdminController.java  # 플랜 관리 API
@@ -1463,9 +1463,9 @@ backend/src/main/java/com/bulc/homepage/licensing/
 │   ├── OwnerType.java                   # 소유자 유형 Enum
 │   └── ActivationStatus.java            # 활성화 상태 Enum
 ├── dto/
-│   ├── ActivationRequest.java           # 검증 요청 DTO (v1.0 레거시)
-│   ├── ValidateRequest.java             # v1.1 검증 요청 DTO
-│   ├── ForceValidateRequest.java        # v1.1.1 강제 검증 요청 DTO
+│   ├── ActivationRequest.java           # 검증 요청 DTO (v0.1.0 레거시)
+│   ├── ValidateRequest.java             # v0.2.0 검증 요청 DTO
+│   ├── ForceValidateRequest.java        # v0.2.1 강제 검증 요청 DTO
 │   ├── ValidationResponse.java          # 검증 응답 DTO (sessionToken, candidates, activeSessions)
 │   ├── MyLicensesResponse.java          # 내 라이선스 목록 응답
 │   ├── LicenseCandidate.java            # 다중 라이선스 후보
@@ -1494,9 +1494,9 @@ backend/src/main/java/com/bulc/homepage/licensing/
 └── service/
     ├── LicenseService.java              # Command Service
     ├── LicensePlanAdminService.java     # 플랜 관리 Service
-    └── SessionTokenService.java         # v1.1.2: sessionToken (JWS) 발급 서비스
+    └── SessionTokenService.java         # v0.2.2: sessionToken (JWS) 발급 서비스
 ```
 
 ---
 
-*Last Updated: 2026-01-07 (v1.1.3 토큰 구조 명확화, 문서 정비)*
+*Last Updated: 2026-01-08 (v0.2.3 토큰 구조 명확화, 문서 정비)*
