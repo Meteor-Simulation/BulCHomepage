@@ -1,4 +1,4 @@
-# Licensing 도메인 설계 v0.2.0
+# Licensing 도메인 설계 v0.3.0
 
 본 문서는 상용 소프트웨어(예: 화재 시뮬레이션 관련 도구)의 **라이선싱 도메인 설계**를 정의한다.
 
@@ -8,6 +8,14 @@
 |-----|------|----------|
 | v0.1.0 | 2025-12-08 | 최초 작성 |
 | v0.2.0 | 2025-12-17 | 계정 기반 API 지원을 위한 도메인 메서드 추가 (IsOwnedBy) |
+| v0.3.0 | 2026-01-08 | Auto-Resolve + Global Session Kick UX 설계 반영 |
+
+### v0.3.0 주요 변경사항
+
+1. **Auto-Resolve 정책 추가**: 서버가 자동으로 최적 라이선스 선택
+2. **Stale 세션 자동 종료**: 30분 비활성 세션 자동 정리
+3. **Global Session Kick**: 라이선스 선택과 세션 종료를 단일 UX로 통합
+4. **Resolution 상태**: OK, AUTO_RECOVERED, USER_ACTION_REQUIRED 도입
 
 > **Note:** Claim 기능(ClaimToUser, IsUnclaimed)은 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
 
@@ -486,7 +494,67 @@ COMMIT;
 
 ---
 
-### 5.5 Offline Token 보안
+### 5.5 Auto-Resolve + Global Session Kick (v0.3.0)
+
+v0.3.0에서는 **"사용자 선택은 정말 막혔을 때만"** 원칙을 도입하여 UX를 개선한다.
+
+#### 핵심 원칙
+
+| 기존 (v0.2.x) | 변경 (v0.3.0) |
+|--------------|---------------|
+| 다중 라이선스 시 사용자에게 선택 요청 | 서버가 용량 기반 자동 선택 |
+| 세션 포화 시 사용자에게 킥 선택 요청 | Stale 세션 자동 종료 후 재시도 |
+| 라이선스 선택 UI + 세션 킥 UI 분리 | Global Session Kick으로 통합 |
+
+#### 라이선스 자동 선택 로직
+
+서버는 후보 라이선스(productCode로 조회된 ACTIVE 라이선스들)에서 다음 순서로 선택:
+
+```
+1. 빈 세션 슬롯이 있는 라이선스 → 즉시 선택 (OK)
+2. 모두 Full이지만 Stale 세션 있음 → Stale 자동 종료 (AUTO_RECOVERED)
+3. 모두 Full & Active 세션만 → USER_ACTION_REQUIRED (KICK_REQUIRED)
+```
+
+#### Stale 판정 기준 (세션 수준)
+
+| 용도 | 임계값 | 설명 |
+|-----|-------|------|
+| Auto-Resolve | 30분 | Validate 시 자동 종료 대상 |
+| Activation.Status=STALE | 30일 | 리포팅/사용률 측정용 |
+
+> **주의:** 두 개념은 별개입니다.
+> - 30분 stale은 "현재 접속 안 함" (세션 레벨, Auto-Resolve에서 사용)
+> - 30일 STALE은 "장기간 미사용" (Activation 상태, 리포팅용)
+
+#### Resolution 상태
+
+| 상태 | HTTP | 설명 | 클라이언트 동작 |
+|-----|------|------|---------------|
+| `OK` | 200 | 정상 활성화 | 앱 시작 |
+| `AUTO_RECOVERED` | 200 | Stale 세션 자동 종료 후 성공 | Toast 알림 후 앱 시작 |
+| `USER_ACTION_REQUIRED` | 409 | 모든 라이선스 Full | Global Session Selector UI 표시 |
+
+#### Global Session Kick
+
+라이선스 선택과 세션 종료를 단일 UI로 통합:
+
+```
+기존 (v0.2.x):
+  409 다중 라이선스 → 라이선스 선택 UI → 409 세션 포화 → 세션 킥 UI
+
+변경 (v0.3.0):
+  409 ALL_LICENSES_FULL → Global Session Selector (모든 라이선스의 세션 통합 표시)
+```
+
+**API 응답 구조:**
+- `activeSessions[]`에 모든 후보 라이선스의 세션 포함
+- 각 세션에 `licenseId`, `productName`, `planName` 표시
+- 사용자가 선택한 세션의 `licenseId`와 `activationId`로 force-validate 호출
+
+---
+
+### 5.6 Offline Token 보안
 
 오프라인 환경에서도 라이선스 검증이 가능하도록 `offlineToken`을 발급하되, 탈취 리스크를 최소화한다.
 

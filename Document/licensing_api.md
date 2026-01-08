@@ -1,7 +1,7 @@
 # Licensing System API Documentation
 
 > **API Base URL:** `/api/v1`
-> **Document Version:** `0.2.3`
+> **Document Version:** `0.3.0`
 > **Release Target:** `1.0.0`
 
 ---
@@ -15,13 +15,24 @@
 | v0.2.1 | 2025-12-23 | 동시 세션 관리 UX 개선 - force-validate, 세션 선택 UI 지원 |
 | v0.2.2 | 2025-12-30 | sessionToken (RS256 JWS) 추가 - CLI 위/변조 방어 |
 | v0.2.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
+| v0.3.0 | 2026-01-08 | Auto-Resolve + Global Session Kick UX |
+
+### v0.3.0 주요 변경사항
+
+1. **UX 원칙 변경**: "사용자 선택은 정말 막혔을 때만" - 자동 해결 우선
+2. **Global Session Kick**: 라이선스 선택 + 세션 종료를 단일 UI로 통합
+3. **`strategy` 필드 제거**: 서버가 항상 최적 라이선스 자동 선택
+4. **Stale 자동 정리**: 서버가 stale session 자동 종료 후 재시도
+5. **새로운 응답 필드**: `resolution` (OK, AUTO_RECOVERED, USER_ACTION_REQUIRED)
+6. **통합 세션 목록**: 409 시 모든 후보 라이선스의 세션을 한 번에 반환
+7. **에러 코드 통합**: `MULTIPLE_LICENSES_FOUND`, `CONCURRENT_SESSION_LIMIT_EXCEEDED` → `ALL_LICENSES_FULL`
 
 ### v0.2.3 주요 변경사항
 
 1. **토큰 구조 통일**: sessionToken/offlineToken 모두 RS256 JWS로 통일 (오프라인 검증 가능)
 2. **offlineToken 스펙 정비**: claims 통일(iss, aud, typ, dfp, ent), absolute cap(`exp ≤ validUntil`)
 3. **오프라인 보안 강화**: 시스템 시간 조작 방어 가이드라인 추가
-4. **ValidateRequest 필드 추가**: `productCode`, `licenseId`, `deviceDisplayName`, `strategy` 문서화
+4. **ValidateRequest 필드 추가**: `productCode`, `licenseId`, `deviceDisplayName` 문서화
 5. **409 Conflict 응답 문서화**: 다중 라이선스/동시 세션 초과 시 응답 형식
 6. **force-validate 정교화**: DEACTIVATED 마킹 및 경쟁 조건 방어 명시
 7. **운영 가이드 추가**: Heartbeat write-behind, 개인정보 처리 정책
@@ -170,43 +181,65 @@ Content-Type: application/json
 |-----|------|-----|------|
 | productCode | string | △ | 제품 코드 (예: "BULC_EVAC"). productId 또는 productCode 중 하나 필수 |
 | productId | UUID | △ | 제품 ID (UUID). productCode 권장 |
-| licenseId | UUID | X | 명시적 라이선스 선택 (다중 라이선스 시 사용) |
+| licenseId | UUID | X | 명시적 라이선스 지정 (자동 선택 bypass용, 설정 메뉴 등) |
 | deviceFingerprint | string | O | 기기 고유 식별 해시 |
 | clientVersion | string | X | 클라이언트 앱 버전 |
 | clientOs | string | X | 운영체제 정보 |
 | deviceDisplayName | string | X | 기기 표시명 (UX용, 예: "John's Work PC") |
-| strategy | enum | X | 다중 라이선스 선택 전략 (기본: `FAIL_ON_MULTIPLE`) |
 
-**Strategy 옵션:**
-| 값 | 설명 |
-|---|------|
-| `FAIL_ON_MULTIPLE` | (기본) 다중 라이선스 시 409 반환, 클라이언트가 선택 |
-| `AUTO_PICK_BEST` | 서버가 자동 선택: ACTIVE > GRACE > 최신 validUntil 순 |
-| `AUTO_PICK_LATEST` | 가장 최근 validUntil인 라이선스 자동 선택 |
+> **v0.3.0 UX 원칙**: "사용자 선택은 정말 막혔을 때만"
+> - 서버가 항상 최적 라이선스를 자동 선택 (capacity 기반)
+> - stale session 자동 종료 후 재시도
+> - 모든 라이선스가 Full 상태일 때만 사용자 개입 요청
 
-> **CLI/Headless 환경:** `strategy=AUTO_PICK_BEST`로 요청하면 409 없이 서버가 자동 선택하여 200 반환
-
-> **라이선스 선택 로직 (서버):**
-> 1. `licenseId`가 있으면 해당 라이선스 직접 사용
-> 2. 없으면 `token.userId` + `productCode/productId`로 사용자의 해당 제품 라이선스 조회
-> 3. 여러 개인 경우:
->    - `strategy=FAIL_ON_MULTIPLE`: 409 Conflict로 후보 목록 반환
->    - `strategy=AUTO_*`: 서버가 자동 선택하여 200 반환
+> **서버 라이선스 선택 로직 (v0.3.0):**
+> 1. `licenseId`가 있으면 해당 라이선스 직접 사용 (override)
+> 2. 없으면 `token.userId` + `productCode/productId`로 후보 라이선스 조회
+> 3. 후보별 capacity 평가 (슬롯 여유, stale 세션 존재 여부 등)
+> 4. 자동 해결 시도:
+>    - 빈 슬롯 있는 라이선스 선택 → OK
+>    - stale session 자동 종료 → 재평가 → AUTO_RECOVERED
+>    - 모두 Full & Not Stale → USER_ACTION_REQUIRED (KICK_REQUIRED)
 
 **Response (200 OK - 성공):**
 ```json
 {
   "valid": true,
+  "resolution": "OK",
   "licenseId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "ACTIVE",
   "validUntil": "2026-12-31T23:59:59Z",
   "entitlements": ["core-simulation", "export-csv"],
-  "sessionToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiZGZwIjoiaHctaGFzaC1hYmMxMjMiLCJlbnQiOlsiY29yZS1zaW11bGF0aW9uIiwiZXhwb3J0LWNzdiJdLCJpYXQiOjE3MzYyNDAwMDAsImV4cCI6MTczNjI0MDkwMH0.signature",
-  "offlineToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJidWxjLWxpY2Vuc2Utc2VydmVyIiwiYXVkIjoiQlVMQ19FVkFDIiwic3ViIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwidHlwIjoib2ZmbGluZSIsImRmcCI6Imh3LWhhc2gtYWJjMTIzIiwiZW50IjpbImNvcmUtc2ltdWxhdGlvbiIsImV4cG9ydC1jc3YiXSwiaWF0IjoxNzM2MjQwMDAwLCJleHAiOjE3Mzg4MzIwMDB9.signature",
+  "sessionToken": "eyJ...",
+  "offlineToken": "eyJ...",
   "offlineTokenExpiresAt": "2026-02-06T00:00:00Z",
   "serverTime": "2026-01-07T10:00:00Z"
 }
 ```
+
+**Response (200 OK - AUTO_RECOVERED):** *(v0.3.0)*
+
+서버가 stale session을 자동 종료 후 성공한 경우:
+
+```json
+{
+  "valid": true,
+  "resolution": "AUTO_RECOVERED",
+  "recoveryAction": "STALE_SESSION_TERMINATED",
+  "recoveryDetails": {
+    "terminatedCount": 1,
+    "terminatedDevice": "Office Desktop",
+    "reason": "30분 이상 비활성 세션 자동 종료"
+  },
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "ACTIVE",
+  "sessionToken": "eyJ...",
+  "offlineToken": "eyJ...",
+  "serverTime": "2026-01-07T10:00:00Z"
+}
+```
+
+> **클라이언트 UX**: Toast/Snackbar로 "다른 기기(Office Desktop)의 비활성 세션을 종료하고 시작했습니다." 표시 (3초)
 
 **Status → Valid 매핑:**
 | License Status | valid | 설명 |
@@ -227,60 +260,51 @@ Content-Type: application/json
 }
 ```
 
-**Response (409 Conflict - 다중 라이선스 선택 필요):** *(v0.2.1)*
+**Response (409 Conflict - USER_ACTION_REQUIRED):** *(v0.3.0 Global Session Kick)*
+
+모든 후보 라이선스가 Full 상태이고 stale session도 없을 때, 사용자가 세션을 선택해야 합니다.
+**핵심 변경**: `activeSessions`에 `licenseId`, `productName` 포함 (어떤 라이선스의 세션인지 구분).
+
 ```json
 {
   "valid": false,
-  "errorCode": "MULTIPLE_LICENSES_FOUND",
-  "errorMessage": "여러 라이선스가 발견되었습니다. 하나를 선택해주세요.",
-  "candidates": [
-    {
-      "licenseId": "550e8400-e29b-41d4-a716-446655440000",
-      "planName": "Pro 연간 구독",
-      "licenseType": "SUBSCRIPTION",
-      "status": "ACTIVE",
-      "validUntil": "2025-12-31T23:59:59Z",
-      "ownerScope": "개인",
-      "activeDevices": 1,
-      "maxDevices": 3,
-      "label": null
-    }
-  ]
-}
-```
-
-> **클라이언트 UX:** 후보 목록을 UI에 표시하고, 사용자가 선택한 `licenseId`를 재요청 시 포함
-
-**Response (409 Conflict - 동시 세션 초과):** *(v0.2.1)*
-```json
-{
-  "valid": false,
-  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
-  "errorCode": "CONCURRENT_SESSION_LIMIT_EXCEEDED",
-  "errorMessage": "동시 세션 제한(2개)을 초과했습니다",
-  "maxConcurrentSessions": 2,
+  "resolution": "USER_ACTION_REQUIRED",
+  "actionRequired": "KICK_REQUIRED",
+  "errorCode": "ALL_LICENSES_FULL",
+  "errorMessage": "사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요.",
+  "serverTime": "2026-01-07T10:00:00Z",
   "activeSessions": [
     {
+      "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+      "productName": "METEOR Pro",
+      "planName": "Pro 연간 구독",
       "activationId": "act-uuid-1",
       "deviceDisplayName": "Office Desktop",
       "deviceFingerprint": "abc***xyz",
-      "lastSeenAt": "2025-01-07T10:30:00Z",
+      "lastSeenAt": "2026-01-07T10:30:00Z",
       "clientOs": "Windows 11",
-      "clientVersion": "1.0.0"
+      "isStale": false
     },
     {
+      "licenseId": "b4080bd4-3d55-46ba-bc1f-eaa8af0a3c64",
+      "productName": "METEOR Basic",
+      "planName": "Basic 월간 구독",
       "activationId": "act-uuid-2",
       "deviceDisplayName": "Home Laptop",
       "deviceFingerprint": "def***uvw",
-      "lastSeenAt": "2025-01-07T09:00:00Z",
+      "lastSeenAt": "2026-01-07T09:00:00Z",
       "clientOs": "macOS 14",
-      "clientVersion": "1.0.0"
+      "isStale": true
     }
   ]
 }
 ```
 
-> **클라이언트 UX:** 활성 세션 목록을 표시하고, 비활성화할 세션을 선택 후 `/validate/force` 호출
+> **클라이언트 UX (Global Session Selector):**
+> 1. 모든 후보 라이선스의 세션을 통합 UI로 표시
+> 2. 각 세션에 `productName`, `planName` 표시 (어떤 라이선스인지 구분)
+> 3. `isStale: true` 세션은 "비활성" 배지 표시
+> 4. 사용자가 선택한 세션의 `licenseId`, `activationId`로 `/validate/force` 호출
 
 **Error Codes:**
 | 코드 | HTTP Status | 설명 |
@@ -290,8 +314,7 @@ Content-Type: application/json
 | LICENSE_SUSPENDED | 403 | 라이선스 정지됨 |
 | LICENSE_REVOKED | 403 | 라이선스 회수됨 |
 | ACTIVATION_LIMIT_EXCEEDED | 403 | 최대 기기 수 초과 |
-| CONCURRENT_SESSION_LIMIT_EXCEEDED | 409 | 동시 세션 제한 초과 (activeSessions 포함) |
-| MULTIPLE_LICENSES_FOUND | 409 | 다중 라이선스 발견 (candidates 포함) |
+| ALL_LICENSES_FULL | 409 | 모든 후보 라이선스 Full (v0.3.0: Global Session Kick 필요) |
 
 ---
 
@@ -344,12 +367,13 @@ Heartbeat는 `lastSeenAt` UPDATE를 빈번하게 발생시켜 DB 부하를 유�
 
 ---
 
-### 1.3.1 Force Validate (동시 세션 강제 해제) *(v0.2.1 신규)*
+### 1.3.1 Force Validate (세션 강제 해제) *(v0.3.0 업데이트)*
 
-동시 세션 제한 초과 시 기존 세션을 강제 비활성화하고 현재 기기를 활성화합니다.
+사용자가 선택한 세션을 강제 비활성화하고 현재 기기를 활성화합니다.
 
-> **사용 시나리오:** `/validate`에서 `CONCURRENT_SESSION_LIMIT_EXCEEDED` (409) 응답 시,
-> 사용자가 비활성화할 세션을 선택한 후 이 엔드포인트 호출
+> **사용 시나리오 (v0.3.0):** `/validate`에서 `ALL_LICENSES_FULL` (409) 응답 시,
+> 사용자가 Global Session Selector에서 종료할 세션을 선택한 후 이 엔드포인트 호출.
+> **핵심**: 선택한 세션의 `licenseId`와 `activationId`를 사용
 
 ```http
 POST /api/v1/licenses/validate/force
@@ -956,8 +980,7 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | ACTIVATION_NOT_FOUND | 404 | 활성화 정보 없음 |
 | ACTIVATION_DEACTIVATED | 403 | force-validate로 종료된 세션 |
 | ACTIVATION_LIMIT_EXCEEDED | 403 | 기기 수 초과 |
-| CONCURRENT_SESSION_LIMIT_EXCEEDED | 409 | 세션 수 초과 (activeSessions 포함) |
-| MULTIPLE_LICENSES_FOUND | 409 | 다중 라이선스 발견 (candidates 포함) |
+| ALL_LICENSES_FULL | 409 | 모든 후보 라이선스가 세션 포화 (v0.3.0 통합) |
 | INVALID_ACTIVATION_IDS | 400 | 비활성화 대상 ID가 유효하지 않음 |
 | INVALID_LICENSE_STATE | 400 | 잘못된 상태 |
 | PLAN_NOT_FOUND | 404 | 플랜 없음 |
@@ -1163,6 +1186,42 @@ offlineToken은 `exp` claim으로 만료를 검증하지만, 사용자가 시스
 
 > **Note:** 이 에러는 서버에 전송되지 않으며, 클라이언트가 로컬에서 판단하여 앱 실행을 차단합니다.
 
+### 8.6 Stale 세션 판정 기준 (v0.3.0)
+
+서버는 세션이 **stale**(비활성)인지 판단하여 Auto-Resolve 시 자동 종료 대상을 결정합니다.
+
+**Stale 판정 조건:**
+```
+Stale = (now - activation.lastSeenAt) > staleThresholdMinutes
+```
+
+| 설정 | 기본값 | 설명 |
+|-----|-------|------|
+| `stale-threshold-minutes` | 30 | Heartbeat 없이 경과한 시간 임계값 |
+
+**동작:**
+| 상황 | Auto-Resolve 동작 | 결과 |
+|-----|------------------|------|
+| 빈 슬롯 있음 | 해당 라이선스 선택 | `resolution: OK` |
+| 모두 Full, Stale 있음 | Stale 세션 자동 종료 | `resolution: AUTO_RECOVERED` |
+| 모두 Full, Stale 없음 | 사용자 선택 요청 | `resolution: USER_ACTION_REQUIRED` |
+
+**Stale Activation 자동 정리 정책:**
+
+> **v0.3.0 기본값: OFF** (보수적 운영)
+
+Stale 세션의 **Activation 레코드**를 자동 삭제(deactivate)하는 정책은 기본적으로 비활성화입니다.
+- Stale 세션은 "현재 연결 안 됨" 상태이지만, 사용자가 다시 돌아올 수 있음
+- 자동 삭제 시 사용자가 기기 재등록해야 하는 불편 발생
+- 플랜별로 정책을 설정하여 활성화 가능 (`cleanupStaleActivations: true`)
+
+```yaml
+bulc:
+  licensing:
+    stale-threshold-minutes: 30
+    cleanup-stale-activations: false  # v0.3.0 기본값
+```
+
 ---
 
 ## 9. 인증/권한 설정 (v0.2.0 변경)
@@ -1210,7 +1269,14 @@ GET  /api/v1/licenses/key/{licenseKey}         → GET  /api/v1/me/licenses 또�
 
 ---
 
-## 10. UX 플로우 (v0.2.0)
+## 10. UX 플로우 (v0.3.0 업데이트)
+
+### 핵심 원칙: "사용자 선택은 정말 막혔을 때만"
+
+v0.3.0에서는 **Auto-Resolve 우선** 원칙을 따릅니다:
+1. 서버가 자동으로 최적 라이선스 선택
+2. Stale 세션은 서버가 자동 종료
+3. 사용자 개입은 모든 라이선스가 활성 세션으로 가득 찼을 때만 요청
 
 ### 기본 플로우: Sign in → Launch
 
@@ -1219,17 +1285,70 @@ GET  /api/v1/licenses/key/{licenseKey}         → GET  /api/v1/me/licenses 또�
 │ 1. 사용자 로그인                                                   │
 │    └─ POST /api/v1/auth/login → accessToken 획득                  │
 ├──────────────────────────────────────────────────────────────────┤
-│ 2. 내 라이선스 조회                                                │
-│    └─ GET /api/v1/me/licenses?productId=xxx                       │
-│    └─ 서버가 해당 제품의 라이선스 목록 반환                          │
+│ 2. 라이선스 검증 요청 (서버 자동 선택)                               │
+│    └─ POST /api/v1/licenses/validate                             │
+│    └─ Body: { productCode, deviceFingerprint, ... }              │
+│    └─ 서버가 후보 라이선스 중 최적 자동 선택                         │
 ├──────────────────────────────────────────────────────────────────┤
-│ 3. 라이선스 검증 및 기기 활성화                                     │
-│    └─ POST /api/v1/licenses/validate (productId, deviceFingerprint) │
-│    └─ offlineToken 저장                                          │
+│ 3. 응답 처리                                                      │
+│    ├─ 200 OK (resolution: "OK") → 바로 앱 실행                     │
+│    ├─ 200 OK (resolution: "AUTO_RECOVERED") → Toast 표시 후 실행   │
+│    └─ 409 (resolution: "USER_ACTION_REQUIRED") → 세션 선택 UI      │
 ├──────────────────────────────────────────────────────────────────┤
 │ 4. 앱 실행                                                        │
 │    └─ 주기적으로 POST /api/v1/licenses/heartbeat                   │
+│    └─ sessionToken/offlineToken 갱신                              │
 └──────────────────────────────────────────────────────────────────┘
+```
+
+### 라이선스 선택 로직 (서버 자동)
+
+```
+후보 라이선스 탐색:
+  │
+  ├─ 빈 슬롯 있는 라이선스 발견 → 해당 라이선스 선택 → OK
+  │
+  ├─ 모두 Full이지만 Stale 세션 있음 → Stale 자동 종료 → AUTO_RECOVERED
+  │
+  └─ 모두 Full & Stale 없음 → 409 USER_ACTION_REQUIRED (KICK_REQUIRED)
+```
+
+### Global Session Kick 플로우
+
+```
+409 ALL_LICENSES_FULL 응답 수신
+        │
+        ▼
+┌─────────────────────────────────────┐
+│   Global Session Selector UI        │
+│                                     │
+│  [METEOR Pro - 연간 구독]           │
+│  ├─ 🖥️ Office Desktop              │
+│  └─ 💻 Home Laptop                  │
+│                                     │
+│  [METEOR Standard - 월간 구독]      │
+│  └─ 📱 Tablet (비활성 30분+)        │
+│                                     │
+│  [종료할 세션 선택] [취소]            │
+└─────────────────────────────────────┘
+        │
+        ▼ 사용자 선택
+        │
+POST /api/v1/licenses/validate/force
+  └─ licenseId: 선택한 세션의 라이선스
+  └─ deactivateActivationIds: [선택한 세션 ID]
+        │
+        ▼
+200 OK → 앱 실행
+```
+
+### AUTO_RECOVERED 토스트 예시
+
+```
+┌────────────────────────────────────────┐
+│ ℹ️ 오래된 세션이 자동 정리되었습니다      │
+│    Office Desktop (30분 이상 비활성)    │
+└────────────────────────────────────────┘
 ```
 
 ---
@@ -1418,10 +1537,19 @@ bulc:
 - [x] Heartbeat에서 offlineToken 갱신 (sliding window)
 - [x] 토큰 구조 문서화 (sessionToken vs offlineToken)
 
-### M1.8 - v0.2.3 추가 기능 (완료)
-- [x] strategy 파라미터 (FAIL_ON_MULTIPLE, AUTO_PICK_BEST)
+### M1.8 - v0.2.3 추가 기능 (완료, v0.3.0에서 일부 변경)
+- [x] ~~strategy 파라미터~~ → v0.3.0에서 제거 (서버 자동 선택으로 통합)
 - [x] ACTIVATION_DEACTIVATED ErrorCode 추가
 - [x] Force Validate 경쟁 조건 방어 (pessimistic lock)
+
+### M1.9 - v0.3.0 Auto-Resolve + Global Session Kick (예정)
+- [ ] `strategy` 필드 제거 (서버 항상 AUTO_SELECT)
+- [ ] 용량 기반 라이선스 선택 로직 구현
+- [ ] Stale 세션 자동 종료 로직 구현 (30분 임계값)
+- [ ] `resolution` 응답 필드 추가 (OK, AUTO_RECOVERED, USER_ACTION_REQUIRED)
+- [ ] Global Session Kick 응답 구조 (`activeSessions`에 `licenseId`, `productName` 포함)
+- [ ] 에러 코드 통합 (`ALL_LICENSES_FULL`)
+- [ ] AUTO_RECOVERED 응답에 `recoveryAction`, `terminatedSession` 포함
 
 > **Note:** Claim 기능은 추후 Redeem 기능으로 별도 구현 예정
 
@@ -1499,4 +1627,4 @@ backend/src/main/java/com/bulc/homepage/licensing/
 
 ---
 
-*Last Updated: 2026-01-08 (v0.2.3 토큰 구조 명확화, 문서 정비)*
+*Last Updated: 2026-01-08 (v0.3.0 Auto-Resolve + Global Session Kick UX)*

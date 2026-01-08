@@ -1,4 +1,4 @@
-# BulC Licensing Auth Module Spec v0.1 (CLI)
+# BulC Licensing Auth Module Spec v0.2 (CLI)
 
 ## 1. 목적
 
@@ -8,7 +8,7 @@
 - **언어/프레임워크 독립**: Java/Unity/.NET 등 어떤 앱이든 동일한 방식으로 통합 가능.
 - **계정 기반 인증**: 브라우저 로그인(OAuth2 Authorization Code + PKCE)으로 안전하게 토큰을 획득/갱신한다.
 - **라이선스 검증은 CLI가 담당**하고, 앱은 CLI를 호출해 표준 JSON 결과만 해석한다.
-- **동시 세션 초과 시 2-phase validate + force UX**를 지원한다(기존 세션 종료 선택).
+- **v0.2 (API v0.3.0)**: Auto-Resolve 우선, Global Session Kick UX 지원
 
 ### 1.2 비목표 (Non-goals)
 
@@ -224,16 +224,18 @@ bulc-lic device-id
 
 **Command:**
 ```bash
-bulc-lic validate --productCode <CODE> --licenseId <UUID> [--deviceFingerprint <HASH>] [--out <PATH>]
+bulc-lic validate --productCode <CODE> [--licenseId <UUID>] [--deviceFingerprint <HASH>] [--out <PATH>]
 ```
 
+- `--licenseId`는 선택 사항. 생략 시 서버가 최적 라이선스 자동 선택 (v0.2/API v0.3.0)
 - `--deviceFingerprint`가 없으면 CLI가 내부에서 생성한 값을 사용한다.
 - `--out`이 있으면 해당 경로에 session.json 저장. 없으면 표준 위치에 저장.
 
-**성공 Output:**
+**성공 Output (resolution: OK):**
 ```json
 {
   "valid": true,
+  "resolution": "OK",
   "licenseId": "uuid",
   "status": "ACTIVE",
   "validUntil": "2026-12-05T10:00:00Z",
@@ -244,27 +246,62 @@ bulc-lic validate --productCode <CODE> --licenseId <UUID> [--deviceFingerprint <
 }
 ```
 
-**동시 세션 초과 (2-phase)** — validate 결과로 "선택 UX" 제공
+**자동 복구 성공 (resolution: AUTO_RECOVERED):**
 
-Exit code는 **20** (라이선스 불가)로 두되, 앱이 JSON을 보고 "force 가능" UX를 띄운다.
+Stale 세션(30분 이상 비활성)이 자동 종료된 경우:
+
+```json
+{
+  "valid": true,
+  "resolution": "AUTO_RECOVERED",
+  "recoveryAction": "STALE_SESSION_TERMINATED",
+  "terminatedSession": {
+    "deviceDisplayName": "Office Desktop",
+    "lastSeenAt": "2026-01-08T01:00:00Z"
+  },
+  "licenseId": "uuid",
+  "status": "ACTIVE",
+  "validUntil": "2026-12-05T10:00:00Z",
+  "entitlements": ["core-simulation"],
+  "sessionPath": "C:\\ProgramData\\Bulc\\Session\\BULC_EVAC\\session.json"
+}
+```
+
+> **앱 UX (v0.2):** `AUTO_RECOVERED` 시 Toast 알림 표시 후 정상 진행
+
+**Global Session Kick 필요 (Exit=20):**
+
+모든 후보 라이선스가 활성 세션으로 가득 찬 경우:
 
 ```json
 {
   "valid": false,
-  "errorCode": "CONCURRENT_SESSION_LIMIT_EXCEEDED",
-  "errorMessage": "동시 실행 가능한 세션 수를 초과했습니다.",
-  "maxConcurrentSessions": 2,
-  "sessionTtlMinutes": 30,
+  "resolution": "USER_ACTION_REQUIRED",
+  "actionRequired": "KICK_REQUIRED",
+  "errorCode": "ALL_LICENSES_FULL",
+  "errorMessage": "사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요.",
   "activeSessions": [
     {
-      "activationId": "uuid-a",
-      "deviceDisplayName": "DESKTOP-1234",
-      "lastSeenAt": "2025-12-26T02:10:00Z"
+      "licenseId": "550e8400-...",
+      "productName": "METEOR Pro",
+      "planName": "Pro 연간 구독",
+      "activationId": "act-uuid-1",
+      "deviceDisplayName": "Office Desktop",
+      "isStale": false
+    },
+    {
+      "licenseId": "661e9411-...",
+      "productName": "METEOR Standard",
+      "planName": "Standard 월간 구독",
+      "activationId": "act-uuid-2",
+      "deviceDisplayName": "Home Laptop",
+      "isStale": true
     }
-  ],
-  "nextAction": "VALIDATE_FORCE_AVAILABLE"
+  ]
 }
 ```
+
+> **앱 UX (v0.2):** Global Session Selector UI에 모든 세션 표시. 사용자가 선택한 세션의 `licenseId`와 `activationId`로 `validate-force` 호출.
 
 #### 7.2.4 `bulc-lic validate-force`
 
@@ -364,23 +401,30 @@ bulc-lic heartbeat --productCode <CODE> --licenseId <UUID> [--deviceFingerprint 
 
 ## 11. 통합 가이드 (앱 개발자 관점)
 
-### 11.1 앱이 해야 하는 최소 동작
+### 11.1 앱이 해야 하는 최소 동작 (v0.2 업데이트)
 
 **실행 시:**
 1. `bulc-auth status` 확인 (미로그인 시 로그인 버튼 제공)
 2. 로그인 필요 시 `bulc-auth login` 호출 (사용자 액션 기반)
-3. `bulc-lic list`로 라이선스 후보 표시 (복수면 선택)
-4. `bulc-lic validate` 호출 → 성공 시 session.json을 읽고 기능 활성화
+3. `bulc-lic validate --productCode <CODE>` 호출 (서버가 최적 라이선스 자동 선택)
+4. `resolution` 필드에 따라 처리:
+   - `OK` → 바로 앱 실행
+   - `AUTO_RECOVERED` → Toast 표시 후 앱 실행
+   - `USER_ACTION_REQUIRED` → Global Session Selector UI 표시
 
 **실행 중:**
 1. 주기적으로 `bulc-lic heartbeat` 호출
 2. `SESSION_DEACTIVATED`면 "세션 종료됨" UI + 재검증/재로그인 유도
 
-### 11.2 동시 세션 초과 UX (2-phase)
+### 11.2 Global Session Kick UX (v0.2)
 
-validate 결과가 `CONCURRENT_SESSION_LIMIT_EXCEEDED`면:
-1. `activeSessions` 목록을 사용자에게 보여줌
-2. "선택한 세션 종료 후 계속" 선택 시 `validate-force` 호출
+validate 결과가 `ALL_LICENSES_FULL` (resolution: USER_ACTION_REQUIRED)이면:
+1. `activeSessions` 목록을 Global Session Selector UI로 표시
+2. 각 세션에 `productName`, `planName` 표시 (어떤 라이선스인지 구분)
+3. `isStale: true` 세션은 "비활성" 배지 표시
+4. 사용자가 선택한 세션의 `licenseId`와 `activationId`로 `validate-force` 호출
+
+> **v0.2 변경:** 기존 2-phase (라이선스 선택 → 세션 선택)에서 **단일 UI**로 통합
 
 ---
 
@@ -426,18 +470,19 @@ validate 결과가 `CONCURRENT_SESSION_LIMIT_EXCEEDED`면:
 
 | Command | 목적 | 입력 옵션 | 성공 stdout (JSON) | 대표 실패 / Exit |
 |---------|------|----------|-------------------|-----------------|
-| `bulc-lic version` | CLI 버전 | (없음) | `{ "ok": true, "version": "0.1.0" }` | - |
+| `bulc-lic version` | CLI 버전 | (없음) | `{ "ok": true, "version": "0.2.0" }` | - |
 | `bulc-lic device-id` | deviceFingerprint 생성/조회 | `--refresh`(재생성 옵션은 기본 비추) | `{ "ok": true, "deviceFingerprint": "..." }` | 환경/권한(50) |
 | `bulc-lic list` | 내 라이선스 목록 | `--productCode <code> --status <ACTIVE\|...>(opt)` | `{ "licenses":[...] }` | 인증 필요(10), 네트워크(30) |
-| `bulc-lic validate` | 실행 전 검증(+activation) | `--productCode <code> --licenseId <uuid> --deviceFingerprint <hash>(opt) --out <path>(opt) --deviceName <name>(opt)` | `{ "valid": true, ..., "sessionPath":"..." }` | 인증 필요(10), 라이선스 불가(20), 네트워크(30) |
-| `bulc-lic validate-force` | 동시세션 초과 시, 기존 세션 종료 후 계속 | `--productCode <code> --licenseId <uuid> --deactivateActivationIds <csv> --deviceFingerprint <hash>(opt) --out <path>(opt)` | validate 성공과 동일 | 인증 필요(10), 라이선스 불가/경쟁조건 409(20), 네트워크(30) |
+| `bulc-lic validate` | 실행 전 검증(+activation) | `--productCode <code> --licenseId <uuid>(opt) --deviceFingerprint <hash>(opt) --out <path>(opt) --deviceName <name>(opt)` | `{ "valid": true, "resolution":"OK", ... }` | 인증 필요(10), 라이선스 불가(20), 네트워크(30) |
+| `bulc-lic validate-force` | Global Session Kick 시, 기존 세션 종료 후 계속 | `--productCode <code> --licenseId <uuid> --deactivateActivationIds <csv> --deviceFingerprint <hash>(opt) --out <path>(opt)` | validate 성공과 동일 | 인증 필요(10), 라이선스 불가/경쟁조건 409(20), 네트워크(30) |
 | `bulc-lic heartbeat` | 실행 중 주기 갱신 | `--productCode <code> --licenseId <uuid> --deviceFingerprint <hash>(opt)` | `{ "valid": true, "licenseId":"...", "status":"ACTIVE" }` | SESSION_DEACTIVATED(20), 인증 필요(10), 네트워크(30) |
 
-### validate / validate-force 성공 JSON (고정)
+### validate / validate-force 성공 JSON (v0.2 업데이트)
 
 ```json
 {
   "valid": true,
+  "resolution": "OK",
   "licenseId": "uuid",
   "status": "ACTIVE",
   "validUntil": "2026-12-05T10:00:00Z",
@@ -448,21 +493,24 @@ validate 결과가 `CONCURRENT_SESSION_LIMIT_EXCEEDED`면:
 }
 ```
 
-### 동시 세션 초과 (JSON 고정 / Exit=20)
+> **v0.2 변경:** `resolution` 필드 추가 (OK, AUTO_RECOVERED, USER_ACTION_REQUIRED)
+
+### Global Session Kick 필요 (JSON / Exit=20)
 
 ```json
 {
   "valid": false,
-  "errorCode": "CONCURRENT_SESSION_LIMIT_EXCEEDED",
-  "errorMessage": "동시 실행 가능한 세션 수를 초과했습니다.",
-  "maxConcurrentSessions": 2,
-  "sessionTtlMinutes": 30,
+  "resolution": "USER_ACTION_REQUIRED",
+  "actionRequired": "KICK_REQUIRED",
+  "errorCode": "ALL_LICENSES_FULL",
+  "errorMessage": "사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요.",
   "activeSessions": [
-    { "activationId": "uuid-a", "deviceDisplayName": "DESKTOP-1234", "lastSeenAt": "2025-12-26T02:10:00Z" }
-  ],
-  "nextAction": "VALIDATE_FORCE_AVAILABLE"
+    { "licenseId": "uuid-lic-1", "productName": "METEOR Pro", "planName": "연간 구독", "activationId": "uuid-a", "deviceDisplayName": "DESKTOP-1234", "isStale": false }
+  ]
 }
 ```
+
+> **v0.2 변경:** `CONCURRENT_SESSION_LIMIT_EXCEEDED` → `ALL_LICENSES_FULL`로 통합
 
 ### heartbeat에서 세션 종료됨 (JSON 고정 / Exit=20)
 
@@ -562,15 +610,17 @@ bulc-cli/
 | `LicensingApiClient` | `/api/v1/me/licenses`, `/api/v1/licenses/validate`, `/api/v1/licenses/validate/force`, `/api/v1/licenses/heartbeat` |
 | `SessionWriter` | session.json schemaVersion=1 고정, `--out` 우선, 없으면 표준 경로 |
 
-### 에러/상태 매핑 (실무용 고정 규칙)
+### 에러/상태 매핑 (v0.2 업데이트)
 
 | 상황 | Exit Code | errorCode |
 |------|-----------|-----------|
 | 401/403 (auth) | 10 | `AUTH_REQUIRED` 또는 `TOKEN_EXPIRED` |
-| `CONCURRENT_SESSION_LIMIT_EXCEEDED` / `SESSION_DEACTIVATED` / `LICENSE_*` | 20 | 해당 코드 그대로 |
+| `ALL_LICENSES_FULL` / `SESSION_DEACTIVATED` / `LICENSE_*` | 20 | 해당 코드 그대로 |
 | 네트워크 예외 (DNS/timeout) | 30 | `NETWORK_UNAVAILABLE` |
 | 5xx | 40 | `SERVER_ERROR` |
 | 로컬 IO/권한/파싱 | 50 | `CLIENT_ERROR` |
+
+> **v0.2 변경:** `CONCURRENT_SESSION_LIMIT_EXCEEDED` → `ALL_LICENSES_FULL`로 통합
 
 ---
 
@@ -593,3 +643,12 @@ bulc-cli/
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
 | v0.1 | 2025-12-29 | 초기 스펙 작성 |
+| v0.2 | 2026-01-08 | API v0.3.0 반영 - Auto-Resolve + Global Session Kick UX |
+
+### v0.2 주요 변경사항
+
+1. **Auto-Resolve 우선**: `--licenseId` 생략 가능, 서버 자동 선택
+2. **resolution 필드 추가**: OK, AUTO_RECOVERED, USER_ACTION_REQUIRED
+3. **Global Session Kick**: 모든 라이선스의 세션을 통합 UI로 표시
+4. **에러 코드 통합**: `CONCURRENT_SESSION_LIMIT_EXCEEDED` → `ALL_LICENSES_FULL`
+5. **CLI 버전**: 0.1.0 → 0.2.0
