@@ -1,4 +1,4 @@
-# Licensing 도메인 설계 v1.1
+# Licensing 도메인 설계 v0.2.0
 
 본 문서는 상용 소프트웨어(예: 화재 시뮬레이션 관련 도구)의 **라이선싱 도메인 설계**를 정의한다.
 
@@ -6,8 +6,8 @@
 
 | 버전 | 날짜 | 변경 내용 |
 |-----|------|----------|
-| v1.0 | 2025-12-08 | 최초 작성 |
-| v1.1 | 2025-12-17 | 계정 기반 API 지원을 위한 도메인 메서드 추가 (IsOwnedBy) |
+| v0.1.0 | 2025-12-08 | 최초 작성 |
+| v0.2.0 | 2025-12-17 | 계정 기반 API 지원을 위한 도메인 메서드 추가 (IsOwnedBy) |
 
 > **Note:** Claim 기능(ClaimToUser, IsUnclaimed)은 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
 
@@ -111,7 +111,7 @@
   - 라이선스 정지/회수.
 - `Renew(newValidUntil)`
   - 구독 연장 등.
-- `IsOwnedBy(userId)` *(v1.1 추가)*
+- `IsOwnedBy(userId)` *(v0.2.0 추가)*
   - 해당 라이선스가 특정 사용자 소유인지 확인.
   - `OwnerType == 'user' && OwnerId == userId`일 때 true.
 
@@ -367,14 +367,14 @@ sequenceDiagram
 - 새 Activation 생성 또는 기존 갱신.
 - 정책 위반 시 오류 응답.
 
-#### v1.1 변경사항
+#### v0.2.0 변경사항
 
-v1.1부터 계정 기반 API가 권장된다:
+v0.2.0부터 계정 기반 API가 권장된다:
 - 클라이언트는 **Bearer Token**으로 인증
 - 요청에 **licenseKey 대신 productId**만 포함
 - 서버가 **userId + productId**로 라이선스 자동 조회
 
-#### 시퀀스 다이어그램 (v1.1 계정 기반)
+#### 시퀀스 다이어그램 (v0.2.0 계정 기반)
 
 ```mermaid
 sequenceDiagram
@@ -388,7 +388,7 @@ sequenceDiagram
     C->>A: Bearer Token으로 인증
     A-->>C: 인증 성공 (userId 확인)
 
-    C->>L: POST /api/licenses/validate { productId, deviceFingerprint, clientInfo }
+    C->>L: POST /api/v1/licenses/validate { productId, deviceFingerprint, clientInfo }
     activate L
 
     L->>L: userId + productId로 License 조회

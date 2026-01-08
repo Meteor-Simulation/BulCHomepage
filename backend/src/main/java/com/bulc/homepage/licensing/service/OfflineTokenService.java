@@ -5,36 +5,32 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * v1.1.3: Offline Token 서비스.
+ * v0.2.3: Offline Token 서비스.
  *
  * 오프라인 실행 허용 기간 동안 클라이언트가 서버 연결 없이 라이선스를 검증할 수 있도록
  * RS256 서명된 offlineToken을 생성합니다.
  *
  * sessionToken과 동일하게 RS256을 사용하며, 클라이언트는 공개키로 검증합니다.
  *
- * Claims (v1.1.3 통일):
+ * Claims (v0.2.3 통일):
  * - iss: 발급자 (bulc-license-server)
  * - aud: 대상 제품 코드 (예: BULC_EVAC)
  * - sub: licenseId
  * - typ: 토큰 타입 ("offline")
  * - dfp: deviceFingerprint (기기 바인딩)
  * - ent: entitlements 배열
+ * - kid: 키 식별자 (테스트 키 구분용)
  * - iat: 발급 시각 (epoch seconds)
  * - exp: 만료 시각 (epoch seconds) - **absolute cap: exp ≤ validUntil**
  *
- * 갱신 정책 (v1.1.3):
+ * 갱신 정책 (v0.2.3):
  * - 갱신 임계값: 남은 기간이 50% 미만 또는 3일 미만일 때만 갱신
  * - absolute cap: offlineToken.exp는 license.validUntil을 초과할 수 없음
  */
@@ -43,56 +39,19 @@ import java.util.UUID;
 public class OfflineTokenService {
 
     private final String issuer;
-    private final String privateKeyBase64;
-    private final String activeProfile;
+    private final SigningKeyProvider keyProvider;
     private final double renewalThresholdRatio;
     private final int renewalThresholdDays;
 
-    private PrivateKey rsaPrivateKey;
-
     public OfflineTokenService(
             @Value("${bulc.licensing.offline-token.issuer:bulc-license-server}") String issuer,
-            @Value("${bulc.licensing.session-token.private-key:}") String privateKeyBase64,
-            @Value("${spring.profiles.active:dev}") String activeProfile,
+            SigningKeyProvider keyProvider,
             @Value("${bulc.licensing.offline-token.renewal-threshold-ratio:0.5}") double renewalThresholdRatio,
             @Value("${bulc.licensing.offline-token.renewal-threshold-days:3}") int renewalThresholdDays) {
         this.issuer = issuer;
-        this.privateKeyBase64 = privateKeyBase64;
-        this.activeProfile = activeProfile;
+        this.keyProvider = keyProvider;
         this.renewalThresholdRatio = renewalThresholdRatio;
         this.renewalThresholdDays = renewalThresholdDays;
-    }
-
-    @PostConstruct
-    public void init() {
-        boolean isProd = activeProfile.contains("prod");
-
-        if (privateKeyBase64 == null || privateKeyBase64.isBlank()) {
-            if (isProd) {
-                throw new IllegalStateException(
-                    "[FATAL] OfflineTokenService: RS256 개인키가 설정되지 않았습니다. " +
-                    "prod 환경에서는 SESSION_TOKEN_PRIVATE_KEY 환경변수가 필수입니다."
-                );
-            } else {
-                log.warn("OfflineTokenService: RS256 개인키가 없어 offlineToken 발급이 비활성화됩니다.");
-                this.rsaPrivateKey = null;
-                return;
-            }
-        }
-
-        try {
-            this.rsaPrivateKey = loadPrivateKey(privateKeyBase64);
-            log.info("OfflineTokenService: RS256 개인키 로드 성공");
-        } catch (Exception e) {
-            if (isProd) {
-                throw new IllegalStateException(
-                    "[FATAL] OfflineTokenService: RS256 개인키 로드 실패: " + e.getMessage(), e
-                );
-            } else {
-                log.error("OfflineTokenService: RS256 개인키 로드 실패", e);
-                this.rsaPrivateKey = null;
-            }
-        }
     }
 
     /**
@@ -109,7 +68,7 @@ public class OfflineTokenService {
     public OfflineToken generateOfflineToken(UUID licenseId, String productCode,
                                               String deviceFingerprint, List<String> entitlements,
                                               int allowOfflineDays, Instant licenseValidUntil) {
-        if (rsaPrivateKey == null) {
+        if (!keyProvider.isEnabled()) {
             log.warn("OfflineTokenService: RS256 키가 없어 offlineToken을 발급할 수 없습니다.");
             return null;
         }
@@ -117,7 +76,7 @@ public class OfflineTokenService {
         Instant now = Instant.now();
         Instant baseExp = now.plus(allowOfflineDays, ChronoUnit.DAYS);
 
-        // v1.1.3: Absolute cap - exp는 licenseValidUntil을 초과할 수 없음
+        // v0.2.3: Absolute cap - exp는 licenseValidUntil을 초과할 수 없음
         Instant exp;
         if (licenseValidUntil != null && baseExp.isAfter(licenseValidUntil)) {
             exp = licenseValidUntil;
@@ -126,9 +85,13 @@ public class OfflineTokenService {
             exp = baseExp;
         }
 
-        // v1.1.3: 통일된 claims 구조
+        // v0.2.3: 통일된 claims 구조 + kid 추가
         String token = Jwts.builder()
-                .header().add("alg", "RS256").add("typ", "JWT").and()
+                .header()
+                    .add("alg", "RS256")
+                    .add("typ", "JWT")
+                    .add("kid", keyProvider.keyId())
+                    .and()
                 .issuer(issuer)
                 .audience().add(productCode).and()
                 .subject(licenseId.toString())
@@ -137,7 +100,7 @@ public class OfflineTokenService {
                 .claim("ent", entitlements)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
-                .signWith(rsaPrivateKey, Jwts.SIG.RS256)
+                .signWith(keyProvider.signingKey(), Jwts.SIG.RS256)
                 .compact();
 
         return new OfflineToken(token, exp);
@@ -146,7 +109,7 @@ public class OfflineTokenService {
     /**
      * offlineToken 갱신 필요 여부 확인.
      *
-     * 갱신 조건 (v1.1.3):
+     * 갱신 조건 (v0.2.3):
      * - 남은 기간이 전체의 50% 미만
      * - 또는 남은 기간이 3일 미만
      *
@@ -185,21 +148,14 @@ public class OfflineTokenService {
      * RS256 키 로드 여부 반환.
      */
     public boolean isEnabled() {
-        return rsaPrivateKey != null;
+        return keyProvider.isEnabled();
     }
 
-    private PrivateKey loadPrivateKey(String keyData) throws Exception {
-        String cleanedKey = keyData
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                .replace("-----END RSA PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
-
-        byte[] keyBytes = Base64.getDecoder().decode(cleanedKey);
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return keyFactory.generatePrivate(keySpec);
+    /**
+     * 현재 키 식별자 반환 (테스트 검증용).
+     */
+    public String getKeyId() {
+        return keyProvider.keyId();
     }
 
     /**

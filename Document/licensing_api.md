@@ -1,16 +1,22 @@
-# Licensing System API Documentation v1.1.3
+# Licensing System API Documentation
+
+> **API Base URL:** `/api/v1`
+> **Document Version:** `0.2.3`
+> **Release Target:** `1.0.0`
+
+---
 
 ## 변경 이력
 
 | 버전 | 날짜 | 변경 내용 |
 |-----|------|----------|
-| v1.0 | 2025-12-08 | 최초 작성 (M1, M2 구현) |
-| v1.1 | 2025-12-17 | M1.5 보안 개선 - 계정 기반 인증으로 전환 |
-| v1.1.1 | 2025-12-23 | 동시 세션 관리 UX 개선 - force-validate, 세션 선택 UI 지원 |
-| v1.1.2 | 2025-12-30 | sessionToken (RS256 JWS) 추가 - CLI 위/변조 방어 |
-| v1.1.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
+| v0.1.0 | 2025-12-08 | 최초 작성 (M1, M2 구현) |
+| v0.2.0 | 2025-12-17 | M1.5 보안 개선 - 계정 기반 인증으로 전환 |
+| v0.2.1 | 2025-12-23 | 동시 세션 관리 UX 개선 - force-validate, 세션 선택 UI 지원 |
+| v0.2.2 | 2025-12-30 | sessionToken (RS256 JWS) 추가 - CLI 위/변조 방어 |
+| v0.2.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
 
-### v1.1.3 주요 변경사항
+### v0.2.3 주요 변경사항
 
 1. **토큰 구조 통일**: sessionToken/offlineToken 모두 RS256 JWS로 통일 (오프라인 검증 가능)
 2. **offlineToken 스펙 정비**: claims 통일(iss, aud, typ, dfp, ent), absolute cap(`exp ≤ validUntil`)
@@ -20,28 +26,28 @@
 6. **force-validate 정교화**: DEACTIVATED 마킹 및 경쟁 조건 방어 명시
 7. **운영 가이드 추가**: Heartbeat write-behind, 개인정보 처리 정책
 
-### v1.1.1 주요 변경사항
+### v0.2.1 주요 변경사항
 
 1. **force-validate 엔드포인트 추가**: 동시 세션 초과 시 기존 세션 강제 해제 후 활성화
 2. **세션 선택 UI 지원**: 동시 세션 초과 시 활성 세션 목록 반환 (409 Conflict)
 3. **라이선스 선택 UI 지원**: 다중 라이선스 존재 시 후보 목록 반환 (409 Conflict)
 4. **deviceDisplayName 필드**: 기기 표시명 지원 (UX 개선)
 
-### v1.1.2 주요 변경사항
+### v0.2.2 주요 변경사항
 
 1. **sessionToken 필드 추가**: validate/heartbeat 응답에 RS256 서명된 JWS 토큰 포함
 2. **클라이언트 검증 강화**: sessionToken 서명 검증 필수 (CLI 바꿔치기/session.json 조작 방어)
 3. **기기 바인딩**: deviceFingerprint가 토큰에 포함되어 다른 기기 복사 방지
 4. **짧은 TTL**: 기본 15분 만료로 재사용 공격 제한
 
-### v1.1 주요 변경사항
+### v0.2.0 주요 변경사항
 
 1. **계정 토큰 기반 인증으로 전환**: 키 기반 공개 API → Bearer token 인증 필수
-2. **`/api/me/licenses` 추가**: 사용자 본인의 라이선스 목록 조회
-3. **`/api/licenses/validate`, `/heartbeat` 변경**: path에서 licenseKey 제거, 토큰 기반으로 전환
-4. **공개 API 제거**: `/api/licenses/key/*`, `/api/licenses/*/validate`, `/api/licenses/*/heartbeat` 비인증 접근 제거
+2. **`/api/v1/me/licenses` 추가**: 사용자 본인의 라이선스 목록 조회
+3. **`/api/v1/licenses/validate`, `/heartbeat` 변경**: path에서 licenseKey 제거, 토큰 기반으로 전환
+4. **공개 API 제거**: `/api/v1/licenses/key/*`, `/api/v1/licenses/*/validate`, `/api/v1/licenses/*/heartbeat` 비인증 접근 제거
 
-> **Note:** Claim 기능(라이선스 키 귀속)은 v1.1에서 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
+> **Note:** Claim 기능(라이선스 키 귀속)은 v0.2.0에서 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
 
 ---
 
@@ -73,7 +79,7 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 ```
 
 **핵심 원칙:**
-- **모든 클라이언트 API는 Bearer token 인증 필수** (v1.1 변경)
+- **모든 클라이언트 API는 Bearer token 인증 필수** (v0.2.0 변경)
 - 라이선스 **발급/정지/회수/갱신**은 HTTP API로 노출하지 않음
 - 이러한 작업은 Billing/Admin 모듈에서 내부적으로 LicenseService 직접 호출
 
@@ -85,8 +91,8 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 
 ### Base URL
 ```
-/api/licenses
-/api/me/licenses
+/api/v1/licenses
+/api/v1/me/licenses
 ```
 
 ### 인증
@@ -94,14 +100,14 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 
 ---
 
-### 1.1 내 라이선스 목록 조회 (v1.1 신규)
+### 1.1 내 라이선스 목록 조회 (v0.2.0 신규)
 
 현재 로그인한 사용자의 라이선스 목록을 조회합니다.
 
 ```http
-GET /api/me/licenses
-GET /api/me/licenses?productId={uuid}
-GET /api/me/licenses?status=ACTIVE
+GET /api/v1/me/licenses
+GET /api/v1/me/licenses?productId={uuid}
+GET /api/v1/me/licenses?status=ACTIVE
 Authorization: Bearer {accessToken}
 ```
 
@@ -137,14 +143,14 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 1.2 라이선스 검증 및 활성화 (v1.1 변경)
+### 1.2 라이선스 검증 및 활성화 (v0.2.0 변경)
 
 클라이언트 앱 실행 시 라이선스 유효성을 확인하고 기기를 활성화합니다.
 
-> **v1.1 변경:** Path에서 licenseKey 제거, Bearer token 기반으로 변경
+> **v0.2.0 변경:** Path에서 licenseKey 제거, Bearer token 기반으로 변경
 
 ```http
-POST /api/licenses/validate
+POST /api/v1/licenses/validate
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -221,7 +227,7 @@ Content-Type: application/json
 }
 ```
 
-**Response (409 Conflict - 다중 라이선스 선택 필요):** *(v1.1.1)*
+**Response (409 Conflict - 다중 라이선스 선택 필요):** *(v0.2.1)*
 ```json
 {
   "valid": false,
@@ -245,7 +251,7 @@ Content-Type: application/json
 
 > **클라이언트 UX:** 후보 목록을 UI에 표시하고, 사용자가 선택한 `licenseId`를 재요청 시 포함
 
-**Response (409 Conflict - 동시 세션 초과):** *(v1.1.1)*
+**Response (409 Conflict - 동시 세션 초과):** *(v0.2.1)*
 ```json
 {
   "valid": false,
@@ -289,14 +295,14 @@ Content-Type: application/json
 
 ---
 
-### 1.3 Heartbeat (주기적 검증) (v1.1 변경)
+### 1.3 Heartbeat (주기적 검증) (v0.2.0 변경)
 
 클라이언트가 주기적으로 세션 상태를 갱신합니다.
 
-> **v1.1 변경:** Path에서 licenseKey 제거, Bearer token 기반으로 변경
+> **v0.2.0 변경:** Path에서 licenseKey 제거, Bearer token 기반으로 변경
 
 ```http
-POST /api/licenses/heartbeat
+POST /api/v1/licenses/heartbeat
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -338,7 +344,7 @@ Heartbeat는 `lastSeenAt` UPDATE를 빈번하게 발생시켜 DB 부하를 유�
 
 ---
 
-### 1.3.1 Force Validate (동시 세션 강제 해제) *(v1.1.1 신규)*
+### 1.3.1 Force Validate (동시 세션 강제 해제) *(v0.2.1 신규)*
 
 동시 세션 제한 초과 시 기존 세션을 강제 비활성화하고 현재 기기를 활성화합니다.
 
@@ -346,7 +352,7 @@ Heartbeat는 `lastSeenAt` UPDATE를 빈번하게 발생시켜 DB 부하를 유�
 > 사용자가 비활성화할 세션을 선택한 후 이 엔드포인트 호출
 
 ```http
-POST /api/licenses/validate/force
+POST /api/v1/licenses/validate/force
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -392,14 +398,14 @@ Content-Type: application/json
 
 ---
 
-### 1.4 라이선스 상세 조회 (v1.1 변경)
+### 1.4 라이선스 상세 조회 (v0.2.0 변경)
 
 본인 소유의 라이선스 상세 정보를 조회합니다.
 
-> **v1.1 변경:** 인증 필수, 본인 소유 라이선스만 조회 가능
+> **v0.2.0 변경:** 인증 필수, 본인 소유 라이선스만 조회 가능
 
 ```http
-GET /api/licenses/{licenseId}
+GET /api/v1/licenses/{licenseId}
 Authorization: Bearer {accessToken}
 ```
 
@@ -449,14 +455,14 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 1.5 기기 비활성화 (v1.1 변경)
+### 1.5 기기 비활성화 (v0.2.0 변경)
 
 사용자가 특정 기기에서 라이선스를 해제합니다.
 
-> **v1.1 변경:** 인증 필수, 본인 소유 라이선스의 기기만 비활성화 가능
+> **v0.2.0 변경:** 인증 필수, 본인 소유 라이선스의 기기만 비활성화 가능
 
 ```http
-DELETE /api/licenses/{licenseId}/activations/{deviceFingerprint}
+DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint}
 Authorization: Bearer {accessToken}
 ```
 
@@ -475,12 +481,12 @@ Authorization: Bearer {accessToken}
 
 ### 1.6 (Deprecated) 라이선스 키로 조회
 
-> **v1.1 Deprecated:** 보안상 이 엔드포인트는 제거됩니다.
-> 대신 `/api/me/licenses` 또는 `/api/licenses/{licenseId}`를 사용하세요.
+> **v0.2.0 Deprecated:** 보안상 이 엔드포인트는 제거됩니다.
+> 대신 `/api/v1/me/licenses` 또는 `/api/v1/licenses/{licenseId}`를 사용하세요.
 
 ```http
-# v1.0 (Deprecated - v1.2에서 제거 예정)
-GET /api/licenses/key/{licenseKey}
+# v0.1.0 (Deprecated - v1.0.0에서 제거 예정)
+GET /api/v1/licenses/key/{licenseKey}
 ```
 
 ---
@@ -491,7 +497,7 @@ GET /api/licenses/key/{licenseKey}
 
 ### Base URL
 ```
-/api/admin/license-plans
+/api/v1/admin/license-plans
 ```
 
 ### 인증/권한
@@ -502,10 +508,10 @@ GET /api/licenses/key/{licenseKey}
 ### 2.1 플랜 목록 조회
 
 ```http
-GET /api/admin/license-plans
-GET /api/admin/license-plans?activeOnly=true
-GET /api/admin/license-plans?productId={uuid}
-GET /api/admin/license-plans?page=0&size=20&sort=createdAt,desc
+GET /api/v1/admin/license-plans
+GET /api/v1/admin/license-plans?activeOnly=true
+GET /api/v1/admin/license-plans?productId={uuid}
+GET /api/v1/admin/license-plans?page=0&size=20&sort=createdAt,desc
 Authorization: Bearer {adminToken}
 ```
 
@@ -552,7 +558,7 @@ Authorization: Bearer {adminToken}
 ### 2.2 플랜 상세 조회
 
 ```http
-GET /api/admin/license-plans/{id}
+GET /api/v1/admin/license-plans/{id}
 Authorization: Bearer {adminToken}
 ```
 
@@ -563,7 +569,7 @@ Authorization: Bearer {adminToken}
 ### 2.3 플랜 생성
 
 ```http
-POST /api/admin/license-plans
+POST /api/v1/admin/license-plans
 Authorization: Bearer {adminToken}
 Content-Type: application/json
 ```
@@ -609,7 +615,7 @@ Content-Type: application/json
 ### 2.4 플랜 수정
 
 ```http
-PUT /api/admin/license-plans/{id}
+PUT /api/v1/admin/license-plans/{id}
 Authorization: Bearer {adminToken}
 Content-Type: application/json
 ```
@@ -626,7 +632,7 @@ Content-Type: application/json
 ### 2.5 플랜 활성화
 
 ```http
-PATCH /api/admin/license-plans/{id}/activate
+PATCH /api/v1/admin/license-plans/{id}/activate
 Authorization: Bearer {adminToken}
 ```
 
@@ -637,7 +643,7 @@ Authorization: Bearer {adminToken}
 ### 2.6 플랜 비활성화
 
 ```http
-PATCH /api/admin/license-plans/{id}/deactivate
+PATCH /api/v1/admin/license-plans/{id}/deactivate
 Authorization: Bearer {adminToken}
 ```
 
@@ -650,7 +656,7 @@ Authorization: Bearer {adminToken}
 ### 2.7 플랜 삭제
 
 ```http
-DELETE /api/admin/license-plans/{id}
+DELETE /api/v1/admin/license-plans/{id}
 Authorization: Bearer {adminToken}
 ```
 
@@ -676,7 +682,7 @@ Authorization: Bearer {adminToken}
 
 ### Base URL
 ```
-/api/admin/licenses
+/api/v1/admin/licenses
 ```
 
 ### 인증/권한
@@ -689,11 +695,11 @@ Authorization: Bearer {adminToken}
 다양한 조건으로 라이선스를 검색합니다.
 
 ```http
-GET /api/admin/licenses
-GET /api/admin/licenses?status=ACTIVE
-GET /api/admin/licenses?ownerType=USER&ownerId={uuid}
-GET /api/admin/licenses?licenseKey=TEST
-GET /api/admin/licenses?page=0&size=20
+GET /api/v1/admin/licenses
+GET /api/v1/admin/licenses?status=ACTIVE
+GET /api/v1/admin/licenses?ownerType=USER&ownerId={uuid}
+GET /api/v1/admin/licenses?licenseKey=TEST
+GET /api/v1/admin/licenses?page=0&size=20
 Authorization: Bearer {adminToken}
 ```
 
@@ -745,7 +751,7 @@ Authorization: Bearer {adminToken}
 특정 소유자(유저/조직)의 모든 라이선스를 조회합니다.
 
 ```http
-GET /api/admin/licenses/owner/{ownerType}/{ownerId}
+GET /api/v1/admin/licenses/owner/{ownerType}/{ownerId}
 Authorization: Bearer {adminToken}
 ```
 
@@ -981,7 +987,7 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ---
 
-## 8. 토큰 구조 (v1.1.3 정리)
+## 8. 토큰 구조 (v0.2.3 정리)
 
 라이선스 시스템은 **두 종류의 토큰**을 사용합니다:
 
@@ -1159,29 +1165,29 @@ offlineToken은 `exp` claim으로 만료를 검증하지만, 사용자가 시스
 
 ---
 
-## 9. 인증/권한 설정 (v1.1 변경)
+## 9. 인증/권한 설정 (v0.2.0 변경)
 
-### v1.1 Security 설정
+### Security 설정
 
 | 엔드포인트 패턴 | 인증 | 권한 | 설명 |
 |---------------|-----|------|------|
-| `POST /api/licenses/validate` | **필요** | USER | 라이선스 검증 |
-| `POST /api/licenses/heartbeat` | **필요** | USER | Heartbeat |
-| `GET /api/me/licenses` | **필요** | USER | 내 라이선스 목록 |
-| `GET /api/licenses/{id}` | **필요** | USER (본인 소유) | 상세 조회 |
-| `DELETE /api/licenses/{id}/activations/*` | **필요** | USER (본인 소유) | 기기 비활성화 |
-| `GET /api/licenses/key/*` | **제거** | - | v1.1에서 제거 |
-| `/api/admin/licenses/**` | **필요** | ADMIN | 관리자 검색 API |
-| `/api/admin/license-plans/**` | **필요** | ADMIN | 플랜 관리 API |
+| `POST /api/v1/licenses/validate` | **필요** | USER | 라이선스 검증 |
+| `POST /api/v1/licenses/heartbeat` | **필요** | USER | Heartbeat |
+| `GET /api/v1/me/licenses` | **필요** | USER | 내 라이선스 목록 |
+| `GET /api/v1/licenses/{id}` | **필요** | USER (본인 소유) | 상세 조회 |
+| `DELETE /api/v1/licenses/{id}/activations/*` | **필요** | USER (본인 소유) | 기기 비활성화 |
+| `GET /api/v1/licenses/key/*` | **제거** | - | v0.2.0에서 제거 |
+| `/api/v1/admin/licenses/**` | **필요** | ADMIN | 관리자 검색 API |
+| `/api/v1/admin/license-plans/**` | **필요** | ADMIN | 플랜 관리 API |
 
-### v1.0 → v1.1 마이그레이션 가이드
+### v0.1.0 → v0.2.0 마이그레이션 가이드
 
 **제거되는 엔드포인트:**
 ```
-# v1.0 (제거)
-POST /api/licenses/{licenseKey}/validate    → POST /api/licenses/validate
-POST /api/licenses/{licenseKey}/heartbeat   → POST /api/licenses/heartbeat
-GET  /api/licenses/key/{licenseKey}         → GET  /api/me/licenses 또는 /api/licenses/{id}
+# v0.1.0 (제거)
+POST /api/v1/licenses/{licenseKey}/validate    → POST /api/v1/licenses/validate
+POST /api/v1/licenses/{licenseKey}/heartbeat   → POST /api/v1/licenses/heartbeat
+GET  /api/v1/licenses/key/{licenseKey}         → GET  /api/v1/me/licenses 또는 /api/v1/licenses/{id}
 ```
 
 **클라이언트 변경사항:**
@@ -1204,41 +1210,41 @@ GET  /api/licenses/key/{licenseKey}         → GET  /api/me/licenses 또는 /ap
 
 ---
 
-## 10. UX 플로우 (v1.1)
+## 10. UX 플로우 (v0.2.0)
 
 ### 기본 플로우: Sign in → Launch
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ 1. 사용자 로그인                                                   │
-│    └─ POST /api/auth/login → accessToken 획득                    │
+│    └─ POST /api/v1/auth/login → accessToken 획득                  │
 ├──────────────────────────────────────────────────────────────────┤
 │ 2. 내 라이선스 조회                                                │
-│    └─ GET /api/me/licenses?productId=xxx                         │
+│    └─ GET /api/v1/me/licenses?productId=xxx                       │
 │    └─ 서버가 해당 제품의 라이선스 목록 반환                          │
 ├──────────────────────────────────────────────────────────────────┤
 │ 3. 라이선스 검증 및 기기 활성화                                     │
-│    └─ POST /api/licenses/validate (productId, deviceFingerprint) │
+│    └─ POST /api/v1/licenses/validate (productId, deviceFingerprint) │
 │    └─ offlineToken 저장                                          │
 ├──────────────────────────────────────────────────────────────────┤
 │ 4. 앱 실행                                                        │
-│    └─ 주기적으로 POST /api/licenses/heartbeat                     │
+│    └─ 주기적으로 POST /api/v1/licenses/heartbeat                   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Appendix A: cURL Examples (v1.1)
+## Appendix A: cURL Examples
 
 ### 내 라이선스 목록 조회
 ```bash
-curl http://localhost:8080/api/me/licenses \
+curl http://localhost:8080/api/v1/me/licenses \
   -H "Authorization: Bearer {accessToken}"
 ```
 
-### 라이선스 검증 (v1.1)
+### 라이선스 검증
 ```bash
-curl -X POST http://localhost:8080/api/licenses/validate \
+curl -X POST http://localhost:8080/api/v1/licenses/validate \
   -H "Authorization: Bearer {accessToken}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1249,9 +1255,9 @@ curl -X POST http://localhost:8080/api/licenses/validate \
   }'
 ```
 
-### Heartbeat (v1.1)
+### Heartbeat
 ```bash
-curl -X POST http://localhost:8080/api/licenses/heartbeat \
+curl -X POST http://localhost:8080/api/v1/licenses/heartbeat \
   -H "Authorization: Bearer {accessToken}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1264,7 +1270,7 @@ curl -X POST http://localhost:8080/api/licenses/heartbeat \
 
 ### 플랜 생성 (Admin)
 ```bash
-curl -X POST http://localhost:8080/api/admin/license-plans \
+curl -X POST http://localhost:8080/api/v1/admin/license-plans \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {adminToken}" \
   -d '{
@@ -1386,36 +1392,36 @@ bulc:
 - [x] Exception Handling
 
 ### M1.5 - 보안 개선 (완료)
-- [x] `/api/me/licenses` 엔드포인트 추가
+- [x] `/api/v1/me/licenses` 엔드포인트 추가
 - [x] validate/heartbeat Bearer token 인증 적용
-- [x] `/api/licenses/key/*` 공개 접근 제거
+- [x] `/api/v1/licenses/key/*` 공개 접근 제거
 - [x] Security 설정 변경
 
-### M1.5.1 - 동시 세션 관리 UX (v1.1.1 완료)
-- [x] `/api/licenses/validate/force` 엔드포인트 추가
+### M1.5.1 - 동시 세션 관리 UX (v0.2.1 완료)
+- [x] `/api/v1/licenses/validate/force` 엔드포인트 추가
 - [x] 409 Conflict 응답 (candidates, activeSessions) 구현
 - [x] ForceValidateRequest DTO 구현
 - [x] LicenseCandidate, ActiveSessionInfo DTO 구현
 - [x] deviceDisplayName 필드 지원
 
-### M1.6 - sessionToken 추가 (v1.1.2 완료)
+### M1.6 - sessionToken 추가 (v0.2.2 완료)
 - [x] SessionTokenService 구현 (RS256 JWS)
 - [x] ValidationResponse에 sessionToken 필드 추가
 - [x] validate/heartbeat/force-validate에서 sessionToken 발급
 - [x] CLI 위/변조 방어 설계 문서화
 
-### M1.7 - offlineToken 정비 (v1.1.3 진행중)
-- [ ] **offlineToken RS256 전환** (현재 HS256 → RS256 변경 필요)
-- [ ] offlineToken claims 통일 (iss, aud, typ, dfp, ent 추가)
-- [ ] absolute cap 적용 (`exp ≤ license.validUntil`)
-- [ ] 갱신 임계값 적용 (ratio 50% 또는 3일 미만)
+### M1.7 - offlineToken 정비 (v0.2.3 완료)
+- [x] **offlineToken RS256 전환** (HS256 → RS256 완료)
+- [x] offlineToken claims 통일 (iss, aud, typ, dfp, ent 추가)
+- [x] absolute cap 적용 (`exp ≤ license.validUntil`)
+- [x] 갱신 임계값 적용 (ratio 50% 또는 3일 미만)
 - [x] Heartbeat에서 offlineToken 갱신 (sliding window)
 - [x] 토큰 구조 문서화 (sessionToken vs offlineToken)
 
-### M1.8 - v1.1.3 추가 기능 (진행중)
-- [ ] strategy 파라미터 (FAIL_ON_MULTIPLE, AUTO_PICK_BEST)
-- [ ] ACTIVATION_DEACTIVATED ErrorCode 추가
-- [ ] Force Validate 경쟁 조건 방어 (pessimistic lock)
+### M1.8 - v0.2.3 추가 기능 (완료)
+- [x] strategy 파라미터 (FAIL_ON_MULTIPLE, AUTO_PICK_BEST)
+- [x] ACTIVATION_DEACTIVATED ErrorCode 추가
+- [x] Force Validate 경쟁 조건 방어 (pessimistic lock)
 
 > **Note:** Claim 기능은 추후 Redeem 기능으로 별도 구현 예정
 
@@ -1443,7 +1449,7 @@ bulc:
 ```
 backend/src/main/java/com/bulc/homepage/licensing/
 ├── controller/
-│   ├── LicenseController.java           # 사용자 API (v1.1 변경)
+│   ├── LicenseController.java           # 사용자 API (v0.2.0 변경)
 │   ├── MyLicenseController.java         # /api/me/licenses 엔드포인트
 │   ├── LicenseAdminController.java      # 관리자 API
 │   └── LicensePlanAdminController.java  # 플랜 관리 API
@@ -1457,9 +1463,9 @@ backend/src/main/java/com/bulc/homepage/licensing/
 │   ├── OwnerType.java                   # 소유자 유형 Enum
 │   └── ActivationStatus.java            # 활성화 상태 Enum
 ├── dto/
-│   ├── ActivationRequest.java           # 검증 요청 DTO (v1.0 레거시)
-│   ├── ValidateRequest.java             # v1.1 검증 요청 DTO
-│   ├── ForceValidateRequest.java        # v1.1.1 강제 검증 요청 DTO
+│   ├── ActivationRequest.java           # 검증 요청 DTO (v0.1.0 레거시)
+│   ├── ValidateRequest.java             # v0.2.0 검증 요청 DTO
+│   ├── ForceValidateRequest.java        # v0.2.1 강제 검증 요청 DTO
 │   ├── ValidationResponse.java          # 검증 응답 DTO (sessionToken, candidates, activeSessions)
 │   ├── MyLicensesResponse.java          # 내 라이선스 목록 응답
 │   ├── LicenseCandidate.java            # 다중 라이선스 후보
@@ -1488,9 +1494,9 @@ backend/src/main/java/com/bulc/homepage/licensing/
 └── service/
     ├── LicenseService.java              # Command Service
     ├── LicensePlanAdminService.java     # 플랜 관리 Service
-    └── SessionTokenService.java         # v1.1.2: sessionToken (JWS) 발급 서비스
+    └── SessionTokenService.java         # v0.2.2: sessionToken (JWS) 발급 서비스
 ```
 
 ---
 
-*Last Updated: 2026-01-07 (v1.1.3 토큰 구조 명확화, 문서 정비)*
+*Last Updated: 2026-01-08 (v0.2.3 토큰 구조 명확화, 문서 정비)*

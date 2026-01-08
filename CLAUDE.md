@@ -72,7 +72,7 @@ database/
 
 Document/
 ├── licensing_domain_v1.md # Licensing system domain design
-├── licensing_api_v1.md    # Licensing API documentation
+├── licensing_api.md       # Licensing API documentation (v0.2.x)
 └── 테이블정의서.md         # Database table definitions
 ```
 
@@ -101,7 +101,7 @@ Document/
 
 ## Licensing System
 
-소프트웨어 라이선스 관리 시스템입니다. 자세한 내용은 `Document/licensing_api_v1.md` 참조.
+소프트웨어 라이선스 관리 시스템입니다. 자세한 내용은 `Document/licensing_api.md` 참조.
 
 ### Architecture
 ```
@@ -115,22 +115,25 @@ Billing Module → Internal Service (직접 호출) ─┘
 - **Soft Delete**: 플랜 삭제 시 `is_deleted=true`로 표시, 기존 라이선스 유지
 - **Offline Token**: Opaque 토큰, 클라이언트는 `offlineTokenExpiresAt`만 로컬 검증
 
-### Client API Endpoints
+### Client API Endpoints (v0.2.0+, 계정 기반 인증)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/licenses/{key}/validate` | 라이선스 검증 및 기기 활성화 |
-| POST | `/api/licenses/{key}/heartbeat` | 세션 갱신 (기존 활성화만) |
-| DELETE | `/api/licenses/{id}/activations/{fingerprint}` | 기기 비활성화 |
-| GET | `/api/licenses/{id}` | 라이선스 조회 (ID) |
-| GET | `/api/licenses/key/{key}` | 라이선스 조회 (Key) |
+| GET | `/api/v1/me/licenses` | 내 라이선스 목록 조회 |
+| POST | `/api/v1/licenses/validate` | 라이선스 검증 및 기기 활성화 |
+| POST | `/api/v1/licenses/heartbeat` | 세션 갱신 (기존 활성화만) |
+| POST | `/api/v1/licenses/validate/force` | 강제 활성화 (세션 충돌 시) |
+| DELETE | `/api/v1/licenses/{id}/activations/{fingerprint}` | 기기 비활성화 |
+| GET | `/api/v1/licenses/{id}` | 라이선스 조회 (ID) |
 
 ### Admin API Endpoints
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/admin/license-plans` | 플랜 목록 |
-| POST | `/api/admin/license-plans` | 플랜 생성 |
-| PUT | `/api/admin/license-plans/{id}` | 플랜 수정 |
-| DELETE | `/api/admin/license-plans/{id}` | 플랜 삭제 (soft) |
+| GET | `/api/v1/admin/license-plans` | 플랜 목록 |
+| POST | `/api/v1/admin/license-plans` | 플랜 생성 |
+| PUT | `/api/v1/admin/license-plans/{id}` | 플랜 수정 |
+| DELETE | `/api/v1/admin/license-plans/{id}` | 플랜 삭제 (soft) |
+| GET | `/api/v1/admin/licenses` | 라이선스 검색 (관리자) |
+| GET | `/api/v1/admin/licenses/{id}` | 라이선스 상세 조회 (관리자) |
 
 ### Internal Service Methods (HTTP 미노출)
 ```java

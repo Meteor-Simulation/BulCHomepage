@@ -18,12 +18,12 @@ import java.util.UUID;
 
 /**
  * 내 라이선스 API Controller.
- * v1.1에서 추가됨.
+ * v0.2.0에서 추가됨.
  *
- * GET /api/me/licenses - 내 라이선스 목록 조회
+ * GET /api/v1/me/licenses - 내 라이선스 목록 조회
  */
 @RestController
-@RequestMapping("/api/me/licenses")
+@RequestMapping("/api/v1/me/licenses")
 @RequiredArgsConstructor
 public class MyLicenseController {
 
@@ -34,9 +34,9 @@ public class MyLicenseController {
      * 내 라이선스 목록 조회.
      * 현재 로그인한 사용자의 라이선스 목록을 반환합니다.
      *
-     * GET /api/me/licenses
-     * GET /api/me/licenses?productId={uuid}
-     * GET /api/me/licenses?status=ACTIVE
+     * GET /api/v1/me/licenses
+     * GET /api/v1/me/licenses?productId={uuid}
+     * GET /api/v1/me/licenses?status=ACTIVE
      */
     @GetMapping
     public ResponseEntity<MyLicensesResponse> getMyLicenses(

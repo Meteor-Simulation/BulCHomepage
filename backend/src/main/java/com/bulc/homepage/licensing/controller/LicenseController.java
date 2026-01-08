@@ -18,15 +18,15 @@ import java.util.UUID;
 /**
  * 라이선스 클라이언트용 API Controller.
  *
- * v1.1 변경사항:
+ * v0.2.0 변경사항:
  * - 계정 기반 인증 API (Bearer token 필수)
- * - /api/me/licenses 추가
- * - /api/licenses/validate, /heartbeat 계정 기반으로 변경
+ * - /api/v1/me/licenses 추가
+ * - /api/v1/licenses/validate, /heartbeat 계정 기반으로 변경
  *
  * @see LicenseService
  */
 @RestController
-@RequestMapping("/api/licenses")
+@RequestMapping("/api/v1/licenses")
 @RequiredArgsConstructor
 public class LicenseController {
 
@@ -34,15 +34,15 @@ public class LicenseController {
     private final UserRepository userRepository;
 
     // ==========================================
-    // v1.1 계정 기반 API (Bearer token 필수)
+    // v0.2.0 계정 기반 API (Bearer token 필수)
     // ==========================================
 
     /**
-     * 라이선스 검증 및 활성화 (v1.1 계정 기반).
+     * 라이선스 검증 및 활성화 (v0.2.0 계정 기반).
      * Bearer token 인증된 사용자의 라이선스를 검증합니다.
      *
-     * POST /api/licenses/validate
-     * v1.1에서 추가됨 - 기존 /{licenseKey}/validate 대체.
+     * POST /api/v1/licenses/validate
+     * v0.2.0에서 추가됨 - 기존 /{licenseKey}/validate 대체.
      *
      * 응답:
      * - 200 OK: 검증 성공
@@ -57,11 +57,11 @@ public class LicenseController {
     }
 
     /**
-     * Heartbeat (v1.1 계정 기반).
+     * Heartbeat (v0.2.0 계정 기반).
      * Bearer token 인증된 사용자의 활성화 상태를 갱신합니다.
      *
-     * POST /api/licenses/heartbeat
-     * v1.1에서 추가됨 - 기존 /{licenseKey}/heartbeat 대체.
+     * POST /api/v1/licenses/heartbeat
+     * v0.2.0에서 추가됨 - 기존 /{licenseKey}/heartbeat 대체.
      *
      * 응답:
      * - 200 OK: 갱신 성공
@@ -76,10 +76,10 @@ public class LicenseController {
     }
 
     /**
-     * 강제 검증 및 활성화 (v1.1.1 신규).
+     * 강제 검증 및 활성화 (v0.2.1 신규).
      * 동시 세션 제한 초과 시 기존 세션을 비활성화하고 새 세션을 활성화.
      *
-     * POST /api/licenses/validate/force
+     * POST /api/v1/licenses/validate/force
      *
      * 요청 흐름:
      * 1. /validate 호출 → 409 CONCURRENT_SESSION_LIMIT_EXCEEDED (activeSessions 포함)
@@ -115,10 +115,10 @@ public class LicenseController {
     }
 
     /**
-     * 라이선스 상세 조회 (v1.1 소유자 검증).
+     * 라이선스 상세 조회 (v0.2.0 소유자 검증).
      * 본인 소유의 라이선스만 조회 가능합니다.
      *
-     * GET /api/licenses/{licenseId}
+     * GET /api/v1/licenses/{licenseId}
      */
     @GetMapping("/{licenseId}")
     public ResponseEntity<LicenseResponse> getLicense(@PathVariable UUID licenseId) {
@@ -128,10 +128,10 @@ public class LicenseController {
     }
 
     /**
-     * 기기 비활성화 (v1.1 소유자 검증).
+     * 기기 비활성화 (v0.2.0 소유자 검증).
      * 본인 소유의 라이선스의 기기만 비활성화 가능합니다.
      *
-     * DELETE /api/licenses/{licenseId}/activations/{deviceFingerprint}
+     * DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint}
      */
     @DeleteMapping("/{licenseId}/activations/{deviceFingerprint}")
     public ResponseEntity<Void> deactivate(
