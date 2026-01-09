@@ -55,6 +55,9 @@ bulc:
       # RS256 개인키 (Base64 인코딩된 PKCS#8 형식, 또는 PEM 문자열)
       # 운영 환경에서는 반드시 환경변수로 설정
       private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
+    # v0.3.0: Auto-Resolve용 stale 판정 기준 (분)
+    # 이 시간 이상 heartbeat 없으면 stale로 간주하여 자동 종료 대상
+    stale-threshold-minutes: ${STALE_THRESHOLD_MINUTES:30}
 
 # Toss Payments Configuration
 toss:

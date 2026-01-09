@@ -238,28 +238,27 @@ class LicenseSecurityTest {
     class MultiLicenseStrategyTest {
 
         @Test
-        @DisplayName("strategy 미지정 시 다중 라이선스면 409 Conflict (FAIL_ON_MULTIPLE)")
-        void shouldReturn409WhenMultipleLicensesWithoutStrategy() {
+        @DisplayName("v0.3.0: 다중 라이선스 시 서버가 자동 선택 (Auto-Resolve)")
+        void shouldAutoSelectWhenMultipleLicenses() {
             // given - 동일 사용자에게 다른 제품의 라이선스 2개 발급
-            issueLicenseForProduct(PRODUCT_ID);
-            issueLicenseForProduct(PRODUCT_ID_2);
+            LicenseResponse license1 = issueLicenseForProduct(PRODUCT_ID);
+            LicenseResponse license2 = issueLicenseForProduct(PRODUCT_ID_2);
 
             UUID userId = USER_ID;
             // productId를 지정하지 않으면 사용자의 모든 유효 라이선스가 candidates
             ValidateRequest request = new ValidateRequest(
                     null, null, null,  // productId 미지정
                     "device-123", "1.0", "Windows", null,
-                    null  // strategy 미지정 (기본: FAIL_ON_MULTIPLE)
+                    null  // v0.3.0: strategy 무시, 서버가 항상 Auto-Select
             );
 
             // when
             ValidationResponse response = licenseService.validateAndActivateByUser(userId, request);
 
-            // then - 409 응답 (선택 필요)
-            assertThat(response.valid()).isFalse();
-            assertThat(response.errorCode()).isEqualTo("LICENSE_SELECTION_REQUIRED");
-            assertThat(response.candidates()).isNotNull();
-            assertThat(response.candidates()).hasSize(2);
+            // then - v0.3.0: 서버가 자동으로 라이선스 선택하여 성공
+            assertThat(response.valid()).isTrue();
+            assertThat(response.licenseId()).isIn(license1.id(), license2.id());
+            assertThat(response.resolution()).isEqualTo("OK");
         }
 
         @Test

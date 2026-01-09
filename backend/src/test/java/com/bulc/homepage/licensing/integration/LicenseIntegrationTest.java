@@ -234,9 +234,9 @@ class LicenseIntegrationTest {
             ValidationResponse response = licenseService.validateAndActivate(licenseKey,
                     new ActivationRequest("device-3", "1.0", "Linux", "10.0.0.3"));
 
-            // then
+            // then - v0.3.0: 모든 슬롯이 사용 중이면 ALL_LICENSES_FULL 반환
             assertThat(response.valid()).isFalse();
-            assertThat(response.errorCode()).isIn("ACTIVATION_LIMIT_EXCEEDED", "CONCURRENT_SESSION_LIMIT_EXCEEDED");
+            assertThat(response.errorCode()).isIn("ACTIVATION_LIMIT_EXCEEDED", "ALL_LICENSES_FULL");
         }
 
         @Test

@@ -32,8 +32,7 @@ public class LicenseExceptionHandler {
             case LICENSE_NOT_FOUND, ACTIVATION_NOT_FOUND, PLAN_NOT_FOUND,
                  LICENSE_NOT_FOUND_FOR_PRODUCT -> HttpStatus.NOT_FOUND;
             case LICENSE_ALREADY_EXISTS, PLAN_CODE_DUPLICATE -> HttpStatus.CONFLICT;
-            case LICENSE_SELECTION_REQUIRED -> HttpStatus.CONFLICT;  // 409 - 복수 라이선스 선택 필요
-            case CONCURRENT_SESSION_LIMIT_EXCEEDED -> HttpStatus.CONFLICT;  // v1.1.1: 409 - 동시 세션 초과
+            case ALL_LICENSES_FULL -> HttpStatus.CONFLICT;  // v0.3.0: 409 - 모든 라이선스 full
             case LICENSE_EXPIRED, LICENSE_SUSPENDED, LICENSE_REVOKED,
                  ACTIVATION_LIMIT_EXCEEDED, ACCESS_DENIED -> HttpStatus.FORBIDDEN;
             case SESSION_DEACTIVATED, ACTIVATION_DEACTIVATED -> HttpStatus.FORBIDDEN;  // v1.1.1, v1.1.3: 403 - 세션/활성화 비활성화됨
