@@ -207,6 +207,14 @@ public class Activation {
     }
 
     /**
+     * 테스트 전용: lastSeenAt 강제 설정.
+     * 프로덕션 코드에서는 사용하지 않음.
+     */
+    public void forceSetLastSeenAt(Instant lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
+    }
+
+    /**
      * STALE 상태 판단 (stalePeriodDays 이상 미접속).
      */
     public boolean shouldBeStale(int stalePeriodDays, Instant now) {

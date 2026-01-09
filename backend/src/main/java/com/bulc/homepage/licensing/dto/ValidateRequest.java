@@ -14,13 +14,15 @@ import java.util.UUID;
  *
  * 라이선스 선택:
  * - licenseId 지정: 해당 라이선스 사용 (소유자 검증)
- * - licenseId 미지정:
+ * - licenseId 미지정: 서버가 자동으로 최적의 라이선스 선택 (v0.3.0)
  *   - 후보 0개: 404 LICENSE_NOT_FOUND_FOR_PRODUCT
- *   - 후보 1개: 자동 선택
- *   - 후보 2개 이상: strategy에 따라 처리 (v1.1.3)
+ *   - 후보 1개 이상: 서버 자동 선택 (Two-Pass Algorithm)
  *
- * v1.1.3 추가:
- * - strategy: 다중 라이선스 선택 전략
+ * v0.3.0 변경:
+ * - strategy 필드 deprecated - 서버가 항상 자동 선택
+ * - 빈 슬롯 있으면 바로 활성화 (resolution: OK)
+ * - stale 세션 있으면 자동 종료 후 활성화 (resolution: AUTO_RECOVERED)
+ * - 모두 full이면 세션 목록 반환 (resolution: USER_ACTION_REQUIRED)
  */
 public record ValidateRequest(
         // 제품 식별 (둘 중 하나 필수)
@@ -41,7 +43,9 @@ public record ValidateRequest(
         // v1.1.1: 기기 표시 이름 (선택) - UX용
         String deviceDisplayName,
 
-        // v1.1.3: 다중 라이선스 선택 전략 (기본: FAIL_ON_MULTIPLE)
+        // v1.1.3: 다중 라이선스 선택 전략
+        // v0.3.0: deprecated - 서버가 항상 자동 선택 (이 필드는 무시됨)
+        @Deprecated
         LicenseSelectionStrategy strategy
 ) {
     /**
@@ -53,7 +57,9 @@ public record ValidateRequest(
 
     /**
      * 전략 반환 (null이면 기본값 FAIL_ON_MULTIPLE).
+     * v0.3.0: deprecated - 서버가 항상 자동 선택하므로 더 이상 사용하지 않음
      */
+    @Deprecated
     public LicenseSelectionStrategy getEffectiveStrategy() {
         return strategy != null ? strategy : LicenseSelectionStrategy.FAIL_ON_MULTIPLE;
     }

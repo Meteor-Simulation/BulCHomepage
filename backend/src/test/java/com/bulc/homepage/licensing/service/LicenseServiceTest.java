@@ -73,7 +73,8 @@ class LicenseServiceTest {
                 planRepository,
                 productRepository,
                 sessionTokenService,
-                offlineTokenService
+                offlineTokenService,
+                30  // v0.3.0: staleThresholdMinutes
         );
 
         // v1.1.2: sessionToken mock 기본 설정 (lenient - 모든 테스트에서 사용되지 않아도 OK)
@@ -322,8 +323,11 @@ class LicenseServiceTest {
 
             given(licenseRepository.findByLicenseKeyWithLock(LICENSE_KEY))
                     .willReturn(Optional.of(license));
-            given(activationRepository.countByLicenseIdAndStatus(any(), eq(ActivationStatus.ACTIVE)))
+            // v0.3.0: countActiveSessions 사용
+            given(activationRepository.countActiveSessions(any(), any()))
                     .willReturn(2L);
+            given(activationRepository.findActiveSessions(any(), any()))
+                    .willReturn(List.of());
 
             ActivationRequest request = new ActivationRequest(
                     "device-3", "1.0.0", "Linux", "10.0.0.3"
@@ -334,9 +338,10 @@ class LicenseServiceTest {
 
             // then
             assertThat(response.valid()).isFalse();
+            // v0.3.0: ALL_LICENSES_FULL 또는 ACTIVATION_LIMIT_EXCEEDED
             assertThat(response.errorCode()).isIn(
                     "ACTIVATION_LIMIT_EXCEEDED",
-                    "CONCURRENT_SESSION_LIMIT_EXCEEDED"
+                    "ALL_LICENSES_FULL"
             );
         }
     }

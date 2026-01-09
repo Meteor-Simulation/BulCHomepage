@@ -97,4 +97,36 @@ public interface ActivationRepository extends JpaRepository<Activation, UUID> {
      * 여러 활성화 ID로 조회 (force deactivate에서 사용).
      */
     List<Activation> findByIdIn(List<UUID> ids);
+
+    // ==========================================
+    // v0.3.0 추가 메서드 - Auto-Resolve
+    // ==========================================
+
+    /**
+     * Stale 세션 조회 (Auto-Resolve용).
+     * Stale 조건: status = ACTIVE AND lastSeenAt < staleThreshold
+     * 가장 오래된 세션부터 반환 (자동 종료 우선순위).
+     *
+     * @param licenseId 라이선스 ID
+     * @param staleThreshold stale 판정 기준 시간 (now - staleThresholdMinutes)
+     * @return stale 세션 목록 (오래된 순)
+     */
+    @Query("SELECT a FROM Activation a WHERE a.license.id = :licenseId " +
+            "AND a.status = 'ACTIVE' AND a.lastSeenAt < :staleThreshold " +
+            "ORDER BY a.lastSeenAt ASC")
+    List<Activation> findStaleSessions(@Param("licenseId") UUID licenseId, @Param("staleThreshold") Instant staleThreshold);
+
+    /**
+     * 여러 라이선스의 활성 세션 일괄 조회 (Global Session Kick용).
+     * 모든 후보 라이선스의 세션을 한 번에 조회.
+     *
+     * @param licenseIds 라이선스 ID 목록
+     * @param sessionThreshold 세션 만료 기준 시간 (now - sessionTtlMinutes)
+     * @return 모든 라이선스의 활성 세션 목록
+     */
+    @Query("SELECT a FROM Activation a WHERE a.license.id IN :licenseIds " +
+            "AND a.status = 'ACTIVE' AND a.lastSeenAt >= :sessionThreshold " +
+            "ORDER BY a.lastSeenAt DESC")
+    List<Activation> findActiveSessionsByLicenseIds(@Param("licenseIds") List<UUID> licenseIds,
+                                                     @Param("sessionThreshold") Instant sessionThreshold);
 }

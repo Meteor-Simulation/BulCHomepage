@@ -237,19 +237,15 @@ class LicenseControllerTest {
 
         @Test
         @WithMockUser(username = TEST_USER_EMAIL)
-        @DisplayName("동시 세션 초과 시 409 Conflict + CONCURRENT_SESSION_LIMIT_EXCEEDED 반환 (v0.2.1)")
-        void shouldReturn409WhenConcurrentSessionLimitExceeded() throws Exception {
+        @DisplayName("모든 라이선스 full 시 409 Conflict + ALL_LICENSES_FULL 반환 (v0.3.0)")
+        void shouldReturn409WhenAllLicensesFull() throws Exception {
             // given
             User mockUser = User.builder().email(TEST_USER_EMAIL).build();
             given(userRepository.findByEmail(TEST_USER_EMAIL)).willReturn(Optional.of(mockUser));
 
             UUID userIdAsUUID = UUID.nameUUIDFromBytes(TEST_USER_EMAIL.getBytes(StandardCharsets.UTF_8));
-            // v0.2.1: 동시 세션 초과 시 activeSessions 목록과 함께 반환
-            ValidationResponse response = ValidationResponse.concurrentSessionLimitExceeded(
-                    LICENSE_ID,
-                    List.of(),  // 활성 세션 목록
-                    2           // maxConcurrentSessions
-            );
+            // v0.3.0: 모든 라이선스 full 시 activeSessions 목록과 함께 반환
+            ValidationResponse response = ValidationResponse.allLicensesFull(List.of());
             given(licenseService.validateAndActivateByUser(eq(userIdAsUUID), any(ValidateRequest.class)))
                     .willReturn(response);
 
@@ -261,7 +257,7 @@ class LicenseControllerTest {
                     "1.0.0",
                     "Windows",
                     null,  // deviceDisplayName
-                    null   // strategy (v0.2.3)
+                    null   // strategy (v0.3.0: deprecated)
             );
 
             // when & then
@@ -269,10 +265,10 @@ class LicenseControllerTest {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isConflict())  // v0.2.1: 409 Conflict
+                    .andExpect(status().isConflict())  // v0.3.0: 409 Conflict
                     .andExpect(jsonPath("$.valid").value(false))
-                    .andExpect(jsonPath("$.errorCode").value("CONCURRENT_SESSION_LIMIT_EXCEEDED"))
-                    .andExpect(jsonPath("$.maxConcurrentSessions").value(2));
+                    .andExpect(jsonPath("$.errorCode").value("ALL_LICENSES_FULL"))
+                    .andExpect(jsonPath("$.resolution").value("USER_ACTION_REQUIRED"));
         }
 
         @Test

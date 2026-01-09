@@ -28,7 +28,6 @@ public class LicenseException extends RuntimeException {
         LICENSE_REVOKED("라이선스가 회수되었습니다"),
         LICENSE_ALREADY_EXISTS("이미 해당 제품의 라이선스가 존재합니다"),
         ACTIVATION_LIMIT_EXCEEDED("최대 기기 활성화 수를 초과했습니다"),
-        CONCURRENT_SESSION_LIMIT_EXCEEDED("최대 동시 세션 수를 초과했습니다"),
         ACTIVATION_NOT_FOUND("활성화 정보를 찾을 수 없습니다"),
         INVALID_LICENSE_STATE("잘못된 라이선스 상태입니다"),
         INVALID_ACTIVATION_STATE("잘못된 활성화 상태입니다"),
@@ -39,7 +38,6 @@ public class LicenseException extends RuntimeException {
         // v1.1 추가
         ACCESS_DENIED("접근 권한이 없습니다"),
         LICENSE_NOT_FOUND_FOR_PRODUCT("해당 제품의 라이선스가 없습니다"),
-        LICENSE_SELECTION_REQUIRED("복수의 라이선스가 존재합니다. licenseId를 지정해주세요"),
 
         // v1.1.1 추가
         SESSION_DEACTIVATED("세션이 다른 기기에서 비활성화되었습니다"),
@@ -47,7 +45,10 @@ public class LicenseException extends RuntimeException {
         INVALID_ACTIVATION_OWNERSHIP("비활성화 대상 세션이 해당 라이선스에 속하지 않습니다"),
 
         // v1.1.3 추가
-        ACTIVATION_DEACTIVATED("활성화가 다른 기기에 의해 비활성화되었습니다. 재인증이 필요합니다");
+        ACTIVATION_DEACTIVATED("활성화가 다른 기기에 의해 비활성화되었습니다. 재인증이 필요합니다"),
+
+        // v0.3.0: Auto-Resolve 통합 에러 코드
+        ALL_LICENSES_FULL("사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요");
 
         private final String message;
 
