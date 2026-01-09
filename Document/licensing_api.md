@@ -94,6 +94,23 @@ BulC Homepage 라이선스 시스템의 REST API 문서입니다.
 - 라이선스 **발급/정지/회수/갱신**은 HTTP API로 노출하지 않음
 - 이러한 작업은 Billing/Admin 모듈에서 내부적으로 LicenseService 직접 호출
 
+### 응답 신뢰 모델 (SOT 규칙)
+
+> **⚠️ 필수 준수사항** - 클라이언트 구현 시 반드시 따라야 하는 핵심 규칙입니다.
+
+- **기능 unlock의 SOT(Source of Truth)는 `sessionToken`(및 오프라인 시 `offlineToken`)이다.**
+- 클라이언트는 **토큰 서명/클레임 검증이 성공한 경우에만** 기능을 unlock한다.
+- 응답 JSON 본체의 `valid`, `status`, `entitlements` 등은 **표시/디버깅/호환성 목적의 참고 값**이며,
+  **권한 판단에 사용하지 않는다.**
+- 응답 본체와 토큰의 값이 불일치하면 **무조건 토큰을 기준으로 동작**한다.
+
+**기대 동작 요약:**
+| 상황 | 클라이언트 동작 |
+|-----|---------------|
+| 토큰 검증 실패/없음 | **무조건 invalid** - 기능 unlock 금지 |
+| 토큰 검증 성공 | **unlock**, 응답 본체는 UI/로그에만 사용 |
+| 본체와 토큰 값 불일치 | **토큰 기준으로 동작**, 본체는 폐기 (경고 로그 권장) |
+
 ---
 
 ## 1. User License API
@@ -217,6 +234,21 @@ Content-Type: application/json
 }
 ```
 
+**응답 필드 설명:**
+| 필드 | 용도 | 비고 |
+|-----|------|-----|
+| `valid` | UI 표시용 | ⚠️ **권한 판단 Deprecated** - 토큰 검증 사용 |
+| `status` | UI 표시용 | ⚠️ **권한 판단 Deprecated** - 토큰 검증 사용 |
+| `entitlements` | UI 표시용 | ⚠️ **권한 판단 Deprecated** - 토큰 `ent` 클레임 사용 |
+| `sessionToken` | **SOT (온라인)** | RS256 서명 검증 후 `ent` 기준 기능 unlock |
+| `offlineToken` | **SOT (오프라인)** | RS256 서명 검증 후 `ent` 기준 기능 unlock |
+| `resolution` | UX 처리 | OK, AUTO_RECOVERED, USER_ACTION_REQUIRED |
+| `serverTime` | 시간 동기화 | 클라이언트 시계 보정용 |
+
+> **⚠️ SOT 주의사항**: 응답 본체의 `valid`, `status`, `entitlements` 필드는 **UI 표시/디버깅 목적의 참고 값**입니다.
+> 기능 unlock 판단은 반드시 `sessionToken`(온라인) 또는 `offlineToken`(오프라인)의 **서명 검증 및 클레임**을 기준으로 하세요.
+> 자세한 내용은 상단의 "응답 신뢰 모델 (SOT 규칙)" 섹션을 참조하세요.
+
 **Response (200 OK - AUTO_RECOVERED):** *(v0.3.0)*
 
 서버가 stale session을 자동 종료 후 성공한 경우:
@@ -241,9 +273,12 @@ Content-Type: application/json
 
 > **클라이언트 UX**: Toast/Snackbar로 "다른 기기(Office Desktop)의 비활성 세션을 종료하고 시작했습니다." 표시 (3초)
 
-**Status → Valid 매핑:**
-| License Status | valid | 설명 |
-|----------------|-------|------|
+**Status → Valid 매핑 (참고용/UI 표시용):**
+
+> ⚠️ 이 테이블은 응답 본체의 `valid` 필드 참고용입니다. **권한 판단의 SOT는 토큰**입니다.
+
+| License Status | valid (참고) | 설명 |
+|----------------|-------------|------|
 | ACTIVE | true | 정상 사용 가능 |
 | EXPIRED_GRACE | true | 유예 기간 (경고 표시 권장) |
 | EXPIRED_HARD | false | 완전 만료 |
@@ -334,6 +369,9 @@ Content-Type: application/json
 
 **Response:** `/validate`와 동일한 형식
 
+> **⚠️ SOT 주의사항**: Heartbeat 응답도 validate와 동일하게, `valid`, `status`, `entitlements`는 **참고용**입니다.
+> 기능 unlock 판단은 `sessionToken`/`offlineToken` 토큰 검증 기준입니다.
+
 #### Validate vs Heartbeat 차이점
 
 | 구분 | Validate | Heartbeat |
@@ -403,6 +441,8 @@ Content-Type: application/json
 | deviceDisplayName | string | X | 기기 표시명 |
 
 **Response (200 OK):** `/validate` 성공 응답과 동일
+
+> **⚠️ SOT 주의사항**: force-validate 응답도 validate와 동일하게, `valid`, `status`, `entitlements`는 **참고용**입니다.
 
 **서버 처리 규칙:**
 1. `deactivateActivationIds`의 각 activation을 **DEACTIVATED** 상태로 마킹
@@ -1011,6 +1051,27 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 ---
 
 ## 8. 토큰 구조 (v0.2.3 정리)
+
+### 8.0 토큰이 SOT(Source of Truth)인 이유
+
+> **⚠️ 핵심 원칙**: 기능 unlock의 최종 권위는 **토큰(sessionToken/offlineToken)**입니다.
+
+**왜 응답 본체가 아닌 토큰이 SOT인가?**
+
+| 관점 | 응답 본체 (`valid`, `status`) | 토큰 (`sessionToken`, `offlineToken`) |
+|-----|-------------------------------|--------------------------------------|
+| **변조 방지** | JSON은 누구나 수정 가능 | RS256 서명으로 위/변조 불가 |
+| **오프라인 검증** | 서버 접속 없이 검증 불가 | 공개키로 로컬 검증 가능 |
+| **기기 바인딩** | 바인딩 없음 | `dfp` 클레임으로 기기 강제 |
+| **만료 관리** | 별도 구현 필요 | `exp` 클레임으로 자동 만료 |
+
+**클라이언트 구현 규칙:**
+1. **토큰 검증 우선**: 응답을 받으면 먼저 토큰 서명/클레임을 검증
+2. **토큰 기준 동작**: `valid: true`여도 토큰 검증 실패 시 기능 unlock 금지
+3. **불일치 시 토큰 우선**: 응답 본체와 토큰 값이 다르면 토큰 기준으로 동작
+4. **응답 본체 용도**: UI 표시, 로깅, 디버깅에만 사용
+
+---
 
 라이선스 시스템은 **두 종류의 토큰**을 사용합니다:
 
