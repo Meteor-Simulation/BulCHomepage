@@ -44,20 +44,21 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
-# Licensing Session Token Configuration (v1.1.2)
+# Licensing Configuration (v1.1.2)
 bulc:
   licensing:
+    # RS256 개인키 파일 경로 (PKCS#8 PEM 형식)
+    # 운영 환경에서는 반드시 환경변수로 설정
+    # Docker/K8s: /run/secrets/session_token_private_key.pem
+    private-key-path: ${LIC_PRIVATE_KEY_PATH:}
     session-token:
       # sessionToken TTL (분), 기본 15분
-      ttl-minutes: ${SESSION_TOKEN_TTL_MINUTES:15}
+      ttl-minutes: ${LIC_TOKEN_TTL_MINUTES:15}
       # 발급자 식별자
-      issuer: ${SESSION_TOKEN_ISSUER:bulc-license-server}
-      # RS256 개인키 (Base64 인코딩된 PKCS#8 형식, 또는 PEM 문자열)
-      # 운영 환경에서는 반드시 환경변수로 설정
-      private-key: ${SESSION_TOKEN_PRIVATE_KEY:}
+      issuer: ${LIC_TOKEN_ISSUER:bulc-license-server}
     # v0.3.0: Auto-Resolve용 stale 판정 기준 (분)
     # 이 시간 이상 heartbeat 없으면 stale로 간주하여 자동 종료 대상
-    stale-threshold-minutes: ${STALE_THRESHOLD_MINUTES:30}
+    stale-threshold-minutes: ${LIC_STALE_THRESHOLD_MINUTES:30}
 
 # Toss Payments Configuration
 toss:
