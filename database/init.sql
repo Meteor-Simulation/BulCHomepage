@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS license_plans CASCADE;
 DROP TABLE IF EXISTS admin_logs CASCADE;
 DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
+DROP TABLE IF EXISTS token_blacklist CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS payment_details CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
@@ -100,10 +101,18 @@ COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
 COMMENT ON COLUMN users.is_active IS '계정 활성화 상태 (기본: true)';
 COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 
--- 기본 관리자 계정 (비밀번호: test1234!)
+-- 기본 계정 (비밀번호: meteor2025!)
+-- 관리자 계정
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('msimul@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오'),
-    ('meteor@gmail.com', '$2b$10$85r1YrG0Fqn10YgUffGbduJ1/Aif1WoFkH3eNWEUKzNZA3n/5hdDS', '000', '메테오');
+    ('meteor@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '메테오'),
+    ('simul@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '김지태');
+
+-- 매니저 계정
+INSERT INTO users (email, password_hash, roles_code, name) VALUES
+    ('juwon@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '강주원'),
+    ('kjh@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '김자현'),
+    ('lapalce@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '황지인'),
+    ('qogkstj02@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '배한서');
 
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)
@@ -301,6 +310,25 @@ CREATE TABLE activity_logs (
 
 COMMENT ON TABLE activity_logs IS '활동 로그 테이블 - 로그인, 구매, 환불 등 기록';
 COMMENT ON COLUMN activity_logs.action IS 'login, logout, purchase, refund, subscription_start, subscription_cancel 등';
+
+-- =========================================================
+-- 9-1. token_blacklist (토큰 블랙리스트 테이블)
+-- =========================================================
+CREATE TABLE token_blacklist (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    token           VARCHAR(500) NOT NULL,
+    user_email      VARCHAR(255) NOT NULL,
+    expires_at      TIMESTAMP NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE token_blacklist IS '토큰 블랙리스트 테이블 - 로그아웃된 JWT 토큰 관리';
+COMMENT ON COLUMN token_blacklist.token IS '블랙리스트에 등록된 JWT 토큰';
+COMMENT ON COLUMN token_blacklist.user_email IS '토큰 소유자 이메일';
+COMMENT ON COLUMN token_blacklist.expires_at IS '토큰 만료 시간 (만료 후 자동 삭제)';
+
+CREATE INDEX idx_token_blacklist_token ON token_blacklist(token);
+CREATE INDEX idx_token_blacklist_expires_at ON token_blacklist(expires_at);
 
 -- =========================================================
 -- 10. user_change_logs (유저 정보 변경 로그 테이블)

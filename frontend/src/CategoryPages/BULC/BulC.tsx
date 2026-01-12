@@ -4,6 +4,8 @@ import '../Common/CategoryPages.css';
 import './BulC.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import LoginModal from '../../components/LoginModal';
+import { useAuth } from '../../context/AuthContext';
 
 const SUB_NAV_ITEMS = [
   { id: 'intro', label: 'Intro' },
@@ -71,7 +73,11 @@ const TutorialContent: React.FC = () => (
 );
 
 // Download 컨텐츠
-const DownloadContent: React.FC = () => (
+interface DownloadContentProps {
+  onPurchaseClick: () => void;
+}
+
+const DownloadContent: React.FC<DownloadContentProps> = ({ onPurchaseClick }) => (
   <div className="bulc-download-section">
     <h1 className="download-title">지금 시작하세요</h1>
     <div className="download-buttons-grid">
@@ -86,9 +92,9 @@ const DownloadContent: React.FC = () => (
       <a href="#" className="download-btn">
         AI Agent Download
       </a>
-      <a href="/payment" className="download-btn">
+      <button onClick={onPurchaseClick} className="download-btn">
         라이센스 구입
-      </a>
+      </button>
       <a href="#" className="download-btn">
         Q&A
       </a>
@@ -99,7 +105,9 @@ const DownloadContent: React.FC = () => (
 const BulCPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isLoggedIn } = useAuth();
   const [activeMenu, setActiveMenu] = useState<string>('intro');
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   // location state에서 activeTab 읽어서 설정
   useEffect(() => {
@@ -119,6 +127,21 @@ const BulCPage: React.FC = () => {
     setActiveMenu(menu);
   };
 
+  // 라이센스 구입 클릭 핸들러
+  const handlePurchaseClick = () => {
+    if (isLoggedIn) {
+      navigate('/payment');
+    } else {
+      setLoginModalOpen(true);
+    }
+  };
+
+  // 로그인 성공 시 결제 페이지로 이동
+  const handleLoginSuccess = () => {
+    setLoginModalOpen(false);
+    navigate('/payment');
+  };
+
   const renderContent = () => {
     switch (activeMenu) {
       case 'intro':
@@ -130,7 +153,7 @@ const BulCPage: React.FC = () => {
       case 'tutorial':
         return <TutorialContent />;
       case 'download':
-        return <DownloadContent />;
+        return <DownloadContent onPurchaseClick={handlePurchaseClick} />;
       default:
         return <IntroContent onNavigate={handleNavigate} />;
     }
@@ -155,6 +178,12 @@ const BulCPage: React.FC = () => {
       </main>
 
       <Footer />
+
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

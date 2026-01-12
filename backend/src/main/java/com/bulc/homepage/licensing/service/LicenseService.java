@@ -486,7 +486,8 @@ public class LicenseService {
      * v1.1에서 추가됨.
      */
     public List<MyLicenseView> getMyLicenses(UUID userId, UUID productId, LicenseStatus status) {
-        List<License> licenses = licenseRepository.findByUserIdWithFilters(userId, productId, status);
+        String statusStr = status != null ? status.name() : null;
+        List<License> licenses = licenseRepository.findByUserIdWithFilters(userId, productId, statusStr);
         return licenses.stream()
                 .map(MyLicenseView::from)
                 .collect(Collectors.toList());

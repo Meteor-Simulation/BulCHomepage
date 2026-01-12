@@ -221,7 +221,26 @@
    EMAIL VERIFICATION SECTION
 ======================================== */
 .email-verification-section {
-  margin-top: 10px;
+  margin-top: 8px;
+}
+
+/* 사용 가능한 이메일 + 인증 버튼 한 줄 배치 */
+.email-available-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.input-message.inline {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.verification-btn.inline {
+  padding: 8px 14px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .verification-btn {
@@ -251,21 +270,20 @@
   font-size: 13px;
 }
 
-.verification-code-wrapper {
+.verification-code-row {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
 }
 
 .verification-code-input {
-  flex: 1;
-  max-width: 150px;
-  padding: 10px 12px;
+  width: 90px;
+  padding: 8px 10px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 14px;
   font-family: var(--font-main);
-  letter-spacing: 4px;
+  letter-spacing: 1px;
   text-align: center;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -281,24 +299,29 @@
   cursor: not-allowed;
 }
 
-.resend-btn {
-  background: none;
-  border: none;
-  color: #6b7280;
+.verification-timer {
   font-size: 13px;
-  cursor: pointer;
-  text-decoration: underline;
-  font-family: var(--font-main);
-  transition: color 0.2s ease;
-}
-
-.resend-btn:hover:not(:disabled) {
+  font-weight: 600;
   color: var(--accent);
+  flex: 1;
 }
 
-.resend-btn:disabled {
-  color: #d1d5db;
-  cursor: not-allowed;
+.verification-timer.expired {
+  color: #dc2626;
+}
+
+.code-error-msg {
+  font-size: 12px;
+  font-weight: 500;
+  color: #dc2626;
+}
+
+.verification-btn.secondary {
+  background-color: #9ca3af;
+}
+
+.verification-btn.secondary:hover:not(:disabled) {
+  background-color: #6b7280;
 }
 
 /* ========================================
@@ -324,20 +347,73 @@
     gap: 14px;
   }
 
-  .verification-code-wrapper {
+  .verification-code-row {
     flex-wrap: wrap;
+    gap: 6px;
   }
 
   .verification-code-input {
-    max-width: 120px;
+    width: 80px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .verification-timer {
+    font-size: 12px;
+    min-width: 32px;
   }
 
   .verification-btn.small {
-    padding: 8px 10px;
-    font-size: 12px;
+    padding: 6px 8px;
+    font-size: 11px;
   }
 
-  .resend-btn {
-    font-size: 12px;
+  .email-available-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
+
+  .verification-btn.inline {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   계정 재활성화 스타일
+======================================== */
+.reactivation-description {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.reactivation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reactivation-verify-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cancel-reactivation-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 12px;
+  margin-top: 8px;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.cancel-reactivation-btn:hover {
+  color: #333;
 }

@@ -44,6 +44,9 @@ public class PaymentService {
 
     /**
      * 토스페이먼츠 결제 승인
+     *
+     * 카드/계좌이체: 즉시 완료 → 라이선스 발급
+     * 가상계좌: 입금 대기 상태 → 웹훅으로 입금 확인 후 라이선스 발급
      */
     @Transactional
     public Map<String, Object> confirmPayment(PaymentConfirmRequest request, String userEmail) {
@@ -79,22 +82,47 @@ public class PaymentService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseBody = objectMapper.readTree(response.getBody());
 
+                // 토스페이먼츠 결제 상태 확인
+                String paymentStatus = responseBody.path("status").asText();
+                log.info("토스페이먼츠 결제 상태: {}", paymentStatus);
+
                 // 결제 정보 저장
                 Payment payment = savePaymentInfo(request, responseBody, userEmail, pricePlan);
-
-                // 라이선스 발급
-                LicenseIssueResult licenseResult = issueLicense(userEmail, pricePlan, payment.getId());
 
                 Map<String, Object> result = new HashMap<>();
                 result.put("success", true);
                 result.put("orderId", request.getOrderId());
                 result.put("orderName", responseBody.path("orderName").asText());
                 result.put("amount", request.getAmount());
-                result.put("licenseKey", licenseResult.licenseKey());
-                result.put("licenseValidUntil", licenseResult.validUntil());
+                result.put("paymentStatus", paymentStatus);
 
-                log.info("결제 승인 및 라이선스 발급 성공: orderId={}, licenseKey={}",
-                        request.getOrderId(), licenseResult.licenseKey());
+                // 가상계좌는 입금 대기 상태 - 웹훅에서 라이선스 발급
+                if ("WAITING_FOR_DEPOSIT".equals(paymentStatus)) {
+                    // 가상계좌 정보 반환
+                    JsonNode virtualAccount = responseBody.path("virtualAccount");
+                    result.put("isVirtualAccount", true);
+                    result.put("bankName", getBankName(virtualAccount.path("bankCode").asText(null)));
+                    result.put("accountNumber", virtualAccount.path("accountNumber").asText());
+                    result.put("dueDate", virtualAccount.path("dueDate").asText());
+                    result.put("message", "가상계좌가 발급되었습니다. 입금 완료 후 라이선스가 발급됩니다.");
+
+                    log.info("가상계좌 발급 완료 (입금 대기): orderId={}, 계좌={} {}",
+                            request.getOrderId(),
+                            result.get("bankName"),
+                            result.get("accountNumber"));
+                    return result;
+                }
+
+                // 즉시 완료 상태 (카드, 계좌이체 등) - 바로 라이선스 발급
+                if ("DONE".equals(paymentStatus)) {
+                    LicenseIssueResult licenseResult = issueLicense(userEmail, pricePlan, payment.getId());
+                    result.put("licenseKey", licenseResult.licenseKey());
+                    result.put("licenseValidUntil", licenseResult.validUntil());
+
+                    log.info("결제 승인 및 라이선스 발급 성공: orderId={}, licenseKey={}",
+                            request.getOrderId(), licenseResult.licenseKey());
+                }
+
                 return result;
             } else {
                 throw new RuntimeException("결제 승인 실패");
@@ -102,6 +130,39 @@ public class PaymentService {
         } catch (Exception e) {
             log.error("결제 승인 오류: {}", e.getMessage(), e);
             throw new RuntimeException("결제 승인 처리 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 웹훅을 통한 결제 완료 처리 (가상계좌 입금 완료 등)
+     */
+    @Transactional
+    public void handlePaymentComplete(String paymentKey, String orderId) {
+        log.info("결제 완료 처리 (웹훅): paymentKey={}, orderId={}", paymentKey, orderId);
+
+        // 결제 정보 조회
+        Payment payment = paymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new RuntimeException("결제 정보를 찾을 수 없습니다: paymentKey=" + paymentKey));
+
+        // 이미 완료된 결제인지 확인
+        if ("C".equals(payment.getStatus())) {
+            log.info("이미 완료된 결제입니다: orderId={}", orderId);
+            return;
+        }
+
+        // 결제 상태 업데이트
+        payment.setStatus("C");
+        payment.setPaidAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        // 라이선스 발급
+        PricePlan pricePlan = payment.getPricePlan();
+        if (pricePlan != null && pricePlan.getLicensePlanId() != null) {
+            LicenseIssueResult licenseResult = issueLicense(payment.getUserEmail(), pricePlan, payment.getId());
+            log.info("웹훅을 통한 라이선스 발급 성공: orderId={}, licenseKey={}",
+                    orderId, licenseResult.licenseKey());
+        } else {
+            log.warn("라이선스 플랜이 연결되지 않은 결제: orderId={}", orderId);
         }
     }
 
@@ -142,16 +203,21 @@ public class PaymentService {
                 .map(user -> user.getName())
                 .orElse(null);
 
+        // 결제 상태 확인
+        String paymentStatus = responseBody.path("status").asText();
+        boolean isCompleted = "DONE".equals(paymentStatus);
+
         // Payment 엔티티 생성
+        // P: Pending(대기), C: Completed(완료)
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(request.getAmount()))
                 .orderName(responseBody.path("orderName").asText())
-                .status("C")  // C: Completed (완료)
+                .status(isCompleted ? "C" : "P")  // 가상계좌는 입금 대기 상태
                 .userEmail(userEmail)
                 .userEmailFk(userEmail)
                 .userName(userName)
                 .pricePlan(pricePlan)
-                .paidAt(LocalDateTime.now())
+                .paidAt(isCompleted ? LocalDateTime.now() : null)  // 완료 시에만 결제 시간 설정
                 .build();
 
         // PaymentDetail 엔티티 생성

@@ -103,14 +103,14 @@ public interface LicenseRepository extends JpaRepository<License, UUID> {
     /**
      * 사용자의 라이선스 목록 조회 (특정 제품 필터 가능).
      */
-    @Query("SELECT l FROM License l WHERE l.ownerType = 'USER' AND l.ownerId = :userId " +
-            "AND (:productId IS NULL OR l.productId = :productId) " +
-            "AND (:status IS NULL OR l.status = :status) " +
-            "ORDER BY l.createdAt DESC")
+    @Query(value = "SELECT * FROM licenses l WHERE l.owner_type = 'USER' AND l.owner_id = :userId " +
+            "AND (CAST(:productId AS uuid) IS NULL OR l.product_id = :productId) " +
+            "AND (CAST(:status AS varchar) IS NULL OR l.status = :status) " +
+            "ORDER BY l.created_at DESC", nativeQuery = true)
     List<License> findByUserIdWithFilters(
             @Param("userId") UUID userId,
             @Param("productId") UUID productId,
-            @Param("status") LicenseStatus status
+            @Param("status") String status
     );
 
     /**

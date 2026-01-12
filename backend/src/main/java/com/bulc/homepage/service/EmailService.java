@@ -1,61 +1,140 @@
 package com.bulc.homepage.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.microsoft.graph.models.BodyType;
+import com.microsoft.graph.models.EmailAddress;
+import com.microsoft.graph.models.ItemBody;
+import com.microsoft.graph.models.Message;
+import com.microsoft.graph.models.Recipient;
+import com.microsoft.graph.serviceclient.GraphServiceClient;
+import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${microsoft.graph.tenant-id:}")
+    private String tenantId;
 
-    @Value("${mail.from:noreply@bulc.com}")
-    private String fromAddress;
+    @Value("${microsoft.graph.client-id:}")
+    private String clientId;
 
-    @Value("${mail.enabled:false}")
-    private boolean mailEnabled;
+    @Value("${microsoft.graph.client-secret:}")
+    private String clientSecret;
+
+    @Value("${mail.from:noreply@bulc.co.kr}")
+    private String mailFrom;
+
+    @Value("${mail.from-accounts:accounts@bulc.co.kr}")
+    private String mailFromAccounts;
+
+    @Value("${mail.from-billing:billing@bulc.co.kr}")
+    private String mailFromBilling;
+
+    @Value("${mail.reply-to:support@bulc.co.kr}")
+    private String mailReplyTo;
+
+    private GraphServiceClient graphClient;
+    private boolean isConfigured = false;
+
+    @PostConstruct
+    public void init() {
+        if (tenantId != null && !tenantId.isEmpty() &&
+            clientId != null && !clientId.isEmpty() &&
+            clientSecret != null && !clientSecret.isEmpty()) {
+
+            try {
+                ClientSecretCredential credential = new ClientSecretCredentialBuilder()
+                        .tenantId(tenantId)
+                        .clientId(clientId)
+                        .clientSecret(clientSecret)
+                        .build();
+
+                graphClient = new GraphServiceClient(credential, "https://graph.microsoft.com/.default");
+                isConfigured = true;
+                log.info("Microsoft Graph 이메일 서비스 초기화 완료");
+            } catch (Exception e) {
+                log.error("Microsoft Graph 초기화 실패: {}", e.getMessage());
+                isConfigured = false;
+            }
+        } else {
+            log.warn("Microsoft Graph 설정이 없습니다. 이메일은 로그로만 출력됩니다.");
+            isConfigured = false;
+        }
+    }
 
     /**
      * 이메일 인증 코드 발송
      */
     public void sendVerificationEmail(String toEmail, String verificationCode) {
-        if (!mailEnabled) {
-            log.info("[메일 비활성화] 인증 코드: {} -> {}", toEmail, verificationCode);
-            return;
-        }
-
         String subject = "[BulC] 이메일 인증 코드";
         String content = buildVerificationEmailContent(verificationCode);
-
-        sendHtmlEmail(toEmail, subject, content);
+        sendEmail(mailFromAccounts, toEmail, subject, content);
     }
 
     /**
-     * HTML 이메일 발송
+     * 결제 관련 이메일 발송
      */
-    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+    public void sendBillingEmail(String toEmail, String subject, String content) {
+        sendEmail(mailFromBilling, toEmail, subject, content);
+    }
+
+    /**
+     * 일반 이메일 발송
+     */
+    public void sendEmail(String fromEmail, String toEmail, String subject, String htmlContent) {
+        if (!isConfigured) {
+            log.info("[이메일 미설정] To: {}, Subject: {}", toEmail, subject);
+            log.debug("[이메일 내용]\n{}", htmlContent);
+            return;
+        }
+
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            Message message = new Message();
+            message.setSubject(subject);
 
-            helper.setFrom(fromAddress);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
+            ItemBody body = new ItemBody();
+            body.setContentType(BodyType.Html);
+            body.setContent(htmlContent);
+            message.setBody(body);
 
-            mailSender.send(message);
-            log.info("이메일 발송 성공: {}", to);
-        } catch (MessagingException e) {
-            log.error("이메일 발송 실패: {}", to, e);
+            Recipient toRecipient = new Recipient();
+            EmailAddress toAddress = new EmailAddress();
+            toAddress.setAddress(toEmail);
+            toRecipient.setEmailAddress(toAddress);
+            message.setToRecipients(List.of(toRecipient));
+
+            // Reply-To 설정
+            Recipient replyToRecipient = new Recipient();
+            EmailAddress replyToAddress = new EmailAddress();
+            replyToAddress.setAddress(mailReplyTo);
+            replyToRecipient.setEmailAddress(replyToAddress);
+            message.setReplyTo(List.of(replyToRecipient));
+
+            SendMailPostRequestBody sendMailRequest = new SendMailPostRequestBody();
+            sendMailRequest.setMessage(message);
+            sendMailRequest.setSaveToSentItems(true);
+
+            graphClient.users().byUserId(fromEmail).sendMail().post(sendMailRequest);
+            log.info("이메일 발송 성공: {} -> {}", fromEmail, toEmail);
+        } catch (Exception e) {
+            log.error("이메일 발송 실패: {} -> {}, 오류: {}", fromEmail, toEmail, e.getMessage());
             throw new RuntimeException("이메일 발송에 실패했습니다.", e);
         }
+    }
+
+    /**
+     * 기본 발신자로 이메일 발송
+     */
+    public void sendHtmlEmail(String toEmail, String subject, String htmlContent) {
+        sendEmail(mailFrom, toEmail, subject, htmlContent);
     }
 
     /**

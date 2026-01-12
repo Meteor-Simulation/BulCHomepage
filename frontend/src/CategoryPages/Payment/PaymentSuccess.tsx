@@ -10,6 +10,11 @@ interface PaymentResult {
   orderName?: string;
   licenseKey?: string;
   licenseValidUntil?: string;
+  // 가상계좌 정보
+  isVirtualAccount?: boolean;
+  bankName?: string;
+  accountNumber?: string;
+  dueDate?: string;
 }
 
 const PaymentSuccess: React.FC = () => {
@@ -91,6 +96,11 @@ const PaymentSuccess: React.FC = () => {
           orderName: result.orderName,
           licenseKey: result.licenseKey,
           licenseValidUntil: result.licenseValidUntil,
+          // 가상계좌 정보
+          isVirtualAccount: result.isVirtualAccount,
+          bankName: result.bankName,
+          accountNumber: result.accountNumber,
+          dueDate: result.dueDate,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : '결제 처리 중 오류가 발생했습니다.');
@@ -145,6 +155,77 @@ const PaymentSuccess: React.FC = () => {
     );
   }
 
+  // 가상계좌 입금 대기 UI
+  if (paymentResult?.isVirtualAccount) {
+    const formatDueDate = (dateStr: string) => {
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } catch {
+        return dateStr;
+      }
+    };
+
+    return (
+      <div className="payment-result-page">
+        <Header hideUserMenu={true} />
+        <div className="payment-result-container">
+          <div className="payment-result-card waiting">
+            <div className="result-icon waiting">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <h2>가상계좌가 발급되었습니다</h2>
+            <p>아래 계좌로 입금하시면 라이선스가 발급됩니다.</p>
+
+            <div className="payment-details virtual-account">
+              <div className="detail-row bank-info">
+                <span className="label">입금 계좌</span>
+                <span className="value account">
+                  {paymentResult.bankName} {paymentResult.accountNumber}
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="label">입금 금액</span>
+                <span className="value highlight">{paymentResult.amount.toLocaleString()}원</span>
+              </div>
+              {paymentResult.dueDate && (
+                <div className="detail-row">
+                  <span className="label">입금 기한</span>
+                  <span className="value">{formatDueDate(paymentResult.dueDate)}</span>
+                </div>
+              )}
+              <div className="detail-row">
+                <span className="label">주문번호</span>
+                <span className="value">{paymentResult.orderId}</span>
+              </div>
+            </div>
+
+            <div className="virtual-account-notice">
+              <p>입금 기한 내에 입금하지 않으면 주문이 자동 취소됩니다.</p>
+              <p>입금 완료 후 라이선스가 자동으로 발급되며, 이메일로 안내됩니다.</p>
+            </div>
+
+            <div className="result-actions">
+              <button className="btn-primary" onClick={() => navigate('/')}>
+                홈으로 이동
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 일반 결제 완료 UI (카드, 계좌이체 등)
   return (
     <div className="payment-result-page">
       <Header hideUserMenu={true} />

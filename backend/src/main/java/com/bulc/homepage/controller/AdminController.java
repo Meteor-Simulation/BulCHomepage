@@ -61,6 +61,20 @@ public class AdminController {
     }
 
     /**
+     * 현재 로그인한 사용자의 권한 코드 조회
+     */
+    private String getCurrentUserRolesCode() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        String email = auth.getName();
+        return userRepository.findByEmail(email)
+                .map(User::getRolesCode)
+                .orElse(null);
+    }
+
+    /**
      * 사용자 목록 조회 (활성 사용자만)
      */
     @GetMapping("/users")
@@ -87,16 +101,18 @@ public class AdminController {
     }
 
     /**
-     * 사용자 권한 수정 (시스템 관리자 전용)
+     * 사용자 권한 수정
+     * - 관리자(000): 모든 권한 수정 가능
+     * - 매니저(001): 관리자(000) 권한 수정 불가, 관리자(000)로 수정 불가
      * userId는 email (User의 PK)
      */
     @PutMapping("/users/{userId}/role")
     public ResponseEntity<?> updateUserRole(
             @PathVariable String userId,
             @RequestBody RoleUpdateRequest request) {
-        if (!isSystemAdmin()) {
+        if (!isAdmin()) {
             return ResponseEntity.status(403)
-                    .body(new ErrorResponse("시스템 관리자 권한이 필요합니다."));
+                    .body(new ErrorResponse("관리자 권한이 필요합니다."));
         }
 
         // 유효한 권한 코드 체크
@@ -105,9 +121,26 @@ public class AdminController {
                     .body(new ErrorResponse("유효하지 않은 권한 코드입니다."));
         }
 
+        String currentUserRole = getCurrentUserRolesCode();
+
+        // 매니저(001)인 경우 제한 적용
+        if ("001".equals(currentUserRole)) {
+            // 관리자(000)로 수정 불가
+            if ("000".equals(request.rolesCode())) {
+                return ResponseEntity.status(403)
+                        .body(new ErrorResponse("매니저는 관리자 권한을 부여할 수 없습니다."));
+            }
+        }
+
         // userId는 email (User의 PK)
         return userRepository.findById(userId)
                 .map(user -> {
+                    // 매니저(001)인 경우: 관리자(000) 계정 수정 불가
+                    if ("001".equals(currentUserRole) && "000".equals(user.getRolesCode())) {
+                        return ResponseEntity.status(403)
+                                .body(new ErrorResponse("매니저는 관리자 계정의 권한을 수정할 수 없습니다."));
+                    }
+
                     user.setRolesCode(request.rolesCode());
                     userRepository.save(user);
                     return ResponseEntity.ok(new UserResponse(

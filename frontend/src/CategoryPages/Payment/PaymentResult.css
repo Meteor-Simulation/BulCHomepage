@@ -179,6 +179,69 @@
   line-height: 1.6;
 }
 
+/* 가상계좌 입금 대기 스타일 */
+.result-icon.waiting {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.result-icon.waiting svg {
+  color: #3b82f6;
+}
+
+.payment-result-card.waiting h2 {
+  color: #3b82f6;
+}
+
+.payment-details.virtual-account {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.detail-row.bank-info .value.account {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.detail-row .value.highlight {
+  font-size: 18px;
+  font-weight: 700;
+  color: #C4320A;
+}
+
+.virtual-account-notice {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.virtual-account-notice p {
+  font-size: 13px;
+  color: #92400e;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.virtual-account-notice p:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+/* 라이선스 키 스타일 */
+.detail-row.license-key .value.license {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  background: #f0f0f0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
 /* 반응형 */
 @media (max-width: 480px) {
   .payment-result-card {
@@ -191,5 +254,16 @@
 
   .result-actions {
     flex-direction: column;
+  }
+
+  .detail-row.bank-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .detail-row.bank-info .value.account {
+    width: 100%;
+    text-align: center;
   }
 }

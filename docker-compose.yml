@@ -41,13 +41,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-BulcHomepageSecretKey2024VeryLongSecretKeyForJWT384BitSecurity}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-600000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
-      # Mail Configuration
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-BulC Homepage <noreply@bulc.com>}
-      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      # Microsoft Graph API Mail Configuration
+      MS_TENANT_ID: ${MS_TENANT_ID:-}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@msimul.com}
+      MAIL_FROM_ACCOUNTS: ${MAIL_FROM_ACCOUNTS:-accounts@msimul.com}
+      MAIL_FROM_BILLING: ${MAIL_FROM_BILLING:-billing@msimul.com}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-support@msimul.com}
       # OAuth2 Configuration
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}

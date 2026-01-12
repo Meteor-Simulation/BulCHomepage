@@ -8,6 +8,7 @@ import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
+import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.repository.ActivityLogRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.repository.UserSocialAccountRepository;
@@ -41,21 +42,38 @@ public class AuthService {
     @Transactional
     public AuthResponse signup(SignupRequest request) {
         // 이메일 중복 확인
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("이미 가입된 이메일입니다");
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User user;
+
+        if (existingUser != null) {
+            // 비활성화된 계정인 경우 재활성화
+            if (!existingUser.getIsActive()) {
+                existingUser.setIsActive(true);
+                existingUser.setDeactivatedAt(null);
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                // 재가입 시 개인정보 삭제
+                existingUser.setName(null);
+                existingUser.setPhone(null);
+                user = userRepository.save(existingUser);
+
+                // 계정 재활성화 로그 저장
+                saveActivityLog(user.getEmail(), "reactivate", "user", null, "계정 재활성화 완료");
+            } else {
+                throw new RuntimeException("이미 가입된 이메일입니다");
+            }
+        } else {
+            // 신규 User 생성 (email이 PK)
+            user = User.builder()
+                    .email(request.getEmail())
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .rolesCode("002")  // 기본값: 일반 사용자
+                    .build();
+
+            user = userRepository.save(user);
+
+            // 회원가입 로그 저장
+            saveActivityLog(user.getEmail(), "signup", "user", null, "회원가입 완료");
         }
-
-        // User 생성 (email이 PK)
-        User user = User.builder()
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .rolesCode("002")  // 기본값: 일반 사용자
-                .build();
-
-        user = userRepository.save(user);
-
-        // 회원가입 로그 저장
-        saveActivityLog(user.getEmail(), "signup", "user", null, "회원가입 완료");
 
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
@@ -83,13 +101,13 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null) {
             log.warn("로그인 실패 - 존재하지 않는 이메일: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("존재하지 않는 이메일입니다.");
+            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // 비활성화된 계정인지 확인
+        // 비활성화된 계정인지 확인 (존재하지 않는 것처럼 처리)
         if (!user.getIsActive()) {
             log.warn("로그인 실패 - 비활성화된 계정: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("비활성화된 계정입니다. 고객센터에 문의해주세요.");
+            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         try {
@@ -122,7 +140,7 @@ public class AuthService {
             // 비밀번호 오류
             saveActivityLog(user.getEmail(), "login_failed", "user", null, "비밀번호 오류 - IP: " + ipAddress);
             log.warn("로그인 실패 - 비밀번호 오류, 이메일: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("비밀번호가 올바르지 않습니다.");
+            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
         } catch (RuntimeException e) {
             // 이미 처리된 RuntimeException은 그대로 전파
             throw e;
@@ -147,6 +165,27 @@ public class AuthService {
         } catch (Exception e) {
             log.error("활동 로그 저장 실패: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Access Token 생성 (외부 호출용)
+     */
+    public String generateAccessToken(String email) {
+        return jwtTokenProvider.generateAccessToken(email);
+    }
+
+    /**
+     * Refresh Token 생성 (외부 호출용)
+     */
+    public String generateRefreshToken(String email) {
+        return jwtTokenProvider.generateRefreshToken(email);
+    }
+
+    /**
+     * 토큰에서 이메일 추출 (외부 호출용)
+     */
+    public String getEmailFromToken(String token) {
+        return jwtTokenProvider.getEmailFromToken(token);
     }
 
     /**

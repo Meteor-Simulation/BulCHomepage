@@ -1,0 +1,89 @@
+/* ========================================
+   CONTACT MODAL - 문의하기 모달 스타일
+======================================== */
+
+.contact-modal {
+  max-width: 500px;
+}
+
+.contact-form {
+  gap: 16px;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.contact-label .required {
+  color: #dc2626;
+}
+
+.contact-textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: var(--font-main);
+}
+
+.input-readonly {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* 성공 화면 */
+.contact-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  color: #16a34a;
+  margin-bottom: 16px;
+}
+
+.success-message {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.success-sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.contact-success .modal-submit-btn {
+  width: auto;
+  padding: 12px 48px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+  .contact-modal {
+    max-width: none;
+    margin: 16px;
+  }
+
+  .contact-label {
+    font-size: 13px;
+  }
+
+  .contact-textarea {
+    min-height: 100px;
+  }
+}

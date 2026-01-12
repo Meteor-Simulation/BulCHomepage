@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
+import LoginModal from '../../components/LoginModal';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import './MyPage.css';
 
@@ -98,12 +99,15 @@ const MyPage: React.FC = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 로그인 체크
+  // 로그인 모달
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // 로그인 체크 - 미로그인 시 로그인 모달 표시
   useEffect(() => {
     if (isAuthReady && !isLoggedIn) {
-      navigate('/');
+      setLoginModalOpen(true);
     }
-  }, [isAuthReady, isLoggedIn, navigate]);
+  }, [isAuthReady, isLoggedIn]);
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -842,6 +846,19 @@ const MyPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* 로그인 모달 - 미로그인 시 표시 */}
+    <LoginModal
+      isOpen={loginModalOpen}
+      onClose={() => {
+        setLoginModalOpen(false);
+        navigate('/');
+      }}
+      onSuccess={() => {
+        setLoginModalOpen(false);
+        window.location.reload();
+      }}
+    />
 
     {/* 계정 삭제 확인 모달 */}
     {isDeleteModalOpen && (

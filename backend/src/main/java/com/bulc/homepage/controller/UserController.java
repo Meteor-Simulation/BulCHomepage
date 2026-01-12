@@ -148,7 +148,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "이미 비활성화된 계정입니다."));
         }
 
-        // 계정 비활성화
+        // 계정 비활성화 (개인정보는 재가입 시 삭제)
         user.setIsActive(false);
         user.setDeactivatedAt(java.time.LocalDateTime.now());
         userRepository.save(user);

@@ -19,7 +19,7 @@ interface AuthContextType {
   isAdmin: boolean; // 관리자 여부 (admin 또는 manager)
   login: (email: string, password: string) => Promise<LoginResult>;
   loginWithToken: (accessToken: string, refreshToken: string) => Promise<LoginResult>;
-  logout: () => void;
+  logout: () => Promise<void>;
   sessionTimeLeft: number | null; // 남은 세션 시간 (초)
 }
 
@@ -60,7 +60,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
 
   // 로그아웃 함수
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    // 백엔드 로그아웃 API 호출 (토큰 블랙리스트 등록)
+    if (accessToken) {
+      try {
+        await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+      } catch (error) {
+        console.error('Logout API error:', error);
+      }
+    }
+
     setUser(null);
     setSessionTimeLeft(null);
     localStorage.removeItem('user');

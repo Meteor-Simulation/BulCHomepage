@@ -31,36 +31,51 @@ public class EmailVerificationService {
     }
 
     /**
+     * 이메일 상태 체크 (활성화/비활성화 구분)
+     * @return null: 미가입, true: 활성 계정, false: 비활성 계정
+     */
+    public Boolean checkEmailStatus(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> user.getIsActive())
+                .orElse(null);
+    }
+
+    /**
      * 인증 코드 생성 및 저장
      */
     @Transactional
     public String sendVerificationCode(String email) {
-        // 이메일 중복 체크
-        if (userRepository.existsByEmail(email)) {
+        // 이메일 중복 체크 (비활성화된 계정은 재가입 허용)
+        Boolean isActive = checkEmailStatus(email);
+        if (isActive != null && isActive) {
             throw new RuntimeException("이미 가입된 이메일입니다");
         }
 
         // 6자리 인증 코드 생성
         String code = generateVerificationCode();
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES);
 
-        // 기존 인증 코드 삭제 (email이 UNIQUE이므로)
-        emailVerificationRepository.deleteByEmail(email);
-
-        // 새 인증 코드 저장
-        EmailVerification verification = EmailVerification.builder()
-                .email(email)
-                .verificationCode(code)
-                .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES))
-                .build();
+        // 기존 인증 코드가 있으면 업데이트, 없으면 새로 생성
+        EmailVerification verification = emailVerificationRepository.findByEmail(email)
+                .map(existing -> {
+                    existing.setVerificationCode(code);
+                    existing.setExpiresAt(expiresAt);
+                    return existing;
+                })
+                .orElseGet(() -> EmailVerification.builder()
+                        .email(email)
+                        .verificationCode(code)
+                        .expiresAt(expiresAt)
+                        .build());
 
         emailVerificationRepository.save(verification);
 
-        log.info("인증 코드 발송 - 이메일: {}, 코드: {}", email, code);
+        log.info("인증 코드 발송 - 이메일: {}", email);
 
-        // 실제 이메일 발송 (mail.enabled=true 시 발송)
+        // 실제 이메일 발송
         emailService.sendVerificationEmail(email, code);
 
-        return code; // 개발 단계에서는 코드 반환, 운영에서는 제거
+        return code;
     }
 
     /**
@@ -93,11 +108,15 @@ public class EmailVerificationService {
     }
 
     /**
-     * 6자리 숫자 인증 코드 생성
+     * 6자리 영숫자 인증 코드 생성 (대소문자 구별)
      */
     private String generateVerificationCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
-        return String.valueOf(code);
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return code.toString();
     }
 }

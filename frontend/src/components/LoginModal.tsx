@@ -27,6 +27,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 모달 열릴 때 상태 초기화
+  useEffect(() => {
+    if (isOpen) {
+      setEmail('');
+      setPassword('');
+      setShowPassword(false);
+      setError('');
+      setIsLoading(false);
+    }
+  }, [isOpen]);
+
   // 소셜 로그인 핸들러
   const handleSocialLogin = (provider: string) => {
     window.location.href = `${API_URL}/api/auth/oauth2/authorize/${provider}`;
