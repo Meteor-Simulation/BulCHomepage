@@ -28,13 +28,14 @@ mail:
 
 bulc:
   licensing:
+    # 테스트에서는 TestKeyConfig가 런타임에 키를 생성합니다.
+    # private-key-path는 설정하지 않습니다.
+    private-key-path:
     session-token:
       ttl-minutes: 15
       issuer: bulc-license-server
-      # 테스트에서는 TestKeyConfig가 런타임에 키를 생성합니다.
-      # private-key는 설정하지 않습니다 (보안 개선).
-      private-key:
     offline-token:
       issuer: bulc-license-server
       renewal-threshold-ratio: 0.5
       renewal-threshold-days: 3
+    stale-threshold-minutes: 30
