@@ -97,7 +97,7 @@ public class AuthController {
         cookie.setHttpOnly(true);  // JavaScript 접근 불가 (XSS 방지)
         cookie.setSecure(false);   // 개발환경에서는 HTTP 허용, 운영에서는 true로 변경 필요
         cookie.setPath("/api/auth/refresh");  // /refresh 엔드포인트에서만 전송
-        cookie.setMaxAge(24 * 60 * 60); // 24시간 (refreshToken과 동일)
+        cookie.setMaxAge(30 * 24 * 60 * 60); // 30일 (refreshToken과 동일)
         response.addCookie(cookie);
     }
 
