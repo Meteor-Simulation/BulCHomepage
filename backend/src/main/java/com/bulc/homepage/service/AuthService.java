@@ -93,31 +93,55 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
-    public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
-        log.info("로그인 시도 - 이메일: {}, IP: {}, User-Agent: {}", request.getEmail(), ipAddress, userAgent);
+    /**
+     * 순수 인증만 수행 (ID/PW 검증).
+     * OAuth 2.0 및 기존 로그인에서 공통으로 사용.
+     *
+     * @param email 사용자 이메일
+     * @param password 비밀번호
+     * @return 인증된 User 객체
+     * @throws RuntimeException 인증 실패 시
+     */
+    private static final String AUTH_FAILURE_MESSAGE = "이메일 또는 비밀번호가 올바르지 않습니다.";
 
-        // 먼저 사용자 존재 여부 확인
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+    public User authenticateUser(String email, String password) {
+        // 사용자 존재 여부 확인
+        User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
-            log.warn("로그인 실패 - 존재하지 않는 이메일: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            log.warn("인증 실패 - 존재하지 않는 이메일: {}", email);
+            // 보안: 이메일 존재 여부를 노출하지 않음
+            throw new RuntimeException(AUTH_FAILURE_MESSAGE);
         }
 
         // 비활성화된 계정인지 확인 (존재하지 않는 것처럼 처리)
         if (!user.getIsActive()) {
-            log.warn("로그인 실패 - 비활성화된 계정: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            log.warn("인증 실패 - 비활성화된 계정: {}", email);
+            throw new RuntimeException(AUTH_FAILURE_MESSAGE);
         }
 
         try {
             // 인증 (비밀번호 확인)
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
+            return user;
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            log.warn("인증 실패 - 비밀번호 오류, 이메일: {}", email);
+            // 보안: 비밀번호 오류와 이메일 미존재를 구분하지 않음
+            throw new RuntimeException(AUTH_FAILURE_MESSAGE);
+        }
+    }
+
+    @Transactional
+    public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
+        log.info("로그인 시도 - 이메일: {}, IP: {}, User-Agent: {}", request.getEmail(), ipAddress, userAgent);
+
+        try {
+            // 공통 인증 로직 호출
+            User user = authenticateUser(request.getEmail(), request.getPassword());
 
             // JWT 토큰 생성
-            String accessToken = jwtTokenProvider.generateAccessToken(authentication);
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
             // 로그인 성공 로그
@@ -136,19 +160,11 @@ public class AuthService {
                             .rolesCode(user.getRolesCode())
                             .build())
                     .build();
-        } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            // 비밀번호 오류
-            saveActivityLog(user.getEmail(), "login_failed", "user", null, "비밀번호 오류 - IP: " + ipAddress);
-            log.warn("로그인 실패 - 비밀번호 오류, 이메일: {}, IP: {}", request.getEmail(), ipAddress);
-            throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
         } catch (RuntimeException e) {
-            // 이미 처리된 RuntimeException은 그대로 전파
+            // 인증 실패 로그
+            saveActivityLog(request.getEmail(), "login_failed", "user", null,
+                    e.getMessage() + " - IP: " + ipAddress);
             throw e;
-        } catch (Exception e) {
-            // 기타 예외
-            saveActivityLog(user.getEmail(), "login_failed", "user", null, "로그인 실패: " + e.getMessage() + " - IP: " + ipAddress);
-            log.warn("로그인 실패 - 이메일: {}, IP: {}, 사유: {}", request.getEmail(), ipAddress, e.getMessage());
-            throw new RuntimeException("로그인 중 오류가 발생했습니다.");
         }
     }
 

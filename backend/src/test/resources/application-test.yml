@@ -39,3 +39,23 @@ bulc:
       renewal-threshold-ratio: 0.5
       renewal-threshold-days: 3
     stale-threshold-minutes: 30
+
+  # OAuth 테스트용 클라이언트 설정
+  # 포트 와일드카드: http://localhost:*/path → 모든 포트 허용
+  oauth:
+    clients:
+      meteor-app:
+        display-name: "BUL-C Fire Simulator"
+        allowed-redirect-uris:
+          - meteor://oauth/callback
+          - http://localhost:*/oauth/callback
+          - http://127.0.0.1:*/oauth/callback
+      bulc-app:
+        display-name: "BulC"
+        allowed-redirect-uris:
+          - bulc://oauth/callback
+          - http://localhost:*/oauth/callback
+      test-client:
+        display-name: "Test Client"
+        allowed-redirect-uris:
+          - http://localhost:*/test/callback
