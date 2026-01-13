@@ -14,7 +14,9 @@ import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.service.AuthService;
 import com.bulc.homepage.service.EmailVerificationService;
 import com.bulc.homepage.service.TokenBlacklistService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,41 +59,113 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         String ipAddress = getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
         log.info("Login request for email: {} from IP: {}", request.getEmail(), ipAddress);
         AuthResponse response = authService.login(request, ipAddress, userAgent);
+
+        // SSO 지원: JWT를 httpOnly 쿠키로 설정
+        // 브라우저에서 OAuth 요청 시 자동 로그인에 사용됨
+        setAuthCookie(httpResponse, response.getAccessToken());
+        setRefreshTokenCookie(httpResponse, response.getRefreshToken());
+
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", response));
     }
 
+    /**
+     * Access Token을 httpOnly 쿠키로 설정.
+     * OAuth SSO 자동 로그인에 사용됩니다.
+     */
+    private void setAuthCookie(HttpServletResponse response, String token) {
+        Cookie cookie = new Cookie("AUTH_TOKEN", token);
+        cookie.setHttpOnly(true);  // JavaScript 접근 불가 (XSS 방지)
+        cookie.setSecure(false);   // 개발환경에서는 HTTP 허용, 운영에서는 true로 변경 필요
+        cookie.setPath("/");       // 전체 경로에서 접근 가능
+        cookie.setMaxAge(60 * 60); // 1시간 (accessToken과 동일)
+        response.addCookie(cookie);
+    }
+
+    /**
+     * Refresh Token을 httpOnly 쿠키로 설정.
+     * RTR과 함께 사용하여 안전한 토큰 갱신을 지원합니다.
+     */
+    private void setRefreshTokenCookie(HttpServletResponse response, String token) {
+        Cookie cookie = new Cookie("REFRESH_TOKEN", token);
+        cookie.setHttpOnly(true);  // JavaScript 접근 불가 (XSS 방지)
+        cookie.setSecure(false);   // 개발환경에서는 HTTP 허용, 운영에서는 true로 변경 필요
+        cookie.setPath("/api/auth/refresh");  // /refresh 엔드포인트에서만 전송
+        cookie.setMaxAge(24 * 60 * 60); // 24시간 (refreshToken과 동일)
+        response.addCookie(cookie);
+    }
+
+    /**
+     * 모든 인증 쿠키 삭제 (로그아웃 시 호출).
+     */
+    private void clearAuthCookies(HttpServletResponse response) {
+        // Access Token 쿠키 삭제
+        Cookie authCookie = new Cookie("AUTH_TOKEN", "");
+        authCookie.setHttpOnly(true);
+        authCookie.setPath("/");
+        authCookie.setMaxAge(0);  // 즉시 만료
+        response.addCookie(authCookie);
+
+        // Refresh Token 쿠키 삭제
+        Cookie refreshCookie = new Cookie("REFRESH_TOKEN", "");
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setPath("/api/auth/refresh");
+        refreshCookie.setMaxAge(0);  // 즉시 만료
+        response.addCookie(refreshCookie);
+    }
+
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletResponse httpResponse) {
         log.info("Token refresh request");
         AuthResponse response = authService.refreshToken(request);
+
+        // [RTR] 새 토큰으로 쿠키 갱신
+        setAuthCookie(httpResponse, response.getAccessToken());
+        setRefreshTokenCookie(httpResponse, response.getRefreshToken());
+
         return ResponseEntity.ok(ApiResponse.success("토큰 갱신 성공", response));
     }
 
     /**
-     * 로그아웃 (토큰 블랙리스트 추가)
+     * 로그아웃 (토큰 블랙리스트 추가 + RTR 무효화 + 쿠키 삭제)
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response) {
         String token = extractTokenFromRequest(request);
 
+        // SSO 쿠키 삭제 (Access Token + Refresh Token)
+        clearAuthCookies(response);
+
         if (token == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("토큰이 없습니다."));
+            // 쿠키는 삭제했으므로 성공으로 처리
+            return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
         }
 
         try {
             String email = authService.getEmailFromToken(token);
+
+            // Access Token 블랙리스트 추가
             tokenBlacklistService.blacklistToken(token, email);
+
+            // [RTR] Refresh Token 무효화 (DB에서 삭제)
+            authService.invalidateRefreshToken(email);
+
             log.info("로그아웃 성공 - 사용자: {}", email);
             return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
         } catch (Exception e) {
             log.error("로그아웃 실패: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ApiResponse.error("로그아웃 실패"));
+            // 쿠키는 이미 삭제했으므로 성공으로 처리
+            return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
         }
     }
 

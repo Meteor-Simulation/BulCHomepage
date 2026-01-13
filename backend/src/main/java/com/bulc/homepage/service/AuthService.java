@@ -6,10 +6,12 @@ import com.bulc.homepage.dto.request.RefreshTokenRequest;
 import com.bulc.homepage.dto.request.SignupRequest;
 import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
+import com.bulc.homepage.entity.RefreshToken;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.repository.ActivityLogRepository;
+import com.bulc.homepage.repository.RefreshTokenRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.repository.UserSocialAccountRepository;
 import com.bulc.homepage.security.JwtTokenProvider;
@@ -24,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,12 +36,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
     private final ActivityLogRepository activityLogRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
+
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -78,6 +86,9 @@ public class AuthService {
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+
+        // [RTR] Refresh Token을 DB에 저장
+        saveOrUpdateRefreshToken(user.getEmail(), refreshToken, "signup");
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -144,6 +155,9 @@ public class AuthService {
             String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
+            // [RTR] Refresh Token을 DB에 저장 (기존 토큰 교체)
+            saveOrUpdateRefreshToken(user.getEmail(), refreshToken, userAgent);
+
             // 로그인 성공 로그
             saveActivityLog(user.getEmail(), "login", "user", null, "로그인 성공 - IP: " + ipAddress);
             log.info("로그인 성공 - 이메일: {}, IP: {}", request.getEmail(), ipAddress);
@@ -184,6 +198,37 @@ public class AuthService {
     }
 
     /**
+     * [RTR] Refresh Token을 DB에 저장 또는 업데이트.
+     * 기존 토큰이 있으면 새 토큰으로 교체, 없으면 새로 생성.
+     */
+    private void saveOrUpdateRefreshToken(String email, String refreshToken, String deviceInfo) {
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000);
+
+        RefreshToken rtEntity = refreshTokenRepository.findByUserEmail(email)
+                .orElse(RefreshToken.builder()
+                        .userEmail(email)
+                        .build());
+
+        rtEntity.setToken(refreshToken);
+        rtEntity.setExpiresAt(expiresAt);
+        rtEntity.setDeviceInfo(deviceInfo);
+        rtEntity.setLastUsedAt(LocalDateTime.now());
+
+        refreshTokenRepository.save(rtEntity);
+        log.debug("Refresh Token 저장 완료 - 이메일: {}", email);
+    }
+
+    /**
+     * [RTR] Refresh Token 무효화 (로그아웃 시 호출).
+     * DB에서 해당 사용자의 Refresh Token 삭제.
+     */
+    @Transactional
+    public void invalidateRefreshToken(String email) {
+        refreshTokenRepository.deleteAllByUserEmail(email);
+        log.info("Refresh Token 무효화 완료 - 이메일: {}", email);
+    }
+
+    /**
      * Access Token 생성 (외부 호출용)
      */
     public String generateAccessToken(String email) {
@@ -205,13 +250,18 @@ public class AuthService {
     }
 
     /**
-     * Refresh Token을 사용하여 새로운 Access Token 발급
+     * Refresh Token을 사용하여 새로운 Access Token 발급 (RTR 적용).
+     *
+     * RTR (Refresh Token Rotation):
+     * 1. 요청된 RT가 DB에 저장된 RT와 일치하는지 확인
+     * 2. 일치하면 새 AT + 새 RT 발급, DB의 RT 교체
+     * 3. 불일치하면 토큰 탈취 의심 → 해당 사용자의 모든 RT 무효화 (강제 로그아웃)
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
 
-        // Refresh Token 유효성 검사
+        // Refresh Token JWT 유효성 검사
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new RuntimeException("유효하지 않은 Refresh Token입니다");
         }
@@ -228,12 +278,42 @@ public class AuthService {
             throw new RuntimeException("비활성화된 계정입니다. 고객센터에 문의해주세요.");
         }
 
-        // 새로운 Access Token 생성
+        // [RTR 핵심] DB에 저장된 Refresh Token과 비교
+        RefreshToken storedToken = refreshTokenRepository.findByUserEmail(email).orElse(null);
+
+        if (storedToken == null) {
+            // DB에 RT가 없음 - 로그아웃된 상태이거나 비정상 접근
+            log.warn("RTR 실패 - DB에 저장된 토큰 없음: {}", email);
+            throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (!storedToken.getToken().equals(refreshToken)) {
+            // [Token Theft Detection] DB의 RT와 요청된 RT가 불일치
+            // 탈취된 RT 재사용 시도로 간주 → 모든 세션 무효화
+            log.warn("RTR 토큰 탈취 의심 - 이메일: {}, 모든 세션 강제 종료", email);
+            refreshTokenRepository.deleteAllByUserEmail(email);
+            saveActivityLog(email, "token_theft_detected", "security", null,
+                    "Refresh Token 재사용 감지, 모든 세션 강제 종료");
+            throw new RuntimeException("보안 문제가 감지되었습니다. 다시 로그인해주세요.");
+        }
+
+        // 토큰 만료 확인
+        if (storedToken.isExpired()) {
+            log.info("RTR 실패 - 만료된 토큰: {}", email);
+            refreshTokenRepository.deleteAllByUserEmail(email);
+            throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        // 새로운 Access Token, Refresh Token 생성
         String newAccessToken = jwtTokenProvider.generateAccessToken(email);
-        // 새로운 Refresh Token도 발급 (선택적)
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
 
-        log.info("토큰 갱신 성공 - 이메일: {}", email);
+        // [RTR] DB의 Refresh Token 교체 (Rotation)
+        LocalDateTime newExpiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000);
+        storedToken.rotateToken(newRefreshToken, newExpiresAt);
+        refreshTokenRepository.save(storedToken);
+
+        log.info("토큰 갱신 성공 (RTR) - 이메일: {}", email);
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
@@ -298,6 +378,9 @@ public class AuthService {
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+
+        // [RTR] Refresh Token을 DB에 저장
+        saveOrUpdateRefreshToken(user.getEmail(), refreshToken, "oauth_signup:" + provider);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)

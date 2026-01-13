@@ -206,6 +206,91 @@ class AuthIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false));
         }
+
+        @Test
+        @DisplayName("[RTR] 토큰 갱신 후 새 Refresh Token으로 재갱신 성공")
+        void shouldRefreshWithNewTokenAfterRotation() throws Exception {
+            // given - 먼저 로그인해서 refresh token 획득
+            Map<String, String> loginRequest = Map.of(
+                    "email", TEST_EMAIL,
+                    "password", TEST_PASSWORD
+            );
+
+            MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginRequest)))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            String loginResponse = loginResult.getResponse().getContentAsString();
+            String refreshToken1 = extractJsonValue(loginResponse, "refreshToken");
+            assertThat(refreshToken1).isNotNull();
+
+            // when - 첫 번째 갱신
+            Map<String, String> refreshRequest1 = Map.of("refreshToken", refreshToken1);
+
+            MvcResult refresh1Result = mockMvc.perform(post("/api/auth/refresh")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(refreshRequest1)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andReturn();
+
+            String refresh1Response = refresh1Result.getResponse().getContentAsString();
+            String refreshToken2 = extractJsonValue(refresh1Response, "refreshToken");
+            assertThat(refreshToken2).isNotNull();
+
+            // then - 새 토큰으로 다시 갱신 성공 (RTR 핵심 검증)
+            Map<String, String> refreshRequest2 = Map.of("refreshToken", refreshToken2);
+
+            mockMvc.perform(post("/api/auth/refresh")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(refreshRequest2)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
+        }
+
+        @Test
+        @DisplayName("[RTR] 토큰 탈취 감지 - 이전 토큰 재사용 시 실패")
+        void shouldDetectTokenTheftWhenOldTokenReused() throws Exception {
+            // given - 먼저 로그인해서 refresh token 획득
+            Map<String, String> loginRequest = Map.of(
+                    "email", TEST_EMAIL,
+                    "password", TEST_PASSWORD
+            );
+
+            MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginRequest)))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            String loginResponse = loginResult.getResponse().getContentAsString();
+            String oldRefreshToken = extractJsonValue(loginResponse, "refreshToken");
+            assertThat(oldRefreshToken).isNotNull();
+
+            // when - 토큰 갱신 (RTR로 인해 새 토큰 발급, DB의 토큰이 교체됨)
+            Map<String, String> refreshRequest = Map.of("refreshToken", oldRefreshToken);
+
+            MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(refreshRequest)))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            // 새 토큰 확인
+            String newRefreshToken = extractJsonValue(refreshResult.getResponse().getContentAsString(), "refreshToken");
+            assertThat(newRefreshToken).isNotNull();
+
+            // then - 이전(구) 토큰 재사용 시 실패 (토큰 탈취로 간주)
+            // DB에는 새 토큰만 저장되어 있으므로 구 토큰은 거부됨
+            mockMvc.perform(post("/api/auth/refresh")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(refreshRequest)))  // 구 토큰 사용
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false));
+        }
     }
 
     // ==========================================
