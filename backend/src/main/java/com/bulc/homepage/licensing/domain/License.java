@@ -137,6 +137,17 @@ public class License {
     }
 
     /**
+     * 라이선스 정지 해제 (관리자에 의해).
+     */
+    public void unsuspend() {
+        if (this.status != LicenseStatus.SUSPENDED) {
+            throw new IllegalStateException("정지된 라이선스만 해제할 수 있습니다. 현재 상태: " + this.status);
+        }
+        this.status = LicenseStatus.ACTIVE;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * 라이선스 회수 (환불 등).
      */
     public void revoke(String reason) {

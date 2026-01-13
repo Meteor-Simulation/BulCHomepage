@@ -104,15 +104,15 @@ COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 -- 기본 계정 (비밀번호: meteor2025!)
 -- 관리자 계정
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('meteor@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '메테오'),
-    ('simul@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '김지태');
+    ('meteor@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '메테오'),
+    ('simul@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '김지태');
 
 -- 매니저 계정
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('juwon@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '강주원'),
-    ('kjh@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '김자현'),
-    ('lapalce@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '황지인'),
-    ('qogkstj02@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '배한서');
+    ('juwon@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '강주원'),
+    ('kjh4387@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '김자현'),
+    ('laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
+    ('qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
 
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)

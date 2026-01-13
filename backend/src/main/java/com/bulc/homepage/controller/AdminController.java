@@ -4,6 +4,7 @@ import com.bulc.homepage.entity.PricePlan;
 import com.bulc.homepage.entity.Product;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.License;
+import com.bulc.homepage.licensing.domain.LicenseStatus;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.repository.PaymentRepository;
 import com.bulc.homepage.repository.PricePlanRepository;
@@ -85,6 +86,16 @@ public class AdminController {
 
         List<UserResponse> users = userRepository.findAll().stream()
                 .filter(user -> user.getIsActive() != null && user.getIsActive()) // 비활성화된 계정 필터링
+                .sorted((u1, u2) -> {
+                    // 1차: 권한순 (000 > 001 > 002, 오름차순 정렬)
+                    int roleCompare = u1.getRolesCode().compareTo(u2.getRolesCode());
+                    if (roleCompare != 0) return roleCompare;
+                    // 2차: 가입일순 (먼저 가입한 순서, 오름차순 정렬)
+                    if (u1.getCreatedAt() == null && u2.getCreatedAt() == null) return 0;
+                    if (u1.getCreatedAt() == null) return 1;
+                    if (u2.getCreatedAt() == null) return -1;
+                    return u1.getCreatedAt().compareTo(u2.getCreatedAt());
+                })
                 .map(user -> new UserResponse(
                         user.getEmail(),  // email이 PK
                         user.getEmail(),
@@ -461,19 +472,89 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
+        // 사용자 이메일 -> UUID 매핑 생성
+        java.util.Map<java.util.UUID, String> ownerIdToEmail = new java.util.HashMap<>();
+        userRepository.findAll().forEach(user -> {
+            java.util.UUID uuid = java.util.UUID.nameUUIDFromBytes(
+                    user.getEmail().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            ownerIdToEmail.put(uuid, user.getEmail());
+        });
+
         List<LicenseResponse> licenses = licenseRepository.findAll().stream()
-                .map(license -> new LicenseResponse(
-                        license.getId().toString(),
-                        license.getLicenseKey(),
-                        license.getOwnerType().name(),
-                        license.getOwnerId() != null ? license.getOwnerId().toString() : null,
-                        license.getStatus().name(),
-                        license.getValidUntil() != null ? license.getValidUntil().toString() : null,
-                        license.getCreatedAt() != null ? license.getCreatedAt().toString() : null
-                ))
+                .map(license -> {
+                    // owner_id를 이메일로 변환
+                    String ownerDisplay = license.getOwnerId() != null
+                            ? ownerIdToEmail.getOrDefault(license.getOwnerId(), license.getOwnerId().toString())
+                            : null;
+                    return new LicenseResponse(
+                            license.getId().toString(),
+                            license.getLicenseKey(),
+                            license.getOwnerType().name(),
+                            ownerDisplay,
+                            license.getStatus().name(),
+                            license.getValidUntil() != null ? license.getValidUntil().toString() : null,
+                            license.getCreatedAt() != null ? license.getCreatedAt().toString() : null
+                    );
+                })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(licenses);
+    }
+
+    /**
+     * 라이선스 활성화 (SUSPENDED -> ACTIVE)
+     */
+    @PatchMapping("/licenses/{id}/activate")
+    public ResponseEntity<?> activateLicense(@PathVariable String id) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            java.util.UUID licenseId = java.util.UUID.fromString(id);
+            return licenseRepository.findById(licenseId)
+                    .map(license -> {
+                        try {
+                            license.unsuspend();
+                            licenseRepository.save(license);
+                            return ResponseEntity.ok(Map.of("message", "라이선스가 활성화되었습니다."));
+                        } catch (IllegalStateException e) {
+                            return ResponseEntity.badRequest()
+                                    .body(Map.of("message", e.getMessage()));
+                        }
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "잘못된 라이선스 ID입니다."));
+        }
+    }
+
+    /**
+     * 라이선스 비활성화 (ACTIVE -> SUSPENDED)
+     */
+    @PatchMapping("/licenses/{id}/suspend")
+    public ResponseEntity<?> suspendLicense(@PathVariable String id) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            java.util.UUID licenseId = java.util.UUID.fromString(id);
+            return licenseRepository.findById(licenseId)
+                    .map(license -> {
+                        try {
+                            license.suspend("관리자에 의한 비활성화");
+                            licenseRepository.save(license);
+                            return ResponseEntity.ok(Map.of("message", "라이선스가 비활성화되었습니다."));
+                        } catch (IllegalStateException e) {
+                            return ResponseEntity.badRequest()
+                                    .body(Map.of("message", e.getMessage()));
+                        }
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "잘못된 라이선스 ID입니다."));
+        }
     }
 
     /**
