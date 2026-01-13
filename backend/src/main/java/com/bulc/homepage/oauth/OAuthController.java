@@ -1,6 +1,7 @@
 package com.bulc.homepage.oauth;
 
 import com.bulc.homepage.entity.User;
+import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -40,6 +44,7 @@ public class OAuthController {
     private final AuthService authService;
     private final AuthorizationCodeStore codeStore;
     private final OAuthClientProperties clientProperties;
+    private final UserRepository userRepository;
 
     /**
      * OAuth 2.0 Authorization Endpoint.
@@ -100,6 +105,55 @@ public class OAuthController {
             return errorResponse("invalid_request",
                     "Invalid redirect_uri. The URI must be registered for this client");
         }
+
+        // ========================================================
+        // SSO 자동 로그인: 이미 인증된 사용자가 있는지 확인
+        // 브라우저 쿠키(AUTH_TOKEN)를 통해 인증된 상태면 로그인 화면 생략
+        // ========================================================
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof UserDetails) {
+
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String email = userDetails.getUsername();
+
+            // 사용자가 활성 상태인지 확인
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user != null && user.getIsActive()) {
+                log.info("OAuth SSO 자동 로그인: email={}, client_id={}", email, clientId);
+
+                // Authorization Code 발급
+                String code = codeStore.createAndStore(
+                        email,
+                        clientId,
+                        redirectUri,
+                        codeChallenge,
+                        codeChallengeMethod
+                );
+
+                // Custom scheme인 경우 성공 페이지를 통해 리다이렉트
+                if (isCustomScheme(redirectUri)) {
+                    String callbackPageUrl = buildCallbackPageUrl(redirectUri, code, state, clientId);
+                    log.info("OAuth SSO 성공, 성공 페이지로 리다이렉트: {}", callbackPageUrl);
+                    return ResponseEntity
+                            .status(HttpStatus.FOUND)
+                            .location(URI.create(callbackPageUrl))
+                            .build();
+                }
+
+                // HTTP 기반 redirect_uri는 직접 리다이렉트
+                String redirectUrl = buildRedirectUrl(redirectUri, code, state);
+                log.info("OAuth SSO 성공, 리다이렉트: {}", maskUrl(redirectUrl));
+                return ResponseEntity
+                        .status(HttpStatus.FOUND)
+                        .location(URI.create(redirectUrl))
+                        .build();
+            }
+        }
+
+        // ========================================================
+        // 로그인 필요: 인증되지 않은 상태
+        // ========================================================
 
         // 브라우저 요청인 경우 로그인 페이지로 리다이렉트
         String acceptHeader = request.getHeader("Accept");

@@ -3,6 +3,7 @@ package com.bulc.homepage.security;
 import com.bulc.homepage.repository.TokenBlacklistRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -58,11 +59,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * JWT 토큰 추출.
+     * 우선순위: 1. Authorization 헤더 > 2. 쿠키 (AUTH_TOKEN)
+     */
     private String getJwtFromRequest(HttpServletRequest request) {
+        // 1. Authorization 헤더에서 추출
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        // 2. 쿠키에서 추출 (브라우저 SSO 지원)
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("AUTH_TOKEN".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
         return null;
     }
 }

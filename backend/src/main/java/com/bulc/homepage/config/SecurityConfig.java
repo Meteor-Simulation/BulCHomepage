@@ -38,7 +38,31 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
+    /**
+     * OAuth 2.0 엔드포인트용 SecurityFilterChain.
+     * 세션 기반 인증을 허용하여 브라우저 쿠키를 통한 자동 로그인 지원.
+     * Order(1)로 우선 적용.
+     */
     @Bean
+    @org.springframework.core.annotation.Order(1)
+    public SecurityFilterChain oauthSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/oauth/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // 세션 기반 인증 허용 (IF_REQUIRED: 필요시에만 세션 생성)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+                // JWT 필터를 통해 쿠키의 JWT 토큰으로도 인증 가능하도록 함
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    @org.springframework.core.annotation.Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
