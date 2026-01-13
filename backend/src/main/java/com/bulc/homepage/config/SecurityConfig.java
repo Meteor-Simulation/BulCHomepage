@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/logs/activity").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // OAuth 2.0 엔드포인트 (PKCE)
+                        .requestMatchers("/oauth/**").permitAll()
                         // 라이선스 클라이언트 API (인증 없이 접근 가능)
                         .requestMatchers("/api/licenses/*/validate").permitAll()
                         .requestMatchers("/api/licenses/*/heartbeat").permitAll()
