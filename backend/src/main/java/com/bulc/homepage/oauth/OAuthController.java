@@ -120,33 +120,21 @@ public class OAuthController {
             // 사용자가 활성 상태인지 확인
             User user = userRepository.findByEmail(email).orElse(null);
             if (user != null && user.getIsActive()) {
-                log.info("OAuth SSO 자동 로그인: email={}, client_id={}", email, clientId);
+                log.info("OAuth SSO 자동 로그인 감지: email={}, client_id={}", email, clientId);
 
-                // Authorization Code 발급
-                String code = codeStore.createAndStore(
+                // SSO 동의 페이지로 리다이렉트 (사용자 확인 필요)
+                String consentPageUrl = buildConsentPageUrl(
                         email,
                         clientId,
                         redirectUri,
                         codeChallenge,
-                        codeChallengeMethod
+                        codeChallengeMethod,
+                        state
                 );
-
-                // Custom scheme인 경우 성공 페이지를 통해 리다이렉트
-                if (isCustomScheme(redirectUri)) {
-                    String callbackPageUrl = buildCallbackPageUrl(redirectUri, code, state, clientId);
-                    log.info("OAuth SSO 성공, 성공 페이지로 리다이렉트: {}", callbackPageUrl);
-                    return ResponseEntity
-                            .status(HttpStatus.FOUND)
-                            .location(URI.create(callbackPageUrl))
-                            .build();
-                }
-
-                // HTTP 기반 redirect_uri는 직접 리다이렉트
-                String redirectUrl = buildRedirectUrl(redirectUri, code, state);
-                log.info("OAuth SSO 성공, 리다이렉트: {}", maskUrl(redirectUrl));
+                log.info("OAuth SSO 동의 페이지로 리다이렉트: {}", consentPageUrl);
                 return ResponseEntity
                         .status(HttpStatus.FOUND)
-                        .location(URI.create(redirectUrl))
+                        .location(URI.create(consentPageUrl))
                         .build();
             }
         }
@@ -182,6 +170,118 @@ public class OAuthController {
                 ),
                 "message", "사용자 인증이 필요합니다"
         ));
+    }
+
+    /**
+     * SSO 동의 확인 처리.
+     *
+     * 사용자가 동의 페이지에서 "계속" 버튼을 누르면 호출됩니다.
+     * 인증된 사용자에 대해 Authorization Code를 발급하고 리다이렉트합니다.
+     */
+    @PostMapping(value = "/sso-confirm", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> ssoConfirm(
+            @RequestParam("client_id") String clientId,
+            @RequestParam("redirect_uri") String redirectUri,
+            @RequestParam("code_challenge") String codeChallenge,
+            @RequestParam(value = "code_challenge_method", defaultValue = "S256") String codeChallengeMethod,
+            @RequestParam(value = "state", required = false) String state) {
+
+        log.info("OAuth SSO 확인 요청: client_id={}", clientId);
+
+        // 현재 인증된 사용자 확인
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserDetails)) {
+            log.warn("SSO 확인 실패: 인증되지 않은 사용자");
+            // 로그인 페이지로 리다이렉트
+            String loginPageUrl = buildLoginPageUrl(clientId, redirectUri, codeChallenge, codeChallengeMethod, state);
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create(loginPageUrl))
+                    .build();
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String email = userDetails.getUsername();
+
+        // 사용자가 활성 상태인지 확인
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null || !user.getIsActive()) {
+            log.warn("SSO 확인 실패: 비활성 사용자 email={}", email);
+            String loginPageUrl = buildLoginPageUrl(clientId, redirectUri, codeChallenge, codeChallengeMethod, state);
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create(loginPageUrl))
+                    .build();
+        }
+
+        // client_id 검증
+        if (!isRegisteredClient(clientId)) {
+            return errorResponse("unauthorized_client", "Unknown or unregistered client_id");
+        }
+
+        // redirect_uri 검증
+        if (!isValidRedirectUri(clientId, redirectUri)) {
+            return errorResponse("invalid_request", "Invalid redirect_uri");
+        }
+
+        // PKCE 파라미터 검증
+        if (!PkceUtils.isSupportedMethod(codeChallengeMethod)) {
+            return errorResponse("invalid_request", "Unsupported code_challenge_method");
+        }
+        if (codeChallenge == null || codeChallenge.length() < 43) {
+            return errorResponse("invalid_request", "code_challenge is required");
+        }
+
+        // Authorization Code 발급
+        String code = codeStore.createAndStore(
+                email,
+                clientId,
+                redirectUri,
+                codeChallenge,
+                codeChallengeMethod
+        );
+
+        log.info("OAuth SSO 확인 성공: email={}, client_id={}", email, clientId);
+
+        // Custom scheme인 경우 성공 페이지를 통해 리다이렉트
+        if (isCustomScheme(redirectUri)) {
+            String callbackPageUrl = buildCallbackPageUrl(redirectUri, code, state, clientId);
+            log.info("OAuth SSO 성공, 성공 페이지로 리다이렉트: {}", callbackPageUrl);
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create(callbackPageUrl))
+                    .build();
+        }
+
+        // HTTP 기반 redirect_uri는 직접 리다이렉트
+        String redirectUrl = buildRedirectUrl(redirectUri, code, state);
+        log.info("OAuth SSO 성공, 리다이렉트: {}", maskUrl(redirectUrl));
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(redirectUrl))
+                .build();
+    }
+
+    /**
+     * SSO 동의 페이지 URL 생성.
+     */
+    private String buildConsentPageUrl(String email, String clientId, String redirectUri,
+                                       String codeChallenge, String codeChallengeMethod, String state) {
+        String appName = clientProperties.getDisplayName(clientId);
+
+        StringBuilder url = new StringBuilder("/oauth/consent.html?");
+        url.append("email=").append(urlEncode(email));
+        url.append("&app_name=").append(urlEncode(appName));
+        url.append("&client_id=").append(urlEncode(clientId));
+        url.append("&redirect_uri=").append(urlEncode(redirectUri));
+        url.append("&code_challenge=").append(urlEncode(codeChallenge));
+        url.append("&code_challenge_method=").append(urlEncode(codeChallengeMethod));
+        if (state != null && !state.isEmpty()) {
+            url.append("&state=").append(urlEncode(state));
+        }
+        return url.toString();
     }
 
     /**
