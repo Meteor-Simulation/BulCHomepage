@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "price_plans")
@@ -21,9 +20,6 @@ public class PricePlan {
 
     @Column(name = "product_code", nullable = false, length = 3)
     private String productCode;
-
-    @Column(name = "license_plan_id")
-    private UUID licensePlanId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_code", referencedColumnName = "code", insertable = false, updatable = false)

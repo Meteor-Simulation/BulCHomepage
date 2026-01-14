@@ -2,6 +2,7 @@ package com.bulc.homepage.controller;
 
 import com.bulc.homepage.dto.request.LoginRequest;
 import com.bulc.homepage.dto.request.OAuthSignupRequest;
+import com.bulc.homepage.dto.request.PasswordResetRequest;
 import com.bulc.homepage.dto.request.RefreshTokenRequest;
 import com.bulc.homepage.dto.request.SignupRequest;
 import com.bulc.homepage.dto.request.EmailVerificationRequest;
@@ -13,6 +14,7 @@ import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.service.AuthService;
 import com.bulc.homepage.service.EmailVerificationService;
+import com.bulc.homepage.service.PasswordResetService;
 import com.bulc.homepage.service.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -33,6 +35,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
     private final TokenBlacklistService tokenBlacklistService;
     private final UserRepository userRepository;
 
@@ -264,6 +267,54 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("계정이 재활성화되었습니다", response));
+    }
+
+    /**
+     * 비밀번호 재설정 요청 (인증 코드 발송)
+     */
+    @PostMapping("/password/reset-request")
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(
+            @Valid @RequestBody EmailVerificationRequest request) {
+        log.info("Password reset request for email: {}", request.getEmail());
+        try {
+            passwordResetService.requestPasswordReset(request.getEmail());
+            return ResponseEntity.ok(ApiResponse.success("비밀번호 재설정 코드가 발송되었습니다", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 코드 검증
+     */
+    @PostMapping("/password/verify-code")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> verifyPasswordResetCode(
+            @Valid @RequestBody VerifyCodeRequest request) {
+        log.info("Password reset code verification for email: {}", request.getEmail());
+        try {
+            boolean verified = passwordResetService.verifyResetCode(request.getEmail(), request.getCode());
+            return ResponseEntity.ok(ApiResponse.success(
+                    "인증 코드가 확인되었습니다",
+                    Map.of("verified", verified)
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 완료
+     */
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody PasswordResetRequest request) {
+        log.info("Password reset for email: {}", request.getEmail());
+        try {
+            passwordResetService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success("비밀번호가 재설정되었습니다", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     private String getClientIp(HttpServletRequest request) {

@@ -27,6 +27,33 @@ interface License {
   maxActivations: number;
 }
 
+interface Subscription {
+  id: number;
+  productCode: string;
+  productName: string | null;
+  pricePlanId: number;
+  pricePlanName: string | null;
+  price: number;
+  currency: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  autoRenew: boolean;
+  billingCycle: string | null;
+  nextBillingDate: string | null;
+  createdAt: string;
+}
+
+interface BillingKey {
+  id: number;
+  cardCompany: string;
+  cardNumber: string;
+  cardType: string;
+  ownerType: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 const COUNTRIES = [
   { code: 'KR', name: '대한민국', currency: 'KRW' },
   { code: 'CN', name: '중국', currency: 'USD' },
@@ -59,6 +86,14 @@ const MyPage: React.FC = () => {
   // 라이선스 정보
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoadingLicenses, setIsLoadingLicenses] = useState(false);
+
+  // 구독 정보
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
+
+  // 등록된 카드 (빌링키)
+  const [billingKeys, setBillingKeys] = useState<BillingKey[]>([]);
+  const [isLoadingBillingKeys, setIsLoadingBillingKeys] = useState(false);
 
   // 프로필 수정 모드
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -93,6 +128,10 @@ const MyPage: React.FC = () => {
 
   // 개발자 미리보기 (관리자 전용)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // 구독 테스트 (개발 환경용)
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [testLoading, setTestLoading] = useState<string | null>(null);
 
   // 계정 삭제
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -167,6 +206,64 @@ const MyPage: React.FC = () => {
 
     if (isLoggedIn) {
       fetchLicenses();
+    }
+  }, [isLoggedIn]);
+
+  // 구독 정보 로드
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      setIsLoadingSubscriptions(true);
+      try {
+        const response = await fetch(`${API_URL}/api/subscriptions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptions(data.data || []);
+        }
+      } catch (error) {
+        console.error('구독 정보 로드 실패:', error);
+      } finally {
+        setIsLoadingSubscriptions(false);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchSubscriptions();
+    }
+  }, [isLoggedIn]);
+
+  // 등록된 카드 로드
+  useEffect(() => {
+    const fetchBillingKeys = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      setIsLoadingBillingKeys(true);
+      try {
+        const response = await fetch(`${API_URL}/api/subscriptions/billing-keys`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setBillingKeys(data.data || []);
+        }
+      } catch (error) {
+        console.error('등록된 카드 로드 실패:', error);
+      } finally {
+        setIsLoadingBillingKeys(false);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchBillingKeys();
     }
   }, [isLoggedIn]);
 
@@ -378,6 +475,279 @@ const MyPage: React.FC = () => {
       setIsDeleteModalOpen(false);
       setDeleteConfirmText('');
     }
+  };
+
+  // 자동 갱신 토글
+  const handleToggleAutoRenew = async (subscriptionId: number, currentState: boolean) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      if (currentState) {
+        // 자동 갱신 비활성화
+        const response = await fetch(`${API_URL}/api/subscriptions/${subscriptionId}/auto-renew`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          setSubscriptions(prev => prev.map(sub =>
+            sub.id === subscriptionId ? { ...sub, autoRenew: false, nextBillingDate: null } : sub
+          ));
+          showSuccess('자동 갱신이 비활성화되었습니다.');
+        } else {
+          showError('자동 갱신 비활성화에 실패했습니다.');
+        }
+      } else {
+        // 자동 갱신 활성화 - 기본 결제 수단 사용
+        const defaultCard = billingKeys.find(b => b.isDefault);
+        if (!defaultCard) {
+          showError('기본 결제 수단을 먼저 등록해주세요.');
+          return;
+        }
+        const response = await fetch(
+          `${API_URL}/api/subscriptions/${subscriptionId}/auto-renew?billingKeyId=${defaultCard.id}&billingCycle=YEARLY`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptions(prev => prev.map(sub =>
+            sub.id === subscriptionId ? data.data : sub
+          ));
+          showSuccess('자동 갱신이 활성화되었습니다.');
+        } else {
+          showError('자동 갱신 활성화에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('자동 갱신 토글 오류:', error);
+      showError('자동 갱신 설정 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 기본 결제 수단 변경
+  const handleSetDefaultCard = async (billingKeyId: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/subscriptions/billing-keys/${billingKeyId}/default`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setBillingKeys(prev => prev.map(b => ({
+          ...b,
+          isDefault: b.id === billingKeyId
+        })));
+        showSuccess('기본 결제 수단이 변경되었습니다.');
+      } else {
+        showError('기본 결제 수단 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('기본 결제 수단 변경 오류:', error);
+      showError('기본 결제 수단 변경 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 카드 삭제
+  const handleDeleteCard = async (billingKeyId: number) => {
+    if (!window.confirm('이 카드를 삭제하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/subscriptions/billing-keys/${billingKeyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setBillingKeys(prev => prev.filter(b => b.id !== billingKeyId));
+        showSuccess('카드가 삭제되었습니다.');
+      } else {
+        showError('카드 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카드 삭제 오류:', error);
+      showError('카드 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  // === 구독 테스트 함수들 (개발 환경 전용) ===
+
+  // 구독 만료일을 N일 후로 설정
+  const handleSimulateNearExpiry = async (subscriptionId: number, days: number = 3) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setTestLoading(`simulate-${subscriptionId}`);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/test/subscriptions/${subscriptionId}/simulate-near-expiry?daysUntilExpiry=${days}`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        showSuccess(`구독 종료일이 ${days}일 후로 설정되었습니다.`);
+        // 구독 목록 새로고침
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (subsResponse.ok) {
+          const subsData = await subsResponse.json();
+          setSubscriptions(subsData.data || []);
+        }
+      } else {
+        const err = await response.json();
+        showError(err.error || '테스트 실행 실패');
+      }
+    } catch (error) {
+      showError('테스트 실행 중 오류 발생');
+    } finally {
+      setTestLoading(null);
+    }
+  };
+
+  // 구독을 즉시 갱신 대상으로 설정
+  const handleMakeDueNow = async (subscriptionId: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setTestLoading(`due-${subscriptionId}`);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/test/subscriptions/${subscriptionId}/make-due-now`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        showSuccess('구독이 즉시 갱신 대상으로 설정되었습니다.');
+        // 구독 목록 새로고침
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (subsResponse.ok) {
+          const subsData = await subsResponse.json();
+          setSubscriptions(subsData.data || []);
+        }
+      } else {
+        const err = await response.json();
+        showError(err.error || '테스트 실행 실패');
+      }
+    } catch (error) {
+      showError('테스트 실행 중 오류 발생');
+    } finally {
+      setTestLoading(null);
+    }
+  };
+
+  // 갱신 프로세스 수동 실행
+  const handleProcessRenewals = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setTestLoading('process-renewals');
+    try {
+      const response = await fetch(`${API_URL}/api/test/subscriptions/process-renewals`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        showSuccess('갱신 프로세스가 실행되었습니다.');
+        // 구독 목록 새로고침
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (subsResponse.ok) {
+          const subsData = await subsResponse.json();
+          setSubscriptions(subsData.data || []);
+        }
+      } else {
+        showError('갱신 프로세스 실행 실패');
+      }
+    } catch (error) {
+      showError('갱신 프로세스 실행 중 오류 발생');
+    } finally {
+      setTestLoading(null);
+    }
+  };
+
+  // 실패한 결제 재시도
+  const handleRetryFailed = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setTestLoading('retry-failed');
+    try {
+      const response = await fetch(`${API_URL}/api/test/subscriptions/retry-failed`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        showSuccess('결제 재시도가 실행되었습니다.');
+      } else {
+        showError('결제 재시도 실행 실패');
+      }
+    } catch (error) {
+      showError('결제 재시도 실행 중 오류 발생');
+    } finally {
+      setTestLoading(null);
+    }
+  };
+
+  // 만료 구독 처리
+  const handleProcessExpired = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setTestLoading('process-expired');
+    try {
+      const response = await fetch(`${API_URL}/api/test/subscriptions/process-expired`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        showSuccess('만료 처리가 실행되었습니다.');
+        // 구독 목록 새로고침
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (subsResponse.ok) {
+          const subsData = await subsResponse.json();
+          setSubscriptions(subsData.data || []);
+        }
+      } else {
+        showError('만료 처리 실행 실패');
+      }
+    } catch (error) {
+      showError('만료 처리 실행 중 오류 발생');
+    } finally {
+      setTestLoading(null);
+    }
+  };
+
+  // 금액 포맷팅
+  const formatPrice = (price: number, currency: string) => {
+    if (currency === 'KRW') {
+      return new Intl.NumberFormat('ko-KR').format(price) + '원';
+    }
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(price);
   };
 
   const showSuccess = (message: string) => {
@@ -742,6 +1112,201 @@ const MyPage: React.FC = () => {
                           {license.usedActivations} / {license.maxActivations}대
                         </span>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 구독 관리 */}
+          <div className="info-card subscription-card">
+            <div className="card-header">
+              <h2 className="card-title">구독 관리</h2>
+            </div>
+            {isLoadingSubscriptions ? (
+              <div className="loading-text">구독 정보를 불러오는 중...</div>
+            ) : subscriptions.length === 0 ? (
+              <div className="empty-subscriptions">
+                <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M22 6L12 13L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <p>활성화된 구독이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="subscription-list">
+                {subscriptions.map((sub) => (
+                  <div key={sub.id} className={`subscription-item status-${sub.status.toLowerCase()}`}>
+                    <div className="subscription-header">
+                      <span className="subscription-product">
+                        {sub.productName || sub.pricePlanName || '구독'}
+                      </span>
+                      <span className={`subscription-status ${sub.status === 'A' ? 'active' : sub.status === 'E' ? 'expired' : 'canceled'}`}>
+                        {sub.status === 'A' ? '활성' : sub.status === 'E' ? '만료됨' : '취소됨'}
+                      </span>
+                    </div>
+                    <div className="subscription-details">
+                      <div className="subscription-detail-row">
+                        <span className="detail-label">요금</span>
+                        <span className="detail-value">{formatPrice(sub.price, sub.currency)}</span>
+                      </div>
+                      <div className="subscription-detail-row">
+                        <span className="detail-label">구독 기간</span>
+                        <span className="detail-value">
+                          {new Date(sub.startDate).toLocaleDateString('ko-KR')} ~ {new Date(sub.endDate).toLocaleDateString('ko-KR')}
+                        </span>
+                      </div>
+                      {sub.status === 'A' && (
+                        <div className="subscription-detail-row auto-renew-row">
+                          <span className="detail-label">자동 갱신</span>
+                          <div className="auto-renew-toggle">
+                            <label className="toggle-switch">
+                              <input
+                                type="checkbox"
+                                checked={sub.autoRenew}
+                                onChange={() => handleToggleAutoRenew(sub.id, sub.autoRenew)}
+                                disabled={billingKeys.length === 0}
+                              />
+                              <span className="toggle-slider"></span>
+                            </label>
+                            <span className="toggle-label">{sub.autoRenew ? 'ON' : 'OFF'}</span>
+                          </div>
+                        </div>
+                      )}
+                      {sub.autoRenew && sub.nextBillingDate && (
+                        <div className="subscription-detail-row">
+                          <span className="detail-label">다음 결제일</span>
+                          <span className="detail-value next-billing">
+                            {new Date(sub.nextBillingDate).toLocaleDateString('ko-KR')}
+                          </span>
+                        </div>
+                      )}
+                      {/* 개발 테스트 버튼 (관리자 전용) */}
+                      {isSystemAdmin && isTestMode && (
+                        <div className="subscription-test-actions">
+                          <div className="test-label">테스트 액션</div>
+                          <div className="test-buttons">
+                            <button
+                              className="test-btn"
+                              onClick={() => handleSimulateNearExpiry(sub.id, 3)}
+                              disabled={testLoading !== null}
+                            >
+                              {testLoading === `simulate-${sub.id}` ? '처리중...' : '3일 후 만료'}
+                            </button>
+                            <button
+                              className="test-btn"
+                              onClick={() => handleMakeDueNow(sub.id)}
+                              disabled={testLoading !== null || !sub.autoRenew}
+                              title={!sub.autoRenew ? '자동 갱신이 활성화되어야 합니다' : ''}
+                            >
+                              {testLoading === `due-${sub.id}` ? '처리중...' : '즉시 갱신 대상'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 구독 테스트 패널 (관리자 전용) */}
+            {isSystemAdmin && (
+              <div className="subscription-test-panel">
+                <div className="test-panel-header">
+                  <button
+                    className={`test-mode-toggle ${isTestMode ? 'active' : ''}`}
+                    onClick={() => setIsTestMode(!isTestMode)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                    테스트 모드 {isTestMode ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                {isTestMode && (
+                  <div className="test-panel-body">
+                    <div className="test-info">
+                      개발 환경 전용 테스트 기능입니다. 구독 갱신 시스템을 수동으로 실행할 수 있습니다.
+                    </div>
+                    <div className="global-test-buttons">
+                      <button
+                        className="test-btn global"
+                        onClick={handleProcessRenewals}
+                        disabled={testLoading !== null}
+                      >
+                        {testLoading === 'process-renewals' ? '실행중...' : '갱신 처리 실행'}
+                      </button>
+                      <button
+                        className="test-btn global"
+                        onClick={handleRetryFailed}
+                        disabled={testLoading !== null}
+                      >
+                        {testLoading === 'retry-failed' ? '실행중...' : '실패 결제 재시도'}
+                      </button>
+                      <button
+                        className="test-btn global"
+                        onClick={handleProcessExpired}
+                        disabled={testLoading !== null}
+                      >
+                        {testLoading === 'process-expired' ? '실행중...' : '만료 처리 실행'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 등록된 결제 수단 */}
+          <div className="info-card payment-methods-card">
+            <div className="card-header">
+              <h2 className="card-title">결제 수단</h2>
+            </div>
+            {isLoadingBillingKeys ? (
+              <div className="loading-text">결제 수단을 불러오는 중...</div>
+            ) : billingKeys.length === 0 ? (
+              <div className="empty-payment-methods">
+                <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 4H3C1.89 4 1 4.89 1 6V18C1 19.11 1.89 20 3 20H21C22.11 20 23 19.11 23 18V6C23 4.89 22.11 4 21 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M1 10H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <p>등록된 결제 수단이 없습니다.</p>
+                <span className="helper-text">결제 시 카드를 등록하면 자동 갱신에 사용할 수 있습니다.</span>
+              </div>
+            ) : (
+              <div className="payment-methods-list">
+                {billingKeys.map((card) => (
+                  <div key={card.id} className={`payment-method-item ${card.isDefault ? 'default' : ''}`}>
+                    <div className="card-info">
+                      <div className="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M21 4H3C1.89 4 1 4.89 1 6V18C1 19.11 1.89 20 3 20H21C22.11 20 23 19.11 23 18V6C23 4.89 22.11 4 21 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M1 10H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <div className="card-details">
+                        <span className="card-company">{card.cardCompany || '카드'}</span>
+                        <span className="card-number">{card.cardNumber}</span>
+                      </div>
+                      {card.isDefault && <span className="default-badge">기본</span>}
+                    </div>
+                    <div className="card-actions">
+                      {!card.isDefault && (
+                        <button
+                          className="set-default-btn"
+                          onClick={() => handleSetDefaultCard(card.id)}
+                        >
+                          기본으로 설정
+                        </button>
+                      )}
+                      <button
+                        className="delete-card-btn"
+                        onClick={() => handleDeleteCard(card.id)}
+                      >
+                        삭제
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -318,7 +318,6 @@ public class AdminController {
                         plan.getPrice().longValue(),
                         plan.getCurrency(),
                         plan.getIsActive(),
-                        plan.getLicensePlanId() != null ? plan.getLicensePlanId().toString() : null,
                         plan.getCreatedAt() != null ? plan.getCreatedAt().toString() : null
                 ))
                 .collect(Collectors.toList());
@@ -355,7 +354,6 @@ public class AdminController {
                 .price(BigDecimal.valueOf(request.price()))
                 .currency(request.currency() != null ? request.currency() : "KRW")
                 .isActive(request.isActive() != null ? request.isActive() : true)
-                .licensePlanId(request.licensePlanId() != null ? java.util.UUID.fromString(request.licensePlanId()) : null)
                 .build();
 
         PricePlan saved = pricePlanRepository.save(plan);
@@ -367,7 +365,6 @@ public class AdminController {
                 saved.getPrice().longValue(),
                 saved.getCurrency(),
                 saved.getIsActive(),
-                saved.getLicensePlanId() != null ? saved.getLicensePlanId().toString() : null,
                 saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
         ));
     }
@@ -398,9 +395,6 @@ public class AdminController {
                     if (request.isActive() != null) {
                         plan.setIsActive(request.isActive());
                     }
-                    if (request.licensePlanId() != null) {
-                        plan.setLicensePlanId(java.util.UUID.fromString(request.licensePlanId()));
-                    }
                     PricePlan saved = pricePlanRepository.save(plan);
                     return ResponseEntity.ok(new PricePlanResponse(
                             saved.getId(),
@@ -410,7 +404,6 @@ public class AdminController {
                             saved.getPrice().longValue(),
                             saved.getCurrency(),
                             saved.getIsActive(),
-                            saved.getLicensePlanId() != null ? saved.getLicensePlanId().toString() : null,
                             saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
                     ));
                 })
@@ -456,7 +449,6 @@ public class AdminController {
                             saved.getPrice().longValue(),
                             saved.getCurrency(),
                             saved.getIsActive(),
-                            saved.getLicensePlanId() != null ? saved.getLicensePlanId().toString() : null,
                             saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
                     ));
                 })
@@ -690,8 +682,8 @@ public class AdminController {
     public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
     public record ProductResponse(String code, String name, String description, Boolean isActive, String createdAt) {}
     public record ProductRequest(String code, String name, String description, Boolean isActive) {}
-    public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String licensePlanId, String createdAt) {}
-    public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive, String licensePlanId) {}
+    public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String createdAt) {}
+    public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive) {}
     public record LicenseResponse(String id, String licenseKey, String ownerType, String ownerId, String status, String validUntil, String createdAt) {}
     public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt) {}
     public record RoleUpdateRequest(String rolesCode) {}
