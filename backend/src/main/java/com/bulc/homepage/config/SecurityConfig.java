@@ -1,6 +1,7 @@
 package com.bulc.homepage.config;
 
 import com.bulc.homepage.oauth2.CustomOAuth2UserService;
+import com.bulc.homepage.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.bulc.homepage.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.bulc.homepage.oauth2.OAuth2AuthenticationFailureHandler;
 import com.bulc.homepage.security.JwtAuthenticationFilter;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     /**
      * OAuth 2.0 엔드포인트용 SecurityFilterChain.
@@ -98,6 +100,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/api/auth/oauth2/authorize")
+                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
                         )
                         .redirectionEndpoint(redirection -> redirection
                                 .baseUri("/api/auth/oauth2/callback/*")

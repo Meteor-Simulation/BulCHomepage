@@ -52,6 +52,9 @@ services:
       # OAuth2 Configuration
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      OAUTH2_CALLBACK_BASE_URL: ${OAUTH2_CALLBACK_BASE_URL:-http://localhost:8080}
       OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

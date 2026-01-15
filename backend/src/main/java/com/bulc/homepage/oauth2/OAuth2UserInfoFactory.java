@@ -8,8 +8,7 @@ public class OAuth2UserInfoFactory {
         if (registrationId.equalsIgnoreCase("naver")) {
             return new NaverOAuth2UserInfo(attributes);
         } else if (registrationId.equalsIgnoreCase("kakao")) {
-            // TODO: KakaoOAuth2UserInfo 구현 후 추가
-            throw new IllegalArgumentException("카카오 로그인은 아직 지원하지 않습니다.");
+            return new KakaoOAuth2UserInfo(attributes);
         } else if (registrationId.equalsIgnoreCase("google")) {
             // TODO: GoogleOAuth2UserInfo 구현 후 추가
             throw new IllegalArgumentException("구글 로그인은 아직 지원하지 않습니다.");
