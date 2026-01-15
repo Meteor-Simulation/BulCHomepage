@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
+import { API_URL } from '../../utils/api';
 import './MyPage.css';
 
 interface UserInfo {
@@ -67,10 +68,6 @@ const LANGUAGES = [
   { code: 'ko', name: '한국어' },
   { code: 'en', name: 'English' },
 ];
-
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -307,6 +304,9 @@ const MyPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setUserInfo(data);
+        // 언어 저장 (로컬)
+        setSelectedLanguage(tempLanguage);
+        localStorage.setItem('language', tempLanguage);
         setIsEditingProfile(false);
         showSuccess('프로필이 저장되었습니다.');
       } else {
@@ -317,20 +317,19 @@ const MyPage: React.FC = () => {
     }
   };
 
-  // 설정 편집 시작
+  // 설정 편집 시작 (결제 통화)
   const handleStartEditSettings = () => {
     setTempCountry(selectedCountry);
-    setTempLanguage(selectedLanguage);
     setIsEditingSettings(true);
   };
 
-  // 설정 저장
+  // 설정 저장 (결제 통화)
   const handleSaveSettings = async () => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
 
     try {
-      // 국가 저장 (서버)
+      // 국가/통화 저장 (서버)
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
         headers: {
@@ -348,13 +347,8 @@ const MyPage: React.FC = () => {
         const data = await response.json();
         setUserInfo(data);
         setSelectedCountry(tempCountry);
-
-        // 언어 저장 (로컬)
-        setSelectedLanguage(tempLanguage);
-        localStorage.setItem('language', tempLanguage);
-
         setIsEditingSettings(false);
-        showSuccess('설정이 저장되었습니다.');
+        showSuccess('결제 통화가 저장되었습니다.');
       } else {
         showError('설정 저장에 실패했습니다.');
       }
@@ -363,10 +357,9 @@ const MyPage: React.FC = () => {
     }
   };
 
-  // 설정 취소
+  // 설정 취소 (결제 통화)
   const handleCancelSettings = () => {
     setTempCountry(selectedCountry);
-    setTempLanguage(selectedLanguage);
     setIsEditingSettings(false);
   };
 
@@ -423,6 +416,7 @@ const MyPage: React.FC = () => {
   const handleCancelProfile = () => {
     setEditName(userInfo.name || '');
     setEditPhone(formatPhoneNumber(userInfo.phone) || '');
+    setTempLanguage(selectedLanguage);
     setIsEditingProfile(false);
   };
 
@@ -833,6 +827,21 @@ const MyPage: React.FC = () => {
                       maxLength={13}
                     />
                   </div>
+                  <div className="form-group">
+                    <label>언어</label>
+                    <div className="language-options">
+                      {LANGUAGES.map((lang) => (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          className={`language-btn ${tempLanguage === lang.code ? 'active' : ''}`}
+                          onClick={() => setTempLanguage(lang.code)}
+                        >
+                          {lang.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="form-actions">
                     <button className="save-btn" onClick={handleSaveProfile}>저장</button>
                     <button className="cancel-btn" onClick={handleCancelProfile}>취소</button>
@@ -851,6 +860,12 @@ const MyPage: React.FC = () => {
                   <div className="info-row">
                     <span className="info-label">전화번호</span>
                     <span className="info-value">{formatPhoneNumber(userInfo.phone) || '-'}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">언어</span>
+                    <span className="info-value">
+                      {LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage}
+                    </span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">비밀번호</span>
@@ -968,91 +983,6 @@ const MyPage: React.FC = () => {
                   </div>
                 </div>
               )}
-          </div>
-
-          {/* 계정 정보 (언어/국가) */}
-          <div className="info-card">
-            <div className="card-header">
-              <h2 className="card-title">계정 정보</h2>
-              {!isEditingSettings && (
-                <button className="edit-btn" onClick={handleStartEditSettings}>
-                  수정
-                </button>
-              )}
-            </div>
-
-            {isEditingSettings ? (
-              <div className="edit-form">
-                <div className="form-group">
-                  <label>언어</label>
-                  <div className="language-options">
-                    {LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.code}
-                        type="button"
-                        className={`language-btn ${tempLanguage === lang.code ? 'active' : ''}`}
-                        onClick={() => setTempLanguage(lang.code)}
-                      >
-                        {lang.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>국가</label>
-                  <div className="input-wrapper">
-                    <select
-                      value={tempCountry}
-                      onChange={(e) => setTempCountry(e.target.value)}
-                      className="country-dropdown"
-                    >
-                      {COUNTRIES.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="helper-text">
-                      적용 통화: {COUNTRIES.find(c => c.code === tempCountry)?.name} - {COUNTRIES.find(c => c.code === tempCountry)?.currency}
-                    </span>
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button className="save-btn" onClick={handleSaveSettings}>저장</button>
-                  <button className="cancel-btn" onClick={handleCancelSettings}>취소</button>
-                </div>
-              </div>
-            ) : (
-              <div className="info-list">
-                <div className="info-row">
-                  <span className="info-label">언어</span>
-                  <span className="info-value">
-                    {LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">국가(결제통화)</span>
-                  <span className="info-value">
-                    {COUNTRIES.find(c => c.code === selectedCountry)?.name || selectedCountry}
-                    ({COUNTRIES.find(c => c.code === selectedCountry)?.currency || 'KRW'})
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* 계정 삭제 섹션 */}
-            <div className="delete-account-section">
-              <div className="delete-account-info">
-                <span className="delete-label">계정 삭제</span>
-                <span className="delete-description">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</span>
-              </div>
-              <button
-                className="delete-account-btn"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                계정 삭제
-              </button>
-            </div>
           </div>
 
           {/* 라이선스 정보 */}
@@ -1263,7 +1193,49 @@ const MyPage: React.FC = () => {
           <div className="info-card payment-methods-card">
             <div className="card-header">
               <h2 className="card-title">결제 수단</h2>
+              {!isEditingSettings && (
+                <button className="edit-btn" onClick={handleStartEditSettings}>
+                  수정
+                </button>
+              )}
             </div>
+
+            {/* 결제 통화 설정 */}
+            {isEditingSettings ? (
+              <div className="edit-form currency-edit-form">
+                <div className="form-group">
+                  <label>결제 국가/통화</label>
+                  <div className="input-wrapper">
+                    <select
+                      value={tempCountry}
+                      onChange={(e) => setTempCountry(e.target.value)}
+                      className="country-dropdown"
+                    >
+                      {COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name} ({country.currency})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button className="save-btn" onClick={handleSaveSettings}>저장</button>
+                  <button className="cancel-btn" onClick={handleCancelSettings}>취소</button>
+                </div>
+              </div>
+            ) : (
+              <div className="currency-info-section">
+                <div className="info-row">
+                  <span className="info-label">결제 국가/통화</span>
+                  <span className="info-value">
+                    {COUNTRIES.find(c => c.code === selectedCountry)?.name || selectedCountry}
+                    ({COUNTRIES.find(c => c.code === selectedCountry)?.currency || 'KRW'})
+                  </span>
+                </div>
+              </div>
+            )}
+
             {isLoadingBillingKeys ? (
               <div className="loading-text">결제 수단을 불러오는 중...</div>
             ) : billingKeys.length === 0 ? (
@@ -1396,6 +1368,22 @@ const MyPage: React.FC = () => {
               )}
             </div>
           )}
+
+          {/* 계정 삭제 */}
+          <div className="info-card delete-account-card">
+            <div className="delete-account-section">
+              <div className="delete-account-info">
+                <span className="delete-label">계정 삭제</span>
+                <span className="delete-description">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</span>
+              </div>
+              <button
+                className="delete-account-btn"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                계정 삭제
+              </button>
+            </div>
+          </div>
 
           {/* 로그아웃 */}
           <div className="info-card logout-card">

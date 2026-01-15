@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { getApiBaseUrl } from '../utils/api';
 
 interface User {
   id: string;
@@ -33,13 +34,6 @@ const getTokenExpiration = (token: string): number | null => {
   } catch {
     return null;
   }
-};
-
-// API Base URL 가져오기
-const getApiBaseUrl = () => {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080'
-    : `http://${window.location.hostname}:8080`;
 };
 
 export const useAuth = () => {

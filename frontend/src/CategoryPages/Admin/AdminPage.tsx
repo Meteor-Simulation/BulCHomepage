@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
 import { formatPhoneNumber } from '../../utils/phoneUtils';
+import { API_URL } from '../../utils/api';
 import './AdminPage.css';
 
 interface User {
@@ -88,10 +89,6 @@ interface Promotion {
 type TabType = 'users' | 'licenses' | 'payments' | 'products' | 'promotions';
 
 const ITEMS_PER_PAGE = 10;
-
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();

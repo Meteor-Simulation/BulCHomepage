@@ -862,15 +862,38 @@
 }
 
 /* ========================================
+   결제 통화 섹션
+======================================== */
+.currency-info-section {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.currency-info-section .info-row {
+  padding: 0;
+}
+
+.currency-edit-form {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ========================================
+   계정 삭제 카드
+======================================== */
+.delete-account-card {
+  background: #fff;
+}
+
+/* ========================================
    계정 삭제 섹션
 ======================================== */
 .delete-account-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 0 0;
-  margin-top: 20px;
-  border-top: 1px solid #eee;
 }
 
 .delete-account-info {

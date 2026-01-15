@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getApiBaseUrl } from '../utils/api';
 import './OAuthSetupPassword.css';
-
-const getApiUrl = () => {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080'
-    : `http://${window.location.hostname}:8080`;
-};
 
 const OAuthSetupPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -65,7 +60,7 @@ const OAuthSetupPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/oauth/signup`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/oauth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

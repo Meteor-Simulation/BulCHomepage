@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
+import { getApiBaseUrl } from '../utils/api';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -121,13 +122,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     if (e.target === e.currentTarget) {
       onClose();
     }
-  };
-
-  // API Base URL
-  const getApiBaseUrl = () => {
-    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8080'
-      : `http://${window.location.hostname}:8080`;
   };
 
   // 이메일 중복 체크

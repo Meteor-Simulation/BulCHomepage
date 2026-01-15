@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 import './LoginModal.css';
 
 // 로그인 성공 시 히스토리 정리 (뒤로가기 방지)
@@ -14,10 +15,6 @@ interface LoginModalProps {
   onSwitchToSignup?: () => void;
   onSuccess?: () => void;
 }
-
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
 
 type PasswordResetStep = 'email' | 'code' | 'newPassword' | 'success';
 
@@ -509,7 +506,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
                 <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" fill="currentColor"/>
               </svg>
             </button>
-            <button type="button" className="social-btn kakao" onClick={() => handleSocialLogin('kakao')} disabled>
+            <button type="button" className="social-btn kakao" onClick={() => handleSocialLogin('kakao')}>
               <svg viewBox="0 0 24 24" className="social-icon">
                 <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.722 1.8 5.108 4.5 6.454-.18.67-.65 2.428-.745 2.805-.118.47.172.463.362.337.15-.1 2.378-1.612 3.34-2.265.51.071 1.03.108 1.543.108 5.523 0 10-3.463 10-7.691S17.523 3 12 3z" fill="currentColor"/>
               </svg>

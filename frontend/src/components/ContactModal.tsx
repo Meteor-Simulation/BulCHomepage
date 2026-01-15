@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 import './ContactModal.css';
 
 interface ContactModalProps {
@@ -7,10 +8,6 @@ interface ContactModalProps {
   onClose: () => void;
   category?: string;
 }
-
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
 
 const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category = 'METEOR' }) => {
   const { user } = useAuth();
