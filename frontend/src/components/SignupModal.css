@@ -1,7 +1,8 @@
 /* ========================================
    SIGNUP MODAL - 회원가입 모달 스타일
-   LoginModal.css를 상속하여 추가 스타일 정의
+   공통 모달 스타일은 modal.css에서 import
 ======================================== */
+@import '../styles/modal.css';
 
 /* 회원가입 모달 특화 스타일 */
 .signup-modal {
@@ -33,7 +34,7 @@
 }
 
 /* ========================================
-   INPUT WRAPPER (placeholder style)
+   INPUT WRAPPER
 ======================================== */
 .input-wrapper {
   position: relative;
@@ -104,7 +105,7 @@
 }
 
 /* ========================================
-   INPUT HINT (비밀번호 조건 등)
+   INPUT HINT
 ======================================== */
 .input-hint {
   font-size: 12px;
@@ -113,7 +114,7 @@
 }
 
 /* ========================================
-   INPUT VALIDATION ERROR (동적 유효성 검사 메시지)
+   INPUT VALIDATION ERROR
 ======================================== */
 .input-validation-error {
   font-size: 12px;
@@ -122,7 +123,7 @@
 }
 
 /* ========================================
-   MODAL LOGIN LINK (로그인 전환 링크)
+   MODAL LOGIN LINK
 ======================================== */
 .modal-login {
   margin-top: 24px;
@@ -184,15 +185,6 @@
 .email-check-status.exists,
 .email-check-status.error {
   color: #dc2626;
-}
-
-/* Input 상태별 스타일 */
-.modal-input.input-error {
-  border-color: #dc2626 !important;
-}
-
-.modal-input.input-success {
-  border-color: #16a34a !important;
 }
 
 /* 메시지 스타일 */

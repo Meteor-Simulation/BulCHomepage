@@ -19,10 +19,12 @@ DROP TABLE IF EXISTS admin_logs CASCADE;
 DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
+DROP TABLE IF EXISTS password_reset_tokens CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS payment_details CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS promotions CASCADE;
 DROP TABLE IF EXISTS price_plans CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS user_social_accounts CASCADE;
@@ -104,15 +106,15 @@ COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 -- 기본 계정 (비밀번호: meteor2025!)
 -- 관리자 계정
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('meteor@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '메테오'),
-    ('simul@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '000', '김지태');
+    ('meteor@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '메테오'),
+    ('simul@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '김지태');
 
 -- 매니저 계정
 INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('juwon@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '강주원'),
-    ('kjh@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '김자현'),
-    ('lapalce@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '황지인'),
-    ('qogkstj02@msimul.com', '$2b$12$1x4PlrXy7ziLi2fjit3N.OWXsTH6Pl.aBNLkQd9UudCUE6icPuwTy', '001', '배한서');
+    ('juwon@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '강주원'),
+    ('kjh4387@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '김자현'),
+    ('laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
+    ('qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
 
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)
@@ -148,6 +150,22 @@ CREATE TABLE email_verifications (
 
 COMMENT ON TABLE email_verifications IS '이메일 인증 테이블 - 인증 코드 관리';
 COMMENT ON COLUMN email_verifications.email IS '인증할 이메일 (UNIQUE - 이메일당 1개 코드)';
+
+-- =========================================================
+-- 3-1. password_reset_tokens (비밀번호 재설정 토큰 테이블)
+-- =========================================================
+CREATE TABLE password_reset_tokens (
+    id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    email               VARCHAR(255) NOT NULL UNIQUE,
+    reset_code          VARCHAR(6) NOT NULL,
+    expires_at          TIMESTAMP NOT NULL,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE password_reset_tokens IS '비밀번호 재설정 토큰 테이블 - 비밀번호 재설정 인증 코드 관리';
+COMMENT ON COLUMN password_reset_tokens.email IS '재설정할 계정 이메일 (UNIQUE - 이메일당 1개 코드)';
+COMMENT ON COLUMN password_reset_tokens.reset_code IS '6자리 영숫자 인증 코드';
+COMMENT ON COLUMN password_reset_tokens.expires_at IS '코드 만료 시간 (기본 10분)';
 
 -- =========================================================
 -- 4. products (상품 종류 테이블)
@@ -196,27 +214,127 @@ INSERT INTO price_plans (product_code, name, description, price, currency) VALUE
     ('001', 'BUL:C 3D Premium', '1년/365일', 3500, 'USD');
 
 -- =========================================================
+-- 5-2. promotions (프로모션/쿠폰 테이블)
+-- =========================================================
+CREATE TABLE promotions (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    code            VARCHAR(50) NOT NULL UNIQUE,
+    name            VARCHAR(100) NOT NULL,
+    discount_type   INTEGER NOT NULL,
+    discount_value  DECIMAL(18,2) NOT NULL,
+    product_code    VARCHAR(3) NULL,
+    usage_limit     INTEGER NULL,
+    usage_count     INTEGER NOT NULL DEFAULT 0,
+    valid_from      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valid_until     TIMESTAMP NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_promotions_product FOREIGN KEY (product_code) REFERENCES products(code)
+);
+
+COMMENT ON TABLE promotions IS '프로모션/쿠폰 테이블 - 할인 쿠폰 및 프로모션 관리';
+COMMENT ON COLUMN promotions.code IS '프로모션 코드 (사용자 입력용)';
+COMMENT ON COLUMN promotions.discount_type IS '할인 유형 (퍼센트 값, 예: 10 = 10% 할인)';
+COMMENT ON COLUMN promotions.discount_value IS '할인 값';
+COMMENT ON COLUMN promotions.product_code IS '특정 상품에만 적용 (NULL이면 전체 상품)';
+COMMENT ON COLUMN promotions.usage_limit IS '사용 횟수 제한 (NULL이면 무제한)';
+COMMENT ON COLUMN promotions.usage_count IS '현재까지 사용된 횟수';
+
+-- =========================================================
 -- 6. subscriptions (유저 구독 관리 테이블)
 -- =========================================================
 CREATE TABLE subscriptions (
-    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NULL,
-    product_code    VARCHAR(3) NOT NULL,
-    price_plan_id   BIGINT NOT NULL,
-    status          VARCHAR(1) NOT NULL DEFAULT 'A',
-    start_date      TIMESTAMP NOT NULL,
-    end_date        TIMESTAMP NOT NULL,
-    auto_renew      BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_email          VARCHAR(255) NULL,
+    product_code        VARCHAR(3) NOT NULL,
+    price_plan_id       BIGINT NOT NULL,
+    status              VARCHAR(1) NOT NULL DEFAULT 'A',
+    start_date          TIMESTAMP NOT NULL,
+    end_date            TIMESTAMP NOT NULL,
+    auto_renew          BOOLEAN NOT NULL DEFAULT FALSE,
+    billing_key_id      BIGINT NULL,
+    next_billing_date   TIMESTAMP NULL,
+    billing_cycle       VARCHAR(20) NULL DEFAULT 'YEARLY',
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_email) REFERENCES users(email),
     CONSTRAINT fk_subscriptions_product FOREIGN KEY (product_code) REFERENCES products(code),
     CONSTRAINT fk_subscriptions_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
+    -- fk_subscriptions_billing_key는 billing_keys 테이블 생성 후 ALTER TABLE로 추가됨
 );
 
 COMMENT ON TABLE subscriptions IS '유저 구독 관리 테이블 - 사용자의 구독 현황';
 COMMENT ON COLUMN subscriptions.status IS 'A: 활성(Active), E: 만료(Expired), C: 취소(Canceled)';
+COMMENT ON COLUMN subscriptions.billing_key_id IS '자동결제에 사용할 빌링키 ID';
+COMMENT ON COLUMN subscriptions.next_billing_date IS '다음 결제 예정일';
+COMMENT ON COLUMN subscriptions.billing_cycle IS 'MONTHLY, QUARTERLY, YEARLY';
+
+-- =========================================================
+-- 6-1. billing_keys (빌링키 테이블 - 자동결제용 카드 정보)
+-- =========================================================
+CREATE TABLE billing_keys (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_email      VARCHAR(255) NOT NULL,
+    billing_key     VARCHAR(255) NOT NULL,
+    customer_key    VARCHAR(255) NOT NULL,
+    card_company    VARCHAR(50) NULL,
+    card_number     VARCHAR(20) NULL,
+    card_type       VARCHAR(20) NULL,
+    owner_type      VARCHAR(20) NULL,
+    is_default      BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_billing_keys_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE billing_keys IS '빌링키 테이블 - 자동결제용 카드 정보 저장';
+COMMENT ON COLUMN billing_keys.billing_key IS '토스페이먼츠 빌링키';
+COMMENT ON COLUMN billing_keys.customer_key IS '고객 식별키 (UUID)';
+COMMENT ON COLUMN billing_keys.card_company IS '카드사명';
+COMMENT ON COLUMN billing_keys.card_number IS '마스킹된 카드번호 (앞6자리****뒤4자리)';
+COMMENT ON COLUMN billing_keys.is_default IS '기본 결제 수단 여부';
+
+CREATE INDEX idx_billing_keys_user_email ON billing_keys(user_email);
+CREATE INDEX idx_billing_keys_is_active ON billing_keys(is_active);
+
+-- subscriptions 테이블에 billing_keys 외래키 추가
+ALTER TABLE subscriptions ADD CONSTRAINT fk_subscriptions_billing_key
+    FOREIGN KEY (billing_key_id) REFERENCES billing_keys(id);
+
+-- =========================================================
+-- 6-2. subscription_payments (구독 결제 이력)
+-- =========================================================
+CREATE TABLE subscription_payments (
+    id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    subscription_id     BIGINT NOT NULL,
+    billing_key_id      BIGINT NULL,
+    payment_key         VARCHAR(255) NULL,
+    order_id            VARCHAR(255) NOT NULL,
+    amount              DECIMAL(15, 2) NOT NULL,
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    billing_date        DATE NOT NULL,
+    paid_at             TIMESTAMP NULL,
+    failure_reason      TEXT NULL,
+    retry_count         INT NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_subscription_payments_subscription FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
+    CONSTRAINT fk_subscription_payments_billing_key FOREIGN KEY (billing_key_id) REFERENCES billing_keys(id)
+);
+
+COMMENT ON TABLE subscription_payments IS '구독 결제 이력 테이블';
+COMMENT ON COLUMN subscription_payments.status IS 'PENDING, SUCCESS, FAILED, CANCELED';
+COMMENT ON COLUMN subscription_payments.retry_count IS '결제 재시도 횟수';
+
+CREATE INDEX idx_subscription_payments_subscription_id ON subscription_payments(subscription_id);
+CREATE INDEX idx_subscription_payments_billing_date ON subscription_payments(billing_date);
+CREATE INDEX idx_subscription_payments_status ON subscription_payments(status);
 
 -- =========================================================
 -- 7. payments (결제 테이블)
@@ -488,12 +606,23 @@ CREATE INDEX idx_users_roles_code ON users(roles_code);
 CREATE INDEX idx_email_verifications_email ON email_verifications(email);
 CREATE INDEX idx_email_verifications_expires_at ON email_verifications(expires_at);
 
+-- password_reset_tokens
+CREATE INDEX idx_password_reset_tokens_email ON password_reset_tokens(email);
+CREATE INDEX idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
+
 -- products (code가 PK이므로 별도 인덱스 불필요)
 CREATE INDEX idx_products_is_active ON products(is_active);
 
 -- price_plans
 CREATE INDEX idx_price_plans_product_code ON price_plans(product_code);
 CREATE INDEX idx_price_plans_is_active ON price_plans(is_active);
+
+-- promotions
+CREATE INDEX idx_promotions_code ON promotions(code);
+CREATE INDEX idx_promotions_product_code ON promotions(product_code);
+CREATE INDEX idx_promotions_is_active ON promotions(is_active);
+CREATE INDEX idx_promotions_valid_from ON promotions(valid_from);
+CREATE INDEX idx_promotions_valid_until ON promotions(valid_until);
 
 -- subscriptions
 CREATE INDEX idx_subscriptions_user_email ON subscriptions(user_email);
@@ -570,6 +699,9 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_price_plans_updated_at BEFORE UPDATE ON price_plans
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_promotions_updated_at BEFORE UPDATE ON promotions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions

@@ -4,19 +4,12 @@ import { loadTossPayments, TossPaymentsInstance } from '@tosspayments/payment-sd
 import { useAuth } from '../../context/AuthContext';
 import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
+import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import './Payment.css';
 
 // 토스페이먼츠 클라이언트 키
 const TOSS_CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
-
-// API URL - 동적으로 현재 호스트에 맞게 설정
-const getApiUrl = () => {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080'
-    : `http://${window.location.hostname}:8080`;
-};
-const API_URL = getApiUrl();
 
 // 상품 타입
 interface Product {

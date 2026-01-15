@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 import './LoginModal.css';
 
 // 로그인 성공 시 히스토리 정리 (뒤로가기 방지)
@@ -15,9 +16,7 @@ interface LoginModalProps {
   onSuccess?: () => void;
 }
 
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
+type PasswordResetStep = 'email' | 'code' | 'newPassword' | 'success';
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess }) => {
   const { login } = useAuth();
@@ -27,6 +26,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 비밀번호 찾기 상태
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [resetStep, setResetStep] = useState<PasswordResetStep>('email');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // 모달 열릴 때 상태 초기화
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +44,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
       setShowPassword(false);
       setError('');
       setIsLoading(false);
+      setIsPasswordReset(false);
+      setResetStep('email');
+      setResetEmail('');
+      setResetCode('');
+      setNewPassword('');
+      setConfirmPassword('');
     }
   }, [isOpen]);
 
@@ -109,8 +124,312 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
     }
   };
 
+  // 비밀번호 찾기 - 이메일 입력 후 코드 발송
+  const handleRequestResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!resetEmail.trim()) {
+      setError('이메일을 입력해주세요.');
+      return;
+    }
+    if (!emailRegex.test(resetEmail)) {
+      setError('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/password/reset-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResetStep('code');
+        setError('');
+      } else {
+        setError(data.message || '인증 코드 발송에 실패했습니다.');
+      }
+    } catch {
+      setError('인증 코드 발송 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 비밀번호 찾기 - 코드 확인
+  const handleVerifyResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!resetCode.trim()) {
+      setError('인증 코드를 입력해주세요.');
+      return;
+    }
+    if (resetCode.length !== 6) {
+      setError('인증 코드는 6자리입니다.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/password/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail, code: resetCode }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResetStep('newPassword');
+        setError('');
+      } else {
+        setError(data.message || '인증 코드가 올바르지 않습니다.');
+      }
+    } catch {
+      setError('인증 코드 확인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 비밀번호 찾기 - 새 비밀번호 설정
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!newPassword) {
+      setError('새 비밀번호를 입력해주세요.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('비밀번호는 최소 8자 이상이어야 합니다.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/password/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetEmail,
+          code: resetCode,
+          newPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResetStep('success');
+        setError('');
+      } else {
+        setError(data.message || '비밀번호 재설정에 실패했습니다.');
+      }
+    } catch {
+      setError('비밀번호 재설정 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 비밀번호 찾기 모드에서 로그인으로 돌아가기
+  const handleBackToLogin = () => {
+    setIsPasswordReset(false);
+    setResetStep('email');
+    setResetEmail('');
+    setResetCode('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError('');
+  };
+
   if (!isOpen) return null;
 
+  // 비밀번호 찾기 화면 렌더링
+  if (isPasswordReset) {
+    return (
+      <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
+        <div className="modal-content">
+          <button className="modal-close-btn" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <h2 className="modal-title">비밀번호 찾기</h2>
+
+          {resetStep === 'email' && (
+            <form className="modal-form" onSubmit={handleRequestResetCode}>
+              <p className="modal-description">
+                가입하신 이메일을 입력해주세요.<br />
+                비밀번호 재설정 코드를 보내드립니다.
+              </p>
+              <input
+                type="email"
+                placeholder="이메일"
+                className="modal-input"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                disabled={isLoading}
+                autoFocus
+              />
+              {error && <p className="modal-error">{error}</p>}
+              <button type="submit" className="modal-submit-btn" disabled={isLoading}>
+                {isLoading ? '발송 중...' : '인증 코드 발송'}
+              </button>
+            </form>
+          )}
+
+          {resetStep === 'code' && (
+            <form className="modal-form" onSubmit={handleVerifyResetCode}>
+              <p className="modal-description">
+                <strong>{resetEmail}</strong>으로<br />
+                인증 코드를 발송했습니다.
+              </p>
+              <input
+                type="text"
+                placeholder="인증 코드 6자리"
+                className="modal-input"
+                value={resetCode}
+                onChange={(e) => setResetCode(e.target.value)}
+                disabled={isLoading}
+                maxLength={6}
+                autoFocus
+              />
+              {error && <p className="modal-error">{error}</p>}
+              <button type="submit" className="modal-submit-btn" disabled={isLoading}>
+                {isLoading ? '확인 중...' : '코드 확인'}
+              </button>
+              <button
+                type="button"
+                className="modal-secondary-btn"
+                onClick={() => setResetStep('email')}
+                disabled={isLoading}
+              >
+                이메일 다시 입력
+              </button>
+            </form>
+          )}
+
+          {resetStep === 'newPassword' && (
+            <form className="modal-form" onSubmit={handleResetPassword}>
+              <p className="modal-description">
+                새로운 비밀번호를 입력해주세요.
+              </p>
+              <div className="password-input-wrapper">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="새 비밀번호 (8자 이상)"
+                  className="modal-input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isLoading}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <div className="password-input-wrapper">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="새 비밀번호 확인"
+                  className="modal-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {error && <p className="modal-error">{error}</p>}
+              <button type="submit" className="modal-submit-btn" disabled={isLoading}>
+                {isLoading ? '변경 중...' : '비밀번호 변경'}
+              </button>
+            </form>
+          )}
+
+          {resetStep === 'success' && (
+            <div className="modal-form">
+              <div className="modal-success">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="success-icon">
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M22 4L12 14.01l-3-3" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <p className="modal-description">
+                  비밀번호가 성공적으로 변경되었습니다.<br />
+                  새 비밀번호로 로그인해주세요.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="modal-submit-btn"
+                onClick={handleBackToLogin}
+              >
+                로그인하기
+              </button>
+            </div>
+          )}
+
+          {resetStep !== 'success' && (
+            <div className="modal-back-to-login">
+              <button type="button" className="modal-back-link" onClick={handleBackToLogin}>
+                로그인으로 돌아가기
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 기본 로그인 화면 렌더링
   return (
     <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
       <div className="modal-content">
@@ -166,7 +485,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         </form>
 
         <div className="modal-forgot-password">
-          <button type="button" className="modal-forgot-link">
+          <button
+            type="button"
+            className="modal-forgot-link"
+            onClick={() => setIsPasswordReset(true)}
+          >
             비밀번호를 잊으셨나요?
           </button>
         </div>
@@ -183,7 +506,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
                 <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" fill="currentColor"/>
               </svg>
             </button>
-            <button type="button" className="social-btn kakao" onClick={() => handleSocialLogin('kakao')} disabled>
+            <button type="button" className="social-btn kakao" onClick={() => handleSocialLogin('kakao')}>
               <svg viewBox="0 0 24 24" className="social-icon">
                 <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.722 1.8 5.108 4.5 6.454-.18.67-.65 2.428-.745 2.805-.118.47.172.463.362.337.15-.1 2.378-1.612 3.34-2.265.51.071 1.03.108 1.543.108 5.523 0 10-3.463 10-7.691S17.523 3 12 3z" fill="currentColor"/>
               </svg>

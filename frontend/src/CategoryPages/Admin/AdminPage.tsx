@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
 import { formatPhoneNumber } from '../../utils/phoneUtils';
+import { API_URL } from '../../utils/api';
 import './AdminPage.css';
 
 interface User {
@@ -43,18 +44,6 @@ interface License {
   status: string;
   validUntil: string;
   createdAt: string;
-}
-
-interface LicensePlan {
-  id: string;
-  productId: string;
-  code: string;
-  name: string;
-  description: string;
-  licenseType: string;
-  durationDays: number;
-  maxActivations: number;
-  active: boolean;
 }
 
 interface Payment {
@@ -100,10 +89,6 @@ interface Promotion {
 type TabType = 'users' | 'licenses' | 'payments' | 'products' | 'promotions';
 
 const ITEMS_PER_PAGE = 10;
-
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080'
-  : `http://${window.location.hostname}:8080`;
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -162,21 +147,6 @@ const AdminPage: React.FC = () => {
     licensePlanId: '',
     isActive: true,
   });
-
-  // 라이선스 발급 모달 상태
-  const [licensePlans, setLicensePlans] = useState<LicensePlan[]>([]);
-  const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
-  const [licenseForm, setLicenseForm] = useState({
-    userId: '',
-    planId: '',
-    memo: '',
-  });
-  const [licenseIssueResult, setLicenseIssueResult] = useState<{
-    success: boolean;
-    licenseKey?: string;
-    message?: string;
-  } | null>(null);
-  const [isIssuingLicense, setIsIssuingLicense] = useState(false);
 
   // 사용자 권한 수정 모달 상태
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -309,8 +279,6 @@ const AdminPage: React.FC = () => {
             break;
           case 'licenses':
             await fetchLicenses(token);
-            await fetchUsers(token);  // 라이선스 발급 시 사용자 선택용
-            await fetchLicensePlans(token);  // 라이선스 발급 시 플랜 선택용
             break;
           case 'payments':
             await fetchPayments(token);
@@ -318,7 +286,6 @@ const AdminPage: React.FC = () => {
           case 'products':
             await fetchProducts(token);
             await fetchPricePlans(token);
-            await fetchLicensePlans(token);  // 요금제에 라이선스 플랜 연결용
             break;
           case 'promotions':
             await fetchPromotions(token);
@@ -375,6 +342,72 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // 라이선스 활성화
+  const handleActivateLicense = async (licenseId: string) => {
+    if (!window.confirm('이 라이선스를 활성화하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/activate`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        await fetchLicenses(token);
+        alert('라이선스가 활성화되었습니다.');
+      } else {
+        try {
+          const error = await response.json();
+          alert(error.message || '활성화에 실패했습니다.');
+        } catch {
+          alert(`활성화에 실패했습니다. (HTTP ${response.status})`);
+        }
+      }
+    } catch (error) {
+      console.error('라이선스 활성화 실패:', error);
+      alert('활성화 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 라이선스 비활성화
+  const handleSuspendLicense = async (licenseId: string) => {
+    if (!window.confirm('이 라이선스를 비활성화하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/suspend`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        await fetchLicenses(token);
+        alert('라이선스가 비활성화되었습니다.');
+      } else {
+        try {
+          const error = await response.json();
+          alert(error.message || '비활성화에 실패했습니다.');
+        } catch {
+          alert(`비활성화에 실패했습니다. (HTTP ${response.status})`);
+        }
+      }
+    } catch (error) {
+      console.error('라이선스 비활성화 실패:', error);
+      alert('비활성화 중 오류가 발생했습니다.');
+    }
+  };
+
   const fetchPayments = async (token: string) => {
     const response = await fetch(`${API_URL}/api/admin/payments`, {
       headers: { 'Authorization': `Bearer ${token}` },
@@ -392,17 +425,6 @@ const AdminPage: React.FC = () => {
     if (response.ok) {
       const data = await response.json();
       setPromotions(data);
-    }
-  };
-
-  const fetchLicensePlans = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/license-plans?activeOnly=true`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    if (response.ok) {
-      const data = await response.json();
-      // Page 응답에서 content 추출
-      setLicensePlans(data.content || data);
     }
   };
 
@@ -754,71 +776,6 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // 라이선스 발급 모달 함수들
-  const openLicenseModal = () => {
-    setLicenseForm({ userId: '', planId: '', memo: '' });
-    setLicenseIssueResult(null);
-    setIsLicenseModalOpen(true);
-  };
-
-  const closeLicenseModal = () => {
-    setIsLicenseModalOpen(false);
-    setLicenseIssueResult(null);
-  };
-
-  const handleLicenseIssue = async () => {
-    if (!licenseForm.userId || !licenseForm.planId) {
-      alert('사용자와 플랜을 선택해주세요.');
-      return;
-    }
-
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
-    setIsIssuingLicense(true);
-
-    try {
-      const response = await fetch(`${API_URL}/api/admin/licenses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: licenseForm.userId,
-          planId: licenseForm.planId,
-          usageCategory: 'COMMERCIAL',
-          memo: licenseForm.memo || null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setLicenseIssueResult({
-          success: true,
-          licenseKey: data.licenseKey,
-          message: data.message,
-        });
-        // 라이선스 목록 새로고침
-        await fetchLicenses(token);
-      } else {
-        setLicenseIssueResult({
-          success: false,
-          message: data.message || '라이선스 발급에 실패했습니다.',
-        });
-      }
-    } catch (error) {
-      console.error('라이선스 발급 실패:', error);
-      setLicenseIssueResult({
-        success: false,
-        message: '라이선스 발급 중 오류가 발생했습니다.',
-      });
-    } finally {
-      setIsIssuingLicense(false);
-    }
-  };
-
   // 사용자 권한 수정 모달 함수들
   const openRoleModal = (userToEdit: User) => {
     setEditingUser(userToEdit);
@@ -1166,16 +1123,9 @@ const AdminPage: React.FC = () => {
                     <SearchBar placeholder="라이선스 키, 소유자 ID, 상태로 검색" />
                     <div className="admin-section-header">
                       <h2>라이선스 목록</h2>
-                      <div className="admin-header-actions">
-                        <span className="admin-count">
-                          {appliedSearch ? `${filteredLicenses.length}개 / 전체 ${licenses.length}개` : `${licenses.length}개`}
-                        </span>
-                        {isSystemAdmin && (
-                          <button className="admin-add-btn" onClick={openLicenseModal}>
-                            + 라이선스 발급
-                          </button>
-                        )}
-                      </div>
+                      <span className="admin-count">
+                        {appliedSearch ? `${filteredLicenses.length}개 / 전체 ${licenses.length}개` : `${licenses.length}개`}
+                      </span>
                     </div>
                     <div className="admin-table-wrapper">
                       <table className="admin-table">
@@ -1184,10 +1134,11 @@ const AdminPage: React.FC = () => {
                             <th>ID</th>
                             <th>라이선스 키</th>
                             <th>소유자 유형</th>
-                            <th>소유자 ID</th>
+                            <th>소유자 이메일</th>
                             <th>상태</th>
                             <th>만료일</th>
                             <th>생성일</th>
+                            <th>관리</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1205,11 +1156,32 @@ const AdminPage: React.FC = () => {
                                 </td>
                                 <td>{formatDate(license.validUntil)}</td>
                                 <td>{formatDate(license.createdAt)}</td>
+                                <td>
+                                  <div className="action-buttons">
+                                    {license.status === 'ACTIVE' ? (
+                                      <button
+                                        className="action-btn delete"
+                                        onClick={() => handleSuspendLicense(license.id)}
+                                      >
+                                        비활성화
+                                      </button>
+                                    ) : license.status === 'SUSPENDED' ? (
+                                      <button
+                                        className="action-btn edit"
+                                        onClick={() => handleActivateLicense(license.id)}
+                                      >
+                                        활성화
+                                      </button>
+                                    ) : (
+                                      <span className="action-disabled">-</span>
+                                    )}
+                                  </div>
+                                </td>
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={7} className="empty-row">
+                              <td colSpan={8} className="empty-row">
                                 {appliedSearch ? '검색 결과가 없습니다.' : '등록된 라이선스가 없습니다.'}
                               </td>
                             </tr>
@@ -1425,7 +1397,6 @@ const AdminPage: React.FC = () => {
                               <th>요금제명</th>
                               <th>설명</th>
                               <th>가격</th>
-                              <th>라이선스 플랜</th>
                               <th>상태</th>
                               <th>생성일</th>
                               {canManagePromotions && <th>관리</th>}
@@ -1440,16 +1411,6 @@ const AdminPage: React.FC = () => {
                                   <td>{plan.name}</td>
                                   <td>{plan.description || '-'}</td>
                                   <td>{formatPrice(plan.price, plan.currency)}</td>
-                                  <td>
-                                    {plan.licensePlanId ? (
-                                      (() => {
-                                        const lp = licensePlans.find(p => p.id === plan.licensePlanId);
-                                        return lp ? `${lp.name}` : plan.licensePlanId;
-                                      })()
-                                    ) : (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
                                   <td>
                                     {canManagePromotions ? (
                                       <button
@@ -1487,7 +1448,7 @@ const AdminPage: React.FC = () => {
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={canManagePromotions ? 9 : 8} className="empty-row">
+                                <td colSpan={canManagePromotions ? 8 : 7} className="empty-row">
                                   {appliedSearch ? '검색 결과가 없습니다.' : '등록된 요금제가 없습니다.'}
                                 </td>
                               </tr>
@@ -1727,126 +1688,6 @@ const AdminPage: React.FC = () => {
         </div>
       )}
 
-      {/* 라이선스 발급 모달 */}
-      {isLicenseModalOpen && (
-        <div className="modal-overlay" onClick={closeLicenseModal}>
-          <div className="modal-content license-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>라이선스 수동 발급</h3>
-              <button className="modal-close-btn" onClick={closeLicenseModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              {licenseIssueResult ? (
-                // 발급 결과 표시
-                <div className={`issue-result ${licenseIssueResult.success ? 'success' : 'error'}`}>
-                  {licenseIssueResult.success ? (
-                    <>
-                      <div className="result-icon success">✓</div>
-                      <h4>라이선스가 발급되었습니다</h4>
-                      <div className="license-key-display">
-                        <label>라이선스 키</label>
-                        <div className="key-value">
-                          <code>{licenseIssueResult.licenseKey}</code>
-                          <button
-                            className="copy-btn"
-                            onClick={() => {
-                              navigator.clipboard.writeText(licenseIssueResult.licenseKey || '');
-                              alert('라이선스 키가 복사되었습니다.');
-                            }}
-                          >
-                            복사
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="result-icon error">✕</div>
-                      <h4>발급 실패</h4>
-                      <p className="error-message">{licenseIssueResult.message}</p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                // 발급 폼
-                <>
-                  <div className="form-group">
-                    <label>사용자 <span className="required">*</span></label>
-                    <select
-                      value={licenseForm.userId}
-                      onChange={(e) => setLicenseForm({ ...licenseForm, userId: e.target.value })}
-                    >
-                      <option value="">사용자를 선택하세요</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.email} {user.name ? `(${user.name})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>라이선스 플랜 <span className="required">*</span></label>
-                    <select
-                      value={licenseForm.planId}
-                      onChange={(e) => setLicenseForm({ ...licenseForm, planId: e.target.value })}
-                    >
-                      <option value="">플랜을 선택하세요</option>
-                      {licensePlans.map((plan) => (
-                        <option key={plan.id} value={plan.id}>
-                          {plan.name} ({plan.licenseType}, {plan.durationDays}일)
-                        </option>
-                      ))}
-                    </select>
-                    {licenseForm.planId && (
-                      <div className="plan-info">
-                        {(() => {
-                          const selectedPlan = licensePlans.find(p => p.id === licenseForm.planId);
-                          if (!selectedPlan) return null;
-                          return (
-                            <p>
-                              유형: {selectedPlan.licenseType === 'PERPETUAL' ? '영구' : '구독형'} |
-                              기간: {selectedPlan.durationDays}일 |
-                              최대 기기: {selectedPlan.maxActivations}대
-                            </p>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label>메모 (발급 사유)</label>
-                    <textarea
-                      value={licenseForm.memo}
-                      onChange={(e) => setLicenseForm({ ...licenseForm, memo: e.target.value })}
-                      placeholder="예: 프로모션 지급, 테스트 목적 등"
-                      rows={2}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="modal-footer">
-              {licenseIssueResult ? (
-                <button className="btn-submit" onClick={closeLicenseModal}>
-                  확인
-                </button>
-              ) : (
-                <>
-                  <button className="btn-cancel" onClick={closeLicenseModal}>취소</button>
-                  <button
-                    className="btn-submit"
-                    onClick={handleLicenseIssue}
-                    disabled={isIssuingLicense}
-                  >
-                    {isIssuingLicense ? '발급 중...' : '발급'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 사용자 권한 수정 모달 */}
       {isRoleModalOpen && editingUser && (
         <div className="modal-overlay" onClick={closeRoleModal}>
@@ -2038,21 +1879,6 @@ const AdminPage: React.FC = () => {
                     <option value="USD">USD ($)</option>
                   </select>
                 </div>
-              </div>
-              <div className="form-group">
-                <label>라이선스 플랜</label>
-                <select
-                  value={pricePlanForm.licensePlanId}
-                  onChange={(e) => setPricePlanForm({ ...pricePlanForm, licensePlanId: e.target.value })}
-                >
-                  <option value="">선택 안함 (라이선스 미발급)</option>
-                  {licensePlans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name} ({plan.licenseType === 'SUBSCRIPTION' ? '구독형' : plan.licenseType === 'PERPETUAL' ? '영구' : plan.licenseType}, {plan.durationDays}일, 최대 {plan.maxActivations}대)
-                    </option>
-                  ))}
-                </select>
-                <small>결제 완료 시 자동 발급될 라이선스 플랜을 선택하세요</small>
               </div>
               <div className="form-group checkbox-group">
                 <label>

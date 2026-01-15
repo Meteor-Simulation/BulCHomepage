@@ -1,6 +1,8 @@
 /* ========================================
    CONTACT MODAL - 문의하기 모달 스타일
+   공통 모달 스타일은 modal.css에서 import
 ======================================== */
+@import '../styles/modal.css';
 
 .contact-modal {
   max-width: 500px;

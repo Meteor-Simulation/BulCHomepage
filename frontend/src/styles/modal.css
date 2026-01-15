@@ -1,0 +1,327 @@
+/* ========================================
+   SHARED MODAL STYLES
+   공통 모달 스타일
+======================================== */
+
+/* ========================================
+   MODAL OVERLAY
+======================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   MODAL CONTENT
+======================================== */
+.modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   CLOSE BUTTON
+======================================== */
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-close-btn svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   MODAL TITLE
+======================================== */
+.modal-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ========================================
+   MODAL FORM
+======================================== */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-input {
+  padding: 14px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--text);
+  font-size: 15px;
+  font-family: var(--font-main);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modal-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
+}
+
+.modal-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Input 상태별 스타일 */
+.modal-input.input-error {
+  border-color: #dc2626 !important;
+}
+
+.modal-input.input-success {
+  border-color: #16a34a !important;
+}
+
+/* ========================================
+   MODAL ERROR MESSAGE
+======================================== */
+.modal-error {
+  color: #dc2626;
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+  padding: 8px;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 6px;
+}
+
+/* ========================================
+   MODAL SUBMIT BUTTON
+======================================== */
+.modal-submit-btn {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  margin-top: 4px;
+}
+
+.modal-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(196, 50, 10, 0.4);
+}
+
+.modal-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   SECONDARY BUTTON
+======================================== */
+.modal-secondary-btn {
+  padding: 12px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-secondary-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.modal-secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   PASSWORD INPUT WITH TOGGLE
+======================================== */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .modal-input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+/* Hide Edge's built-in password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover svg {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* ========================================
+   DIVIDER
+======================================== */
+.modal-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.modal-divider span {
+  padding: 0 16px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* ========================================
+   MODAL DESCRIPTION
+======================================== */
+.modal-description {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.modal-description strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ========================================
+   MODAL SUCCESS
+======================================== */
+.modal-success {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.modal-success .success-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE
+======================================== */
+@media (max-width: 480px) {
+  .modal-content {
+    margin: 20px;
+    padding: 30px 24px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+  }
+}

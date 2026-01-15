@@ -80,6 +80,15 @@ public class EmailService {
     }
 
     /**
+     * 비밀번호 재설정 코드 발송
+     */
+    public void sendPasswordResetEmail(String toEmail, String resetCode) {
+        String subject = "[BulC] 비밀번호 재설정 코드";
+        String content = buildPasswordResetEmailContent(resetCode);
+        sendEmail(mailFromAccounts, toEmail, subject, content);
+    }
+
+    /**
      * 결제 관련 이메일 발송
      */
     public void sendBillingEmail(String toEmail, String subject, String content) {
@@ -176,6 +185,59 @@ public class EmailService {
                         <div class="note">
                             * 인증 코드는 10분간 유효합니다.<br>
                             * 본인이 요청하지 않은 경우 이 메일을 무시해 주세요.
+                        </div>
+                    </div>
+                    <div class="footer">
+                        &copy; 2024 BulC. All rights reserved.
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(code);
+    }
+
+    /**
+     * 비밀번호 재설정 이메일 HTML 템플릿
+     */
+    private String buildPasswordResetEmailContent(String code) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+                    .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                    .logo { text-align: center; margin-bottom: 30px; }
+                    .logo h1 { color: #FF6B00; font-size: 28px; margin: 0; }
+                    .title { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; text-align: center; }
+                    .message { color: #666; line-height: 1.6; margin-bottom: 30px; text-align: center; }
+                    .code-box { background: #f8f9fa; border: 2px dashed #FF6B00; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                    .code { font-size: 32px; font-weight: 700; color: #FF6B00; letter-spacing: 8px; }
+                    .note { font-size: 13px; color: #999; text-align: center; margin-top: 20px; }
+                    .warning { font-size: 13px; color: #e74c3c; text-align: center; margin-top: 15px; }
+                    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="card">
+                        <div class="logo">
+                            <h1>BUL:C</h1>
+                        </div>
+                        <div class="title">비밀번호 재설정</div>
+                        <div class="message">
+                            아래 인증 코드를 입력하여<br>비밀번호를 재설정해 주세요.
+                        </div>
+                        <div class="code-box">
+                            <div class="code">%s</div>
+                        </div>
+                        <div class="note">
+                            * 인증 코드는 10분간 유효합니다.
+                        </div>
+                        <div class="warning">
+                            * 본인이 요청하지 않은 경우, 계정 보안을 확인해 주세요.
                         </div>
                     </div>
                     <div class="footer">
