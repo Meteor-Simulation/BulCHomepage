@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import './MeteorPages.css';
+import '../../Common/CategoryPages.css';
+import '../../METEOR/MeteorPages.css';
 
 const BulCTutorial: React.FC = () => {
   const [showAll, setShowAll] = useState(false);

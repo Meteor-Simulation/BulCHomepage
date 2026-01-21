@@ -134,6 +134,7 @@ const MyPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModalError, setDeleteModalError] = useState('');
 
   // 로그인 모달
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -440,11 +441,12 @@ const MyPage: React.FC = () => {
   // 계정 삭제
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== '계정삭제') {
-      showError('확인 문구를 정확히 입력해주세요.');
+      setDeleteModalError('확인 문구를 정확히 입력해주세요.');
       return;
     }
 
     setIsDeleting(true);
+    setDeleteModalError('');
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${API_URL}/api/users/me/deactivate`, {
@@ -456,18 +458,20 @@ const MyPage: React.FC = () => {
       });
 
       if (response.ok) {
+        // 성공 시에만 모달 닫기
+        setIsDeleteModalOpen(false);
+        setDeleteConfirmText('');
         logout();
         navigate('/', { state: { message: '계정이 삭제되었습니다.' } });
       } else {
         const errorData = await response.json();
-        showError(errorData.message || '계정 삭제에 실패했습니다.');
+        // 에러 시 모달 안에 에러 표시 (모달 닫지 않음)
+        setDeleteModalError(errorData.message || '계정 삭제에 실패했습니다.');
       }
     } catch (error) {
-      showError('계정 삭제 중 오류가 발생했습니다.');
+      setDeleteModalError('계정 삭제 중 오류가 발생했습니다.');
     } finally {
       setIsDeleting(false);
-      setIsDeleteModalOpen(false);
-      setDeleteConfirmText('');
     }
   };
 
@@ -1415,7 +1419,11 @@ const MyPage: React.FC = () => {
 
     {/* 계정 삭제 확인 모달 */}
     {isDeleteModalOpen && (
-      <div className="delete-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+      <div className="delete-modal-overlay" onClick={() => {
+        setIsDeleteModalOpen(false);
+        setDeleteConfirmText('');
+        setDeleteModalError('');
+      }}>
         <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
           <div className="delete-modal-header">
             <svg className="warning-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1438,11 +1446,17 @@ const MyPage: React.FC = () => {
               <input
                 type="text"
                 value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                onChange={(e) => {
+                  setDeleteConfirmText(e.target.value);
+                  setDeleteModalError('');
+                }}
                 placeholder="계정삭제"
                 className="confirm-input"
               />
             </div>
+            {deleteModalError && (
+              <p className="delete-modal-error">{deleteModalError}</p>
+            )}
           </div>
           <div className="delete-modal-footer">
             <button
@@ -1450,6 +1464,7 @@ const MyPage: React.FC = () => {
               onClick={() => {
                 setIsDeleteModalOpen(false);
                 setDeleteConfirmText('');
+                setDeleteModalError('');
               }}
             >
               취소

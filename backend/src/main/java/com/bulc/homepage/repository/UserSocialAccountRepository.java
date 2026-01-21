@@ -14,4 +14,6 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
     boolean existsByProviderAndProviderId(String provider, String providerId);
 
     Optional<UserSocialAccount> findByUserEmailAndProvider(String userEmail, String provider);
+
+    void deleteByUserEmail(String userEmail);
 }

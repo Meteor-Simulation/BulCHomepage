@@ -54,18 +54,25 @@ public class AuthService {
         User user;
 
         if (existingUser != null) {
-            // 비활성화된 계정인 경우 재활성화
+            // 비활성화된 계정인 경우 초기화 후 재사용
             if (!existingUser.getIsActive()) {
-                existingUser.setIsActive(true);
-                existingUser.setDeactivatedAt(null);
-                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-                // 재가입 시 개인정보 삭제
+                log.info("비활성화된 계정 초기화 후 재가입 처리: {}", existingUser.getEmail());
+                // 관련 데이터 정리
+                activityLogRepository.deleteByUserEmail(existingUser.getEmail());
+                refreshTokenRepository.deleteAllByUserEmail(existingUser.getEmail());
+                // 소셜 계정 삭제
+                socialAccountRepository.deleteByUserEmail(existingUser.getEmail());
+
+                // 기존 사용자 정보 초기화 및 재활성화
                 existingUser.setName(null);
                 existingUser.setPhone(null);
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                existingUser.setIsActive(true);
+                existingUser.setDeactivatedAt(null);
                 user = userRepository.save(existingUser);
 
-                // 계정 재활성화 로그 저장
-                saveActivityLog(user.getEmail(), "reactivate", "user", null, "계정 재활성화 완료");
+                // 회원가입 로그 저장
+                saveActivityLog(user.getEmail(), "signup", "user", null, "회원가입 완료 (비활성화 계정 재가입)");
             } else {
                 throw new RuntimeException("이미 가입된 이메일입니다");
             }
@@ -346,20 +353,40 @@ public class AuthService {
         String providerId = claims.get("providerId", String.class);
 
         // 이미 가입된 이메일인지 확인
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("이미 가입된 이메일입니다.");
-        }
+        User existingUser = userRepository.findByEmail(email).orElse(null);
+        User user;
 
-        // 사용자 생성
-        User user = User.builder()
-                .email(email)
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .phone(request.getPhone())
-                .rolesCode("002")  // 일반 사용자
-                .countryCode("KR")
-                .build();
-        user = userRepository.save(user);
+        if (existingUser != null) {
+            // 비활성화된 계정이면 초기화 후 재사용
+            if (!existingUser.getIsActive()) {
+                log.info("비활성화된 계정 초기화 후 OAuth 재가입 처리: {}", email);
+                // 관련 데이터 정리
+                activityLogRepository.deleteByUserEmail(existingUser.getEmail());
+                refreshTokenRepository.deleteAllByUserEmail(existingUser.getEmail());
+                socialAccountRepository.deleteByUserEmail(existingUser.getEmail());
+
+                // 기존 사용자 정보 초기화 및 재활성화
+                existingUser.setName(request.getName());
+                existingUser.setPhone(request.getPhone());
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                existingUser.setIsActive(true);
+                existingUser.setDeactivatedAt(null);
+                user = userRepository.save(existingUser);
+            } else {
+                throw new RuntimeException("이미 가입된 이메일입니다.");
+            }
+        } else {
+            // 신규 사용자 생성
+            user = User.builder()
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .name(request.getName())
+                    .phone(request.getPhone())
+                    .rolesCode("002")  // 일반 사용자
+                    .countryCode("KR")
+                    .build();
+            user = userRepository.save(user);
+        }
 
         // 소셜 계정 연동
         UserSocialAccount socialAccount = UserSocialAccount.builder()

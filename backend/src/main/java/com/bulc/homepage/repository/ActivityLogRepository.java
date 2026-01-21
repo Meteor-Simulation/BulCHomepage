@@ -15,4 +15,6 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     List<ActivityLog> findByActionOrderByCreatedAtDesc(String action);
 
     List<ActivityLog> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime after);
+
+    void deleteByUserEmail(String userEmail);
 }

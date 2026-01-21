@@ -1072,6 +1072,17 @@
   cursor: not-allowed;
 }
 
+.delete-modal-error {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}
+
 @media (max-width: 480px) {
   .delete-account-section {
     flex-direction: column;

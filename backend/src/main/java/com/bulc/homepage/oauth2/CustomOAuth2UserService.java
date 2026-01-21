@@ -2,6 +2,8 @@ package com.bulc.homepage.oauth2;
 
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
+import com.bulc.homepage.repository.ActivityLogRepository;
+import com.bulc.homepage.repository.RefreshTokenRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.repository.UserSocialAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
+    private final ActivityLogRepository activityLogRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional
@@ -65,19 +69,56 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String userEmail = email;
 
         if (existingSocialAccount.isPresent()) {
-            // 기존 소셜 계정 사용자 - 바로 로그인
+            // 기존 소셜 계정 사용자
             User user = existingSocialAccount.get().getUser();
-            userEmail = user.getEmail();
-            log.info("기존 소셜 계정 사용자 로그인: {}", userEmail);
+
+            // 비활성화된 계정이면 초기화 후 신규 가입으로 처리
+            if (!user.getIsActive()) {
+                log.info("비활성화된 계정 초기화 후 신규 가입 처리: {}", user.getEmail());
+                // 관련 데이터 정리
+                cleanupUserData(user.getEmail());
+                // 소셜 계정 삭제 (새로 연결할 것임)
+                socialAccountRepository.deleteByUserEmail(user.getEmail());
+                // 사용자 정보 초기화 (신규 가입 형태로)
+                user.setName(null);
+                user.setPhone(null);
+                user.setPasswordHash(null);
+                user.setDeactivatedAt(null);
+                // 아직 isActive는 false 유지 (비밀번호 설정 후 true로)
+                userRepository.save(user);
+                // 신규 사용자로 처리
+                isNewUser = true;
+            } else {
+                userEmail = user.getEmail();
+                log.info("기존 소셜 계정 사용자 로그인: {}", userEmail);
+            }
         } else {
             // 새로운 소셜 로그인 - 이메일로 기존 사용자 확인
             Optional<User> existingUser = userRepository.findByEmail(email);
             if (existingUser.isPresent()) {
-                // 기존 이메일 사용자에 소셜 계정 연동
                 User user = existingUser.get();
-                linkSocialAccount(user, provider, providerId);
-                userEmail = user.getEmail();
-                log.info("기존 사용자에 소셜 계정 연동: {}", userEmail);
+
+                // 비활성화된 계정이면 초기화 후 신규 가입으로 처리
+                if (!user.getIsActive()) {
+                    log.info("비활성화된 계정 초기화 후 신규 가입 처리: {}", email);
+                    // 관련 데이터 정리
+                    cleanupUserData(user.getEmail());
+                    // 소셜 계정 삭제
+                    socialAccountRepository.deleteByUserEmail(user.getEmail());
+                    // 사용자 정보 초기화
+                    user.setName(null);
+                    user.setPhone(null);
+                    user.setPasswordHash(null);
+                    user.setDeactivatedAt(null);
+                    userRepository.save(user);
+                    // 신규 사용자로 처리
+                    isNewUser = true;
+                } else {
+                    // 기존 이메일 사용자에 소셜 계정 연동
+                    linkSocialAccount(user, provider, providerId);
+                    userEmail = user.getEmail();
+                    log.info("기존 사용자에 소셜 계정 연동: {}", userEmail);
+                }
             } else {
                 // 신규 사용자 - 비밀번호 설정 페이지로 이동 필요
                 isNewUser = true;
@@ -116,5 +157,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .providerId(providerId)
                 .build();
         socialAccountRepository.save(socialAccount);
+    }
+
+    /**
+     * 사용자 관련 데이터 정리 (재가입 시)
+     */
+    private void cleanupUserData(String userEmail) {
+        // 활동 로그 삭제
+        activityLogRepository.deleteByUserEmail(userEmail);
+        // 리프레시 토큰 삭제
+        refreshTokenRepository.deleteAllByUserEmail(userEmail);
+        log.info("사용자 관련 데이터 정리 완료: {}", userEmail);
     }
 }

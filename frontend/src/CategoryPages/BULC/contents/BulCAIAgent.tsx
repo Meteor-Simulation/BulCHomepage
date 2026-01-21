@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import './MeteorPages.css';
-import ReportModal from '../../components/ReportModal';
+import '../../Common/CategoryPages.css';
+import '../../METEOR/MeteorPages.css';
+import ReportModal from '../../../components/ReportModal';
 
 const BulCAIAgent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
