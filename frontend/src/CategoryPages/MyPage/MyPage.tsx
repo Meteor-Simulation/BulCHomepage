@@ -28,6 +28,18 @@ interface License {
   maxActivations: number;
 }
 
+interface Activation {
+  id: string;
+  deviceFingerprint: string;
+  status: string;
+  activatedAt: string;
+  lastSeenAt: string;
+  clientVersion: string;
+  clientOs: string;
+  lastIp: string;
+  deviceDisplayName: string | null;
+}
+
 interface Subscription {
   id: number;
   productCode: string;
@@ -83,6 +95,11 @@ const MyPage: React.FC = () => {
   // 라이선스 정보
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoadingLicenses, setIsLoadingLicenses] = useState(false);
+
+  // 기기 목록 (라이선스별)
+  const [expandedLicenseId, setExpandedLicenseId] = useState<string | null>(null);
+  const [activations, setActivations] = useState<Record<string, Activation[]>>({});
+  const [isLoadingActivations, setIsLoadingActivations] = useState<string | null>(null);
 
   // 구독 정보
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -186,7 +203,7 @@ const MyPage: React.FC = () => {
 
       setIsLoadingLicenses(true);
       try {
-        const response = await fetch(`${API_URL}/api/me/licenses`, {
+        const response = await fetch(`${API_URL}/api/v1/me/licenses`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -430,6 +447,91 @@ const MyPage: React.FC = () => {
     setShowNewPassword(false);
     setShowConfirmPassword(false);
     setIsEditingPassword(false);
+  };
+
+  // 기기 목록 토글
+  const handleToggleDeviceList = async (licenseId: string) => {
+    if (expandedLicenseId === licenseId) {
+      setExpandedLicenseId(null);
+      return;
+    }
+
+    setExpandedLicenseId(licenseId);
+
+    // 이미 fetch된 데이터가 있으면 재요청하지 않음
+    if (activations[licenseId]) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setIsLoadingActivations(licenseId);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] }));
+      }
+    } catch (error) {
+      console.error('기기 목록 로드 실패:', error);
+    } finally {
+      setIsLoadingActivations(null);
+    }
+  };
+
+  // 기기 목록 재조회
+  const refreshActivations = async (licenseId: string) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] }));
+      }
+    } catch (error) {
+      console.error('기기 목록 재조회 실패:', error);
+    }
+  };
+
+  // 기기 비활성화
+  const handleDeactivateDevice = async (licenseId: string, deviceFingerprint: string) => {
+    if (!window.confirm('이 기기를 해제하시겠습니까?')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/v1/licenses/${licenseId}/activations/${deviceFingerprint}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        showSuccess('기기가 해제되었습니다.');
+        // 기기 목록 재조회
+        await refreshActivations(licenseId);
+        // 라이선스 목록 재조회 (usedActivations 갱신)
+        const licResponse = await fetch(`${API_URL}/api/v1/me/licenses`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (licResponse.ok) {
+          const licData = await licResponse.json();
+          setLicenses(licData.licenses || []);
+        }
+      } else {
+        showError('기기 해제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('기기 비활성화 오류:', error);
+      showError('기기 해제 중 오류가 발생했습니다.');
+    }
   };
 
   // 로그아웃
@@ -1012,7 +1114,7 @@ const MyPage: React.FC = () => {
                   <div key={license.id} className={`license-item ${license.status.toLowerCase()}`}>
                     <div className="license-header">
                       <span className="license-product">
-                        {license.productName || license.planName || 'BUL:C'}
+                        {license.productName || license.planName || 'BULC'}
                       </span>
                       <span className={`license-status status-${license.status.toLowerCase()}`}>
                         {license.status === 'ACTIVE' ? '활성' :
@@ -1040,12 +1142,65 @@ const MyPage: React.FC = () => {
                           {license.validUntil ? new Date(license.validUntil).toLocaleDateString('ko-KR') : '무제한'}
                         </span>
                       </div>
-                      <div className="license-detail-row">
+                      <div
+                        className="license-detail-row device-toggle-row"
+                        onClick={() => handleToggleDeviceList(license.id)}
+                      >
                         <span className="detail-label">기기 등록</span>
-                        <span className="detail-value">
+                        <span className="detail-value device-toggle-value">
                           {license.usedActivations} / {license.maxActivations}대
+                          <span className={`device-toggle-icon ${expandedLicenseId === license.id ? 'expanded' : ''}`}>
+                            ▼
+                          </span>
                         </span>
                       </div>
+                      {expandedLicenseId === license.id && (
+                        <div className="device-list">
+                          {isLoadingActivations === license.id ? (
+                            <div className="device-loading">기기 목록을 불러오는 중...</div>
+                          ) : !activations[license.id] || activations[license.id].length === 0 ? (
+                            <div className="device-empty">등록된 기기가 없습니다.</div>
+                          ) : (
+                            activations[license.id].map((activation) => (
+                              <div key={activation.id} className="device-item">
+                                <div className="device-info">
+                                  <span className="device-name">
+                                    {activation.deviceDisplayName || activation.clientOs || '알 수 없는 기기'}
+                                  </span>
+                                  <span className="device-meta">
+                                    {activation.clientOs && <span className="device-os">{activation.clientOs}</span>}
+                                    {activation.clientVersion && <span className="device-version"> v{activation.clientVersion}</span>}
+                                  </span>
+                                  <span className="device-meta">
+                                    마지막 접속: {activation.lastSeenAt
+                                      ? new Date(activation.lastSeenAt).toLocaleString('ko-KR')
+                                      : '-'}
+                                  </span>
+                                </div>
+                                <div className="device-actions">
+                                  <span className={`device-status-badge status-${activation.status.toLowerCase()}`}>
+                                    {activation.status === 'ACTIVE' ? '활성' :
+                                     activation.status === 'STALE' ? '비활성' :
+                                     activation.status === 'DEACTIVATED' ? '해제됨' :
+                                     activation.status === 'EXPIRED' ? '만료' : activation.status}
+                                  </span>
+                                  {(activation.status === 'ACTIVE' || activation.status === 'STALE') && (
+                                    <button
+                                      className="device-deactivate-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeactivateDevice(license.id, activation.deviceFingerprint);
+                                      }}
+                                    >
+                                      해제
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
