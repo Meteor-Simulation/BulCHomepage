@@ -8,8 +8,13 @@ import com.bulc.homepage.licensing.exception.LicenseExceptionHandler;
 import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
+import com.bulc.homepage.security.JwtAuthenticationFilter;
 import com.bulc.homepage.security.JwtTokenProvider;
+import com.bulc.homepage.oauth2.CustomOAuth2UserService;
+import com.bulc.homepage.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.bulc.homepage.oauth2.OAuth2AuthenticationFailureHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -61,6 +66,21 @@ class LicenseControllerTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @MockBean
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    @MockBean
+    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     private static final String LICENSE_KEY = "TEST-1234-5678-ABCD";
     private static final UUID LICENSE_ID = UUID.randomUUID();
