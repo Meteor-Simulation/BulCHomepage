@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
@@ -12,6 +14,7 @@ interface UserInfo {
   name: string;
   phone: string;
   country: string;
+  language: string | null;
 }
 
 interface License {
@@ -83,13 +86,15 @@ const LANGUAGES = [
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isLoggedIn, isAuthReady, logout, user } = useAuth();
+  const { changeLanguage: changeGlobalLanguage } = useLanguage();
 
   // 관리자 여부 (rolesCode '000'만)
   const isSystemAdmin = user?.rolesCode === '000';
 
   // 사용자 정보
-  const [userInfo, setUserInfo] = useState<UserInfo>({ email: '', name: '', phone: '', country: 'KR' });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ email: '', name: '', phone: '', country: 'KR', language: null });
   const [isLoading, setIsLoading] = useState(true);
 
   // 라이선스 정보
@@ -182,6 +187,12 @@ const MyPage: React.FC = () => {
           // 전화번호를 포맷팅하여 표시
           setEditPhone(formatPhoneNumber(data.phone) || '');
           setSelectedCountry(data.country || 'KR');
+          // DB에 언어 설정이 있으면 적용 (우선순위: DB > localStorage > IP)
+          if (data.language) {
+            setSelectedLanguage(data.language);
+            setTempLanguage(data.language);
+            changeGlobalLanguage(data.language);
+          }
         }
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error);
@@ -316,17 +327,18 @@ const MyPage: React.FC = () => {
           // 저장할 때는 숫자만 추출하여 저장
           phone: cleanPhoneNumber(editPhone),
           country: userInfo.country,
+          language: tempLanguage,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setUserInfo(data);
-        // 언어 저장 (로컬)
+        // 언어 저장 (로컬 + i18n + context)
         setSelectedLanguage(tempLanguage);
-        localStorage.setItem('language', tempLanguage);
+        changeGlobalLanguage(tempLanguage);
         setIsEditingProfile(false);
-        showSuccess('프로필이 저장되었습니다.');
+        showSuccess(t('myPage.profileSaved'));
       } else {
         showError('프로필 저장에 실패했습니다.');
       }

@@ -38,6 +38,9 @@ public class User {
     @Builder.Default
     private String countryCode = "KR";
 
+    @Column(name = "language_code", length = 5)
+    private String languageCode;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

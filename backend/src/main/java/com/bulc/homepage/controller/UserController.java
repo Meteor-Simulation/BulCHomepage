@@ -41,12 +41,13 @@ public class UserController {
                 user.getEmail(),
                 user.getName(),
                 user.getPhone(),
-                user.getCountryCode()
+                user.getCountryCode(),
+                user.getLanguageCode()
         ));
     }
 
     /**
-     * 사용자 정보 업데이트 (이름, 전화번호, 국가)
+     * 사용자 정보 업데이트 (이름, 전화번호, 국가, 언어)
      */
     @PutMapping("/me")
     public ResponseEntity<UserInfoResponse> updateCurrentUser(@RequestBody UpdateUserRequest request) {
@@ -79,13 +80,19 @@ public class UserController {
             user.setCountryCode(request.country());
         }
 
+        // 언어 설정 업데이트 (null 허용 - IP 감지로 전환)
+        if (request.language() != null) {
+            user.setLanguageCode(request.language().isBlank() ? null : request.language());
+        }
+
         userRepository.save(user);
 
         return ResponseEntity.ok(new UserInfoResponse(
                 user.getEmail(),
                 user.getName(),
                 user.getPhone(),
-                user.getCountryCode()
+                user.getCountryCode(),
+                user.getLanguageCode()
         ));
     }
 
@@ -179,8 +186,8 @@ public class UserController {
     }
 
     // DTOs
-    public record UserInfoResponse(String email, String name, String phone, String country) {}
-    public record UpdateUserRequest(String name, String phone, String country) {}
+    public record UserInfoResponse(String email, String name, String phone, String country, String language) {}
+    public record UpdateUserRequest(String name, String phone, String country, String language) {}
     public record ChangePasswordRequest(String currentPassword, String newPassword) {}
     public record ApiResponse(boolean success, String message) {}
 }

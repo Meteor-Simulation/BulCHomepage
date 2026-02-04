@@ -82,6 +82,7 @@ CREATE TABLE users (
     name            VARCHAR(100) NULL,
     phone           VARCHAR(20) NULL,
     country_code    VARCHAR(10) NULL DEFAULT 'KR',
+    language_code   VARCHAR(5) NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     deactivated_at  TIMESTAMP NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -100,6 +101,7 @@ COMMENT ON COLUMN users.roles_code IS '역할 코드 (000:관리자, 001:매니�
 COMMENT ON COLUMN users.name IS '이름 (결제 시 입력)';
 COMMENT ON COLUMN users.phone IS '전화번호 (결제 시 입력)';
 COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
+COMMENT ON COLUMN users.language_code IS '언어 코드 (ko/en, NULL이면 IP 감지 사용)';
 COMMENT ON COLUMN users.is_active IS '계정 활성화 상태 (기본: true)';
 COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 
