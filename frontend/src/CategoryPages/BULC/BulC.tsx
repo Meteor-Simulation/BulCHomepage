@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import LoginModal from '../../components/LoginModal';
 import { useAuth } from '../../context/AuthContext';
 import { useHashMenu } from '../../hooks/useHashMenu';
+import { isSubdomainAccess } from '../../utils/subdomain';
 
 // 컨텐츠 컴포넌트들
 import {
@@ -35,7 +36,13 @@ const BulCPage: React.FC = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   const handleLogoClick = () => {
-    navigate('/');
+    // 서브도메인 접속 시 첫 메뉴(Intro)로 이동, 일반 접속 시 메인 페이지로
+    if (isSubdomainAccess()) {
+      setActiveMenu('intro');
+      window.scrollTo(0, 0);
+    } else {
+      navigate('/');
+    }
   };
 
   const handleNavigate = (menu: string) => {

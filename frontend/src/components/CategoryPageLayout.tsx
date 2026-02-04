@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import { useHashMenu } from '../hooks/useHashMenu';
+import { isSubdomainAccess } from '../utils/subdomain';
 
 interface SubNavItem {
   id: string;
@@ -57,7 +58,13 @@ const CategoryPageLayout: React.FC<CategoryPageLayoutProps> = ({
   });
 
   const handleLogoClick = () => {
-    navigate('/');
+    // 서브도메인 접속 시 첫 메뉴(Intro)로 이동, 일반 접속 시 메인 페이지로
+    if (isSubdomainAccess()) {
+      setActiveMenu(defaultMenuId);
+      window.scrollTo(0, 0);
+    } else {
+      navigate('/');
+    }
   };
 
   // 현재 메뉴에 해당하는 컨텐츠 렌더링
