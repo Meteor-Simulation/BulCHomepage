@@ -47,6 +47,9 @@ public class AuthService {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    @Value("${jwt.oauth-refresh-token-expiration:31536000000}")  // 기본값 1년
+    private long oauthRefreshTokenExpiration;
+
     @Transactional
     public AuthResponse signup(SignupRequest request) {
         // 이메일 중복 확인
@@ -421,5 +424,144 @@ public class AuthService {
                         .rolesCode(user.getRolesCode())
                         .build())
                 .build();
+    }
+
+    // ==========================================
+    // OAuth 2.0 전용 메서드 (RTR 적용 + 장기 만료)
+    // ==========================================
+
+    /**
+     * OAuth 클라이언트용 토큰 발급 (RTR 적용).
+     * Authorization Code 교환 후 호출됩니다.
+     * Refresh Token은 1년 만료로 설정됩니다.
+     *
+     * @param email 사용자 이메일
+     * @param clientId OAuth 클라이언트 ID (deviceInfo로 저장)
+     * @return AuthResponse (accessToken, refreshToken 포함)
+     */
+    @Transactional
+    public AuthResponse issueTokensForOAuth(String email, String clientId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+
+        if (!user.getIsActive()) {
+            throw new RuntimeException("비활성화된 계정입니다");
+        }
+
+        // JWT 토큰 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(email);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(email);
+
+        // [RTR] Refresh Token을 DB에 저장 (OAuth용 장기 만료)
+        saveOrUpdateRefreshTokenForOAuth(email, refreshToken, "oauth:" + clientId);
+
+        saveActivityLog(email, "oauth_token_issued", "oauth", null,
+                "OAuth 토큰 발급 - client_id: " + clientId);
+        log.info("OAuth 토큰 발급 성공 - 이메일: {}, client_id: {}", email, clientId);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(accessTokenExpiration / 1000)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getEmail())
+                        .email(user.getEmail())
+                        .name(user.getName() != null ? user.getName() : user.getEmail())
+                        .rolesCode(user.getRolesCode())
+                        .build())
+                .build();
+    }
+
+    /**
+     * OAuth 클라이언트용 토큰 갱신 (RTR 적용).
+     * Refresh Token Rotation + Token Theft Detection 적용.
+     * 새 Refresh Token도 1년 만료로 설정됩니다.
+     *
+     * @param refreshToken 기존 Refresh Token
+     * @return AuthResponse (새 accessToken, 새 refreshToken 포함)
+     */
+    @Transactional
+    public AuthResponse refreshTokenForOAuth(String refreshToken) {
+        // Refresh Token JWT 유효성 검사
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 Refresh Token입니다");
+        }
+
+        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+
+        if (!user.getIsActive()) {
+            throw new RuntimeException("비활성화된 계정입니다");
+        }
+
+        // [RTR 핵심] DB에 저장된 Refresh Token과 비교
+        RefreshToken storedToken = refreshTokenRepository.findByUserEmail(email).orElse(null);
+
+        if (storedToken == null) {
+            log.warn("OAuth RTR 실패 - DB에 저장된 토큰 없음: {}", email);
+            throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (!storedToken.getToken().equals(refreshToken)) {
+            // [Token Theft Detection] 탈취된 RT 재사용 시도
+            log.warn("OAuth RTR 토큰 탈취 의심 - 이메일: {}, 모든 세션 강제 종료", email);
+            refreshTokenRepository.deleteAllByUserEmail(email);
+            saveActivityLog(email, "oauth_token_theft_detected", "security", null,
+                    "OAuth Refresh Token 재사용 감지, 모든 세션 강제 종료");
+            throw new RuntimeException("보안 문제가 감지되었습니다. 다시 로그인해주세요.");
+        }
+
+        if (storedToken.isExpired()) {
+            log.info("OAuth RTR 실패 - 만료된 토큰: {}", email);
+            refreshTokenRepository.deleteAllByUserEmail(email);
+            throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        // 새로운 Access Token, Refresh Token 생성
+        String newAccessToken = jwtTokenProvider.generateAccessToken(email);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+
+        // [RTR] DB의 Refresh Token 교체 (OAuth용 장기 만료)
+        LocalDateTime newExpiresAt = LocalDateTime.now().plusSeconds(oauthRefreshTokenExpiration / 1000);
+        storedToken.rotateToken(newRefreshToken, newExpiresAt);
+        refreshTokenRepository.save(storedToken);
+
+        log.info("OAuth 토큰 갱신 성공 (RTR) - 이메일: {}", email);
+
+        return AuthResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
+                .expiresIn(accessTokenExpiration / 1000)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getEmail())
+                        .email(user.getEmail())
+                        .name(user.getName() != null ? user.getName() : user.getEmail())
+                        .rolesCode(user.getRolesCode())
+                        .build())
+                .build();
+    }
+
+    /**
+     * [RTR] OAuth용 Refresh Token을 DB에 저장 (1년 만료).
+     */
+    private void saveOrUpdateRefreshTokenForOAuth(String email, String refreshToken, String deviceInfo) {
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(oauthRefreshTokenExpiration / 1000);
+
+        RefreshToken rtEntity = refreshTokenRepository.findByUserEmail(email)
+                .orElse(RefreshToken.builder()
+                        .userEmail(email)
+                        .build());
+
+        rtEntity.setToken(refreshToken);
+        rtEntity.setExpiresAt(expiresAt);
+        rtEntity.setDeviceInfo(deviceInfo);
+        rtEntity.setLastUsedAt(LocalDateTime.now());
+
+        refreshTokenRepository.save(rtEntity);
+        log.debug("OAuth Refresh Token 저장 완료 (1년 만료) - 이메일: {}", email);
     }
 }

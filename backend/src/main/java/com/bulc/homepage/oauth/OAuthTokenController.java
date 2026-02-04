@@ -1,8 +1,7 @@
 package com.bulc.homepage.oauth;
 
-import com.bulc.homepage.entity.User;
-import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.security.JwtTokenProvider;
+import com.bulc.homepage.dto.response.AuthResponse;
+import com.bulc.homepage.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,8 +34,7 @@ import java.util.Optional;
 public class OAuthTokenController {
 
     private final AuthorizationCodeStore codeStore;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userRepository;
+    private final AuthService authService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -111,40 +109,37 @@ public class OAuthTokenController {
                     "PKCE verification failed. code_verifier does not match code_challenge");
         }
 
-        // 사용자 조회
-        Optional<User> userOpt = userRepository.findByEmail(authCode.getUserEmail());
-        if (userOpt.isEmpty()) {
-            log.error("OAuth token 실패: 사용자 없음, email={}", authCode.getUserEmail());
-            return errorResponse("invalid_grant",
-                    "User not found");
+        // [RTR] AuthService를 통해 토큰 발급 (DB 저장 + 1년 만료)
+        try {
+            AuthResponse response = authService.issueTokensForOAuth(
+                    authCode.getUserEmail(), clientId);
+
+            log.info("OAuth token 성공: email={}", authCode.getUserEmail());
+
+            // RFC 6749 Token Response
+            return ResponseEntity.ok(Map.of(
+                    "access_token", response.getAccessToken(),
+                    "refresh_token", response.getRefreshToken(),
+                    "token_type", "Bearer",
+                    "expires_in", accessTokenExpiration / 1000,
+                    "user", Map.of(
+                            "id", response.getUser().getId(),
+                            "email", response.getUser().getEmail(),
+                            "roles_code", response.getUser().getRolesCode() != null
+                                    ? response.getUser().getRolesCode() : "002"
+                    )
+            ));
+        } catch (RuntimeException e) {
+            log.error("OAuth token 실패: {}", e.getMessage());
+            return errorResponse("invalid_grant", e.getMessage());
         }
-
-        User user = userOpt.get();
-
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
-
-        log.info("OAuth token 성공: email={}", user.getEmail());
-
-        // RFC 6749 Token Response
-        return ResponseEntity.ok(Map.of(
-                "access_token", accessToken,
-                "refresh_token", refreshToken,
-                "token_type", "Bearer",
-                "expires_in", accessTokenExpiration / 1000,
-                "user", Map.of(
-                        "id", user.getEmail(),
-                        "email", user.getEmail(),
-                        "roles_code", user.getRolesCode() != null ? user.getRolesCode() : "002"
-                )
-        ));
     }
 
     /**
-     * Token Refresh Endpoint (선택적).
+     * Token Refresh Endpoint.
      *
-     * Refresh Token → 새 Access Token
+     * Refresh Token → 새 Access Token + 새 Refresh Token (RTR 적용)
+     * Token Theft Detection 적용: 탈취된 토큰 재사용 시 모든 세션 무효화
      */
     @PostMapping(value = "/token/refresh", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<?> refreshToken(
@@ -159,36 +154,22 @@ public class OAuthTokenController {
                     "Only 'refresh_token' grant_type is supported for this endpoint");
         }
 
-        // Refresh Token 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            return errorResponse("invalid_grant",
-                    "Invalid or expired refresh token");
+        // [RTR] AuthService를 통해 토큰 갱신 (DB 검증 + Token Theft Detection)
+        try {
+            AuthResponse response = authService.refreshTokenForOAuth(refreshToken);
+
+            log.info("OAuth token refresh 성공: email={}", response.getUser().getEmail());
+
+            return ResponseEntity.ok(Map.of(
+                    "access_token", response.getAccessToken(),
+                    "refresh_token", response.getRefreshToken(),
+                    "token_type", "Bearer",
+                    "expires_in", accessTokenExpiration / 1000
+            ));
+        } catch (RuntimeException e) {
+            log.warn("OAuth token refresh 실패: {}", e.getMessage());
+            return errorResponse("invalid_grant", e.getMessage());
         }
-
-        // 이메일 추출
-        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-
-        // 사용자 조회
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            return errorResponse("invalid_grant",
-                    "User not found");
-        }
-
-        User user = userOpt.get();
-
-        // 새 토큰 발급
-        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
-
-        log.info("OAuth token refresh 성공: email={}", user.getEmail());
-
-        return ResponseEntity.ok(Map.of(
-                "access_token", newAccessToken,
-                "refresh_token", newRefreshToken,
-                "token_type", "Bearer",
-                "expires_in", accessTokenExpiration / 1000
-        ));
     }
 
     /**

@@ -56,12 +56,15 @@ services:
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
       OAUTH2_CALLBACK_BASE_URL: ${OAUTH2_CALLBACK_BASE_URL:-http://localhost:8080}
       OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
+      # Licensing RS256 Key (Session/Offline Token)
+      LIC_PRIVATE_KEY_PATH: /run/secrets/session_token_private_key.pem
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
       - ./backend/src:/app/src:ro
       - ./backend/build.gradle:/app/build.gradle:ro
       - ./backend/settings.gradle:/app/settings.gradle:ro
+      - ./secrets/session_token_private_key.pem:/run/secrets/session_token_private_key.pem:ro
     depends_on:
       database:
         condition: service_healthy

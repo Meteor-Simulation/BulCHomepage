@@ -78,7 +78,8 @@ mail:
 jwt:
   secret: ${JWT_SECRET:BulcHomepageSecretKeyForJwtTokenGeneration2024VeryLongSecretKey}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
-  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7일 (7 * 24 * 60 * 60 * 1000)
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}  # 30일 (30 * 24 * 60 * 60 * 1000)
+  oauth-refresh-token-expiration: ${JWT_OAUTH_REFRESH_EXPIRATION:31536000000}  # 1년 (365 * 24 * 60 * 60 * 1000)
 
 # OAuth2 Redirect URI
 app:
@@ -117,6 +118,12 @@ bulc:
         allowed-redirect-uris:
           - bulc://oauth/callback
           - http://localhost:*/oauth/callback
+      bulc-desktop:
+        display-name: "BulC Desktop"
+        allowed-redirect-uris:
+          - bulc://oauth/callback
+          - http://localhost:*/oauth/callback
+          - http://127.0.0.1:*/oauth/callback
 
 # Toss Payments Configuration
 toss:
