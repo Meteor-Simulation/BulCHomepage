@@ -870,7 +870,7 @@ const MyPage: React.FC = () => {
 
   return (
     <>
-      <Header logoText="METEOR" hideUserMenu={true} />
+      <Header logoText="BULC" hideUserMenu={true} />
       <div className="mypage-container">
         <div className="mypage-content">
           <button className="back-btn" onClick={() => navigate(-1)}>
