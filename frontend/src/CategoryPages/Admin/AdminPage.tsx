@@ -1784,7 +1784,7 @@ const AdminPage: React.FC = () => {
                   type="text"
                   value={productForm.name}
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                  placeholder="예: BUL:C"
+                  placeholder="예: BULC"
                 />
               </div>
               <div className="form-group">
