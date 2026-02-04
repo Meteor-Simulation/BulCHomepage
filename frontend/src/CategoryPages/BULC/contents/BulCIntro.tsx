@@ -17,7 +17,7 @@ const BulCIntro: React.FC<BulCIntroProps> = ({ onNavigate }) => (
     </div>
     <div className="intro-buttons-grid">
       <button className="intro-btn" onClick={() => onNavigate('bulc')}>
-        BULC
+        BUL:C
       </button>
       <button className="intro-btn" onClick={() => onNavigate('ai-agent')}>
         AI Agent

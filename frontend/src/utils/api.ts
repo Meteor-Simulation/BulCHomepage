@@ -5,9 +5,10 @@
 
 // API Base URL 가져오기
 export const getApiBaseUrl = (): string => {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')
     ? 'http://localhost:8080'
-    : `http://${window.location.hostname}:8080`;
+    : `http://${hostname}:8080`;
 };
 
 // API_URL 상수 (레거시 호환용)

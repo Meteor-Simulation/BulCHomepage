@@ -15,7 +15,7 @@ interface ContentMap {
 }
 
 interface CategoryPageLayoutProps {
-  /** 로고 텍스트 (ex: "BUL:C", "METEOR", "VR") */
+  /** 로고 텍스트 (ex: "BULC", "METEOR", "VR") */
   logoText: string;
   /** 서브 네비게이션 메뉴 아이템들 */
   menuItems: SubNavItem[];
@@ -32,7 +32,7 @@ interface CategoryPageLayoutProps {
  *
  * @example
  * <CategoryPageLayout
- *   logoText="BUL:C"
+ *   logoText="BULC"
  *   menuItems={[
  *     { id: 'intro', label: 'Intro' },
  *     { id: 'tutorial', label: 'Tutorial' },

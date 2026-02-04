@@ -6,10 +6,10 @@ const BulCTutorial: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
 
   const tutorials = [
-    { id: 1, url: 'https://www.youtube.com/embed/pykuJxTP-Yo', title: 'BULC 튜토리얼 1' },
-    { id: 2, url: 'https://www.youtube.com/embed/bjMh2Rz1_ss', title: 'BULC 튜토리얼 2' },
-    { id: 3, url: 'https://www.youtube.com/embed/85P_ZNZ3dOE', title: 'BULC 튜토리얼 3' },
-    { id: 4, url: 'https://www.youtube.com/embed/colbQGQYNmU', title: 'BULC 튜토리얼 4' },
+    { id: 1, url: 'https://www.youtube.com/embed/pykuJxTP-Yo', title: 'BUL:C 튜토리얼 1' },
+    { id: 2, url: 'https://www.youtube.com/embed/bjMh2Rz1_ss', title: 'BUL:C 튜토리얼 2' },
+    { id: 3, url: 'https://www.youtube.com/embed/85P_ZNZ3dOE', title: 'BUL:C 튜토리얼 3' },
+    { id: 4, url: 'https://www.youtube.com/embed/colbQGQYNmU', title: 'BUL:C 튜토리얼 4' },
   ];
 
   const visibleTutorials = showAll ? tutorials : tutorials.slice(0, 3);
@@ -18,10 +18,10 @@ const BulCTutorial: React.FC = () => {
     <section className="bulc-tutorial-section">
       <div className="meteor-container">
         <div className="section-header">
-          <div className="section-eyebrow">LEARN BULC</div>
-          <h2 className="section-title">BULC 튜토리얼</h2>
+          <div className="section-eyebrow">LEARN BUL:C</div>
+          <h2 className="section-title">BUL:C 튜토리얼</h2>
           <p className="section-description">
-            BULC 사용 방법을 단계별로 배우고 화재 시뮬레이션 전문가가 되어보세요.
+            BUL:C 사용 방법을 단계별로 배우고 화재 시뮬레이션 전문가가 되어보세요.
           </p>
         </div>
 
