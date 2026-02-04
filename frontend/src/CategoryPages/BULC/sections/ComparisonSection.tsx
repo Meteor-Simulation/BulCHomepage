@@ -8,7 +8,7 @@ const ComparisonSection: React.FC = () => {
         <div className="bulc-comparison__header">
           <h2 className="bulc-comparison__label">Comparison</h2>
           <h3 className="bulc-comparison__title">
-            Why Switch to BULC Now?
+            Why Switch to BUL:C Now?
           </h3>
           <p className="bulc-comparison__subtitle">
             Traditional methods are slow, error-prone, and expensive. It's time
@@ -41,7 +41,7 @@ const ComparisonSection: React.FC = () => {
                 AI-Assisted Workflow
               </p>
               <p className="bulc-comparison__card-solution-desc">
-                BULC auto-generates FDS code from your CAD models instantly.
+                BUL:C auto-generates FDS code from your CAD models instantly.
               </p>
             </div>
           </div>

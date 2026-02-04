@@ -16,7 +16,7 @@ const CoreValuesSection: React.FC = () => {
               <div className="bulc-values__image-bg bulc-values__image-bg--blue" />
               <img
                 src="https://picsum.photos/seed/security/600/400"
-                alt="Forensic Accuracy"
+                alt="Accuracy"
                 className="bulc-values__image"
               />
             </div>
@@ -25,12 +25,12 @@ const CoreValuesSection: React.FC = () => {
                 <div className="bulc-values__icon-wrap">
                   <ShieldCheck className="bulc-values__icon" />
                 </div>
-                <h3 className="bulc-values__name">Forensic Accuracy</h3>
+                <h3 className="bulc-values__name">Accuracy</h3>
               </div>
               <p className="bulc-values__desc">
-                Precision is non-negotiable when lives are at stake. BULC
+                Precision is non-negotiable when lives are at stake. BUL:C
                 utilizes validated FDS physics engines, ensuring every simulation
-                meets rigorous international safety standards (ISO/ASTM).
+                meets rigorous international safety standards (NIST).
               </p>
               <ul className="bulc-values__checks">
                 <li className="bulc-values__check-item">
@@ -63,18 +63,13 @@ const CoreValuesSection: React.FC = () => {
                 <h3 className="bulc-values__name">Unrivaled Speed</h3>
               </div>
               <p className="bulc-values__desc">
-                Time is money. By offloading complex calculations to our cloud
-                GPU cluster, what used to take days now takes hours. Iterate
+                Time is money. By offloading complex calculations to GPU, what used to take days now takes hours. Iterate
                 faster and deliver results sooner.
               </p>
               <ul className="bulc-values__checks">
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  Parallel processing on 1000+ cores
-                </li>
-                <li className="bulc-values__check-item">
-                  <Check className="bulc-values__check-icon" />
-                  Real-time preview rendering
+                  Parallel processing on GPU cores
                 </li>
               </ul>
             </div>
@@ -95,7 +90,7 @@ const CoreValuesSection: React.FC = () => {
                 <div className="bulc-values__icon-wrap">
                   <Workflow className="bulc-values__icon" />
                 </div>
-                <h3 className="bulc-values__name">End-to-End Automation</h3>
+                <h3 className="bulc-values__name">End-to-End Automation (Comming Soon)</h3>
               </div>
               <p className="bulc-values__desc">
                 From importing the CAD drawing to generating the final PDF

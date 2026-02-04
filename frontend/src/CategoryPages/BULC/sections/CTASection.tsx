@@ -13,7 +13,7 @@ const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
           Ready to automate your simulations?
         </h2>
         <p className="bulc-cta__subtitle">
-          Join 500+ fire safety engineers who have switched to BULC.
+          Join 500+ fire safety engineers who have switched to BUL:C.
         </p>
 
         <div className="bulc-cta__action">
@@ -36,11 +36,10 @@ const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
           <div className="bulc-cta__faq-item">
             <h4 className="bulc-cta__faq-question">
               <HelpCircle className="bulc-cta__faq-icon" />
-              Do I need a powerful computer?
+              Which operating system do I need?
             </h4>
             <p className="bulc-cta__faq-answer">
-              No. BULC runs entirely in the cloud. You can run heavy
-              simulations on a basic laptop.
+              BUL:C runs on Windows (64-bit). A standard Windows PC is enough for typical workflows.
             </p>
           </div>
           <div className="bulc-cta__faq-item bulc-cta__faq-item--last">
@@ -49,7 +48,7 @@ const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
               Is it compatible with Revit?
             </h4>
             <p className="bulc-cta__faq-answer">
-              Yes, we have direct plugins for Revit, AutoCAD, and SketchUp.
+               Not yet. We currently don't have direct plugins for Revit, AutoCAD, or SketchUp — but it’s on our roadmap.
             </p>
           </div>
         </div>

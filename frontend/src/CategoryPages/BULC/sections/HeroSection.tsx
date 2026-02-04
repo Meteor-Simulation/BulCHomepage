@@ -31,7 +31,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick }) => {
           </h1>
 
           <p className="bulc-hero__description">
-            Drastically reduce human error and gain full MCP control. BULC
+            Drastically reduce human error and gain full MCP control. BUL:C
             combines advanced FDS-based physics with AI automation for instant
             compliance reporting.
           </p>
@@ -76,7 +76,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick }) => {
             <div className="bulc-hero__video-caption">
               <p className="bulc-hero__video-caption-title">
                 <Zap className="bulc-hero__video-caption-icon" />
-                BULC Interface Walkthrough
+                BUL:C Interface Walkthrough
               </p>
               <p className="bulc-hero__video-caption-sub">
                 See how automation saves 40+ hours per project

@@ -10,7 +10,7 @@ const ReportSection: React.FC = () => {
           <div className="bulc-report__text">
             <h2 className="bulc-report__title">Reports that Impress Clients</h2>
             <p className="bulc-report__desc">
-              Stop struggling with screenshots and Word documents. BULC
+              Stop struggling with screenshots and Word documents. BUL:C
               generates professional, interactive web-based reports and standard
               PDFs that clearly communicate safety outcomes.
             </p>
@@ -25,7 +25,7 @@ const ReportSection: React.FC = () => {
               <div className="bulc-report__feature">
                 <PlayCircle className="bulc-report__feature-icon" />
                 <span className="bulc-report__feature-label">
-                  Embedded Animations
+                  Embedded Contours
                 </span>
               </div>
               <div className="bulc-report__feature">

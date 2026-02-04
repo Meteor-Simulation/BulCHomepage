@@ -2,9 +2,9 @@ import React from 'react';
 import { Flag } from 'lucide-react';
 
 const steps = [
-  { id: 1, title: 'Import', desc: 'Upload CAD/BIM models directly.' },
-  { id: 2, title: 'Configure', desc: 'Set fire loads & boundaries.' },
-  { id: 3, title: 'Simulate', desc: 'Cloud GPU Processing.' },
+  { id: 1, title: 'Import', desc: 'Upload CAD/BIM models directly.(Comming Soon)' },
+  { id: 2, title: 'Setup', desc: 'Set fire loads & boundaries using an LLM-powered AI assistant.' },
+  { id: 3, title: 'Simulate', desc: '100x times Fast GPU Processing Compared to CPU.' },
   { id: 4, title: 'Analyze', desc: 'Review AI insights & data.' },
 ];
 
