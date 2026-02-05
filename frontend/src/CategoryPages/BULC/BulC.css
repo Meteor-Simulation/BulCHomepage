@@ -9,8 +9,32 @@
 ---------------------------------------- */
 .bulc-landing {
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: calc(100vh - 200px);
+}
+
+/* 언어 테스트 버튼 */
+.bulc-lang-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: all 0.2s;
+}
+
+.bulc-lang-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .bulc-landing section {
@@ -33,7 +57,7 @@
 ======================================== */
 .bulc-hero {
   position: relative;
-  padding: 128px 0 80px;
+  padding: 0 0 80px;
   overflow: hidden;
   background: #fff;
 }
@@ -368,7 +392,7 @@
    2. Comparison Section
 ======================================== */
 .bulc-comparison {
-  padding: 96px 0;
+  padding: 0 0 96px;
   background: #f8f9fa;
 }
 
@@ -565,7 +589,7 @@
    3. Core Values Section
 ======================================== */
 .bulc-values {
-  padding: 96px 0;
+  padding: 0 0 96px;
   background: #fff;
   overflow: hidden;
 }
@@ -716,7 +740,7 @@
    4. Workflow Section
 ======================================== */
 .bulc-workflow {
-  padding: 96px 0;
+  padding: 0 0 96px;
   background: #f8f9fa;
 }
 
@@ -865,7 +889,7 @@
    5. Report Section
 ======================================== */
 .bulc-report {
-  padding: 96px 0;
+  padding: 0 0 96px;
   background: #fff;
   overflow: hidden;
   border-bottom: 1px solid #f1f5f9;
@@ -1132,7 +1156,7 @@
    6. CTA + FAQ Section
 ======================================== */
 .bulc-cta {
-  padding: 96px 0;
+  padding: 0 0 96px;
   background: #f8f9fa;
   border-top: 1px solid #e2e8f0;
 }
@@ -1282,7 +1306,7 @@
 /* 768px */
 @media (max-width: 768px) {
   .bulc-hero {
-    padding: 100px 0 60px;
+    padding: 0 0 60px;
   }
 
   .bulc-hero__title {
@@ -1332,7 +1356,7 @@
 
   /* Comparison */
   .bulc-comparison {
-    padding: 64px 0;
+    padding: 0 0 64px;
   }
 
   .bulc-comparison__title {
@@ -1354,7 +1378,7 @@
 
   /* Values */
   .bulc-values {
-    padding: 64px 0;
+    padding: 0 0 64px;
   }
 
   .bulc-values__title {
@@ -1380,7 +1404,7 @@
 
   /* Workflow */
   .bulc-workflow {
-    padding: 64px 0;
+    padding: 0 0 64px;
   }
 
   .bulc-workflow__title {
@@ -1398,7 +1422,7 @@
 
   /* Report */
   .bulc-report {
-    padding: 64px 0;
+    padding: 0 0 64px;
   }
 
   .bulc-report__title {
@@ -1429,7 +1453,7 @@
 
   /* CTA */
   .bulc-cta {
-    padding: 64px 0;
+    padding: 0 0 64px;
   }
 
   .bulc-cta__title {
@@ -1444,7 +1468,7 @@
 /* 480px */
 @media (max-width: 480px) {
   .bulc-hero {
-    padding: 90px 0 48px;
+    padding: 0 0 48px;
   }
 
   .bulc-hero__title {
