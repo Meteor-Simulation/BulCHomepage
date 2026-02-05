@@ -168,11 +168,9 @@ const LANGUAGES = [
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isLoggedIn, isAuthReady, logout, user } = useAuth();
+  const { isLoggedIn, isAuthReady, logout, user, isAdmin } = useAuth();
   const { changeLanguage: changeGlobalLanguage } = useLanguage();
 
-  // 관리자 여부 (rolesCode '000'만)
-  const isSystemAdmin = user?.rolesCode === '000';
 
   // 사용자 정보
   const [userInfo, setUserInfo] = useState<UserInfo>({ email: '', name: '', phone: '', country: 'KR', language: null });
@@ -1036,7 +1034,7 @@ const MyPage: React.FC = () => {
 
   // 관리자 메뉴 변경 시 데이터 로드
   useEffect(() => {
-    if (!isSystemAdmin || !activeMenu.startsWith('admin-')) return;
+    if (!isAdmin || !activeMenu.startsWith('admin-')) return;
 
     const token = localStorage.getItem('accessToken');
     if (!token) return;
@@ -1075,7 +1073,7 @@ const MyPage: React.FC = () => {
     };
 
     loadAdminData();
-  }, [activeMenu, isSystemAdmin]);
+  }, [activeMenu, isAdmin]);
 
   // 관리자 검색 핸들러
   const handleAdminSearch = () => {
@@ -1362,7 +1360,7 @@ const MyPage: React.FC = () => {
               </div>
 
               {/* 관리자 정보 대메뉴 (관리자만 표시) */}
-              {isSystemAdmin && (
+              {isAdmin && (
               <div className="menu-group admin-menu-group">
                 <div className="menu-parent admin">
                   <svg className="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1855,7 +1853,7 @@ const MyPage: React.FC = () => {
                         </div>
                       )}
                       {/* 개발 테스트 버튼 (관리자 전용) */}
-                      {isSystemAdmin && isTestMode && (
+                      {isAdmin && isTestMode && (
                         <div className="subscription-test-actions">
                           <div className="test-label">테스트 액션</div>
                           <div className="test-buttons">
@@ -1883,52 +1881,6 @@ const MyPage: React.FC = () => {
               </div>
             )}
 
-            {/* 구독 테스트 패널 (관리자 전용) */}
-            {isSystemAdmin && (
-              <div className="subscription-test-panel">
-                <div className="test-panel-header">
-                  <button
-                    className={`test-mode-toggle ${isTestMode ? 'active' : ''}`}
-                    onClick={() => setIsTestMode(!isTestMode)}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                    </svg>
-                    테스트 모드 {isTestMode ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-                {isTestMode && (
-                  <div className="test-panel-body">
-                    <div className="test-info">
-                      개발 환경 전용 테스트 기능입니다. 구독 갱신 시스템을 수동으로 실행할 수 있습니다.
-                    </div>
-                    <div className="global-test-buttons">
-                      <button
-                        className="test-btn global"
-                        onClick={handleProcessRenewals}
-                        disabled={testLoading !== null}
-                      >
-                        {testLoading === 'process-renewals' ? '실행중...' : '갱신 처리 실행'}
-                      </button>
-                      <button
-                        className="test-btn global"
-                        onClick={handleRetryFailed}
-                        disabled={testLoading !== null}
-                      >
-                        {testLoading === 'retry-failed' ? '실행중...' : '실패 결제 재시도'}
-                      </button>
-                      <button
-                        className="test-btn global"
-                        onClick={handleProcessExpired}
-                        disabled={testLoading !== null}
-                      >
-                        {testLoading === 'process-expired' ? '실행중...' : '만료 처리 실행'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
           </>
           )}
@@ -2033,7 +1985,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 개발자 미리보기 (관리자 전용) */}
-          {isSystemAdmin && (
+          {isAdmin && (
             <div className="info-card dev-preview-card">
               <div className="card-header">
                 <h2 className="card-title">
@@ -2116,7 +2068,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 관리자 섹션 - 사용자 관리 */}
-          {activeMenu === 'admin-users' && isSystemAdmin && (
+          {activeMenu === 'admin-users' && isAdmin && (
             <div className="info-card admin-section-card wide">
               <div className="card-header">
                 <h2 className="card-title">{t('myPage.menu.adminUsers')}</h2>
@@ -2178,7 +2130,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 관리자 섹션 - 결제 관리 */}
-          {activeMenu === 'admin-payments' && isSystemAdmin && (
+          {activeMenu === 'admin-payments' && isAdmin && (
             <div className="info-card admin-section-card wide">
               <div className="card-header">
                 <h2 className="card-title">{t('myPage.menu.adminPayments')}</h2>
@@ -2244,7 +2196,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 관리자 섹션 - 상품 관리 */}
-          {activeMenu === 'admin-products' && isSystemAdmin && (
+          {activeMenu === 'admin-products' && isAdmin && (
             <>
               <div className="info-card admin-section-card wide">
                 <div className="card-header">
@@ -2363,7 +2315,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 관리자 섹션 - 라이선스 관리 */}
-          {activeMenu === 'admin-licenses' && isSystemAdmin && (
+          {activeMenu === 'admin-licenses' && isAdmin && (
             <div className="info-card admin-section-card wide">
               <div className="card-header">
                 <h2 className="card-title">{t('myPage.menu.adminLicenses')}</h2>
@@ -2435,7 +2387,7 @@ const MyPage: React.FC = () => {
           )}
 
           {/* 관리자 섹션 - 프로모션 관리 */}
-          {activeMenu === 'admin-promotions' && isSystemAdmin && (
+          {activeMenu === 'admin-promotions' && isAdmin && (
             <div className="info-card admin-section-card wide">
               <div className="card-header">
                 <h2 className="card-title">{t('myPage.menu.adminPromotions')}</h2>
