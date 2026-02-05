@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS license_plans CASCADE;
 DROP TABLE IF EXISTS admin_logs CASCADE;
 DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
@@ -449,6 +450,33 @@ COMMENT ON COLUMN token_blacklist.expires_at IS '토큰 만료 시간 (만료 �
 
 CREATE INDEX idx_token_blacklist_token ON token_blacklist(token);
 CREATE INDEX idx_token_blacklist_expires_at ON token_blacklist(expires_at);
+
+-- =========================================================
+-- 9-2. refresh_tokens (리프레시 토큰 테이블 - RTR 지원)
+-- =========================================================
+CREATE TABLE refresh_tokens (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_email      VARCHAR(255) NOT NULL,
+    token           VARCHAR(500) NOT NULL,
+    device_id       VARCHAR(255) NULL,
+    device_info     VARCHAR(500) NULL,
+    expires_at      TIMESTAMP NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at    TIMESTAMP NULL,
+
+    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE refresh_tokens IS '리프레시 토큰 테이블 - RTR(Refresh Token Rotation) 지원';
+COMMENT ON COLUMN refresh_tokens.token IS '리프레시 토큰 값';
+COMMENT ON COLUMN refresh_tokens.device_id IS '디바이스 식별자 (멀티 디바이스 지원)';
+COMMENT ON COLUMN refresh_tokens.device_info IS '디바이스 정보 (User-Agent 등)';
+COMMENT ON COLUMN refresh_tokens.expires_at IS '토큰 만료 시간';
+COMMENT ON COLUMN refresh_tokens.last_used_at IS '마지막 사용 시간';
+
+CREATE INDEX idx_refresh_tokens_user_email ON refresh_tokens(user_email);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_device_id ON refresh_tokens(device_id);
 
 -- =========================================================
 -- 10. user_change_logs (유저 정보 변경 로그 테이블)

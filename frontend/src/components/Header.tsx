@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import ContactModal from './ContactModal';
@@ -37,6 +38,7 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, logout } = useAuth();
+  const { language, changeLanguage } = useLanguage();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -99,6 +101,44 @@ const Header: React.FC<HeaderProps> = ({
         <div className="header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
           <span className="header-logo-text">{logoText}</span>
+        </div>
+        {/* 언어 전환 버튼 (테스트용) */}
+        <div className="header-lang-switch" style={{
+          display: 'flex',
+          gap: '8px',
+          marginLeft: '16px',
+          alignItems: 'center'
+        }}>
+          <button
+            onClick={() => changeLanguage('ko')}
+            style={{
+              padding: '4px 12px',
+              border: language === 'ko' ? '2px solid #C4320A' : '1px solid #ccc',
+              borderRadius: '4px',
+              background: language === 'ko' ? '#FFF4F0' : '#fff',
+              color: language === 'ko' ? '#C4320A' : '#666',
+              fontWeight: language === 'ko' ? 'bold' : 'normal',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            한국어
+          </button>
+          <button
+            onClick={() => changeLanguage('en')}
+            style={{
+              padding: '4px 12px',
+              border: language === 'en' ? '2px solid #C4320A' : '1px solid #ccc',
+              borderRadius: '4px',
+              background: language === 'en' ? '#FFF4F0' : '#fff',
+              color: language === 'en' ? '#C4320A' : '#666',
+              fontWeight: language === 'en' ? 'bold' : 'normal',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            English
+          </button>
         </div>
         <div className="header-right">
           {/* 관리자 메뉴 - 관리자/매니저에게만 표시 */}

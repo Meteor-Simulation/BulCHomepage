@@ -49,11 +49,11 @@ services:
       MAIL_FROM_ACCOUNTS: ${MAIL_FROM_ACCOUNTS:-accounts@msimul.com}
       MAIL_FROM_BILLING: ${MAIL_FROM_BILLING:-billing@msimul.com}
       MAIL_REPLY_TO: ${MAIL_REPLY_TO:-support@msimul.com}
-      # OAuth2 Configuration
-      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
-      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
-      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
-      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      # OAuth2 Configuration (dummy values for dev - replace with real keys for OAuth testing)
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-dev_naver_client_id}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-dev_naver_secret}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-dev_kakao_client_id}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-dev_kakao_secret}
       OAUTH2_CALLBACK_BASE_URL: ${OAUTH2_CALLBACK_BASE_URL:-http://localhost:8080}
       OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
       # Licensing RS256 Key (Session/Offline Token)

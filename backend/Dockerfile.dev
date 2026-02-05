@@ -5,14 +5,21 @@ FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-# Gradle Wrapper 복사 및 의존성 캐싱
-COPY gradlew .
-COPY gradle gradle
+# Gradle 설치
+RUN apt-get update && apt-get install -y wget unzip && \
+    wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip && \
+    unzip -q gradle-8.5-bin.zip && \
+    rm gradle-8.5-bin.zip && \
+    mv gradle-8.5 /opt/gradle && \
+    ln -s /opt/gradle/bin/gradle /usr/bin/gradle && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 빌드 설정 파일 복사
 COPY build.gradle .
 COPY settings.gradle .
 
 # 의존성 미리 다운로드 (캐시 활용)
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
+RUN gradle dependencies --no-daemon || true
 
 EXPOSE 8080
 
