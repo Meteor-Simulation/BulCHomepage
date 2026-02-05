@@ -1304,18 +1304,13 @@ const MyPage: React.FC = () => {
       <Header logoText="BULC" hideUserMenu={true} />
       <div className="mypage-container">
         <div className="mypage-layout">
+          {/* 상단 영역 */}
+          <div className="mypage-layout-top">
+            {/* 추후 상단 컨텐츠 추가 가능 */}
+          </div>
+
           {/* 왼쪽 사이드바 */}
           <aside className="mypage-sidebar">
-            <div className="sidebar-header">
-              <button className="back-btn" onClick={() => navigate(-1)}>
-                <svg className="back-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {t('myPage.back')}
-              </button>
-              <h1 className="mypage-title">{t('myPage.title')}</h1>
-            </div>
-
             <nav className="sidebar-nav">
               {/* 개인정보 대메뉴 */}
               <div className="menu-group">
