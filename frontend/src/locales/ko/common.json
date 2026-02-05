@@ -13,13 +13,28 @@
     "logoutMessage": "로그아웃 되었습니다."
   },
   "myPage": {
-    "title": "마이페이지",
+    "title": "내 정보",
     "back": "되돌아가기",
+    "menu": {
+      "personalInfo": "개인정보",
+      "profile": "프로필 정보",
+      "account": "계정정보",
+      "licenseInfo": "라이선스 정보",
+      "subscription": "구독 정보",
+      "payment": "결제 정보",
+      "admin": "관리자",
+      "adminUsers": "사용자 관리",
+      "adminPayments": "결제 관리",
+      "adminProducts": "상품 관리",
+      "adminLicenses": "라이선스 관리",
+      "adminPromotions": "프로모션 관리"
+    },
     "profile": "프로필 정보",
     "edit": "수정",
     "save": "저장",
     "cancel": "취소",
     "email": "이메일",
+    "emailId": "이메일 (아이디)",
     "emailNotEditable": "이메일은 변경할 수 없습니다.",
     "name": "이름",
     "namePlaceholder": "이름 입력",
@@ -61,5 +76,125 @@
     "edit": "수정",
     "delete": "삭제",
     "loading": "로딩 중..."
+  },
+  "bulc": {
+    "nav": {
+      "intro": "소개",
+      "comparison": "비교",
+      "coreValues": "핵심 가치",
+      "workflow": "워크플로우",
+      "report": "리포트",
+      "getStarted": "시작하기"
+    },
+    "hero": {
+      "badge": "NEW: AI-GPU 가속 지원",
+      "title1": "문서 작성부터",
+      "title2": "시뮬레이션, 리포트까지 자동화",
+      "description": "휴먼 에러를 대폭 줄이고 완벽한 MCP 제어권을 확보하세요. BUL:C는 고급 FDS 기반 물리 엔진과 AI 자동화를 결합하여 즉각적인 법규 준수 리포트를 생성합니다.",
+      "startFree": "무료로 시작하기",
+      "watchDemo": "데모 보기",
+      "videoTitle": "BUL:C 인터페이스 안내",
+      "videoSubtitle": "프로젝트당 40시간 이상 절약하는 자동화 확인하기"
+    },
+    "comparison": {
+      "label": "비교",
+      "title": "지금 BUL:C로 전환해야 하는 이유",
+      "subtitle": "기존 방식은 느리고, 오류가 많으며, 비용이 많이 듭니다. 이제 워크플로우를 업그레이드할 때입니다.",
+      "card1": {
+        "title": "수동 문서 작성",
+        "problem1": "구문 오류 발생 가능성",
+        "problem2": "수 주간의 설정 시간 소요",
+        "solutionTitle": "AI 지원 워크플로우",
+        "solutionDesc": "BUL:C가 CAD 모델에서 FDS 코드를 즉시 자동 생성합니다."
+      },
+      "card2": {
+        "badge": "추천",
+        "title": "시뮬레이션 속도",
+        "problem1": "CPU 렌더링에 수일 소요",
+        "problem2": "하드웨어 병목 현상",
+        "solutionTitle": "GPU 가속",
+        "solutionDesc": "클라우드 GPU를 활용하여 로컬 CPU보다 100배 빠르게 시뮬레이션을 실행하세요."
+      },
+      "card3": {
+        "title": "정적 리포트",
+        "problem1": "수동 데이터 추출",
+        "problem2": "정적이고 비대화형",
+        "solutionTitle": "동적 리포트",
+        "solutionDesc": "3D 시각화가 포함된 인터랙티브 리포트를 즉시 생성합니다."
+      }
+    },
+    "coreValues": {
+      "title": "3가지 핵심 가치",
+      "accuracy": {
+        "title": "정확성",
+        "desc": "생명이 걸린 문제에서 정밀도는 타협할 수 없습니다. BUL:C는 검증된 FDS 물리 엔진을 사용하여 모든 시뮬레이션이 엄격한 국제 안전 기준(NIST)을 충족하도록 보장합니다.",
+        "check1": "실제 화재 시험 대비 검증됨",
+        "check2": "정밀한 연기 및 열 전파 모델"
+      },
+      "speed": {
+        "title": "압도적인 속도",
+        "desc": "시간은 돈입니다. 복잡한 계산을 GPU로 오프로드하여, 며칠 걸리던 작업을 몇 시간 만에 완료합니다. 더 빠르게 반복하고 더 빨리 결과를 전달하세요.",
+        "check1": "GPU 코어에서 병렬 처리"
+      },
+      "automation": {
+        "title": "완전 자동화 (출시 예정)",
+        "desc": "CAD 도면 가져오기부터 최종 PDF 법규 준수 리포트 생성까지 전체 파이프라인이 자동화됩니다. 서류 작업 대신 엔지니어링에 집중하세요.",
+        "check1": "원클릭 리포트 생성",
+        "check2": "자동 피난 경로 분석"
+      }
+    },
+    "workflow": {
+      "title": "간편한 5단계 워크플로우",
+      "subtitle": "컨셉부터 법규 준수까지 기록적인 시간 내에 완료합니다.",
+      "step1": {
+        "title": "가져오기",
+        "desc": "CAD/BIM 모델을 직접 업로드합니다. (출시 예정)"
+      },
+      "step2": {
+        "title": "설정",
+        "desc": "LLM 기반 AI 어시스턴트로 화재 하중 및 경계를 설정합니다."
+      },
+      "step3": {
+        "title": "시뮬레이션",
+        "desc": "CPU 대비 100배 빠른 GPU 처리."
+      },
+      "step4": {
+        "title": "분석",
+        "desc": "AI 인사이트 및 데이터를 검토합니다."
+      },
+      "step5": {
+        "title": "리포트",
+        "desc": "법규 준수 문서를 자동 생성합니다."
+      }
+    },
+    "report": {
+      "title": "고객을 감동시키는 리포트",
+      "desc": "더 이상 스크린샷과 Word 문서로 고생하지 마세요. BUL:C는 안전 결과를 명확하게 전달하는 전문적인 인터랙티브 웹 기반 리포트와 표준 PDF를 생성합니다.",
+      "feature1": "자동 생성 그래프",
+      "feature2": "임베디드 컨투어",
+      "feature3": "법규 준수 테이블",
+      "mockupTitle": "화재 안전 분석",
+      "mockupMeta": "프로젝트: 스카이라크 타워 | 날짜: 2023년 10월 24일",
+      "mockupPass": "통과",
+      "chartTemp": "온도 상승",
+      "chartEvac": "피난 시간"
+    },
+    "cta": {
+      "title": "시뮬레이션을 자동화할 준비가 되셨나요?",
+      "subtitle": "BUL:C로 전환한 500명 이상의 소방안전 엔지니어와 함께하세요.",
+      "button": "무료로 시작하기",
+      "faq1": {
+        "question": "무료 체험이 있나요?",
+        "answer": "네, 매월 제한된 시뮬레이션 시간으로 무료로 시작할 수 있습니다. 신용카드가 필요 없습니다."
+      },
+      "faq2": {
+        "question": "어떤 운영 체제가 필요한가요?",
+        "answer": "BUL:C는 Windows(64비트)에서 실행됩니다. 일반적인 워크플로우에는 표준 Windows PC면 충분합니다."
+      },
+      "faq3": {
+        "question": "Revit과 호환되나요?",
+        "answer": "아직 아닙니다. 현재 Revit, AutoCAD, SketchUp용 직접 플러그인은 없지만 로드맵에 있습니다."
+      }
+    }
   }
 }

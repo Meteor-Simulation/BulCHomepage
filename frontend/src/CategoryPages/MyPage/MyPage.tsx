@@ -9,6 +9,87 @@ import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '.
 import { API_URL } from '../../utils/api';
 import './MyPage.css';
 
+// 메뉴 타입 정의
+type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions';
+
+// 관리자용 인터페이스
+interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  rolesCode: string;
+  countryCode: string;
+  createdAt: string;
+}
+
+interface Product {
+  code: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface PricePlan {
+  id: number;
+  productCode: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  isActive: boolean;
+  licensePlanId: string | null;
+  createdAt: string;
+}
+
+interface AdminLicense {
+  id: string;
+  licenseKey: string;
+  ownerType: string;
+  ownerId: string;
+  status: string;
+  validUntil: string;
+  createdAt: string;
+}
+
+interface AdminPayment {
+  id: number;
+  userEmail: string;
+  userName: string | null;
+  orderId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod: string | null;
+  cardCompany: string | null;
+  cardNumber: string | null;
+  installmentMonths: number | null;
+  approveNo: string | null;
+  easyPayProvider: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  dueDate: string | null;
+  depositorName: string | null;
+  settlementStatus: string | null;
+  createdAt: string;
+}
+
+interface Promotion {
+  id: number;
+  code: string;
+  name: string;
+  discountType: number;
+  discountValue: number;
+  productCode: string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 interface UserInfo {
   email: string;
   name: string;
@@ -160,6 +241,24 @@ const MyPage: React.FC = () => {
 
   // 로그인 모달
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // 사이드바 메뉴 상태
+  const [activeMenu, setActiveMenu] = useState<MenuSection>('profile');
+
+  // 관리자 데이터 상태
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [adminLicenses, setAdminLicenses] = useState<AdminLicense[]>([]);
+  const [adminPayments, setAdminPayments] = useState<AdminPayment[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
+
+  // 관리자 검색/페이징
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+  const [adminAppliedSearch, setAdminAppliedSearch] = useState('');
+  const [adminCurrentPage, setAdminCurrentPage] = useState(1);
+  const ADMIN_ITEMS_PER_PAGE = 10;
 
   // 로그인 체크 - 미로그인 시 로그인 모달 표시
   useEffect(() => {
@@ -872,6 +971,326 @@ const MyPage: React.FC = () => {
     setTimeout(() => setErrorMessage(''), 3000);
   };
 
+  // ========== 관리자 기능 ==========
+
+  // 관리자 데이터 조회 함수들
+  const fetchAdminUsers = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/users`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setAdminUsers(data);
+    }
+  };
+
+  const fetchAdminLicenses = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/license-list`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setAdminLicenses(data);
+    }
+  };
+
+  const fetchAdminPayments = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/payments`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setAdminPayments(data);
+    }
+  };
+
+  const fetchProducts = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/products`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setProducts(data);
+    }
+  };
+
+  const fetchPricePlans = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/admin/price-plans`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setPricePlans(data);
+    }
+  };
+
+  const fetchPromotions = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/promotions`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setPromotions(data);
+    }
+  };
+
+  // 관리자 메뉴 변경 시 데이터 로드
+  useEffect(() => {
+    if (!isSystemAdmin || !activeMenu.startsWith('admin-')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const loadAdminData = async () => {
+      setIsAdminLoading(true);
+      setAdminSearchQuery('');
+      setAdminAppliedSearch('');
+      setAdminCurrentPage(1);
+
+      try {
+        switch (activeMenu) {
+          case 'admin-users':
+            await fetchAdminUsers(token);
+            break;
+          case 'admin-licenses':
+            await fetchAdminLicenses(token);
+            break;
+          case 'admin-payments':
+            await fetchAdminPayments(token);
+            break;
+          case 'admin-products':
+            await fetchProducts(token);
+            await fetchPricePlans(token);
+            break;
+          case 'admin-promotions':
+            await fetchPromotions(token);
+            await fetchProducts(token);
+            break;
+        }
+      } catch (error) {
+        console.error('관리자 데이터 로드 실패:', error);
+      } finally {
+        setIsAdminLoading(false);
+      }
+    };
+
+    loadAdminData();
+  }, [activeMenu, isSystemAdmin]);
+
+  // 관리자 검색 핸들러
+  const handleAdminSearch = () => {
+    setAdminAppliedSearch(adminSearchQuery);
+    setAdminCurrentPage(1);
+  };
+
+  const handleAdminSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleAdminSearch();
+  };
+
+  const handleAdminClearSearch = () => {
+    setAdminSearchQuery('');
+    setAdminAppliedSearch('');
+    setAdminCurrentPage(1);
+  };
+
+  // 관리자 유틸리티 함수들
+  const getRoleName = (code: string) => {
+    switch (code) {
+      case '000': return '관리자';
+      case '001': return '매니저';
+      case '002': return '일반';
+      default: return code;
+    }
+  };
+
+  const formatAdminDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatAdminPrice = (price: number, currency: string) => {
+    if (currency === 'KRW') {
+      return price.toLocaleString('ko-KR') + '원';
+    }
+    return '$' + price.toLocaleString('en-US');
+  };
+
+  const formatPaymentMethod = (method: string | null) => {
+    if (!method) return '-';
+    const methodMap: { [key: string]: string } = {
+      'CARD': '카드',
+      'VIRTUAL_ACCOUNT': '가상계좌',
+      'EASY_PAY': '간편결제',
+      'TRANSFER': '계좌이체',
+      'MOBILE': '휴대폰',
+    };
+    if (method.startsWith('EASY_PAY_')) {
+      return `간편결제(${method.replace('EASY_PAY_', '')})`;
+    }
+    return methodMap[method] || method;
+  };
+
+  // 라이선스 활성화/비활성화
+  const handleActivateLicense = async (licenseId: string) => {
+    if (!window.confirm('이 라이선스를 활성화하시겠습니까?')) return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/activate`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        await fetchAdminLicenses(token);
+        showSuccess('라이선스가 활성화되었습니다.');
+      } else {
+        showError('활성화에 실패했습니다.');
+      }
+    } catch (error) {
+      showError('활성화 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleSuspendLicense = async (licenseId: string) => {
+    if (!window.confirm('이 라이선스를 비활성화하시겠습니까?')) return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/suspend`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        await fetchAdminLicenses(token);
+        showSuccess('라이선스가 비활성화되었습니다.');
+      } else {
+        showError('비활성화에 실패했습니다.');
+      }
+    } catch (error) {
+      showError('비활성화 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 상품/요금제/프로모션 토글
+  const handleToggleProduct = async (code: string) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/products/${code}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) await fetchProducts(token);
+    } catch (error) {
+      console.error('상품 토글 실패:', error);
+    }
+  };
+
+  const handleTogglePricePlan = async (id: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/price-plans/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) await fetchPricePlans(token);
+    } catch (error) {
+      console.error('요금제 토글 실패:', error);
+    }
+  };
+
+  const handleTogglePromotion = async (id: number) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/promotions/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) await fetchPromotions(token);
+    } catch (error) {
+      console.error('프로모션 토글 실패:', error);
+    }
+  };
+
+  // 필터링 함수들
+  const getFilteredAdminUsers = () => {
+    if (!adminAppliedSearch) return adminUsers;
+    const query = adminAppliedSearch.toLowerCase();
+    return adminUsers.filter(u =>
+      u.email.toLowerCase().includes(query) ||
+      (u.name && u.name.toLowerCase().includes(query)) ||
+      (u.phone && u.phone.includes(query))
+    );
+  };
+
+  const getFilteredAdminLicenses = () => {
+    if (!adminAppliedSearch) return adminLicenses;
+    const query = adminAppliedSearch.toLowerCase();
+    return adminLicenses.filter(l =>
+      l.licenseKey.toLowerCase().includes(query) ||
+      l.ownerId.toLowerCase().includes(query) ||
+      l.status.toLowerCase().includes(query)
+    );
+  };
+
+  const getFilteredAdminPayments = () => {
+    if (!adminAppliedSearch) return adminPayments;
+    const query = adminAppliedSearch.toLowerCase();
+    return adminPayments.filter(p =>
+      p.userEmail.toLowerCase().includes(query) ||
+      (p.userName && p.userName.toLowerCase().includes(query)) ||
+      p.orderId.toLowerCase().includes(query)
+    );
+  };
+
+  const getFilteredProducts = () => {
+    if (!adminAppliedSearch) return products;
+    const query = adminAppliedSearch.toLowerCase();
+    return products.filter(p =>
+      p.code.toLowerCase().includes(query) ||
+      p.name.toLowerCase().includes(query)
+    );
+  };
+
+  const getFilteredPricePlans = () => {
+    if (!adminAppliedSearch) return pricePlans;
+    const query = adminAppliedSearch.toLowerCase();
+    return pricePlans.filter(p =>
+      p.name.toLowerCase().includes(query) ||
+      p.productCode.toLowerCase().includes(query)
+    );
+  };
+
+  const getFilteredPromotions = () => {
+    if (!adminAppliedSearch) return promotions;
+    const query = adminAppliedSearch.toLowerCase();
+    return promotions.filter(p =>
+      p.code.toLowerCase().includes(query) ||
+      p.name.toLowerCase().includes(query)
+    );
+  };
+
+  // 페이징
+  const getPaginatedData = <T,>(data: T[]): T[] => {
+    const startIndex = (adminCurrentPage - 1) * ADMIN_ITEMS_PER_PAGE;
+    return data.slice(startIndex, startIndex + ADMIN_ITEMS_PER_PAGE);
+  };
+
+  const getTotalPages = (totalItems: number): number => {
+    return Math.ceil(totalItems / ADMIN_ITEMS_PER_PAGE);
+  };
+
+
   if (!isAuthReady || isLoading) {
     return (
       <div className="mypage-container">
@@ -884,30 +1303,146 @@ const MyPage: React.FC = () => {
     <>
       <Header logoText="BULC" hideUserMenu={true} />
       <div className="mypage-container">
-        <div className="mypage-content">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <svg className="back-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            되돌아가기
-          </button>
-          <h1 className="mypage-title">마이페이지</h1>
+        <div className="mypage-layout">
+          {/* 왼쪽 사이드바 */}
+          <aside className="mypage-sidebar">
+            <div className="sidebar-header">
+              <button className="back-btn" onClick={() => navigate(-1)}>
+                <svg className="back-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {t('myPage.back')}
+              </button>
+              <h1 className="mypage-title">{t('myPage.title')}</h1>
+            </div>
 
-        {successMessage && (
-          <div className="message success">{successMessage}</div>
-        )}
-        {errorMessage && (
-          <div className="message error">{errorMessage}</div>
-        )}
+            <nav className="sidebar-nav">
+              {/* 개인정보 대메뉴 */}
+              <div className="menu-group">
+                <div className="menu-parent">
+                  <svg className="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>{t('myPage.menu.personalInfo')}</span>
+                </div>
+                <div className="menu-children">
+                  <button
+                    className={`menu-child ${activeMenu === 'profile' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('profile')}
+                  >
+                    {t('myPage.menu.profile')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'account' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('account')}
+                  >
+                    {t('myPage.menu.account')}
+                  </button>
+                </div>
+              </div>
 
-        <div className="mypage-grid">
+              {/* 라이선스 정보 대메뉴 */}
+              <div className="menu-group">
+                <div className="menu-parent">
+                  <svg className="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>{t('myPage.menu.licenseInfo')}</span>
+                </div>
+                <div className="menu-children">
+                  <button
+                    className={`menu-child ${activeMenu === 'subscription' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('subscription')}
+                  >
+                    {t('myPage.menu.subscription')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'payment' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('payment')}
+                  >
+                    {t('myPage.menu.payment')}
+                  </button>
+                </div>
+              </div>
+
+              {/* 관리자 정보 대메뉴 (관리자만 표시) */}
+              {isSystemAdmin && (
+              <div className="menu-group admin-menu-group">
+                <div className="menu-parent admin">
+                  <svg className="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15C15.866 15 19 11.866 19 8V6C19 4.89543 18.1046 4 17 4H7C5.89543 4 5 4.89543 5 6V8C5 11.866 8.13401 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8.21 13.89L7 23L12 20L17 23L15.79 13.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>{t('myPage.menu.admin')}</span>
+                </div>
+                <div className="menu-children">
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-users' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-users')}
+                  >
+                    {t('myPage.menu.adminUsers')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-payments' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-payments')}
+                  >
+                    {t('myPage.menu.adminPayments')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-products' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-products')}
+                  >
+                    {t('myPage.menu.adminProducts')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-licenses')}
+                  >
+                    {t('myPage.menu.adminLicenses')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-promotions')}
+                  >
+                    {t('myPage.menu.adminPromotions')}
+                  </button>
+                </div>
+              </div>
+              )}
+            </nav>
+
+            {/* 로그아웃 버튼 */}
+            <div className="sidebar-footer">
+              <button className="logout-btn-sidebar" onClick={handleLogout}>
+                <svg className="logout-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {t('myPage.logout')}
+              </button>
+            </div>
+          </aside>
+
+          {/* 오른쪽 콘텐츠 영역 */}
+          <main className="mypage-content">
+            {successMessage && (
+              <div className="message success">{successMessage}</div>
+            )}
+            {errorMessage && (
+              <div className="message error">{errorMessage}</div>
+            )}
+
+            <div className="mypage-grid">
           {/* 프로필 정보 */}
+          {activeMenu === 'profile' && (
           <div className="info-card">
               <div className="card-header">
-                <h2 className="card-title">프로필 정보</h2>
+                <h2 className="card-title">{t('myPage.profile')}</h2>
                 {!isEditingProfile && (
                   <button className="edit-btn" onClick={() => setIsEditingProfile(true)}>
-                    수정
+                    {t('myPage.edit')}
                   </button>
                 )}
               </div>
@@ -915,7 +1450,7 @@ const MyPage: React.FC = () => {
               {isEditingProfile ? (
                 <div className="edit-form">
                   <div className="form-group">
-                    <label>이메일</label>
+                    <label>{t('myPage.email')}</label>
                     <div className="input-wrapper">
                       <input
                         type="email"
@@ -923,20 +1458,20 @@ const MyPage: React.FC = () => {
                         disabled
                         className="disabled"
                       />
-                      <span className="helper-text">이메일은 변경할 수 없습니다.</span>
+                      <span className="helper-text">{t('myPage.emailNotEditable')}</span>
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>이름</label>
+                    <label>{t('myPage.name')}</label>
                     <input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="이름 입력"
+                      placeholder={t('myPage.namePlaceholder')}
                     />
                   </div>
                   <div className="form-group">
-                    <label>전화번호</label>
+                    <label>{t('myPage.phone')}</label>
                     <input
                       type="tel"
                       value={editPhone}
@@ -946,7 +1481,7 @@ const MyPage: React.FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>언어</label>
+                    <label>{t('myPage.language')}</label>
                     <div className="language-options">
                       {LANGUAGES.map((lang) => (
                         <button
@@ -961,163 +1496,204 @@ const MyPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="form-actions">
-                    <button className="save-btn" onClick={handleSaveProfile}>저장</button>
-                    <button className="cancel-btn" onClick={handleCancelProfile}>취소</button>
+                    <button className="save-btn" onClick={handleSaveProfile}>{t('myPage.save')}</button>
+                    <button className="cancel-btn" onClick={handleCancelProfile}>{t('myPage.cancel')}</button>
                   </div>
                 </div>
               ) : (
                 <div className="info-list">
                   <div className="info-row">
-                    <span className="info-label">이메일</span>
+                    <span className="info-label">{t('myPage.email')}</span>
                     <span className="info-value">{userInfo.email}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">이름</span>
+                    <span className="info-label">{t('myPage.name')}</span>
                     <span className="info-value">{userInfo.name || '-'}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">전화번호</span>
+                    <span className="info-label">{t('myPage.phone')}</span>
                     <span className="info-value">{formatPhoneNumber(userInfo.phone) || '-'}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">언어</span>
+                    <span className="info-label">{t('myPage.language')}</span>
                     <span className="info-value">
                       {LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage}
                     </span>
                   </div>
-                  <div className="info-row">
-                    <span className="info-label">비밀번호</span>
-                    <button className="password-change-btn" onClick={() => setIsEditingPassword(true)}>
-                      비밀번호 변경
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 비밀번호 변경 폼 */}
-              {isEditingPassword && (
-                <div className="password-edit-section">
-                  <div className="password-edit-header">
-                    <h3>비밀번호 변경</h3>
-                  </div>
-                  <div className="edit-form">
-                    <div className="form-group">
-                      <label>현재 비밀번호</label>
-                      <div className="password-input-wrapper">
-                        <input
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="현재 비밀번호 입력"
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle-btn"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        >
-                          {showCurrentPassword ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                              <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                          ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>새 비밀번호</label>
-                      <div className="password-input-wrapper">
-                        <input
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={(e) => {
-                            setNewPassword(e.target.value);
-                            setPasswordError('');
-                          }}
-                          placeholder="8자 이상, 영문+숫자+특수문자"
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle-btn"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                              <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                          ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>새 비밀번호 확인</label>
-                      <div className="password-input-wrapper">
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            setPasswordError('');
-                          }}
-                          placeholder="새 비밀번호 다시 입력"
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle-btn"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                              <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                          ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    {passwordError && (
-                      <div className="form-error">{passwordError}</div>
-                    )}
-                    <div className="form-actions">
-                      <button className="save-btn" onClick={handleChangePassword}>변경하기</button>
-                      <button className="cancel-btn" onClick={handleCancelPassword}>취소</button>
-                    </div>
-                  </div>
                 </div>
               )}
           </div>
+          )}
 
+          {/* 계정정보 (아이디/비밀번호/계정삭제) */}
+          {activeMenu === 'account' && (
+          <>
+            {/* 이메일 정보 */}
+            <div className="info-card">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.account')}</h2>
+              </div>
+              <div className="info-list">
+                <div className="info-row">
+                  <span className="info-label">{t('myPage.emailId')}</span>
+                  <span className="info-value">{userInfo.email}</span>
+                </div>
+              </div>
+
+              {/* 비밀번호 변경 섹션 */}
+              <div className="password-section">
+                <div className="info-row">
+                  <span className="info-label">{t('myPage.password')}</span>
+                  {!isEditingPassword ? (
+                    <button className="password-change-btn" onClick={() => setIsEditingPassword(true)}>
+                      {t('myPage.changePassword')}
+                    </button>
+                  ) : (
+                    <span className="info-value">{t('myPage.loading')}</span>
+                  )}
+                </div>
+                {isEditingPassword && (
+                  <div className="password-edit-form">
+                    <div className="edit-form">
+                      <div className="form-group">
+                        <label>{t('myPage.currentPassword')}</label>
+                        <div className="password-input-wrapper">
+                          <input
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder={t('myPage.currentPasswordPlaceholder')}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          >
+                            {showCurrentPassword ? (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>{t('myPage.newPassword')}</label>
+                        <div className="password-input-wrapper">
+                          <input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => {
+                              setNewPassword(e.target.value);
+                              setPasswordError('');
+                            }}
+                            placeholder={t('myPage.newPasswordPlaceholder')}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>{t('myPage.confirmPassword')}</label>
+                        <div className="password-input-wrapper">
+                          <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => {
+                              setConfirmPassword(e.target.value);
+                              setPasswordError('');
+                            }}
+                            placeholder={t('myPage.confirmPasswordPlaceholder')}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {passwordError && (
+                        <div className="form-error">{passwordError}</div>
+                      )}
+                      <div className="form-actions">
+                        <button className="save-btn" onClick={handleChangePassword}>{t('myPage.changePasswordBtn')}</button>
+                        <button className="cancel-btn" onClick={handleCancelPassword}>{t('myPage.cancel')}</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 계정 삭제 */}
+            <div className="info-card delete-account-card">
+              <div className="delete-account-section">
+                <div className="delete-account-info">
+                  <span className="delete-label">{t('myPage.deleteAccount')}</span>
+                  <span className="delete-description">{t('myPage.deleteAccountDesc')}</span>
+                </div>
+                <button
+                  className="delete-account-btn"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  {t('myPage.deleteAccount')}
+                </button>
+              </div>
+            </div>
+          </>
+          )}
+
+          {/* 구독 정보 (라이선스 + 구독) */}
+          {activeMenu === 'subscription' && (
+          <>
           {/* 라이선스 정보 */}
           <div className="info-card license-card">
             <div className="card-header">
-              <h2 className="card-title">라이선스 정보</h2>
+              <h2 className="card-title">{t('myPage.license')}</h2>
             </div>
             {isLoadingLicenses ? (
-              <div className="loading-text">라이선스 정보를 불러오는 중...</div>
+              <div className="loading-text">{t('myPage.loading')}</div>
             ) : licenses.length === 0 ? (
               <div className="empty-licenses">
                 <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <p>보유한 라이선스가 없습니다.</p>
+                <p>{t('myPage.noLicense')}</p>
                 <button className="purchase-btn" onClick={() => navigate('/payment')}>
-                  라이선스 구매하기
+                  {t('myPage.purchaseLicense')}
                 </button>
               </div>
             ) : (
@@ -1223,17 +1799,17 @@ const MyPage: React.FC = () => {
           {/* 구독 관리 */}
           <div className="info-card subscription-card">
             <div className="card-header">
-              <h2 className="card-title">구독 관리</h2>
+              <h2 className="card-title">{t('myPage.subscription')}</h2>
             </div>
             {isLoadingSubscriptions ? (
-              <div className="loading-text">구독 정보를 불러오는 중...</div>
+              <div className="loading-text">{t('myPage.loading')}</div>
             ) : subscriptions.length === 0 ? (
               <div className="empty-subscriptions">
                 <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M22 6L12 13L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <p>활성화된 구독이 없습니다.</p>
+                <p>{t('myPage.noSubscription')}</p>
               </div>
             ) : (
               <div className="subscription-list">
@@ -1359,14 +1935,17 @@ const MyPage: React.FC = () => {
               </div>
             )}
           </div>
+          </>
+          )}
 
-          {/* 등록된 결제 수단 */}
+          {/* 결제 정보 */}
+          {activeMenu === 'payment' && (
           <div className="info-card payment-methods-card">
             <div className="card-header">
-              <h2 className="card-title">결제 수단</h2>
+              <h2 className="card-title">{t('myPage.paymentMethod')}</h2>
               {!isEditingSettings && (
                 <button className="edit-btn" onClick={handleStartEditSettings}>
-                  수정
+                  {t('myPage.edit')}
                 </button>
               )}
             </div>
@@ -1375,7 +1954,7 @@ const MyPage: React.FC = () => {
             {isEditingSettings ? (
               <div className="edit-form currency-edit-form">
                 <div className="form-group">
-                  <label>결제 국가/통화</label>
+                  <label>{t('myPage.paymentCurrency')}</label>
                   <div className="input-wrapper">
                     <select
                       value={tempCountry}
@@ -1391,14 +1970,14 @@ const MyPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="form-actions">
-                  <button className="save-btn" onClick={handleSaveSettings}>저장</button>
-                  <button className="cancel-btn" onClick={handleCancelSettings}>취소</button>
+                  <button className="save-btn" onClick={handleSaveSettings}>{t('myPage.save')}</button>
+                  <button className="cancel-btn" onClick={handleCancelSettings}>{t('myPage.cancel')}</button>
                 </div>
               </div>
             ) : (
               <div className="currency-info-section">
                 <div className="info-row">
-                  <span className="info-label">결제 국가/통화</span>
+                  <span className="info-label">{t('myPage.paymentCurrency')}</span>
                   <span className="info-value">
                     {COUNTRIES.find(c => c.code === selectedCountry)?.name || selectedCountry}
                     ({COUNTRIES.find(c => c.code === selectedCountry)?.currency || 'KRW'})
@@ -1408,15 +1987,15 @@ const MyPage: React.FC = () => {
             )}
 
             {isLoadingBillingKeys ? (
-              <div className="loading-text">결제 수단을 불러오는 중...</div>
+              <div className="loading-text">{t('myPage.loading')}</div>
             ) : billingKeys.length === 0 ? (
               <div className="empty-payment-methods">
                 <svg className="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M21 4H3C1.89 4 1 4.89 1 6V18C1 19.11 1.89 20 3 20H21C22.11 20 23 19.11 23 18V6C23 4.89 22.11 4 21 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M1 10H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <p>등록된 결제 수단이 없습니다.</p>
-                <span className="helper-text">결제 시 카드를 등록하면 자동 갱신에 사용할 수 있습니다.</span>
+                <p>{t('myPage.noPaymentMethod')}</p>
+                <span className="helper-text">{t('myPage.paymentMethodHelper')}</span>
               </div>
             ) : (
               <div className="payment-methods-list">
@@ -1456,6 +2035,7 @@ const MyPage: React.FC = () => {
               </div>
             )}
           </div>
+          )}
 
           {/* 개발자 미리보기 (관리자 전용) */}
           {isSystemAdmin && (
@@ -1540,24 +2120,404 @@ const MyPage: React.FC = () => {
             </div>
           )}
 
-          {/* 계정 삭제 */}
-          <div className="info-card delete-account-card">
-            <div className="delete-account-section">
-              <div className="delete-account-info">
-                <span className="delete-label">계정 삭제</span>
-                <span className="delete-description">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</span>
+          {/* 관리자 섹션 - 사용자 관리 */}
+          {activeMenu === 'admin-users' && isSystemAdmin && (
+            <div className="info-card admin-section-card wide">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.adminUsers')}</h2>
+                <span className="admin-count">{getFilteredAdminUsers().length}명</span>
               </div>
-              <button
-                className="delete-account-btn"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                계정 삭제
-              </button>
+              <div className="admin-search-bar">
+                <input
+                  type="text"
+                  placeholder="이메일, 이름, 전화번호로 검색"
+                  value={adminSearchQuery}
+                  onChange={(e) => setAdminSearchQuery(e.target.value)}
+                  onKeyPress={handleAdminSearchKeyPress}
+                />
+                <button onClick={handleAdminSearch}>조회</button>
+                {adminAppliedSearch && <button className="clear" onClick={handleAdminClearSearch}>초기화</button>}
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>이메일</th>
+                          <th>이름</th>
+                          <th>전화번호</th>
+                          <th>권한</th>
+                          <th>가입일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getPaginatedData(getFilteredAdminUsers()).length > 0 ? (
+                          getPaginatedData(getFilteredAdminUsers()).map((u) => (
+                            <tr key={u.id}>
+                              <td>{u.email}</td>
+                              <td>{u.name || '-'}</td>
+                              <td>{formatPhoneNumber(u.phone) || '-'}</td>
+                              <td><span className={`role-badge role-${u.rolesCode}`}>{getRoleName(u.rolesCode)}</span></td>
+                              <td>{formatAdminDate(u.createdAt)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={5} className="empty-row">데이터가 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {getTotalPages(getFilteredAdminUsers().length) > 1 && (
+                    <div className="admin-pagination">
+                      <button disabled={adminCurrentPage === 1} onClick={() => setAdminCurrentPage(p => p - 1)}>&lsaquo;</button>
+                      <span>{adminCurrentPage} / {getTotalPages(getFilteredAdminUsers().length)}</span>
+                      <button disabled={adminCurrentPage === getTotalPages(getFilteredAdminUsers().length)} onClick={() => setAdminCurrentPage(p => p + 1)}>&rsaquo;</button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* 로그아웃 */}
-          <div className="info-card logout-card">
+          {/* 관리자 섹션 - 결제 관리 */}
+          {activeMenu === 'admin-payments' && isSystemAdmin && (
+            <div className="info-card admin-section-card wide">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.adminPayments')}</h2>
+                <span className="admin-count">{getFilteredAdminPayments().length}건</span>
+              </div>
+              <div className="admin-search-bar">
+                <input
+                  type="text"
+                  placeholder="이메일, 이름, 주문번호로 검색"
+                  value={adminSearchQuery}
+                  onChange={(e) => setAdminSearchQuery(e.target.value)}
+                  onKeyPress={handleAdminSearchKeyPress}
+                />
+                <button onClick={handleAdminSearch}>조회</button>
+                {adminAppliedSearch && <button className="clear" onClick={handleAdminClearSearch}>초기화</button>}
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>주문번호</th>
+                          <th>이름</th>
+                          <th>이메일</th>
+                          <th>결제수단</th>
+                          <th>금액</th>
+                          <th>상태</th>
+                          <th>결제일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getPaginatedData(getFilteredAdminPayments()).length > 0 ? (
+                          getPaginatedData(getFilteredAdminPayments()).map((p) => (
+                            <tr key={p.id}>
+                              <td className="order-id">{p.orderId}</td>
+                              <td>{p.userName || '-'}</td>
+                              <td>{p.userEmail}</td>
+                              <td>{formatPaymentMethod(p.paymentMethod)}</td>
+                              <td>{formatAdminPrice(p.amount, p.currency)}</td>
+                              <td><span className={`status-badge status-${p.status?.toLowerCase()}`}>{p.status}</span></td>
+                              <td>{formatAdminDate(p.createdAt)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={7} className="empty-row">데이터가 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {getTotalPages(getFilteredAdminPayments().length) > 1 && (
+                    <div className="admin-pagination">
+                      <button disabled={adminCurrentPage === 1} onClick={() => setAdminCurrentPage(p => p - 1)}>&lsaquo;</button>
+                      <span>{adminCurrentPage} / {getTotalPages(getFilteredAdminPayments().length)}</span>
+                      <button disabled={adminCurrentPage === getTotalPages(getFilteredAdminPayments().length)} onClick={() => setAdminCurrentPage(p => p + 1)}>&rsaquo;</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* 관리자 섹션 - 상품 관리 */}
+          {activeMenu === 'admin-products' && isSystemAdmin && (
+            <>
+              <div className="info-card admin-section-card wide">
+                <div className="card-header">
+                  <h2 className="card-title">{t('myPage.menu.adminProducts')}</h2>
+                  <span className="admin-count">{getFilteredProducts().length}개</span>
+                </div>
+                <div className="admin-search-bar">
+                  <input
+                    type="text"
+                    placeholder="상품 코드, 상품명으로 검색"
+                    value={adminSearchQuery}
+                    onChange={(e) => setAdminSearchQuery(e.target.value)}
+                    onKeyPress={handleAdminSearchKeyPress}
+                  />
+                  <button onClick={handleAdminSearch}>조회</button>
+                  {adminAppliedSearch && <button className="clear" onClick={handleAdminClearSearch}>초기화</button>}
+                </div>
+                {isAdminLoading ? (
+                  <div className="admin-loading">데이터 로딩 중...</div>
+                ) : (
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>코드</th>
+                          <th>상품명</th>
+                          <th>설명</th>
+                          <th>상태</th>
+                          <th>생성일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getFilteredProducts().length > 0 ? (
+                          getFilteredProducts().map((p) => (
+                            <tr key={p.code}>
+                              <td>{p.code}</td>
+                              <td>{p.name}</td>
+                              <td>{p.description || '-'}</td>
+                              <td>
+                                <button
+                                  className={`status-toggle-btn ${p.isActive ? 'active' : 'inactive'}`}
+                                  onClick={() => handleToggleProduct(p.code)}
+                                >
+                                  {p.isActive ? '활성' : '비활성'}
+                                </button>
+                              </td>
+                              <td>{formatAdminDate(p.createdAt)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={5} className="empty-row">데이터가 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="info-card admin-section-card wide">
+                <div className="card-header">
+                  <h2 className="card-title">요금제 목록</h2>
+                  <span className="admin-count">{getFilteredPricePlans().length}개</span>
+                </div>
+                {isAdminLoading ? (
+                  <div className="admin-loading">데이터 로딩 중...</div>
+                ) : (
+                  <>
+                    <div className="admin-table-wrapper">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>상품코드</th>
+                            <th>요금제명</th>
+                            <th>가격</th>
+                            <th>상태</th>
+                            <th>생성일</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {getPaginatedData(getFilteredPricePlans()).length > 0 ? (
+                            getPaginatedData(getFilteredPricePlans()).map((p) => (
+                              <tr key={p.id}>
+                                <td>{p.id}</td>
+                                <td>{p.productCode}</td>
+                                <td>{p.name}</td>
+                                <td>{formatAdminPrice(p.price, p.currency)}</td>
+                                <td>
+                                  <button
+                                    className={`status-toggle-btn ${p.isActive ? 'active' : 'inactive'}`}
+                                    onClick={() => handleTogglePricePlan(p.id)}
+                                  >
+                                    {p.isActive ? '활성' : '비활성'}
+                                  </button>
+                                </td>
+                                <td>{formatAdminDate(p.createdAt)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr><td colSpan={6} className="empty-row">데이터가 없습니다.</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    {getTotalPages(getFilteredPricePlans().length) > 1 && (
+                      <div className="admin-pagination">
+                        <button disabled={adminCurrentPage === 1} onClick={() => setAdminCurrentPage(p => p - 1)}>&lsaquo;</button>
+                        <span>{adminCurrentPage} / {getTotalPages(getFilteredPricePlans().length)}</span>
+                        <button disabled={adminCurrentPage === getTotalPages(getFilteredPricePlans().length)} onClick={() => setAdminCurrentPage(p => p + 1)}>&rsaquo;</button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* 관리자 섹션 - 라이선스 관리 */}
+          {activeMenu === 'admin-licenses' && isSystemAdmin && (
+            <div className="info-card admin-section-card wide">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.adminLicenses')}</h2>
+                <span className="admin-count">{getFilteredAdminLicenses().length}개</span>
+              </div>
+              <div className="admin-search-bar">
+                <input
+                  type="text"
+                  placeholder="라이선스 키, 소유자 ID, 상태로 검색"
+                  value={adminSearchQuery}
+                  onChange={(e) => setAdminSearchQuery(e.target.value)}
+                  onKeyPress={handleAdminSearchKeyPress}
+                />
+                <button onClick={handleAdminSearch}>조회</button>
+                {adminAppliedSearch && <button className="clear" onClick={handleAdminClearSearch}>초기화</button>}
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>라이선스 키</th>
+                          <th>소유자 이메일</th>
+                          <th>상태</th>
+                          <th>만료일</th>
+                          <th>생성일</th>
+                          <th>관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getPaginatedData(getFilteredAdminLicenses()).length > 0 ? (
+                          getPaginatedData(getFilteredAdminLicenses()).map((l) => (
+                            <tr key={l.id}>
+                              <td className="license-key">{l.licenseKey}</td>
+                              <td>{l.ownerId}</td>
+                              <td><span className={`status-badge status-${l.status?.toLowerCase()}`}>{l.status}</span></td>
+                              <td>{formatAdminDate(l.validUntil)}</td>
+                              <td>{formatAdminDate(l.createdAt)}</td>
+                              <td>
+                                {l.status === 'ACTIVE' ? (
+                                  <button className="action-btn delete" onClick={() => handleSuspendLicense(l.id)}>비활성화</button>
+                                ) : l.status === 'SUSPENDED' ? (
+                                  <button className="action-btn edit" onClick={() => handleActivateLicense(l.id)}>활성화</button>
+                                ) : (
+                                  <span>-</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={6} className="empty-row">데이터가 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {getTotalPages(getFilteredAdminLicenses().length) > 1 && (
+                    <div className="admin-pagination">
+                      <button disabled={adminCurrentPage === 1} onClick={() => setAdminCurrentPage(p => p - 1)}>&lsaquo;</button>
+                      <span>{adminCurrentPage} / {getTotalPages(getFilteredAdminLicenses().length)}</span>
+                      <button disabled={adminCurrentPage === getTotalPages(getFilteredAdminLicenses().length)} onClick={() => setAdminCurrentPage(p => p + 1)}>&rsaquo;</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* 관리자 섹션 - 프로모션 관리 */}
+          {activeMenu === 'admin-promotions' && isSystemAdmin && (
+            <div className="info-card admin-section-card wide">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.adminPromotions')}</h2>
+                <span className="admin-count">{getFilteredPromotions().length}개</span>
+              </div>
+              <div className="admin-search-bar">
+                <input
+                  type="text"
+                  placeholder="쿠폰 코드, 프로모션명으로 검색"
+                  value={adminSearchQuery}
+                  onChange={(e) => setAdminSearchQuery(e.target.value)}
+                  onKeyPress={handleAdminSearchKeyPress}
+                />
+                <button onClick={handleAdminSearch}>조회</button>
+                {adminAppliedSearch && <button className="clear" onClick={handleAdminClearSearch}>초기화</button>}
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>쿠폰 코드</th>
+                          <th>프로모션명</th>
+                          <th>할인율</th>
+                          <th>할인금액</th>
+                          <th>사용 현황</th>
+                          <th>유효 기간</th>
+                          <th>상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getPaginatedData(getFilteredPromotions()).length > 0 ? (
+                          getPaginatedData(getFilteredPromotions()).map((p) => (
+                            <tr key={p.id}>
+                              <td className="coupon-code">{p.code}</td>
+                              <td>{p.name}</td>
+                              <td>{p.discountType}%</td>
+                              <td>{p.discountValue.toLocaleString()}원</td>
+                              <td>{p.usageCount} / {p.usageLimit || '∞'}</td>
+                              <td>
+                                {p.validFrom && p.validUntil ? (
+                                  <>{formatAdminDate(p.validFrom).split(' ')[0]} ~ {formatAdminDate(p.validUntil).split(' ')[0]}</>
+                                ) : '제한 없음'}
+                              </td>
+                              <td>
+                                <button
+                                  className={`status-toggle-btn ${p.isActive ? 'active' : 'inactive'}`}
+                                  onClick={() => handleTogglePromotion(p.id)}
+                                >
+                                  {p.isActive ? '활성' : '비활성'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={7} className="empty-row">데이터가 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {getTotalPages(getFilteredPromotions().length) > 1 && (
+                    <div className="admin-pagination">
+                      <button disabled={adminCurrentPage === 1} onClick={() => setAdminCurrentPage(p => p - 1)}>&lsaquo;</button>
+                      <span>{adminCurrentPage} / {getTotalPages(getFilteredPromotions().length)}</span>
+                      <button disabled={adminCurrentPage === getTotalPages(getFilteredPromotions().length)} onClick={() => setAdminCurrentPage(p => p + 1)}>&rsaquo;</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* 모바일용 로그아웃 버튼 */}
+          <div className="mobile-logout-card">
             <button className="logout-btn" onClick={handleLogout}>
               <svg className="logout-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1568,8 +2528,9 @@ const MyPage: React.FC = () => {
             </button>
           </div>
         </div>
+          </main>
+        </div>
       </div>
-    </div>
 
     {/* 로그인 모달 - 미로그인 시 표시 */}
     <LoginModal

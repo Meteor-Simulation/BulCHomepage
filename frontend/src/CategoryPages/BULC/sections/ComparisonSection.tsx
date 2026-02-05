@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const X: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -17,17 +18,18 @@ const FileBarChart2: React.FC<{className?: string}> = ({className}) => (
 );
 
 const ComparisonSection: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="comparison" className="bulc-comparison">
       <div className="bulc-comparison__container">
         <div className="bulc-comparison__header">
-          <h2 className="bulc-comparison__label">Comparison</h2>
+          <h2 className="bulc-comparison__label">{t('bulc.comparison.label')}</h2>
           <h3 className="bulc-comparison__title">
-            Why Switch to BUL:C Now?
+            {t('bulc.comparison.title')}
           </h3>
           <p className="bulc-comparison__subtitle">
-            Traditional methods are slow, error-prone, and expensive. It's time
-            to upgrade your workflow.
+            {t('bulc.comparison.subtitle')}
           </p>
         </div>
 
@@ -38,55 +40,54 @@ const ComparisonSection: React.FC = () => {
             <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
               <Code2 className="bulc-comparison__card-icon" />
             </div>
-            <h4 className="bulc-comparison__card-title">Manual Authoring</h4>
+            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card1.title')}</h4>
             <ul className="bulc-comparison__card-list">
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Prone to syntax errors
+                {t('bulc.comparison.card1.problem1')}
               </li>
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Weeks of setup time
+                {t('bulc.comparison.card1.problem2')}
               </li>
             </ul>
             <div className="bulc-comparison__card-divider" />
             <div className="bulc-comparison__card-solution">
               <p className="bulc-comparison__card-solution-title">
                 <CheckCircle className="bulc-comparison__card-check" />
-                AI-Assisted Workflow
+                {t('bulc.comparison.card1.solutionTitle')}
               </p>
               <p className="bulc-comparison__card-solution-desc">
-                BUL:C auto-generates FDS code from your CAD models instantly.
+                {t('bulc.comparison.card1.solutionDesc')}
               </p>
             </div>
           </div>
 
           {/* Card 2: Speed (Highlighted) */}
           <div className="bulc-comparison__card bulc-comparison__card--featured">
-            <div className="bulc-comparison__card-badge">Recommended</div>
+            <div className="bulc-comparison__card-badge">{t('bulc.comparison.card2.badge')}</div>
             <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--accent">
               <Zap className="bulc-comparison__card-icon" />
             </div>
-            <h4 className="bulc-comparison__card-title">Simulation Speed</h4>
+            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card2.title')}</h4>
             <ul className="bulc-comparison__card-list">
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Days of CPU rendering
+                {t('bulc.comparison.card2.problem1')}
               </li>
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Bottlenecked by hardware
+                {t('bulc.comparison.card2.problem2')}
               </li>
             </ul>
             <div className="bulc-comparison__card-divider" />
             <div className="bulc-comparison__card-solution">
               <p className="bulc-comparison__card-solution-title">
                 <CheckCircle className="bulc-comparison__card-check" />
-                GPU Acceleration
+                {t('bulc.comparison.card2.solutionTitle')}
               </p>
               <p className="bulc-comparison__card-solution-desc">
-                Leverage cloud GPUs to run simulations 100x faster than local
-                CPUs.
+                {t('bulc.comparison.card2.solutionDesc')}
               </p>
             </div>
           </div>
@@ -97,26 +98,25 @@ const ComparisonSection: React.FC = () => {
             <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
               <FileBarChart2 className="bulc-comparison__card-icon" />
             </div>
-            <h4 className="bulc-comparison__card-title">Static Reporting</h4>
+            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card3.title')}</h4>
             <ul className="bulc-comparison__card-list">
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Manual data extraction
+                {t('bulc.comparison.card3.problem1')}
               </li>
               <li className="bulc-comparison__card-item">
                 <X className="bulc-comparison__card-x" />
-                Static, non-interactive
+                {t('bulc.comparison.card3.problem2')}
               </li>
             </ul>
             <div className="bulc-comparison__card-divider" />
             <div className="bulc-comparison__card-solution">
               <p className="bulc-comparison__card-solution-title">
                 <CheckCircle className="bulc-comparison__card-check" />
-                Dynamic Reports
+                {t('bulc.comparison.card3.solutionTitle')}
               </p>
               <p className="bulc-comparison__card-solution-desc">
-                Generate interactive reports with embedded 3D visualizations
-                instantly.
+                {t('bulc.comparison.card3.solutionDesc')}
               </p>
             </div>
           </div>

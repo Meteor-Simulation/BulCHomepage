@@ -1,4 +1,137 @@
 /* ========================================
+   HEADER INTEGRATED NAVIGATION
+======================================== */
+.header.with-nav {
+  justify-content: space-between;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+  margin: 0 24px;
+}
+
+.header-nav-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.header-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: #C4320A;
+  transition: width 0.3s ease;
+}
+
+.header-nav-item:hover {
+  color: #C4320A;
+}
+
+.header-nav-item:hover::after {
+  width: 80%;
+}
+
+.header-nav-item.active {
+  color: #C4320A;
+  font-weight: 600;
+}
+
+.header-nav-item.active::after {
+  width: 80%;
+}
+
+/* 헤더 내 모바일 네비게이션 */
+.header-nav-mobile {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.header-nav-mobile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  max-width: 160px;
+}
+
+.header-nav-mobile-btn:hover {
+  background: #eeeeee;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.header-nav-mobile-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--text);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.header-nav-mobile-arrow.open {
+  transform: rotate(180deg);
+}
+
+.header-nav-mobile-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  overflow: hidden;
+  z-index: 200;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+.header-nav-mobile-item {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.header-nav-mobile-item:hover {
+  background: rgba(196, 50, 10, 0.08);
+}
+
+.header-nav-mobile-item.active {
+  color: #C4320A;
+  background: rgba(196, 50, 10, 0.08);
+  font-weight: 600;
+}
+
+/* ========================================
    HEADER ACTION BUTTONS (로그인, 언어)
 ======================================== */
 .header-right {
@@ -364,15 +497,31 @@
     height: 16px;
   }
 
-  /* 서브 네비게이션: 드롭다운으로 전환 */
+  /* 통합 네비게이션: 드롭다운으로 전환 */
   .desktop-only {
-    display: none;
+    display: none !important;
   }
 
   .mobile-only {
-    display: flex;
+    display: flex !important;
   }
 
+  .header-nav-mobile {
+    margin: 0 8px;
+  }
+
+  .header-nav-mobile-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    max-width: 140px;
+  }
+
+  .header-nav-mobile-arrow {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 기존 서브 네비게이션 (사용하지 않지만 유지) */
   .sub-nav {
     padding: 12px 16px;
   }
@@ -407,6 +556,22 @@
   .header-action-icon {
     width: 22px;
     height: 22px;
+  }
+
+  .header-nav-mobile {
+    margin: 0 4px;
+  }
+
+  .header-nav-mobile-btn {
+    max-width: 120px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .header-nav-mobile-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .sub-nav-mobile-btn {

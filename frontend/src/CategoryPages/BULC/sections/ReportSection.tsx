@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const BarChart: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
@@ -11,36 +12,36 @@ const PlayCircle: React.FC<{className?: string}> = ({className}) => (
 );
 
 const ReportSection: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="report" className="bulc-report">
       <div className="bulc-report__container">
         <div className="bulc-report__layout">
           {/* Text Content */}
           <div className="bulc-report__text">
-            <h2 className="bulc-report__title">Reports that Impress Clients</h2>
+            <h2 className="bulc-report__title">{t('bulc.report.title')}</h2>
             <p className="bulc-report__desc">
-              Stop struggling with screenshots and Word documents. BUL:C
-              generates professional, interactive web-based reports and standard
-              PDFs that clearly communicate safety outcomes.
+              {t('bulc.report.desc')}
             </p>
 
             <div className="bulc-report__features">
               <div className="bulc-report__feature">
                 <BarChart className="bulc-report__feature-icon" />
                 <span className="bulc-report__feature-label">
-                  Auto-plotted Graphs
+                  {t('bulc.report.feature1')}
                 </span>
               </div>
               <div className="bulc-report__feature">
                 <PlayCircle className="bulc-report__feature-icon" />
                 <span className="bulc-report__feature-label">
-                  Embedded Contours
+                  {t('bulc.report.feature2')}
                 </span>
               </div>
               <div className="bulc-report__feature">
                 <TableProperties className="bulc-report__feature-icon" />
                 <span className="bulc-report__feature-label">
-                  Compliance Tables
+                  {t('bulc.report.feature3')}
                 </span>
               </div>
             </div>
@@ -64,14 +65,14 @@ const ReportSection: React.FC = () => {
                 <div className="bulc-report__mockup-header">
                   <div>
                     <h3 className="bulc-report__mockup-heading">
-                      Fire Safety Analysis
+                      {t('bulc.report.mockupTitle')}
                     </h3>
                     <p className="bulc-report__mockup-meta">
-                      Project: Skylark Tower | Date: Oct 24, 2023
+                      {t('bulc.report.mockupMeta')}
                     </p>
                   </div>
                   <div className="bulc-report__mockup-status">
-                    <span className="bulc-report__mockup-badge">PASS</span>
+                    <span className="bulc-report__mockup-badge">{t('bulc.report.mockupPass')}</span>
                   </div>
                 </div>
 
@@ -80,7 +81,7 @@ const ReportSection: React.FC = () => {
                   {/* Bar Chart Mockup */}
                   <div className="bulc-report__mockup-chart">
                     <div className="bulc-report__mockup-chart-label">
-                      Temperature Rise
+                      {t('bulc.report.chartTemp')}
                     </div>
                     <div className="bulc-report__mockup-bars">
                       <div className="bulc-report__bar" style={{ height: '25%', background: '#93c5fd' }} />
@@ -94,7 +95,7 @@ const ReportSection: React.FC = () => {
                   {/* Donut Chart Mockup */}
                   <div className="bulc-report__mockup-chart">
                     <div className="bulc-report__mockup-chart-label">
-                      Evacuation Time
+                      {t('bulc.report.chartEvac')}
                     </div>
                     <div className="bulc-report__mockup-donut-wrap">
                       <div className="bulc-report__mockup-donut">

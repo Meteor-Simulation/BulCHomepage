@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import ContactModal from './ContactModal';
@@ -38,7 +37,6 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, logout } = useAuth();
-  const { language, changeLanguage } = useLanguage();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -73,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({
     });
   };
 
-  // 로그인 성공 콜백
+  // 로그인 성공 콜백 - 마이페이지로 이동
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
     setAlertModal({
@@ -82,6 +80,7 @@ const Header: React.FC<HeaderProps> = ({
       message: t('auth.loginSuccess'),
       type: 'success',
     });
+    navigate('/mypage');
   };
 
   const closeAlert = () => {
@@ -97,49 +96,63 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="header visible">
+      <header className={`header visible ${showSubNav ? 'with-nav' : ''}`}>
         <div className="header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
           <span className="header-logo-text">{logoText}</span>
         </div>
-        {/* 언어 전환 버튼 (테스트용) */}
-        <div className="header-lang-switch" style={{
-          display: 'flex',
-          gap: '8px',
-          marginLeft: '16px',
-          alignItems: 'center'
-        }}>
-          <button
-            onClick={() => changeLanguage('ko')}
-            style={{
-              padding: '4px 12px',
-              border: language === 'ko' ? '2px solid #C4320A' : '1px solid #ccc',
-              borderRadius: '4px',
-              background: language === 'ko' ? '#FFF4F0' : '#fff',
-              color: language === 'ko' ? '#C4320A' : '#666',
-              fontWeight: language === 'ko' ? 'bold' : 'normal',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            한국어
-          </button>
-          <button
-            onClick={() => changeLanguage('en')}
-            style={{
-              padding: '4px 12px',
-              border: language === 'en' ? '2px solid #C4320A' : '1px solid #ccc',
-              borderRadius: '4px',
-              background: language === 'en' ? '#FFF4F0' : '#fff',
-              color: language === 'en' ? '#C4320A' : '#666',
-              fontWeight: language === 'en' ? 'bold' : 'normal',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            English
-          </button>
-        </div>
+
+        {/* 통합 네비게이션 (데스크톱) */}
+        {showSubNav && subNavItems.length > 0 && (
+          <nav className="header-nav desktop-only">
+            {subNavItems.map((item) => (
+              <div
+                key={item.id}
+                className={`header-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
+                onClick={() => onSubNavChange?.(item.id)}
+              >
+                {item.label}
+              </div>
+            ))}
+          </nav>
+        )}
+
+        {/* 모바일 네비게이션 드롭다운 */}
+        {showSubNav && subNavItems.length > 0 && (
+          <div className="header-nav-mobile mobile-only">
+            <button
+              className="header-nav-mobile-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <span>{subNavItems.find(item => item.id === activeSubNav)?.label || t('header.menuSelect')}</span>
+              <svg
+                className={`header-nav-mobile-arrow ${mobileMenuOpen ? 'open' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {mobileMenuOpen && (
+              <div className="header-nav-mobile-dropdown">
+                {subNavItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`header-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      onSubNavChange?.(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="header-right">
           {/* 관리자 메뉴 - 관리자/매니저에게만 표시 */}
           {isLoggedIn && isAdmin && (
@@ -175,66 +188,14 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* 서브 네비게이션 */}
-      {showSubNav && subNavItems.length > 0 && (
-        <>
-          <nav className="sub-nav">
-            {/* 데스크톱 메뉴 */}
-            <div className="sub-nav-center desktop-only">
-              {subNavItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`sub-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
-                  onClick={() => onSubNavChange?.(item.id)}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-
-            {/* 모바일 드롭다운 */}
-            <div className="sub-nav-mobile mobile-only">
-              <button
-                className="sub-nav-mobile-btn"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <span>{subNavItems.find(item => item.id === activeSubNav)?.label || t('header.menuSelect')}</span>
-                <svg
-                  className={`sub-nav-mobile-arrow ${mobileMenuOpen ? 'open' : ''}`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              {mobileMenuOpen && (
-                <div className="sub-nav-mobile-dropdown">
-                  {subNavItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`sub-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
-                      onClick={() => {
-                        onSubNavChange?.(item.id);
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      {item.label}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </nav>
-
-          {/* 플로팅 문의 버튼 */}
-          <button className="floating-contact-btn" onClick={() => setContactModalOpen(true)}>
-            <svg className="floating-contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 11.5C21.0034 12.8199 20.6951 14.1219 20.1 15.3C19.3944 16.7118 18.3098 17.8992 16.9674 18.7293C15.6251 19.5594 14.0782 19.9994 12.5 20C11.1801 20.0035 9.87812 19.6951 8.7 19.1L3 21L4.9 15.3C4.30493 14.1219 3.99656 12.8199 4 11.5C4.00061 9.92179 4.44061 8.37488 5.27072 7.03258C6.10083 5.69028 7.28825 4.6056 8.7 3.90003C9.87812 3.30496 11.1801 2.99659 12.5 3.00003H13C15.0843 3.11502 17.053 3.99479 18.5291 5.47089C20.0052 6.94699 20.885 8.91568 21 11V11.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="floating-contact-text">{contactLabel}</span>
-          </button>
-        </>
+      {/* 플로팅 문의 버튼 */}
+      {showSubNav && (
+        <button className="floating-contact-btn" onClick={() => setContactModalOpen(true)}>
+          <svg className="floating-contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 11.5C21.0034 12.8199 20.6951 14.1219 20.1 15.3C19.3944 16.7118 18.3098 17.8992 16.9674 18.7293C15.6251 19.5594 14.0782 19.9994 12.5 20C11.1801 20.0035 9.87812 19.6951 8.7 19.1L3 21L4.9 15.3C4.30493 14.1219 3.99656 12.8199 4 11.5C4.00061 9.92179 4.44061 8.37488 5.27072 7.03258C6.10083 5.69028 7.28825 4.6056 8.7 3.90003C9.87812 3.30496 11.1801 2.99659 12.5 3.00003H13C15.0843 3.11502 17.053 3.99479 18.5291 5.47089C20.0052 6.94699 20.885 8.91568 21 11V11.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="floating-contact-text">{contactLabel}</span>
+        </button>
       )}
 
       <LoginModal

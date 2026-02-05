@@ -203,6 +203,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .name(user.getName())
                 .rolesCode(user.getRolesCode())
+                .language(user.getLanguageCode())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("사용자 정보 조회 성공", userInfo));
@@ -337,6 +338,7 @@ public class AuthController {
                         .email(user.getEmail())
                         .name(user.getName())
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
 

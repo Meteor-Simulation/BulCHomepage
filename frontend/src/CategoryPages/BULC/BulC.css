@@ -10,10 +10,22 @@
 .bulc-landing {
   width: 100%;
   overflow-x: hidden;
+  min-height: calc(100vh - 200px);
 }
 
 .bulc-landing section {
-  scroll-margin-top: 140px;
+  animation: bulc-fadeIn 0.3s ease-out;
+}
+
+@keyframes bulc-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ========================================
@@ -52,7 +64,6 @@
   right: 0;
   width: 33%;
   height: 33%;
-  background: rgba(191, 219, 254, 0.5);
   transform: translateX(50%) translateY(-50%);
 }
 

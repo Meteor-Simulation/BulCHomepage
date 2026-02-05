@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ShieldCheck: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -14,11 +15,13 @@ const Workflow: React.FC<{className?: string}> = ({className}) => (
 );
 
 const CoreValuesSection: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="core-values" className="bulc-values">
       <div className="bulc-values__container">
         <div className="bulc-values__header">
-          <h2 className="bulc-values__title">Built on 3 Core Values</h2>
+          <h2 className="bulc-values__title">{t('bulc.coreValues.title')}</h2>
         </div>
 
         <div className="bulc-values__list">
@@ -28,7 +31,7 @@ const CoreValuesSection: React.FC = () => {
               <div className="bulc-values__image-bg bulc-values__image-bg--blue" />
               <img
                 src="https://picsum.photos/seed/security/600/400"
-                alt="Accuracy"
+                alt={t('bulc.coreValues.accuracy.title')}
                 className="bulc-values__image"
               />
             </div>
@@ -37,21 +40,19 @@ const CoreValuesSection: React.FC = () => {
                 <div className="bulc-values__icon-wrap">
                   <ShieldCheck className="bulc-values__icon" />
                 </div>
-                <h3 className="bulc-values__name">Accuracy</h3>
+                <h3 className="bulc-values__name">{t('bulc.coreValues.accuracy.title')}</h3>
               </div>
               <p className="bulc-values__desc">
-                Precision is non-negotiable when lives are at stake. BUL:C
-                utilizes validated FDS physics engines, ensuring every simulation
-                meets rigorous international safety standards (NIST).
+                {t('bulc.coreValues.accuracy.desc')}
               </p>
               <ul className="bulc-values__checks">
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  Validated against real-world fire tests
+                  {t('bulc.coreValues.accuracy.check1')}
                 </li>
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  Precise smoke and heat propagation models
+                  {t('bulc.coreValues.accuracy.check2')}
                 </li>
               </ul>
             </div>
@@ -63,7 +64,7 @@ const CoreValuesSection: React.FC = () => {
               <div className="bulc-values__image-bg bulc-values__image-bg--orange" />
               <img
                 src="https://picsum.photos/seed/server/600/400"
-                alt="Unrivaled Speed"
+                alt={t('bulc.coreValues.speed.title')}
                 className="bulc-values__image"
               />
             </div>
@@ -72,16 +73,15 @@ const CoreValuesSection: React.FC = () => {
                 <div className="bulc-values__icon-wrap">
                   <Server className="bulc-values__icon" />
                 </div>
-                <h3 className="bulc-values__name">Unrivaled Speed</h3>
+                <h3 className="bulc-values__name">{t('bulc.coreValues.speed.title')}</h3>
               </div>
               <p className="bulc-values__desc">
-                Time is money. By offloading complex calculations to GPU, what used to take days now takes hours. Iterate
-                faster and deliver results sooner.
+                {t('bulc.coreValues.speed.desc')}
               </p>
               <ul className="bulc-values__checks">
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  Parallel processing on GPU cores
+                  {t('bulc.coreValues.speed.check1')}
                 </li>
               </ul>
             </div>
@@ -93,7 +93,7 @@ const CoreValuesSection: React.FC = () => {
               <div className="bulc-values__image-bg bulc-values__image-bg--slate" />
               <img
                 src="https://picsum.photos/seed/robot/600/400"
-                alt="End-to-End Automation"
+                alt={t('bulc.coreValues.automation.title')}
                 className="bulc-values__image"
               />
             </div>
@@ -102,21 +102,19 @@ const CoreValuesSection: React.FC = () => {
                 <div className="bulc-values__icon-wrap">
                   <Workflow className="bulc-values__icon" />
                 </div>
-                <h3 className="bulc-values__name">End-to-End Automation (Comming Soon)</h3>
+                <h3 className="bulc-values__name">{t('bulc.coreValues.automation.title')}</h3>
               </div>
               <p className="bulc-values__desc">
-                From importing the CAD drawing to generating the final PDF
-                compliance report, the entire pipeline is automated. Focus on
-                engineering, not paperwork.
+                {t('bulc.coreValues.automation.desc')}
               </p>
               <ul className="bulc-values__checks">
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  One-click report generation
+                  {t('bulc.coreValues.automation.check1')}
                 </li>
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
-                  Automated evacuation path analysis
+                  {t('bulc.coreValues.automation.check2')}
                 </li>
               </ul>
             </div>

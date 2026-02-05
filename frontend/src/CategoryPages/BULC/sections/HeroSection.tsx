@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ArrowRight: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -15,6 +16,8 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick }) => {
+  const { t } = useTranslation();
+
   return (
     <section id="hero" className="bulc-hero">
       {/* Background Effects */}
@@ -29,30 +32,28 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick }) => {
               <span className="bulc-hero__badge-ping" />
               <span className="bulc-hero__badge-core" />
             </span>
-            New: AI-GPU Acceleration Enabled
+            {t('bulc.hero.badge')}
           </div>
 
           <h1 className="bulc-hero__title">
-            Automate Authoring to <br />
+            {t('bulc.hero.title1')} <br />
             <span className="bulc-hero__title-gradient">
-              Simulation to Report
+              {t('bulc.hero.title2')}
             </span>
           </h1>
 
           <p className="bulc-hero__description">
-            Drastically reduce human error and gain full MCP control. BUL:C
-            combines advanced FDS-based physics with AI automation for instant
-            compliance reporting.
+            {t('bulc.hero.description')}
           </p>
 
           <div className="bulc-hero__actions">
             <button className="bulc-hero__btn bulc-hero__btn--primary" onClick={onPurchaseClick}>
-              Start for Free
+              {t('bulc.hero.startFree')}
               <ArrowRight className="bulc-hero__btn-icon" />
             </button>
             <button className="bulc-hero__btn bulc-hero__btn--secondary">
               <Play className="bulc-hero__btn-icon bulc-hero__btn-icon--left" />
-              Watch Demo
+              {t('bulc.hero.watchDemo')}
             </button>
           </div>
         </div>
@@ -85,10 +86,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick }) => {
             <div className="bulc-hero__video-caption">
               <p className="bulc-hero__video-caption-title">
                 <Zap className="bulc-hero__video-caption-icon" />
-                BUL:C Interface Walkthrough
+                {t('bulc.hero.videoTitle')}
               </p>
               <p className="bulc-hero__video-caption-sub">
-                See how automation saves 40+ hours per project
+                {t('bulc.hero.videoSubtitle')}
               </p>
             </div>
           </div>

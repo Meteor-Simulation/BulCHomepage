@@ -110,6 +110,7 @@ public class AuthService {
                         .email(user.getEmail())
                         .name(user.getEmail())  // name 필드가 없으므로 email 사용
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
     }
@@ -182,6 +183,7 @@ public class AuthService {
                             .email(user.getEmail())
                             .name(user.getEmail())
                             .rolesCode(user.getRolesCode())
+                            .language(user.getLanguageCode())
                             .build())
                     .build();
         } catch (RuntimeException e) {
@@ -335,6 +337,7 @@ public class AuthService {
                         .email(user.getEmail())
                         .name(user.getEmail())
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
     }
@@ -422,6 +425,7 @@ public class AuthService {
                         .email(user.getEmail())
                         .name(user.getName())
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
     }
@@ -469,6 +473,7 @@ public class AuthService {
                         .email(user.getEmail())
                         .name(user.getName() != null ? user.getName() : user.getEmail())
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
     }
@@ -541,6 +546,7 @@ public class AuthService {
                         .email(user.getEmail())
                         .name(user.getName() != null ? user.getName() : user.getEmail())
                         .rolesCode(user.getRolesCode())
+                        .language(user.getLanguageCode())
                         .build())
                 .build();
     }

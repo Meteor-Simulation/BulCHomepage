@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getApiBaseUrl } from '../utils/api';
 
 interface User {
@@ -6,6 +7,7 @@ interface User {
   email: string;
   name?: string;
   rolesCode?: string; // 000: admin, 001: manager, 002: user
+  language?: string;  // 사용자 언어 설정 (ko, en)
 }
 
 interface LoginResult {
@@ -49,9 +51,18 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const { i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false); // 인증 상태 초기화 완료 여부
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
+
+  // 사용자 언어 설정 적용 함수
+  const applyUserLanguage = useCallback((language: string | undefined) => {
+    if (language) {
+      localStorage.setItem('language', language);
+      i18n.changeLanguage(language);
+    }
+  }, [i18n]);
 
   // 로그아웃 함수
   const logout = useCallback(async () => {
@@ -160,16 +171,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const storedToken = localStorage.getItem('accessToken');
 
       if (storedUser && storedToken) {
+        const parsedUser = JSON.parse(storedUser);
         // 토큰 만료 확인
         const expiration = getTokenExpiration(storedToken);
         if (expiration && expiration > Date.now()) {
-          setUser(JSON.parse(storedUser));
+          setUser(parsedUser);
           localStorage.setItem('tokenExpiration', expiration.toString());
+          // 사용자 언어 설정 적용 (localStorage에 없을 경우 대비)
+          applyUserLanguage(parsedUser.language);
         } else {
           // 토큰이 만료되었으면 갱신 시도
           const success = await refreshAccessToken();
           if (success) {
-            setUser(JSON.parse(storedUser));
+            setUser(parsedUser);
+            // 사용자 언어 설정 적용
+            applyUserLanguage(parsedUser.language);
           } else {
             logout();
           }
@@ -179,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initAuth();
-  }, [logout, refreshAccessToken]);
+  }, [logout, refreshAccessToken, applyUserLanguage]);
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
@@ -204,6 +220,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: userInfo.email,
           name: userInfo.name || userInfo.email,
           rolesCode: userInfo.rolesCode,
+          language: userInfo.language,
         };
 
         setUser(userData);
@@ -216,6 +233,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (expiration) {
           localStorage.setItem('tokenExpiration', expiration.toString());
         }
+
+        // 사용자 언어 설정 적용
+        applyUserLanguage(userInfo.language);
 
         console.log('Login successful, user:', userData);
         return { success: true };
@@ -262,10 +282,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: userInfo.email,
           name: userInfo.name || userInfo.email,
           rolesCode: userInfo.rolesCode,
+          language: userInfo.language,
         };
 
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        // 사용자 언어 설정 적용
+        applyUserLanguage(userInfo.language);
 
         return { success: true };
       }

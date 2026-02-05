@@ -30,5 +30,6 @@ public class AuthResponse {
         private String email;
         private String name;
         private String rolesCode;
+        private String language;  // 사용자 언어 설정 (ko, en)
     }
 }

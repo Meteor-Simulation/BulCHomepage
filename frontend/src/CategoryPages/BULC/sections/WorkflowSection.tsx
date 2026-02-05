@@ -1,24 +1,27 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Flag: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
 );
 
-const steps = [
-  { id: 1, title: 'Import', desc: 'Upload CAD/BIM models directly.(Comming Soon)' },
-  { id: 2, title: 'Setup', desc: 'Set fire loads & boundaries using an LLM-powered AI assistant.' },
-  { id: 3, title: 'Simulate', desc: '100x times Fast GPU Processing Compared to CPU.' },
-  { id: 4, title: 'Analyze', desc: 'Review AI insights & data.' },
-];
-
 const WorkflowSection: React.FC = () => {
+  const { t } = useTranslation();
+
+  const steps = [
+    { id: 1, titleKey: 'bulc.workflow.step1.title', descKey: 'bulc.workflow.step1.desc' },
+    { id: 2, titleKey: 'bulc.workflow.step2.title', descKey: 'bulc.workflow.step2.desc' },
+    { id: 3, titleKey: 'bulc.workflow.step3.title', descKey: 'bulc.workflow.step3.desc' },
+    { id: 4, titleKey: 'bulc.workflow.step4.title', descKey: 'bulc.workflow.step4.desc' },
+  ];
+
   return (
     <section id="workflow" className="bulc-workflow">
       <div className="bulc-workflow__container">
         <div className="bulc-workflow__header">
-          <h2 className="bulc-workflow__title">Seamless 5-Step Workflow</h2>
+          <h2 className="bulc-workflow__title">{t('bulc.workflow.title')}</h2>
           <p className="bulc-workflow__subtitle">
-            From concept to compliance in record time.
+            {t('bulc.workflow.subtitle')}
           </p>
         </div>
 
@@ -38,8 +41,8 @@ const WorkflowSection: React.FC = () => {
                 >
                   {step.id}
                 </div>
-                <h4 className="bulc-workflow__step-title">{step.title}</h4>
-                <p className="bulc-workflow__step-desc">{step.desc}</p>
+                <h4 className="bulc-workflow__step-title">{t(step.titleKey)}</h4>
+                <p className="bulc-workflow__step-desc">{t(step.descKey)}</p>
               </div>
             ))}
 
@@ -49,9 +52,9 @@ const WorkflowSection: React.FC = () => {
               <div className="bulc-workflow__step-number bulc-workflow__step-number--success">
                 <Flag className="bulc-workflow__step-flag" />
               </div>
-              <h4 className="bulc-workflow__step-title">Report</h4>
+              <h4 className="bulc-workflow__step-title">{t('bulc.workflow.step5.title')}</h4>
               <p className="bulc-workflow__step-desc">
-                Auto-generate compliance docs.
+                {t('bulc.workflow.step5.desc')}
               </p>
             </div>
           </div>

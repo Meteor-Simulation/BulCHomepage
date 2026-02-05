@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const HelpCircle: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
@@ -9,19 +10,21 @@ interface CTASectionProps {
 }
 
 const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
+  const { t } = useTranslation();
+
   return (
     <section id="cta" className="bulc-cta">
       <div className="bulc-cta__container">
         <h2 className="bulc-cta__title">
-          Ready to automate your simulations?
+          {t('bulc.cta.title')}
         </h2>
         <p className="bulc-cta__subtitle">
-          Join 500+ fire safety engineers who have switched to BUL:C.
+          {t('bulc.cta.subtitle')}
         </p>
 
         <div className="bulc-cta__action">
           <button className="bulc-cta__btn" onClick={onPurchaseClick}>
-            Get Started for Free
+            {t('bulc.cta.button')}
           </button>
         </div>
 
@@ -29,29 +32,28 @@ const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
           <div className="bulc-cta__faq-item">
             <h4 className="bulc-cta__faq-question">
               <HelpCircle className="bulc-cta__faq-icon" />
-              Is there a free trial?
+              {t('bulc.cta.faq1.question')}
             </h4>
             <p className="bulc-cta__faq-answer">
-              Yes, you can start for free with limited simulation hours per
-              month. No credit card required.
+              {t('bulc.cta.faq1.answer')}
             </p>
           </div>
           <div className="bulc-cta__faq-item">
             <h4 className="bulc-cta__faq-question">
               <HelpCircle className="bulc-cta__faq-icon" />
-              Which operating system do I need?
+              {t('bulc.cta.faq2.question')}
             </h4>
             <p className="bulc-cta__faq-answer">
-              BUL:C runs on Windows (64-bit). A standard Windows PC is enough for typical workflows.
+              {t('bulc.cta.faq2.answer')}
             </p>
           </div>
           <div className="bulc-cta__faq-item bulc-cta__faq-item--last">
             <h4 className="bulc-cta__faq-question">
               <HelpCircle className="bulc-cta__faq-icon" />
-              Is it compatible with Revit?
+              {t('bulc.cta.faq3.question')}
             </h4>
             <p className="bulc-cta__faq-answer">
-               Not yet. We currently don't have direct plugins for Revit, AutoCAD, or SketchUp — but it’s on our roadmap.
+              {t('bulc.cta.faq3.answer')}
             </p>
           </div>
         </div>
