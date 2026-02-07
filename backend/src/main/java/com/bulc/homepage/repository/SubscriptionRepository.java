@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
@@ -16,17 +17,17 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     /**
      * 사용자의 구독 목록 조회
      */
-    List<Subscription> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+    List<Subscription> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     /**
      * 사용자의 활성 구독 목록 조회
      */
-    List<Subscription> findByUserEmailAndStatus(String userEmail, String status);
+    List<Subscription> findByUserIdAndStatus(UUID userId, String status);
 
     /**
      * 사용자의 특정 상품 구독 조회
      */
-    Optional<Subscription> findByUserEmailAndProductCodeAndStatus(String userEmail, String productCode, String status);
+    Optional<Subscription> findByUserIdAndProductCodeAndStatus(UUID userId, String productCode, String status);
 
     /**
      * 자동 갱신이 설정된 구독 중 결제 예정일이 도래한 구독 조회
@@ -48,5 +49,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     /**
      * 사용자에게 활성 구독이 있는지 확인
      */
-    boolean existsByUserEmailAndStatus(String userEmail, String status);
+    boolean existsByUserIdAndStatus(UUID userId, String status);
 }

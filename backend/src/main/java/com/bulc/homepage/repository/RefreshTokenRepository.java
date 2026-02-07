@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Refresh Token Repository for RTR (Refresh Token Rotation).
@@ -18,14 +19,14 @@ import java.util.Optional;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
     /**
-     * 사용자 이메일로 Refresh Token 조회 (단일 디바이스 정책).
+     * 사용자 ID로 Refresh Token 조회 (단일 디바이스 정책).
      */
-    Optional<RefreshToken> findByUserEmail(String userEmail);
+    Optional<RefreshToken> findByUserId(UUID userId);
 
     /**
-     * 사용자 이메일과 디바이스 ID로 Refresh Token 조회 (멀티 디바이스 정책).
+     * 사용자 ID와 디바이스 ID로 Refresh Token 조회 (멀티 디바이스 정책).
      */
-    Optional<RefreshToken> findByUserEmailAndDeviceId(String userEmail, String deviceId);
+    Optional<RefreshToken> findByUserIdAndDeviceId(UUID userId, String deviceId);
 
     /**
      * 토큰 값으로 Refresh Token 조회.
@@ -35,21 +36,21 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     /**
      * 사용자의 모든 Refresh Token 조회 (멀티 디바이스).
      */
-    List<RefreshToken> findAllByUserEmail(String userEmail);
+    List<RefreshToken> findAllByUserId(UUID userId);
 
     /**
      * 사용자의 모든 Refresh Token 삭제 (강제 로그아웃).
      */
     @Modifying
-    @Query("DELETE FROM RefreshToken rt WHERE rt.userEmail = :userEmail")
-    void deleteAllByUserEmail(@Param("userEmail") String userEmail);
+    @Query("DELETE FROM RefreshToken rt WHERE rt.userId = :userId")
+    void deleteAllByUserId(@Param("userId") UUID userId);
 
     /**
      * 사용자의 특정 디바이스 Refresh Token 삭제.
      */
     @Modifying
-    @Query("DELETE FROM RefreshToken rt WHERE rt.userEmail = :userEmail AND rt.deviceId = :deviceId")
-    void deleteByUserEmailAndDeviceId(@Param("userEmail") String userEmail, @Param("deviceId") String deviceId);
+    @Query("DELETE FROM RefreshToken rt WHERE rt.userId = :userId AND rt.deviceId = :deviceId")
+    void deleteByUserIdAndDeviceId(@Param("userId") UUID userId, @Param("deviceId") String deviceId);
 
     /**
      * 토큰 값으로 삭제.
@@ -72,6 +73,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     /**
      * 사용자의 활성 세션 수 조회.
      */
-    @Query("SELECT COUNT(rt) FROM RefreshToken rt WHERE rt.userEmail = :userEmail AND rt.expiresAt > :now")
-    long countActiveSessionsByUserEmail(@Param("userEmail") String userEmail, @Param("now") LocalDateTime now);
+    @Query("SELECT COUNT(rt) FROM RefreshToken rt WHERE rt.userId = :userId AND rt.expiresAt > :now")
+    long countActiveSessionsByUserId(@Param("userId") UUID userId, @Param("now") LocalDateTime now);
 }

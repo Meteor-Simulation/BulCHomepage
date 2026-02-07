@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -29,8 +31,8 @@ public class UserController {
             return ResponseEntity.status(401).build();
         }
 
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        User user = userRepository.findById(userId)
                 .orElse(null);
 
         if (user == null) {
@@ -57,8 +59,8 @@ public class UserController {
             return ResponseEntity.status(401).build();
         }
 
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        User user = userRepository.findById(userId)
                 .orElse(null);
 
         if (user == null) {
@@ -107,8 +109,8 @@ public class UserController {
             return ResponseEntity.status(401).body(new ApiResponse(false, "인증이 필요합니다."));
         }
 
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email).orElse(null);
+        UUID userId = UUID.fromString(auth.getName());
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             return ResponseEntity.status(404).body(new ApiResponse(false, "사용자를 찾을 수 없습니다."));
@@ -143,8 +145,8 @@ public class UserController {
             return ResponseEntity.status(401).body(new ApiResponse(false, "인증이 필요합니다."));
         }
 
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email).orElse(null);
+        UUID userId = UUID.fromString(auth.getName());
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             return ResponseEntity.status(404).body(new ApiResponse(false, "사용자를 찾을 수 없습니다."));

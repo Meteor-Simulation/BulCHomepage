@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 테스트용 컨트롤러 (개발 환경에서만 활성화)
@@ -44,8 +45,8 @@ public class TestController {
             @PathVariable Long subscriptionId,
             @RequestParam(defaultValue = "3") int daysUntilExpiry) {
 
-        String userEmail = getCurrentUserEmail();
-        if (userEmail == null) {
+        UUID userId = getCurrentUserId();
+        if (userId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "인증이 필요합니다"));
         }
 
@@ -53,7 +54,7 @@ public class TestController {
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다"));
 
         // 권한 확인
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(Map.of("error", "권한이 없습니다"));
         }
 
@@ -92,8 +93,8 @@ public class TestController {
     @PostMapping("/subscriptions/{subscriptionId}/make-due-now")
     public ResponseEntity<Map<String, Object>> makeDueNow(@PathVariable Long subscriptionId) {
 
-        String userEmail = getCurrentUserEmail();
-        if (userEmail == null) {
+        UUID userId = getCurrentUserId();
+        if (userId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "인증이 필요합니다"));
         }
 
@@ -101,7 +102,7 @@ public class TestController {
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다"));
 
         // 권한 확인
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(Map.of("error", "권한이 없습니다"));
         }
 
@@ -181,8 +182,8 @@ public class TestController {
      */
     @GetMapping("/subscriptions/{subscriptionId}/payment-history")
     public ResponseEntity<?> getPaymentHistory(@PathVariable Long subscriptionId) {
-        String userEmail = getCurrentUserEmail();
-        if (userEmail == null) {
+        UUID userId = getCurrentUserId();
+        if (userId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "인증이 필요합니다"));
         }
 
@@ -190,7 +191,7 @@ public class TestController {
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다"));
 
         // 권한 확인
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(Map.of("error", "권한이 없습니다"));
         }
 
@@ -201,13 +202,13 @@ public class TestController {
     }
 
     /**
-     * 현재 로그인한 사용자 이메일 조회
+     * 현재 로그인한 사용자 ID 조회
      */
-    private String getCurrentUserEmail() {
+    private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()
                 && !"anonymousUser".equals(authentication.getPrincipal())) {
-            return authentication.getName();
+            return UUID.fromString(authentication.getName());
         }
         return null;
     }

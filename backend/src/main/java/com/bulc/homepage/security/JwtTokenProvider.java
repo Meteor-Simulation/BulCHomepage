@@ -36,15 +36,38 @@ public class JwtTokenProvider {
 
     public String generateAccessToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return generateToken(userDetails.getUsername(), accessTokenExpiration);
+        // username이 userId.toString()으로 설정되어 있다고 가정
+        return generateToken(userDetails.getUsername(), null, accessTokenExpiration);
     }
 
+    /**
+     * 새로운 액세스 토큰 생성 (UUID userId 기반)
+     */
+    public String generateAccessToken(UUID userId, String email) {
+        return generateToken(userId.toString(), email, accessTokenExpiration);
+    }
+
+    /**
+     * @deprecated Use generateAccessToken(UUID userId, String email) instead
+     */
+    @Deprecated
     public String generateAccessToken(String email) {
-        return generateToken(email, accessTokenExpiration);
+        return generateToken(email, null, accessTokenExpiration);
     }
 
+    /**
+     * 새로운 리프레시 토큰 생성 (UUID userId 기반)
+     */
+    public String generateRefreshToken(UUID userId, String email) {
+        return generateToken(userId.toString(), email, refreshTokenExpiration);
+    }
+
+    /**
+     * @deprecated Use generateRefreshToken(UUID userId, String email) instead
+     */
+    @Deprecated
     public String generateRefreshToken(String email) {
-        return generateToken(email, refreshTokenExpiration);
+        return generateToken(email, null, refreshTokenExpiration);
     }
 
     /**
@@ -89,19 +112,39 @@ public class JwtTokenProvider {
         }
     }
 
-    private String generateToken(String subject, long expiration) {
+    private String generateToken(String subject, String email, long expiration) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .id(UUID.randomUUID().toString())  // JTI: 토큰 고유 ID (RTR에서 토큰 구분용)
                 .subject(subject)
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(secretKey)
-                .compact();
+                .expiration(expiryDate);
+
+        if (email != null) {
+            builder.claim("email", email);
+        }
+
+        return builder.signWith(secretKey).compact();
     }
 
+    /**
+     * 토큰에서 사용자 ID(UUID) 추출
+     */
+    public UUID getUserIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return UUID.fromString(claims.getSubject());
+    }
+
+    /**
+     * 토큰에서 이메일 추출 (claim에서)
+     */
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(secretKey)
@@ -109,7 +152,9 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return claims.getSubject();
+        // 먼저 email claim 확인, 없으면 subject 반환 (하위 호환성)
+        String email = claims.get("email", String.class);
+        return email != null ? email : claims.getSubject();
     }
 
     public Date getExpirationFromToken(String token) {

@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,9 +36,9 @@ public class SubscriptionController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<SubscriptionResponse>>> getMySubscriptions() {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
-        List<SubscriptionResponse> subscriptions = subscriptionRepository.findByUserEmailOrderByCreatedAtDesc(userEmail)
+        List<SubscriptionResponse> subscriptions = subscriptionRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::toSubscriptionResponse)
                 .collect(Collectors.toList());
@@ -50,12 +51,12 @@ public class SubscriptionController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> getSubscription(@PathVariable Long id) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다."));
 
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             return ResponseEntity.status(403).body(ApiResponse.error("접근 권한이 없습니다."));
         }
 
@@ -70,10 +71,10 @@ public class SubscriptionController {
             @PathVariable Long id,
             @RequestParam Long billingKeyId,
             @RequestParam(defaultValue = "YEARLY") String billingCycle) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            Subscription subscription = subscriptionBillingService.enableAutoRenew(id, billingKeyId, billingCycle, userEmail);
+            Subscription subscription = subscriptionBillingService.enableAutoRenew(id, billingKeyId, billingCycle, userId);
             return ResponseEntity.ok(ApiResponse.success("자동 갱신이 활성화되었습니다.", toSubscriptionResponse(subscription)));
         } catch (Exception e) {
             log.error("자동 갱신 활성화 실패: {}", e.getMessage());
@@ -86,10 +87,10 @@ public class SubscriptionController {
      */
     @DeleteMapping("/{id}/auto-renew")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> disableAutoRenew(@PathVariable Long id) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            Subscription subscription = subscriptionBillingService.disableAutoRenew(id, userEmail);
+            Subscription subscription = subscriptionBillingService.disableAutoRenew(id, userId);
             return ResponseEntity.ok(ApiResponse.success("자동 갱신이 비활성화되었습니다.", toSubscriptionResponse(subscription)));
         } catch (Exception e) {
             log.error("자동 갱신 비활성화 실패: {}", e.getMessage());
@@ -102,10 +103,10 @@ public class SubscriptionController {
      */
     @GetMapping("/{id}/payments")
     public ResponseEntity<ApiResponse<List<SubscriptionPayment>>> getPaymentHistory(@PathVariable Long id) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            List<SubscriptionPayment> payments = subscriptionBillingService.getPaymentHistory(id, userEmail);
+            List<SubscriptionPayment> payments = subscriptionBillingService.getPaymentHistory(id, userId);
             return ResponseEntity.ok(ApiResponse.success("결제 이력 조회 성공", payments));
         } catch (Exception e) {
             log.error("결제 이력 조회 실패: {}", e.getMessage());
@@ -121,10 +122,10 @@ public class SubscriptionController {
     @PostMapping("/billing-keys")
     public ResponseEntity<ApiResponse<BillingKeyResponse>> issueBillingKey(
             @Valid @RequestBody BillingKeyIssueRequest request) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            BillingKeyResponse response = billingKeyService.issueBillingKey(request, userEmail);
+            BillingKeyResponse response = billingKeyService.issueBillingKey(request, userId);
             return ResponseEntity.ok(ApiResponse.success("카드가 등록되었습니다.", response));
         } catch (Exception e) {
             log.error("빌링키 발급 실패: {}", e.getMessage());
@@ -137,9 +138,9 @@ public class SubscriptionController {
      */
     @GetMapping("/billing-keys")
     public ResponseEntity<ApiResponse<List<BillingKeyResponse>>> getMyBillingKeys() {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
-        List<BillingKeyResponse> billingKeys = billingKeyService.getUserBillingKeys(userEmail);
+        List<BillingKeyResponse> billingKeys = billingKeyService.getUserBillingKeys(userId);
         return ResponseEntity.ok(ApiResponse.success("등록된 카드 목록 조회 성공", billingKeys));
     }
 
@@ -148,10 +149,10 @@ public class SubscriptionController {
      */
     @PatchMapping("/billing-keys/{id}/default")
     public ResponseEntity<ApiResponse<BillingKeyResponse>> setDefaultBillingKey(@PathVariable Long id) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            BillingKeyResponse response = billingKeyService.setDefaultBillingKey(id, userEmail);
+            BillingKeyResponse response = billingKeyService.setDefaultBillingKey(id, userId);
             return ResponseEntity.ok(ApiResponse.success("기본 결제 수단이 변경되었습니다.", response));
         } catch (Exception e) {
             log.error("기본 결제 수단 변경 실패: {}", e.getMessage());
@@ -164,10 +165,10 @@ public class SubscriptionController {
      */
     @DeleteMapping("/billing-keys/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBillingKey(@PathVariable Long id) {
-        String userEmail = getCurrentUserEmail();
+        UUID userId = getCurrentUserId();
 
         try {
-            billingKeyService.deleteBillingKey(id, userEmail);
+            billingKeyService.deleteBillingKey(id, userId);
             return ResponseEntity.ok(ApiResponse.success("카드가 삭제되었습니다.", null));
         } catch (Exception e) {
             log.error("빌링키 삭제 실패: {}", e.getMessage());
@@ -175,13 +176,13 @@ public class SubscriptionController {
         }
     }
 
-    private String getCurrentUserEmail() {
+    private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() ||
                 "anonymousUser".equals(authentication.getPrincipal())) {
             throw new RuntimeException("인증되지 않은 사용자입니다.");
         }
-        return authentication.getName();
+        return UUID.fromString(authentication.getName());
     }
 
     private SubscriptionResponse toSubscriptionResponse(Subscription subscription) {

@@ -2,10 +2,15 @@
 
 | 항목 | 내용 |
 |------|------|
-| 문서 버전 | v1.0 |
-| 작성일 | 2026-01-13 |
+| 문서 버전 | v1.1 |
+| 작성일 | 2026-02-06 |
 | 프로젝트명 | BulC Homepage |
 | Base URL | `http://localhost:8080/api` |
+
+### 주요 변경사항 (v1.1)
+- **Users PK 마이그레이션**: `user.id`가 email에서 UUID로 변경
+- JWT 토큰의 subject가 email에서 userId(UUID)로 변경
+- 인증 응답의 `user.id` 필드가 UUID 문자열로 변경
 
 ---
 
@@ -82,7 +87,7 @@ Authorization: Bearer <access_token>
         "tokenType": "Bearer",
         "expiresIn": 3600,
         "user": {
-            "id": "user@example.com",
+            "id": "550e8400-e29b-41d4-a716-446655440000",
             "email": "user@example.com",
             "name": "홍길동",
             "rolesCode": "002"
@@ -90,6 +95,8 @@ Authorization: Bearer <access_token>
     }
 }
 ```
+
+> **참고**: `user.id`는 UUID 형식입니다. JWT 토큰의 subject도 이 UUID를 사용합니다.
 
 ---
 
@@ -120,7 +127,7 @@ Authorization: Bearer <access_token>
         "tokenType": "Bearer",
         "expiresIn": 3600,
         "user": {
-            "id": "user@example.com",
+            "id": "550e8400-e29b-41d4-a716-446655440000",
             "email": "user@example.com",
             "name": "홍길동",
             "rolesCode": "002"

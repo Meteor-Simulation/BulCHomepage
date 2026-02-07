@@ -6,15 +6,16 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
 
-    List<ActivityLog> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+    List<ActivityLog> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     List<ActivityLog> findByActionOrderByCreatedAtDesc(String action);
 
     List<ActivityLog> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime after);
 
-    void deleteByUserEmail(String userEmail);
+    void deleteByUserId(UUID userId);
 }

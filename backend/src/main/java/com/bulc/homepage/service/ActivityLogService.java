@@ -14,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class ActivityLogService {
             User user = getCurrentUser();
 
             ActivityLog activityLog = ActivityLog.builder()
-                    .userEmail(user != null ? user.getEmail() : null)
+                    .userId(user != null ? user.getId() : null)
                     .action(request.getAction())
                     .targetType(request.getResourcePath() != null ? "resource" : null)
                     .description(buildDescription(request, httpRequest))
@@ -50,7 +52,7 @@ public class ActivityLogService {
             User user = getCurrentUser();
 
             ActivityLog activityLog = ActivityLog.builder()
-                    .userEmail(user != null ? user.getEmail() : null)
+                    .userId(user != null ? user.getId() : null)
                     .action(action)
                     .targetType("resource")
                     .description(String.format("%s %s", httpMethod, resourcePath))
@@ -69,7 +71,7 @@ public class ActivityLogService {
         String action = success ? "login" : "login_failed";
 
         ActivityLog activityLog = ActivityLog.builder()
-                .userEmail(user != null ? user.getEmail() : null)
+                .userId(user != null ? user.getId() : null)
                 .action(action)
                 .targetType("user")
                 .targetId(null)
@@ -84,7 +86,7 @@ public class ActivityLogService {
     @Transactional
     public void logSignupActivity(User user, HttpServletRequest httpRequest) {
         ActivityLog activityLog = ActivityLog.builder()
-                .userEmail(user.getEmail())
+                .userId(user.getId())
                 .action("signup")
                 .targetType("user")
                 .targetId(null)
@@ -114,8 +116,15 @@ public class ActivityLogService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()
                 && !"anonymousUser".equals(authentication.getPrincipal())) {
-            String email = authentication.getName();
-            return userRepository.findByEmail(email).orElse(null);
+            // authentication.getName()은 이제 userId.toString()
+            String userIdString = authentication.getName();
+            try {
+                UUID userId = UUID.fromString(userIdString);
+                return userRepository.findById(userId).orElse(null);
+            } catch (IllegalArgumentException e) {
+                // 하위 호환성: email로 시도
+                return userRepository.findByEmail(userIdString).orElse(null);
+            }
         }
         return null;
     }

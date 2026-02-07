@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface BillingKeyRepository extends JpaRepository<BillingKey, Long> {
@@ -16,17 +17,17 @@ public interface BillingKeyRepository extends JpaRepository<BillingKey, Long> {
     /**
      * 사용자의 활성화된 빌링키 목록 조회
      */
-    List<BillingKey> findByUserEmailAndIsActiveTrue(String userEmail);
+    List<BillingKey> findByUserIdAndIsActiveTrue(UUID userId);
 
     /**
      * 사용자의 기본 빌링키 조회
      */
-    Optional<BillingKey> findByUserEmailAndIsDefaultTrueAndIsActiveTrue(String userEmail);
+    Optional<BillingKey> findByUserIdAndIsDefaultTrueAndIsActiveTrue(UUID userId);
 
     /**
      * 사용자의 모든 빌링키 목록 조회
      */
-    List<BillingKey> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+    List<BillingKey> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     /**
      * customerKey로 빌링키 조회
@@ -42,11 +43,11 @@ public interface BillingKeyRepository extends JpaRepository<BillingKey, Long> {
      * 사용자의 기본 빌링키 해제
      */
     @Modifying
-    @Query("UPDATE BillingKey b SET b.isDefault = false WHERE b.userEmail = :userEmail AND b.isDefault = true")
-    void unsetDefaultByUserEmail(@Param("userEmail") String userEmail);
+    @Query("UPDATE BillingKey b SET b.isDefault = false WHERE b.userId = :userId AND b.isDefault = true")
+    void unsetDefaultByUserId(@Param("userId") UUID userId);
 
     /**
      * 사용자에게 활성화된 빌링키가 있는지 확인
      */
-    boolean existsByUserEmailAndIsActiveTrue(String userEmail);
+    boolean existsByUserIdAndIsActiveTrue(UUID userId);
 }
