@@ -3,6 +3,15 @@
 -- PostgreSQL 16
 -- Generated: 2024-12-22
 -- =========================================================
+--
+-- ⚠️ 주의: 이 파일은 더 이상 사용되지 않습니다 (DEPRECATED)
+-- 최신 스키마는 database/init.sql 파일을 참조하세요.
+--
+-- 주요 변경사항 (2026-02-06):
+-- - users.email PK → users.id (UUID) PK로 변경
+-- - 모든 FK 참조가 user_email → user_id (UUID)로 변경
+-- - refresh_tokens 테이블 추가 (RTR 지원)
+-- =========================================================
 
 -- Extension for UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

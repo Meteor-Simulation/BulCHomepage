@@ -20,6 +20,7 @@ DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS payment_details CASCADE;
@@ -77,7 +78,8 @@ INSERT INTO countries (code, name, currency) VALUES
 -- 3. users (유저 테이블)
 -- =========================================================
 CREATE TABLE users (
-    email           VARCHAR(255) PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email           VARCHAR(255) NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NULL,
     roles_code      VARCHAR(10) NOT NULL DEFAULT '002',
     name            VARCHAR(100) NULL,
@@ -94,9 +96,11 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_is_active ON users(is_active);
+CREATE INDEX idx_users_email ON users(email);
 
 COMMENT ON TABLE users IS '유저 테이블 - 사용자 기본 정보';
-COMMENT ON COLUMN users.email IS '이메일 (기본키, 로그인 ID)';
+COMMENT ON COLUMN users.id IS 'UUID 기본키';
+COMMENT ON COLUMN users.email IS '이메일 (UNIQUE, 로그인 ID)';
 COMMENT ON COLUMN users.password_hash IS '비밀번호 해시 (소셜 로그인 사용자는 NULL)';
 COMMENT ON COLUMN users.roles_code IS '역할 코드 (000:관리자, 001:매니저, 002:일반)';
 COMMENT ON COLUMN users.name IS '이름 (결제 시 입력)';
@@ -108,36 +112,37 @@ COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 
 -- 기본 계정 (비밀번호: meteor2025!)
 -- 관리자 계정
-INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('meteor@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '메테오'),
-    ('simul@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '김지태');
+INSERT INTO users (id, email, password_hash, roles_code, name) VALUES
+    ('00000000-0000-0000-0000-000000000001', 'meteor@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '메테오'),
+    ('00000000-0000-0000-0000-000000000002', 'simul@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '000', '김지태');
 
 -- 매니저 계정
-INSERT INTO users (email, password_hash, roles_code, name) VALUES
-    ('juwon@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '강주원'),
-    ('kjh4387@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '김자현'),
-    ('laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
-    ('qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
+INSERT INTO users (id, email, password_hash, roles_code, name) VALUES
+    ('00000000-0000-0000-0000-000000000003', 'juwon@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '강주원'),
+    ('00000000-0000-0000-0000-000000000004', 'kjh4387@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '김자현'),
+    ('00000000-0000-0000-0000-000000000005', 'laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
+    ('00000000-0000-0000-0000-000000000006', 'qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
 
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)
 -- =========================================================
 CREATE TABLE user_social_accounts (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NOT NULL,
+    user_id         UUID NOT NULL,
     provider        VARCHAR(20) NOT NULL,
     provider_id     VARCHAR(255) NOT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_social_accounts_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE,
+    CONSTRAINT fk_social_accounts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT uk_social_accounts_provider UNIQUE (provider, provider_id)
 );
 
 COMMENT ON TABLE user_social_accounts IS '소셜 계정 연동 테이블 - OAuth 제공자별 사용자 ID 저장';
+COMMENT ON COLUMN user_social_accounts.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN user_social_accounts.provider IS '소셜 로그인 제공자 (NAVER, KAKAO, GOOGLE)';
 COMMENT ON COLUMN user_social_accounts.provider_id IS '소셜 플랫폼에서 제공하는 사용자 고유 ID';
 
-CREATE INDEX idx_social_accounts_user ON user_social_accounts(user_email);
+CREATE INDEX idx_social_accounts_user ON user_social_accounts(user_id);
 CREATE INDEX idx_social_accounts_provider ON user_social_accounts(provider, provider_id);
 
 -- =========================================================
@@ -250,7 +255,7 @@ COMMENT ON COLUMN promotions.usage_count IS '현재까지 사용된 횟수';
 -- =========================================================
 CREATE TABLE subscriptions (
     id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email          VARCHAR(255) NULL,
+    user_id             UUID NULL,
     product_code        VARCHAR(3) NOT NULL,
     price_plan_id       BIGINT NOT NULL,
     status              VARCHAR(1) NOT NULL DEFAULT 'A',
@@ -263,13 +268,14 @@ CREATE TABLE subscriptions (
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_email) REFERENCES users(email),
+    CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_subscriptions_product FOREIGN KEY (product_code) REFERENCES products(code),
     CONSTRAINT fk_subscriptions_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
     -- fk_subscriptions_billing_key는 billing_keys 테이블 생성 후 ALTER TABLE로 추가됨
 );
 
 COMMENT ON TABLE subscriptions IS '유저 구독 관리 테이블 - 사용자의 구독 현황';
+COMMENT ON COLUMN subscriptions.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN subscriptions.status IS 'A: 활성(Active), E: 만료(Expired), C: 취소(Canceled)';
 COMMENT ON COLUMN subscriptions.billing_key_id IS '자동결제에 사용할 빌링키 ID';
 COMMENT ON COLUMN subscriptions.next_billing_date IS '다음 결제 예정일';
@@ -280,7 +286,7 @@ COMMENT ON COLUMN subscriptions.billing_cycle IS 'MONTHLY, QUARTERLY, YEARLY';
 -- =========================================================
 CREATE TABLE billing_keys (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NOT NULL,
+    user_id         UUID NOT NULL,
     billing_key     VARCHAR(255) NOT NULL,
     customer_key    VARCHAR(255) NOT NULL,
     card_company    VARCHAR(50) NULL,
@@ -292,17 +298,18 @@ CREATE TABLE billing_keys (
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_billing_keys_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+    CONSTRAINT fk_billing_keys_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 COMMENT ON TABLE billing_keys IS '빌링키 테이블 - 자동결제용 카드 정보 저장';
+COMMENT ON COLUMN billing_keys.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN billing_keys.billing_key IS '토스페이먼츠 빌링키';
 COMMENT ON COLUMN billing_keys.customer_key IS '고객 식별키 (UUID)';
 COMMENT ON COLUMN billing_keys.card_company IS '카드사명';
 COMMENT ON COLUMN billing_keys.card_number IS '마스킹된 카드번호 (앞6자리****뒤4자리)';
 COMMENT ON COLUMN billing_keys.is_default IS '기본 결제 수단 여부';
 
-CREATE INDEX idx_billing_keys_user_email ON billing_keys(user_email);
+CREATE INDEX idx_billing_keys_user_id ON billing_keys(user_id);
 CREATE INDEX idx_billing_keys_is_active ON billing_keys(is_active);
 
 -- subscriptions 테이블에 billing_keys 외래키 추가
@@ -344,7 +351,7 @@ CREATE INDEX idx_subscription_payments_status ON subscription_payments(status);
 -- =========================================================
 CREATE TABLE payments (
     id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email_fk       VARCHAR(255) NULL,
+    user_id             UUID NULL,
     user_email          VARCHAR(255) NOT NULL,
     user_name           VARCHAR(100) NULL,
     subscription_id     BIGINT NULL,
@@ -360,12 +367,14 @@ CREATE TABLE payments (
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_payments_user FOREIGN KEY (user_email_fk) REFERENCES users(email),
+    CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_payments_subscription FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
     CONSTRAINT fk_payments_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
 );
 
 COMMENT ON TABLE payments IS '결제 테이블 - 결제/환불 정보 관리';
+COMMENT ON COLUMN payments.user_id IS '사용자 UUID (FK → users.id)';
+COMMENT ON COLUMN payments.user_email IS '결제 시점 이메일 스냅샷 (FK 아님)';
 COMMENT ON COLUMN payments.status IS 'P: 대기(Pending), C: 완료(Completed), F: 실패(Failed), R: 환불(Refunded)';
 
 -- =========================================================
@@ -417,7 +426,7 @@ COMMENT ON COLUMN payment_details.settlement_status IS '정산 상태 (계좌이
 -- =========================================================
 CREATE TABLE activity_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NULL,
+    user_id         UUID NULL,
     action          VARCHAR(50) NOT NULL,
     target_type     VARCHAR(50) NULL,
     target_id       BIGINT NULL,
@@ -426,10 +435,11 @@ CREATE TABLE activity_logs (
     user_agent      TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_email) REFERENCES users(email)
+    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 COMMENT ON TABLE activity_logs IS '활동 로그 테이블 - 로그인, 구매, 환불 등 기록';
+COMMENT ON COLUMN activity_logs.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN activity_logs.action IS 'login, logout, purchase, refund, subscription_start, subscription_cancel 등';
 
 -- =========================================================
@@ -438,25 +448,25 @@ COMMENT ON COLUMN activity_logs.action IS 'login, logout, purchase, refund, subs
 CREATE TABLE token_blacklist (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     token           VARCHAR(500) NOT NULL,
-    user_email      VARCHAR(255) NOT NULL,
+    user_id         UUID NOT NULL,
     expires_at      TIMESTAMP NOT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 COMMENT ON TABLE token_blacklist IS '토큰 블랙리스트 테이블 - 로그아웃된 JWT 토큰 관리';
 COMMENT ON COLUMN token_blacklist.token IS '블랙리스트에 등록된 JWT 토큰';
-COMMENT ON COLUMN token_blacklist.user_email IS '토큰 소유자 이메일';
+COMMENT ON COLUMN token_blacklist.user_id IS '토큰 소유자 UUID';
 COMMENT ON COLUMN token_blacklist.expires_at IS '토큰 만료 시간 (만료 후 자동 삭제)';
 
 CREATE INDEX idx_token_blacklist_token ON token_blacklist(token);
 CREATE INDEX idx_token_blacklist_expires_at ON token_blacklist(expires_at);
 
 -- =========================================================
--- 9-2. refresh_tokens (리프레시 토큰 테이블 - RTR 지원)
+-- 9-2. refresh_tokens (리프레시 토큰 테이블)
 -- =========================================================
 CREATE TABLE refresh_tokens (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NOT NULL,
+    user_id         UUID NOT NULL,
     token           VARCHAR(500) NOT NULL,
     device_id       VARCHAR(255) NULL,
     device_info     VARCHAR(500) NULL,
@@ -464,17 +474,18 @@ CREATE TABLE refresh_tokens (
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_used_at    TIMESTAMP NULL,
 
-    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-COMMENT ON TABLE refresh_tokens IS '리프레시 토큰 테이블 - RTR(Refresh Token Rotation) 지원';
-COMMENT ON COLUMN refresh_tokens.token IS '리프레시 토큰 값';
+COMMENT ON TABLE refresh_tokens IS '리프레시 토큰 테이블 - RTR (Refresh Token Rotation) 지원';
+COMMENT ON COLUMN refresh_tokens.user_id IS '사용자 UUID';
+COMMENT ON COLUMN refresh_tokens.token IS '현재 유효한 리프레시 토큰';
 COMMENT ON COLUMN refresh_tokens.device_id IS '디바이스 식별자 (멀티 디바이스 지원)';
 COMMENT ON COLUMN refresh_tokens.device_info IS '디바이스 정보 (User-Agent 등)';
 COMMENT ON COLUMN refresh_tokens.expires_at IS '토큰 만료 시간';
 COMMENT ON COLUMN refresh_tokens.last_used_at IS '마지막 사용 시간';
 
-CREATE INDEX idx_refresh_tokens_user_email ON refresh_tokens(user_email);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX idx_refresh_tokens_device_id ON refresh_tokens(device_id);
 
@@ -483,23 +494,25 @@ CREATE INDEX idx_refresh_tokens_device_id ON refresh_tokens(device_id);
 -- =========================================================
 CREATE TABLE user_change_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_email      VARCHAR(255) NULL,
+    user_id         UUID NULL,
     changed_field   VARCHAR(50) NOT NULL,
     old_value       TEXT NULL,
     new_value       TEXT NULL,
-    changed_by_email VARCHAR(255) NULL,
+    changed_by_id   UUID NULL,
     change_reason   TEXT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 COMMENT ON TABLE user_change_logs IS '유저 정보 변경 로그 - 사용자 정보 변경 이력';
+COMMENT ON COLUMN user_change_logs.user_id IS '변경 대상 사용자 UUID';
+COMMENT ON COLUMN user_change_logs.changed_by_id IS '변경 수행자 UUID';
 
 -- =========================================================
 -- 11. admin_logs (관리자 로그 테이블)
 -- =========================================================
 CREATE TABLE admin_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    admin_email     VARCHAR(255) NOT NULL,
+    admin_id        UUID NOT NULL,
     action          VARCHAR(100) NOT NULL,
     target_type     VARCHAR(50) NOT NULL,
     target_id       BIGINT NULL,
@@ -507,10 +520,11 @@ CREATE TABLE admin_logs (
     ip_address      VARCHAR(50) NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_admin_logs_admin FOREIGN KEY (admin_email) REFERENCES users(email)
+    CONSTRAINT fk_admin_logs_admin FOREIGN KEY (admin_id) REFERENCES users(id)
 );
 
 COMMENT ON TABLE admin_logs IS '관리자 로그 테이블 - 관리자 작업 이력';
+COMMENT ON COLUMN admin_logs.admin_id IS '관리자 UUID (FK → users.id)';
 
 -- =========================================================
 -- 12. license_plans (라이선스 플랜 테이블)
@@ -655,13 +669,13 @@ CREATE INDEX idx_promotions_valid_from ON promotions(valid_from);
 CREATE INDEX idx_promotions_valid_until ON promotions(valid_until);
 
 -- subscriptions
-CREATE INDEX idx_subscriptions_user_email ON subscriptions(user_email);
+CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX idx_subscriptions_product_code ON subscriptions(product_code);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX idx_subscriptions_end_date ON subscriptions(end_date);
 
 -- payments
-CREATE INDEX idx_payments_user_email_fk ON payments(user_email_fk);
+CREATE INDEX idx_payments_user_id ON payments(user_id);
 CREATE INDEX idx_payments_subscription_id ON payments(subscription_id);
 CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_created_at ON payments(created_at);
@@ -671,16 +685,16 @@ CREATE INDEX idx_payment_details_order_id ON payment_details(order_id);
 CREATE INDEX idx_payment_details_payment_key ON payment_details(payment_key);
 
 -- activity_logs
-CREATE INDEX idx_activity_logs_user_email ON activity_logs(user_email);
+CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX idx_activity_logs_action ON activity_logs(action);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
 
 -- user_change_logs
-CREATE INDEX idx_user_change_logs_user_email ON user_change_logs(user_email);
+CREATE INDEX idx_user_change_logs_user_id ON user_change_logs(user_id);
 CREATE INDEX idx_user_change_logs_created_at ON user_change_logs(created_at);
 
 -- admin_logs
-CREATE INDEX idx_admin_logs_admin_email ON admin_logs(admin_email);
+CREATE INDEX idx_admin_logs_admin_id ON admin_logs(admin_id);
 CREATE INDEX idx_admin_logs_action ON admin_logs(action);
 CREATE INDEX idx_admin_logs_created_at ON admin_logs(created_at);
 

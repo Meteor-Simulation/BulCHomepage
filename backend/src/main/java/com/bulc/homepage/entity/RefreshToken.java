@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Refresh Token Entity for RTR (Refresh Token Rotation).
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "refresh_tokens", indexes = {
-    @Index(name = "idx_refresh_tokens_user_email", columnList = "user_email"),
+    @Index(name = "idx_refresh_tokens_user_id", columnList = "user_id"),
     @Index(name = "idx_refresh_tokens_token", columnList = "token"),
     @Index(name = "idx_refresh_tokens_device_id", columnList = "device_id")
 })
@@ -30,8 +31,8 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_email", nullable = false, length = 255)
-    private String userEmail;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     /**
      * 실제 Refresh Token 값.

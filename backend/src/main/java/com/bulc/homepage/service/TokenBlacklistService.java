@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class TokenBlacklistService {
      * 토큰을 블랙리스트에 추가
      */
     @Transactional
-    public void blacklistToken(String token, String userEmail) {
+    public void blacklistToken(String token, UUID userId) {
         // 토큰 만료 시간 추출
         Date expiration = jwtTokenProvider.getExpirationFromToken(token);
         LocalDateTime expiresAt = expiration.toInstant()
@@ -34,12 +35,12 @@ public class TokenBlacklistService {
 
         TokenBlacklist blacklist = TokenBlacklist.builder()
                 .token(token)
-                .userEmail(userEmail)
+                .userId(userId)
                 .expiresAt(expiresAt)
                 .build();
 
         tokenBlacklistRepository.save(blacklist);
-        log.info("토큰 블랙리스트 추가 - 사용자: {}", userEmail);
+        log.info("토큰 블랙리스트 추가 - userId: {}", userId);
     }
 
     /**

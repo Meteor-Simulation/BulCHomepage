@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,8 +33,8 @@ public class PromotionController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return false;
         }
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        return userRepository.findById(userId)
                 .map(user -> "000".equals(user.getRolesCode()) || "001".equals(user.getRolesCode()))
                 .orElse(false);
     }

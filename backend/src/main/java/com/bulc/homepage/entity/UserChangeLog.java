@@ -3,6 +3,7 @@ package com.bulc.homepage.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_change_logs")
@@ -17,11 +18,11 @@ public class UserChangeLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_email", length = 255)
-    private String userEmail;
+    @Column(name = "user_id")
+    private UUID userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_email", referencedColumnName = "email", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
     @Column(name = "changed_field", nullable = false, length = 50)
@@ -33,11 +34,11 @@ public class UserChangeLog {
     @Column(name = "new_value", columnDefinition = "TEXT")
     private String newValue;
 
-    @Column(name = "changed_by_email", length = 255)
-    private String changedByEmail;
+    @Column(name = "changed_by_id")
+    private UUID changedById;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by_email", referencedColumnName = "email", insertable = false, updatable = false)
+    @JoinColumn(name = "changed_by_id", insertable = false, updatable = false)
     private User changedBy;
 
     @Column(name = "change_reason", columnDefinition = "TEXT")

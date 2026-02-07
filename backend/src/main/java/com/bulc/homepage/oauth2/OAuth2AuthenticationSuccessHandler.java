@@ -1,5 +1,7 @@
 package com.bulc.homepage.oauth2;
 
+import com.bulc.homepage.entity.User;
+import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.security.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @Value("${app.oauth2.redirect-uri:http://localhost:3000/oauth/callback}")
     private String redirectUri;
@@ -54,8 +57,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } else {
             // 기존 사용자 - 바로 로그인
-            String accessToken = jwtTokenProvider.generateAccessToken(email);
-            String refreshToken = jwtTokenProvider.generateRefreshToken(email);
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
             log.info("OAuth2 로그인 성공 - Email: {}, Provider: {}", email, provider);
 

@@ -30,7 +30,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-// import java.util.UUID;  // TODO: 라이선스 시스템 연결 시 활성화
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -177,12 +177,17 @@ public class PaymentService {
      * 결제 완료 시 구독 생성 (1년 구독)
      */
     private Subscription createSubscriptionForPayment(String userEmail, PricePlan pricePlan) {
+        // 사용자 조회하여 UUID 획득
+        UUID userId = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userEmail))
+                .getId();
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endDate = now.plusYears(1);  // 1년 구독
         String billingCycle = "YEARLY";  // 1년 구독
 
         Subscription subscription = Subscription.builder()
-                .userEmail(userEmail)
+                .userId(userId)
                 .productCode(pricePlan.getProductCode())
                 .pricePlan(pricePlan)
                 .status("A")  // Active
@@ -194,8 +199,8 @@ public class PaymentService {
 
         subscriptionRepository.save(subscription);
 
-        log.info("구독 생성 완료: userEmail={}, productCode={}, endDate={}, billingCycle={}",
-                userEmail, pricePlan.getProductCode(), endDate, billingCycle);
+        log.info("구독 생성 완료: userId={}, productCode={}, endDate={}, billingCycle={}",
+                userId, pricePlan.getProductCode(), endDate, billingCycle);
 
         return subscription;
     }
@@ -205,10 +210,10 @@ public class PaymentService {
      */
     private Payment savePaymentInfo(PaymentConfirmRequest request, JsonNode responseBody,
                                      String userEmail, PricePlan pricePlan) {
-        // 사용자 이름 조회
-        String userName = userRepository.findByEmail(userEmail)
-                .map(user -> user.getName())
-                .orElse(null);
+        // 사용자 조회
+        var userOpt = userRepository.findByEmail(userEmail);
+        UUID userId = userOpt.map(user -> user.getId()).orElse(null);
+        String userName = userOpt.map(user -> user.getName()).orElse(null);
 
         // 결제 상태 확인
         String paymentStatus = responseBody.path("status").asText();
@@ -220,8 +225,8 @@ public class PaymentService {
                 .amount(BigDecimal.valueOf(request.getAmount()))
                 .orderName(responseBody.path("orderName").asText())
                 .status(isCompleted ? "C" : "P")  // 가상계좌는 입금 대기 상태
-                .userEmail(userEmail)
-                .userEmailFk(userEmail)
+                .userId(userId)
+                .userEmail(userEmail)  // 스냅샷
                 .userName(userName)
                 .pricePlan(pricePlan)
                 .paidAt(isCompleted ? LocalDateTime.now() : null)  // 완료 시에만 결제 시간 설정

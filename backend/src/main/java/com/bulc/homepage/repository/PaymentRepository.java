@@ -8,11 +8,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    List<Payment> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+    List<Payment> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     List<Payment> findByStatus(String status);
 

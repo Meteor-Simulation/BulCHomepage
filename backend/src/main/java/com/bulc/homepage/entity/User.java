@@ -3,6 +3,7 @@ package com.bulc.homepage.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -14,7 +15,10 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @Column(nullable = false, length = 255)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "password_hash", length = 255)

@@ -42,28 +42,45 @@ public class OAuthTokenController {
     /**
      * Token Exchange Endpoint.
      *
-     * Authorization Code + PKCE Verifier → JWT Access Token
+     * 두 가지 grant_type 지원:
+     * 1. authorization_code: Authorization Code + PKCE → JWT Access Token
+     * 2. refresh_token: Refresh Token → 새 Access Token + 새 Refresh Token (RTR)
      *
-     * @param grantType "authorization_code" 고정
-     * @param code Authorization Code
-     * @param redirectUri 원래 redirect_uri (검증용)
-     * @param clientId 클라이언트 ID (검증용)
-     * @param codeVerifier PKCE code_verifier
+     * @param grantType "authorization_code" 또는 "refresh_token"
+     * @param code Authorization Code (grant_type=authorization_code일 때 필수)
+     * @param redirectUri 원래 redirect_uri (grant_type=authorization_code일 때 필수)
+     * @param clientId 클라이언트 ID
+     * @param codeVerifier PKCE code_verifier (grant_type=authorization_code일 때 필수)
+     * @param refreshToken Refresh Token (grant_type=refresh_token일 때 필수)
      */
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<?> token(
             @RequestParam("grant_type") String grantType,
-            @RequestParam("code") String code,
-            @RequestParam("redirect_uri") String redirectUri,
-            @RequestParam("client_id") String clientId,
-            @RequestParam("code_verifier") String codeVerifier) {
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri,
+            @RequestParam(value = "client_id", required = false) String clientId,
+            @RequestParam(value = "code_verifier", required = false) String codeVerifier,
+            @RequestParam(value = "refresh_token", required = false) String refreshToken) {
 
-        log.info("OAuth token 요청: client_id={}", clientId);
+        log.info("OAuth token 요청: grant_type={}, client_id={}", grantType, clientId);
 
-        // grant_type 검증
-        if (!"authorization_code".equals(grantType)) {
+        // grant_type에 따른 분기 처리
+        if ("refresh_token".equals(grantType)) {
+            return handleRefreshToken(refreshToken);
+        } else if (!"authorization_code".equals(grantType)) {
             return errorResponse("unsupported_grant_type",
-                    "Only 'authorization_code' grant_type is supported");
+                    "Supported grant_type: 'authorization_code', 'refresh_token'");
+        }
+
+        // authorization_code grant_type 처리 - 필수 파라미터 검증
+        if (code == null || code.isBlank()) {
+            return errorResponse("invalid_request", "code is required for authorization_code grant");
+        }
+        if (redirectUri == null || redirectUri.isBlank()) {
+            return errorResponse("invalid_request", "redirect_uri is required for authorization_code grant");
+        }
+        if (codeVerifier == null || codeVerifier.isBlank()) {
+            return errorResponse("invalid_request", "code_verifier is required for authorization_code grant");
         }
 
         // code_verifier 검증
@@ -136,25 +153,18 @@ public class OAuthTokenController {
     }
 
     /**
-     * Token Refresh Endpoint.
+     * Refresh Token 처리 (내부 메서드).
      *
      * Refresh Token → 새 Access Token + 새 Refresh Token (RTR 적용)
      * Token Theft Detection 적용: 탈취된 토큰 재사용 시 모든 세션 무효화
      */
-    @PostMapping(value = "/token/refresh", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<?> refreshToken(
-            @RequestParam("grant_type") String grantType,
-            @RequestParam("refresh_token") String refreshToken) {
-
-        log.info("OAuth token refresh 요청");
-
-        // grant_type 검증
-        if (!"refresh_token".equals(grantType)) {
-            return errorResponse("unsupported_grant_type",
-                    "Only 'refresh_token' grant_type is supported for this endpoint");
+    private ResponseEntity<?> handleRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return errorResponse("invalid_request", "refresh_token is required for refresh_token grant");
         }
 
-        // [RTR] AuthService를 통해 토큰 갱신 (DB 검증 + Token Theft Detection)
+        log.info("OAuth token refresh 처리");
+
         try {
             AuthResponse response = authService.refreshTokenForOAuth(refreshToken);
 
@@ -170,6 +180,28 @@ public class OAuthTokenController {
             log.warn("OAuth token refresh 실패: {}", e.getMessage());
             return errorResponse("invalid_grant", e.getMessage());
         }
+    }
+
+    /**
+     * Token Refresh Endpoint (레거시, /oauth/token으로 통합됨).
+     *
+     * @deprecated /oauth/token 엔드포인트에서 grant_type=refresh_token 사용 권장
+     */
+    @Deprecated
+    @PostMapping(value = "/token/refresh", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> refreshToken(
+            @RequestParam("grant_type") String grantType,
+            @RequestParam("refresh_token") String refreshToken) {
+
+        log.info("OAuth token refresh 요청 (레거시 엔드포인트)");
+
+        // grant_type 검증
+        if (!"refresh_token".equals(grantType)) {
+            return errorResponse("unsupported_grant_type",
+                    "Only 'refresh_token' grant_type is supported for this endpoint");
+        }
+
+        return handleRefreshToken(refreshToken);
     }
 
     /**

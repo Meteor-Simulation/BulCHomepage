@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface UserSocialAccountRepository extends JpaRepository<UserSocialAccount, Long> {
@@ -13,7 +14,7 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
 
     boolean existsByProviderAndProviderId(String provider, String providerId);
 
-    Optional<UserSocialAccount> findByUserEmailAndProvider(String userEmail, String provider);
+    Optional<UserSocialAccount> findByUserIdAndProvider(UUID userId, String provider);
 
-    void deleteByUserEmail(String userEmail);
+    void deleteByUserId(UUID userId);
 }

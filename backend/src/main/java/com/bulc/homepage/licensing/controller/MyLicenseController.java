@@ -4,7 +4,6 @@ import com.bulc.homepage.licensing.domain.LicenseStatus;
 import com.bulc.homepage.licensing.dto.MyLicenseView;
 import com.bulc.homepage.licensing.dto.MyLicensesResponse;
 import com.bulc.homepage.licensing.service.LicenseService;
-import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,7 +47,7 @@ public class MyLicenseController {
 
     /**
      * 현재 인증된 사용자의 ID를 UUID로 반환.
-     * User.email을 기반으로 결정적 UUID를 생성합니다.
+     * auth.getName()은 이제 userId.toString()을 반환합니다.
      */
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -57,12 +55,11 @@ public class MyLicenseController {
             throw new IllegalStateException("인증된 사용자가 없습니다");
         }
 
-        String email = authentication.getName();
+        UUID userId = UUID.fromString(authentication.getName());
         // 사용자 존재 여부 확인
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + email));
+        userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + userId));
 
-        // email을 기반으로 결정적 UUID 생성 (Type 3 UUID)
-        return UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
+        return userId;
     }
 }
