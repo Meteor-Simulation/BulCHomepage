@@ -680,51 +680,79 @@ const PaymentPage: React.FC = () => {
               )}
 
               <div className="terms-agreement">
-                <label className="checkbox-label">
+                {/* 전체 동의하기 */}
+                <label className="checkbox-label checkbox-label--all">
                   <input
                     type="checkbox"
                     checked={agreeTermsOfService && agreePrivacy}
                     onChange={(e) => {
-                      if (e.target.checked && !agreeTermsOfService && !agreePrivacy) {
-                        // 체크박스 클릭 시 순차적 모달 표시
-                        setPendingTermsAgreement(true);
-                        setIsTermsModalOpen(true);
-                      } else if (!e.target.checked) {
-                        // 체크 해제 시 모든 동의 취소
+                      if (e.target.checked) {
+                        setAgreeTermsOfService(true);
+                        setAgreePrivacy(true);
+                      } else {
                         setAgreeTermsOfService(false);
                         setAgreePrivacy(false);
                       }
                     }}
                   />
                   <span className="checkmark"></span>
-                  <span className="terms-text">
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                  <span className="terms-label">전체 동의하기</span>
+                </label>
+
+                <div className="terms-divider"></div>
+
+                {/* 이용약관 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreeTermsOfService}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreeTermsOfService) {
                         setIsTermsModalOpen(true);
-                      }}
-                    >
-                      이용약관
-                      {agreeTermsOfService && <span className="agreed-badge">동의</span>}
-                    </button>
-                    {' 및 '}
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      } else {
+                        setAgreeTermsOfService(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsTermsModalOpen(true);
+                    }}
+                  >
+                    이용약관
+                  </button>
+                </label>
+
+                {/* 개인정보처리방침 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreePrivacy) {
                         setIsPrivacyModalOpen(true);
-                      }}
-                    >
-                      개인정보처리방침
-                      {agreePrivacy && <span className="agreed-badge">동의</span>}
-                    </button>
-                    에 동의합니다
-                  </span>
+                      } else {
+                        setAgreePrivacy(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsPrivacyModalOpen(true);
+                    }}
+                  >
+                    개인정보처리방침
+                  </button>
                 </label>
               </div>
 

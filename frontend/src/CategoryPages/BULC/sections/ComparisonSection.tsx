@@ -63,10 +63,10 @@ const ComparisonSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: Speed (Highlighted) */}
-          <div className="bulc-comparison__card bulc-comparison__card--featured">
-            <div className="bulc-comparison__card-badge">{t('bulc.comparison.card2.badge')}</div>
-            <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--accent">
+          {/* Card 2: Speed */}
+          <div className="bulc-comparison__card">
+            <div className="bulc-comparison__card-accent" />
+            <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
               <Zap className="bulc-comparison__card-icon" />
             </div>
             <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card2.title')}</h4>

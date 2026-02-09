@@ -199,6 +199,7 @@ CREATE TABLE price_plans (
     description     VARCHAR(100) NULL,
     price           DECIMAL(18,2) NOT NULL,
     currency        VARCHAR(10) NOT NULL DEFAULT 'KRW',
+    license_plan_id UUID NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -208,13 +209,16 @@ CREATE TABLE price_plans (
 
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
 COMMENT ON COLUMN price_plans.description IS '요금제 설명 (예: 1년, 6개월 등)';
+COMMENT ON COLUMN price_plans.license_plan_id IS '연결된 라이선스 플랜 ID (결제 완료 시 해당 플랜으로 라이선스 발급)';
 
--- 기본 요금제 데이터
+-- 기본 요금제 데이터 (license_plan_id는 license_plans 테이블 생성 후 업데이트)
 INSERT INTO price_plans (product_code, name, description, price, currency) VALUES
     ('001', 'BUL:C PRO', '1년/365일', 4000000, 'KRW'),
     ('001', 'BUL:C PRO', '1년/365일', 2700, 'USD'),
     ('001', 'BUL:C 3D Premium', '1년/365일', 5100000, 'KRW'),
     ('001', 'BUL:C 3D Premium', '1년/365일', 3500, 'USD');
+
+-- price_plans와 license_plans 연결 (별도 UPDATE 쿼리로 처리 - 테이블 생성 순서 때문)
 
 -- =========================================================
 -- 5-2. promotions (프로모션/쿠폰 테이블)
@@ -553,6 +557,17 @@ CREATE TABLE license_plan_entitlements (
 COMMENT ON TABLE license_plan_entitlements IS '플랜별 활성화 기능 목록';
 COMMENT ON COLUMN license_plan_entitlements.entitlement_key IS '기능 식별자 (core-simulation, advanced-visualization 등)';
 
+-- 기본 라이선스 플랜 데이터
+INSERT INTO license_plans (id, product_id, code, name, description, license_type, duration_days, grace_days, max_activations, max_concurrent_sessions, allow_offline_days) VALUES
+    ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', uuid_generate_v5(uuid_ns_url(), 'product:001'), 'BULC-PRO-1Y', 'BUL:C PRO 1년', 'BUL:C PRO 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7),
+    ('b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', uuid_generate_v5(uuid_ns_url(), 'product:001'), 'BULC-3D-PREMIUM-1Y', 'BUL:C 3D Premium 1년', 'BUL:C 3D Premium 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7);
+
+-- 라이선스 플랜 기능 권한 데이터
+INSERT INTO license_plan_entitlements (id, plan_id, entitlement_key) VALUES
+    (uuid_generate_v4(), 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'core-simulation'),
+    (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'core-simulation'),
+    (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', '3d-visualization');
+
 -- =========================================================
 -- 14. licenses (라이선스 테이블)
 -- =========================================================
@@ -751,3 +766,10 @@ CREATE TRIGGER update_licenses_updated_at BEFORE UPDATE ON licenses
 
 CREATE TRIGGER update_license_activations_updated_at BEFORE UPDATE ON license_activations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================
+-- 마지막 단계: price_plans ↔ license_plans 연결
+-- (테이블 생성 순서 때문에 맨 마지막에 실행)
+-- =========================================================
+UPDATE price_plans SET license_plan_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' WHERE name = 'BUL:C PRO';
+UPDATE price_plans SET license_plan_id = 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e' WHERE name = 'BUL:C 3D Premium';

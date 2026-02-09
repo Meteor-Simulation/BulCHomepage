@@ -508,16 +508,38 @@
 /* 이용약관 동의 */
 .terms-agreement {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.terms-divider {
+  height: 1px;
+  background: #eee;
+  margin: 4px 0;
 }
 
 .checkbox-label {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
   font-size: 13px;
   color: #666;
-  line-height: 1.5;
+  line-height: 1;
+}
+
+.checkbox-label--all {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.terms-label {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
 }
 
 .checkbox-label input {
@@ -1440,8 +1462,9 @@
   font-size: inherit;
   font-family: inherit;
   color: #C4320A;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+  line-height: 1;
   transition: color 0.2s;
   display: inline-flex;
   align-items: center;
