@@ -94,7 +94,7 @@ const BulCPage: React.FC = () => {
         logoLink="/"
         onLogoClick={handleLogoClick}
         logoText="BULC"
-        hideUserMenu={true}
+        hideUserMenu={false}
       />
 
       <main className="main-content sub-page">

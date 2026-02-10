@@ -11,6 +11,7 @@
   width: 100%;
   overflow: hidden;
   min-height: calc(100vh - 200px);
+  padding-top: 50px;
 }
 
 /* 언어 테스트 버튼 */
@@ -393,7 +394,7 @@
 ======================================== */
 .bulc-comparison {
   padding: 0 0 96px;
-  background: #f8f9fa;
+  background: #fff;
 }
 
 .bulc-comparison__container {
@@ -741,7 +742,7 @@
 ======================================== */
 .bulc-workflow {
   padding: 0 0 96px;
-  background: #f8f9fa;
+  background: #fff;
 }
 
 .bulc-workflow__container {
@@ -808,6 +809,11 @@
 
 .bulc-workflow__step:hover {
   transform: translateY(-8px);
+  border-color: var(--accent);
+}
+
+.bulc-workflow__step:hover .bulc-workflow__step-number--dark {
+  background: var(--accent);
 }
 
 .bulc-workflow__step--final {
@@ -1157,8 +1163,7 @@
 ======================================== */
 .bulc-cta {
   padding: 0 0 96px;
-  background: #f8f9fa;
-  border-top: 1px solid #e2e8f0;
+  background: #fff;
 }
 
 .bulc-cta__container {
