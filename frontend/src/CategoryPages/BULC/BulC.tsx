@@ -17,6 +17,7 @@ import {
   WorkflowSection,
   ReportSection,
   CTASection,
+  PriceSection,
 } from './sections';
 
 const BulCPage: React.FC = () => {
@@ -25,10 +26,8 @@ const BulCPage: React.FC = () => {
 
   const SUB_NAV_ITEMS = useMemo(() => [
     { id: 'hero', label: t('bulc.nav.intro') },
-    { id: 'comparison', label: t('bulc.nav.comparison') },
-    { id: 'core-values', label: t('bulc.nav.coreValues') },
     { id: 'workflow', label: t('bulc.nav.workflow') },
-    { id: 'report', label: t('bulc.nav.report') },
+    { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
   ], [t]);
   const navigate = useNavigate();
@@ -68,19 +67,27 @@ const BulCPage: React.FC = () => {
   const renderSection = () => {
     switch (activeSection) {
       case 'hero':
-        return <HeroSection onPurchaseClick={handlePurchaseClick} />;
-      case 'comparison':
-        return <ComparisonSection />;
-      case 'core-values':
-        return <CoreValuesSection />;
+        return (
+          <>
+            <HeroSection onPurchaseClick={handlePurchaseClick} />
+            <ComparisonSection />
+            <CoreValuesSection />
+          </>
+        );
       case 'workflow':
         return <WorkflowSection />;
-      case 'report':
-        return <ReportSection />;
+      case 'price':
+        return <PriceSection onPurchaseClick={handlePurchaseClick} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} />;
       default:
-        return <HeroSection onPurchaseClick={handlePurchaseClick} />;
+        return (
+          <>
+            <HeroSection onPurchaseClick={handlePurchaseClick} />
+            <ComparisonSection />
+            <CoreValuesSection />
+          </>
+        );
     }
   };
 

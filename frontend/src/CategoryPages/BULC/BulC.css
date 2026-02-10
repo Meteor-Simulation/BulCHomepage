@@ -804,7 +804,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: transform 0.3s;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
 }
 
 .bulc-workflow__step:hover {
@@ -814,6 +815,39 @@
 
 .bulc-workflow__step:hover .bulc-workflow__step-number--dark {
   background: var(--accent);
+}
+
+/* Active Step (선택된 카드) */
+.bulc-workflow__step--active {
+  border-color: var(--accent);
+  box-shadow: 0 8px 20px rgba(196, 50, 10, 0.15);
+}
+
+.bulc-workflow__step--active .bulc-workflow__step-number--dark {
+  background: var(--accent);
+}
+
+/* Detail Panel (선택 시 하위 컴포넌트) */
+.bulc-workflow__detail {
+  margin-top: 40px;
+  animation: bulc-fadeIn 0.3s ease-out;
+}
+
+.bulc-workflow__detail-content {
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 48px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bulc-workflow__detail-placeholder {
+  color: #94a3b8;
+  font-size: 16px;
+  margin: 0;
 }
 
 .bulc-workflow__step--final {
@@ -1159,7 +1193,212 @@
 }
 
 /* ========================================
-   6. CTA + FAQ Section
+   6. Price Section
+======================================== */
+.bulc-price {
+  padding: 0 0 96px;
+  background: #fff;
+}
+
+.bulc-price__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.bulc-price__header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.bulc-price__title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.bulc-price__subtitle {
+  font-size: 18px;
+  color: #475569;
+  margin: 0;
+}
+
+/* Card Grid */
+.bulc-price__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+/* Card */
+.bulc-price__card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bulc-price__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+.bulc-price__card-header {
+  margin-bottom: 24px;
+}
+
+.bulc-price__card-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.bulc-price__card-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.bulc-price__card-price {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bulc-price__card-amount {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.025em;
+}
+
+.bulc-price__card-period {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bulc-price__card-btn {
+  width: 100%;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.bulc-price__card-btn:hover {
+  background: #a32a08;
+  box-shadow: 0 10px 15px -3px rgba(196, 50, 10, 0.2);
+}
+
+/* Free Card */
+.bulc-price__card--free {
+  border: 2px dashed #e2e8f0;
+  box-shadow: none;
+}
+
+.bulc-price__card--free:hover {
+  border-color: #64748b;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.bulc-price__card-btn--free {
+  background: #1e293b;
+}
+
+.bulc-price__card-btn--free:hover {
+  background: #0f172a;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.bulc-price__card-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.bulc-price__card-features li {
+  font-size: 14px;
+  color: #475569;
+  padding-left: 20px;
+  position: relative;
+}
+
+.bulc-price__card-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #22c55e;
+  font-weight: 700;
+}
+
+/* Loading */
+.bulc-price__loading {
+  text-align: center;
+  padding: 80px 0;
+  color: #64748b;
+}
+
+.bulc-price__spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: bulc-spin 0.8s linear infinite;
+}
+
+@keyframes bulc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error */
+.bulc-price__error {
+  text-align: center;
+  padding: 80px 0;
+  color: #ef4444;
+}
+
+.bulc-price__retry-btn {
+  margin-top: 16px;
+  padding: 10px 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulc-price__retry-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ========================================
+   7. CTA + FAQ Section
 ======================================== */
 .bulc-cta {
   padding: 0 0 96px;
@@ -1456,6 +1695,26 @@
     gap: 16px;
   }
 
+  /* Price */
+  .bulc-price {
+    padding: 0 0 64px;
+  }
+
+  .bulc-price__title {
+    font-size: 28px;
+  }
+
+  .bulc-price__grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .bulc-price__card-amount {
+    font-size: 28px;
+  }
+
   /* CTA */
   .bulc-cta {
     padding: 0 0 64px;
@@ -1518,6 +1777,14 @@
 
   .bulc-report__mockup-charts {
     grid-template-columns: 1fr;
+  }
+
+  .bulc-price__card {
+    padding: 32px 24px;
+  }
+
+  .bulc-price__card-amount {
+    font-size: 24px;
   }
 
   .bulc-cta__title {

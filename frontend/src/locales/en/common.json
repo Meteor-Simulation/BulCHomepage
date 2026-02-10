@@ -84,6 +84,7 @@
       "coreValues": "Core Values",
       "workflow": "Workflow",
       "report": "Report",
+      "price": "Price",
       "getStarted": "Get Started"
     },
     "hero": {
@@ -178,6 +179,22 @@
       "mockupPass": "PASS",
       "chartTemp": "Temperature Rise",
       "chartEvac": "Evacuation Time"
+    },
+    "price": {
+      "title": "Pricing",
+      "subtitle": "Choose the plan that fits your project.",
+      "purchase": "Purchase",
+      "loading": "Loading pricing information...",
+      "error": "Failed to load pricing information.",
+      "retry": "Retry",
+      "perYear": "/ year",
+      "free": {
+        "name": "BUL:C Basic",
+        "desc": "14-day free trial",
+        "price": "$0",
+        "period": "/ 14 days",
+        "button": "Start for Free"
+      }
     },
     "cta": {
       "title": "Ready to automate your simulations?",
