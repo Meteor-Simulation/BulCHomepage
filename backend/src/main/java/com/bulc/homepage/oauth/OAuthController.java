@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * OAuth 2.0 Authorization Controller.
@@ -115,11 +116,13 @@ public class OAuthController {
                 && authentication.getPrincipal() instanceof UserDetails) {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            // username은 이제 userId.toString()
+            UUID userId = UUID.fromString(userDetails.getUsername());
 
             // 사용자가 활성 상태인지 확인
-            User user = userRepository.findByEmail(email).orElse(null);
+            User user = userRepository.findById(userId).orElse(null);
             if (user != null && user.getIsActive()) {
+                String email = user.getEmail();
                 log.info("OAuth SSO 자동 로그인 감지: email={}, client_id={}", email, clientId);
 
                 // SSO 동의 페이지로 리다이렉트 (사용자 확인 필요)
@@ -203,18 +206,20 @@ public class OAuthController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String email = userDetails.getUsername();
+        // username은 이제 userId.toString()
+        UUID userId = UUID.fromString(userDetails.getUsername());
 
         // 사용자가 활성 상태인지 확인
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
         if (user == null || !user.getIsActive()) {
-            log.warn("SSO 확인 실패: 비활성 사용자 email={}", email);
+            log.warn("SSO 확인 실패: 비활성 사용자 userId={}", userId);
             String loginPageUrl = buildLoginPageUrl(clientId, redirectUri, codeChallenge, codeChallengeMethod, state);
             return ResponseEntity
                     .status(HttpStatus.FOUND)
                     .location(URI.create(loginPageUrl))
                     .build();
         }
+        String email = user.getEmail();
 
         // client_id 검증
         if (!isRegisteredClient(clientId)) {

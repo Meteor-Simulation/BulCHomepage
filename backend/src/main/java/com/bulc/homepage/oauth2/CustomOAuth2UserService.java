@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -76,9 +77,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             if (!user.getIsActive()) {
                 log.info("비활성화된 계정 초기화 후 신규 가입 처리: {}", user.getEmail());
                 // 관련 데이터 정리
-                cleanupUserData(user.getEmail());
+                cleanupUserData(user.getId());
                 // 소셜 계정 삭제 (새로 연결할 것임)
-                socialAccountRepository.deleteByUserEmail(user.getEmail());
+                socialAccountRepository.deleteByUserId(user.getId());
                 // 사용자 정보 초기화 (신규 가입 형태로)
                 user.setName(null);
                 user.setPhone(null);
@@ -102,9 +103,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 if (!user.getIsActive()) {
                     log.info("비활성화된 계정 초기화 후 신규 가입 처리: {}", email);
                     // 관련 데이터 정리
-                    cleanupUserData(user.getEmail());
+                    cleanupUserData(user.getId());
                     // 소셜 계정 삭제
-                    socialAccountRepository.deleteByUserEmail(user.getEmail());
+                    socialAccountRepository.deleteByUserId(user.getId());
                     // 사용자 정보 초기화
                     user.setName(null);
                     user.setPhone(null);
@@ -152,7 +153,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private void linkSocialAccount(User user, String provider, String providerId) {
         UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .userEmail(user.getEmail())
+                .userId(user.getId())
                 .provider(provider)
                 .providerId(providerId)
                 .build();
@@ -162,11 +163,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     /**
      * 사용자 관련 데이터 정리 (재가입 시)
      */
-    private void cleanupUserData(String userEmail) {
+    private void cleanupUserData(UUID userId) {
         // 활동 로그 삭제
-        activityLogRepository.deleteByUserEmail(userEmail);
+        activityLogRepository.deleteByUserId(userId);
         // 리프레시 토큰 삭제
-        refreshTokenRepository.deleteAllByUserEmail(userEmail);
-        log.info("사용자 관련 데이터 정리 완료: {}", userEmail);
+        refreshTokenRepository.deleteAllByUserId(userId);
+        log.info("사용자 관련 데이터 정리 완료: userId={}", userId);
     }
 }

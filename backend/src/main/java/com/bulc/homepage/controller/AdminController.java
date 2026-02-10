@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,8 +42,8 @@ public class AdminController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return false;
         }
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        return userRepository.findById(userId)
                 .map(user -> "000".equals(user.getRolesCode()) || "001".equals(user.getRolesCode()))
                 .orElse(false);
     }
@@ -55,8 +56,8 @@ public class AdminController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return false;
         }
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        return userRepository.findById(userId)
                 .map(user -> "000".equals(user.getRolesCode()))
                 .orElse(false);
     }
@@ -69,8 +70,8 @@ public class AdminController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return null;
         }
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
+        UUID userId = UUID.fromString(auth.getName());
+        return userRepository.findById(userId)
                 .map(User::getRolesCode)
                 .orElse(null);
     }
@@ -97,7 +98,7 @@ public class AdminController {
                     return u1.getCreatedAt().compareTo(u2.getCreatedAt());
                 })
                 .map(user -> new UserResponse(
-                        user.getEmail(),  // email이 PK
+                        user.getId().toString(),
                         user.getEmail(),
                         user.getName(),
                         user.getPhone(),
@@ -115,7 +116,7 @@ public class AdminController {
      * 사용자 권한 수정
      * - 관리자(000): 모든 권한 수정 가능
      * - 매니저(001): 관리자(000) 권한 수정 불가, 관리자(000)로 수정 불가
-     * userId는 email (User의 PK)
+     * userId는 UUID (User의 PK)
      */
     @PutMapping("/users/{userId}/role")
     public ResponseEntity<?> updateUserRole(
@@ -143,8 +144,9 @@ public class AdminController {
             }
         }
 
-        // userId는 email (User의 PK)
-        return userRepository.findById(userId)
+        // userId는 UUID (User의 PK)
+        UUID targetUserId = UUID.fromString(userId);
+        return userRepository.findById(targetUserId)
                 .map(user -> {
                     // 매니저(001)인 경우: 관리자(000) 계정 수정 불가
                     if ("001".equals(currentUserRole) && "000".equals(user.getRolesCode())) {
@@ -155,7 +157,7 @@ public class AdminController {
                     user.setRolesCode(request.rolesCode());
                     userRepository.save(user);
                     return ResponseEntity.ok(new UserResponse(
-                            user.getEmail(),  // email이 PK
+                            user.getId().toString(),
                             user.getEmail(),
                             user.getName(),
                             user.getPhone(),
@@ -464,12 +466,10 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
-        // 사용자 이메일 -> UUID 매핑 생성
-        java.util.Map<java.util.UUID, String> ownerIdToEmail = new java.util.HashMap<>();
+        // 사용자 UUID -> 이메일 매핑 생성 (User의 PK가 이제 UUID)
+        java.util.Map<UUID, String> ownerIdToEmail = new java.util.HashMap<>();
         userRepository.findAll().forEach(user -> {
-            java.util.UUID uuid = java.util.UUID.nameUUIDFromBytes(
-                    user.getEmail().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            ownerIdToEmail.put(uuid, user.getEmail());
+            ownerIdToEmail.put(user.getId(), user.getEmail());
         });
 
         List<LicenseResponse> licenses = licenseRepository.findAll().stream()
@@ -574,7 +574,7 @@ public class AdminController {
                         default -> payment.getStatus();
                     };
 
-                    // 사용자 정보 조회 (우선순위: User 관계 > userEmailFk > userName 필드)
+                    // 사용자 정보 조회 (우선순위: User 관계 > userId 조회 > userEmail 스냅샷)
                     // 비활성화된 계정은 "탈퇴한 사용자"로 표시
                     String userName = null;
                     String userEmail = null;
@@ -589,9 +589,9 @@ public class AdminController {
                             userEmail = payment.getUser().getEmail();
                         }
                     }
-                    // 2. userEmailFk로 조회
-                    else if (payment.getUserEmailFk() != null && !payment.getUserEmailFk().isBlank()) {
-                        var userOpt = userRepository.findByEmail(payment.getUserEmailFk());
+                    // 2. userId로 조회
+                    else if (payment.getUserId() != null) {
+                        var userOpt = userRepository.findById(payment.getUserId());
                         if (userOpt.isPresent()) {
                             var user = userOpt.get();
                             if (user.getIsActive() != null && !user.getIsActive()) {
@@ -608,13 +608,13 @@ public class AdminController {
                         userName = "탈퇴한 사용자";
                         userEmail = "(탈퇴)";
                     }
-                    // 3. Payment에 저장된 값 사용 (비활성화가 아닌 경우만)
+                    // 3. Payment에 저장된 스냅샷 값 사용 (비활성화가 아닌 경우만)
                     else {
                         if (userName == null) {
                             userName = payment.getUserName();
                         }
                         if (userEmail == null) {
-                            userEmail = payment.getUserEmailFk() != null ? payment.getUserEmailFk() : payment.getUserEmail();
+                            userEmail = payment.getUserEmail();
                         }
                     }
 

@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -38,6 +40,7 @@ import static org.mockito.Mockito.lenient;
  * DB/Spring Context 없이 순수 단위 테스트.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class LicenseServiceTest {
 
     @Mock
@@ -157,23 +160,23 @@ class LicenseServiceTest {
         }
 
         @Test
-        @DisplayName("동일 제품에 ACTIVE 라이선스가 있으면 예외 발생")
-        void shouldThrowWhenActiveLicenseExists() {
-            // given
-            License existingLicense = createMockLicense(LicenseStatus.ACTIVE);
-            given(licenseRepository.findByOwnerTypeAndOwnerIdAndProductId(
-                    any(), any(), any())).willReturn(Optional.of(existingLicense));
+        @DisplayName("동일 제품에 ACTIVE 라이선스가 있어도 새 라이선스 발급 가능 (1인 다중 라이선스 허용)")
+        void shouldAllowIssueWhenActiveLicenseExists() {
+            // given - 1인 다중 라이선스 허용으로 변경됨
+            given(licenseRepository.save(any(License.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             LicenseIssueRequest request = new LicenseIssueRequest(
                     OwnerType.USER, OWNER_ID, PRODUCT_ID, null,
                     LicenseType.SUBSCRIPTION, null, null, null, null, ORDER_ID
             );
 
-            // when & then
-            assertThatThrownBy(() -> licenseService.issueLicense(request))
-                    .isInstanceOf(LicenseException.class)
-                    .extracting(ex -> ((LicenseException) ex).getErrorCode())
-                    .isEqualTo(ErrorCode.LICENSE_ALREADY_EXISTS);
+            // when
+            LicenseResponse response = licenseService.issueLicense(request);
+
+            // then - 새 라이선스가 정상 발급됨
+            assertThat(response.status()).isEqualTo(LicenseStatus.ACTIVE);
+            verify(licenseRepository).save(any(License.class));
         }
 
         @Test

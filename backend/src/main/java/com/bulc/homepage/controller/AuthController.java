@@ -28,6 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -155,15 +156,15 @@ public class AuthController {
         }
 
         try {
-            String email = authService.getEmailFromToken(token);
+            UUID userId = authService.getUserIdFromToken(token);
 
             // Access Token 블랙리스트 추가
-            tokenBlacklistService.blacklistToken(token, email);
+            tokenBlacklistService.blacklistToken(token, userId);
 
             // [RTR] Refresh Token 무효화 (DB에서 삭제)
-            authService.invalidateRefreshToken(email);
+            authService.invalidateRefreshToken(userId);
 
-            log.info("로그아웃 성공 - 사용자: {}", email);
+            log.info("로그아웃 성공 - userId: {}", userId);
             return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
         } catch (Exception e) {
             log.error("로그아웃 실패: {}", e.getMessage());
@@ -192,14 +193,16 @@ public class AuthController {
             return ResponseEntity.status(401).body(ApiResponse.error("인증되지 않은 사용자입니다."));
         }
 
-        String email = authentication.getName();
-        log.info("Get current user request for email: {}", email);
+        // authentication.getName()은 이제 userId.toString()
+        String userIdString = authentication.getName();
+        log.info("Get current user request for userId: {}", userIdString);
 
-        User user = userRepository.findById(email)
+        UUID userId = UUID.fromString(userIdString);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         AuthResponse.UserInfo userInfo = AuthResponse.UserInfo.builder()
-                .id(user.getEmail())
+                .id(user.getId().toString())
                 .email(user.getEmail())
                 .name(user.getName())
                 .rolesCode(user.getRolesCode())
@@ -326,15 +329,15 @@ public class AuthController {
         log.info("Account reactivated: {}", request.getEmail());
 
         // JWT 토큰 발급
-        String accessToken = authService.generateAccessToken(user.getEmail());
-        String refreshToken = authService.generateRefreshToken(user.getEmail());
+        String accessToken = authService.generateAccessToken(user.getId(), user.getEmail());
+        String refreshToken = authService.generateRefreshToken(user.getId(), user.getEmail());
 
         AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getName())
                         .rolesCode(user.getRolesCode())

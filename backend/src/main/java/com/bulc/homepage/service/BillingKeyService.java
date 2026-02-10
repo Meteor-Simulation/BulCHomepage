@@ -39,11 +39,11 @@ public class BillingKeyService {
      * 빌링키 발급 (authKey를 사용하여 빌링키 발급)
      */
     @Transactional
-    public BillingKeyResponse issueBillingKey(BillingKeyIssueRequest request, String userEmail) {
-        log.info("빌링키 발급 요청: userEmail={}, authKey={}", userEmail, request.getAuthKey());
+    public BillingKeyResponse issueBillingKey(BillingKeyIssueRequest request, UUID userId) {
+        log.info("빌링키 발급 요청: userId={}, authKey={}", userId, request.getAuthKey());
 
         // customerKey 생성 (사용자별 고유 키)
-        String customerKey = UUID.nameUUIDFromBytes(userEmail.getBytes(StandardCharsets.UTF_8)).toString();
+        String customerKey = UUID.nameUUIDFromBytes(userId.toString().getBytes(StandardCharsets.UTF_8)).toString();
 
         HttpHeaders headers = createAuthHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -63,14 +63,14 @@ public class BillingKeyService {
                 JsonNode card = responseBody.path("card");
 
                 // 기존 기본 결제 수단 해제 (첫 번째 카드면 기본으로 설정)
-                boolean isFirstCard = !billingKeyRepository.existsByUserEmailAndIsActiveTrue(userEmail);
+                boolean isFirstCard = !billingKeyRepository.existsByUserIdAndIsActiveTrue(userId);
                 if (request.isSetAsDefault() || isFirstCard) {
-                    billingKeyRepository.unsetDefaultByUserEmail(userEmail);
+                    billingKeyRepository.unsetDefaultByUserId(userId);
                 }
 
                 // 빌링키 저장
                 BillingKey billingKey = BillingKey.builder()
-                        .userEmail(userEmail)
+                        .userId(userId)
                         .billingKey(billingKeyValue)
                         .customerKey(customerKey)
                         .cardCompany(card.path("company").asText(null))
@@ -99,13 +99,13 @@ public class BillingKeyService {
      */
     @Transactional
     public Map<String, Object> requestBillingPayment(Long billingKeyId, String orderId, String orderName,
-                                                      int amount, String userEmail) {
+                                                      int amount, UUID userId) {
         log.info("빌링 결제 요청: billingKeyId={}, orderId={}, amount={}", billingKeyId, orderId, amount);
 
         BillingKey billingKey = billingKeyRepository.findByIdAndIsActiveTrue(billingKeyId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 빌링키입니다."));
 
-        if (!billingKey.getUserEmail().equals(userEmail)) {
+        if (!billingKey.getUserId().equals(userId)) {
             throw new RuntimeException("빌링키 접근 권한이 없습니다.");
         }
 
@@ -149,8 +149,8 @@ public class BillingKeyService {
      * 사용자의 빌링키 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<BillingKeyResponse> getUserBillingKeys(String userEmail) {
-        return billingKeyRepository.findByUserEmailAndIsActiveTrue(userEmail)
+    public List<BillingKeyResponse> getUserBillingKeys(UUID userId) {
+        return billingKeyRepository.findByUserIdAndIsActiveTrue(userId)
                 .stream()
                 .map(this::toBillingKeyResponse)
                 .collect(Collectors.toList());
@@ -160,16 +160,16 @@ public class BillingKeyService {
      * 기본 결제 수단 변경
      */
     @Transactional
-    public BillingKeyResponse setDefaultBillingKey(Long billingKeyId, String userEmail) {
+    public BillingKeyResponse setDefaultBillingKey(Long billingKeyId, UUID userId) {
         BillingKey billingKey = billingKeyRepository.findByIdAndIsActiveTrue(billingKeyId)
                 .orElseThrow(() -> new RuntimeException("빌링키를 찾을 수 없습니다."));
 
-        if (!billingKey.getUserEmail().equals(userEmail)) {
+        if (!billingKey.getUserId().equals(userId)) {
             throw new RuntimeException("빌링키 접근 권한이 없습니다.");
         }
 
         // 기존 기본 결제 수단 해제
-        billingKeyRepository.unsetDefaultByUserEmail(userEmail);
+        billingKeyRepository.unsetDefaultByUserId(userId);
 
         // 새 기본 결제 수단 설정
         billingKey.setAsDefault();
@@ -183,11 +183,11 @@ public class BillingKeyService {
      * 빌링키 삭제 (비활성화)
      */
     @Transactional
-    public void deleteBillingKey(Long billingKeyId, String userEmail) {
+    public void deleteBillingKey(Long billingKeyId, UUID userId) {
         BillingKey billingKey = billingKeyRepository.findByIdAndIsActiveTrue(billingKeyId)
                 .orElseThrow(() -> new RuntimeException("빌링키를 찾을 수 없습니다."));
 
-        if (!billingKey.getUserEmail().equals(userEmail)) {
+        if (!billingKey.getUserId().equals(userId)) {
             throw new RuntimeException("빌링키 접근 권한이 없습니다.");
         }
 
@@ -195,7 +195,7 @@ public class BillingKeyService {
         billingKeyRepository.save(billingKey);
 
         // 만약 기본 결제 수단이었다면 다른 활성 카드를 기본으로 설정
-        List<BillingKey> remainingKeys = billingKeyRepository.findByUserEmailAndIsActiveTrue(userEmail);
+        List<BillingKey> remainingKeys = billingKeyRepository.findByUserIdAndIsActiveTrue(userId);
         if (!remainingKeys.isEmpty() && remainingKeys.stream().noneMatch(BillingKey::getIsDefault)) {
             remainingKeys.get(0).setAsDefault();
             billingKeyRepository.save(remainingKeys.get(0));
@@ -208,8 +208,8 @@ public class BillingKeyService {
      * 기본 결제 수단 조회
      */
     @Transactional(readOnly = true)
-    public BillingKeyResponse getDefaultBillingKey(String userEmail) {
-        return billingKeyRepository.findByUserEmailAndIsDefaultTrueAndIsActiveTrue(userEmail)
+    public BillingKeyResponse getDefaultBillingKey(UUID userId) {
+        return billingKeyRepository.findByUserIdAndIsDefaultTrueAndIsActiveTrue(userId)
                 .map(this::toBillingKeyResponse)
                 .orElse(null);
     }

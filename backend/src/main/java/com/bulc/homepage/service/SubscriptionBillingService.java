@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,18 +38,18 @@ public class SubscriptionBillingService {
      * 자동 갱신 활성화
      */
     @Transactional
-    public Subscription enableAutoRenew(Long subscriptionId, Long billingKeyId, String billingCycle, String userEmail) {
+    public Subscription enableAutoRenew(Long subscriptionId, Long billingKeyId, String billingCycle, UUID userId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다."));
 
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             throw new RuntimeException("구독 접근 권한이 없습니다.");
         }
 
         BillingKey billingKey = billingKeyRepository.findByIdAndIsActiveTrue(billingKeyId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 빌링키입니다."));
 
-        if (!billingKey.getUserEmail().equals(userEmail)) {
+        if (!billingKey.getUserId().equals(userId)) {
             throw new RuntimeException("빌링키 접근 권한이 없습니다.");
         }
 
@@ -66,11 +65,11 @@ public class SubscriptionBillingService {
      * 자동 갱신 비활성화
      */
     @Transactional
-    public Subscription disableAutoRenew(Long subscriptionId, String userEmail) {
+    public Subscription disableAutoRenew(Long subscriptionId, UUID userId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다."));
 
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             throw new RuntimeException("구독 접근 권한이 없습니다.");
         }
 
@@ -151,7 +150,7 @@ public class SubscriptionBillingService {
                     orderId,
                     orderName,
                     amount.intValue(),
-                    subscription.getUserEmail()
+                    subscription.getUserId()
             );
 
             if (Boolean.TRUE.equals(result.get("success"))) {
@@ -240,7 +239,7 @@ public class SubscriptionBillingService {
                     newOrderId,
                     orderName,
                     payment.getAmount().intValue(),
-                    subscription.getUserEmail()
+                    subscription.getUserId()
             );
 
             if (Boolean.TRUE.equals(result.get("success"))) {
@@ -318,11 +317,11 @@ public class SubscriptionBillingService {
      * 구독 결제 이력 조회
      */
     @Transactional(readOnly = true)
-    public List<SubscriptionPayment> getPaymentHistory(Long subscriptionId, String userEmail) {
+    public List<SubscriptionPayment> getPaymentHistory(Long subscriptionId, UUID userId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new RuntimeException("구독을 찾을 수 없습니다."));
 
-        if (!subscription.getUserEmail().equals(userEmail)) {
+        if (!subscription.getUserId().equals(userId)) {
             throw new RuntimeException("구독 접근 권한이 없습니다.");
         }
 

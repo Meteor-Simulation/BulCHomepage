@@ -3,6 +3,7 @@ package com.bulc.homepage.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "admin_logs")
@@ -17,11 +18,11 @@ public class AdminLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "admin_email", nullable = false, length = 255)
-    private String adminEmail;
+    @Column(name = "admin_id", nullable = false)
+    private UUID adminId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_email", referencedColumnName = "email", insertable = false, updatable = false)
+    @JoinColumn(name = "admin_id", insertable = false, updatable = false)
     private User admin;
 
     @Column(nullable = false, length = 100)

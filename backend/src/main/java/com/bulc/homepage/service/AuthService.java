@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -61,10 +62,10 @@ public class AuthService {
             if (!existingUser.getIsActive()) {
                 log.info("비활성화된 계정 초기화 후 재가입 처리: {}", existingUser.getEmail());
                 // 관련 데이터 정리
-                activityLogRepository.deleteByUserEmail(existingUser.getEmail());
-                refreshTokenRepository.deleteAllByUserEmail(existingUser.getEmail());
+                activityLogRepository.deleteByUserId(existingUser.getId());
+                refreshTokenRepository.deleteAllByUserId(existingUser.getId());
                 // 소셜 계정 삭제
-                socialAccountRepository.deleteByUserEmail(existingUser.getEmail());
+                socialAccountRepository.deleteByUserId(existingUser.getId());
 
                 // 기존 사용자 정보 초기화 및 재활성화
                 existingUser.setName(null);
@@ -75,12 +76,12 @@ public class AuthService {
                 user = userRepository.save(existingUser);
 
                 // 회원가입 로그 저장
-                saveActivityLog(user.getEmail(), "signup", "user", null, "회원가입 완료 (비활성화 계정 재가입)");
+                saveActivityLog(user.getId(), "signup", "user", null, "회원가입 완료 (비활성화 계정 재가입)");
             } else {
                 throw new RuntimeException("이미 가입된 이메일입니다");
             }
         } else {
-            // 신규 User 생성 (email이 PK)
+            // 신규 User 생성
             user = User.builder()
                     .email(request.getEmail())
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -90,15 +91,15 @@ public class AuthService {
             user = userRepository.save(user);
 
             // 회원가입 로그 저장
-            saveActivityLog(user.getEmail(), "signup", "user", null, "회원가입 완료");
+            saveActivityLog(user.getId(), "signup", "user", null, "회원가입 완료");
         }
 
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+        // JWT 토큰 생성 (userId 기반)
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
         // [RTR] Refresh Token을 DB에 저장
-        saveOrUpdateRefreshToken(user.getEmail(), refreshToken, "signup");
+        saveOrUpdateRefreshToken(user.getId(), refreshToken, "signup");
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -106,7 +107,7 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(accessTokenExpiration / 1000)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getEmail())  // name 필드가 없으므로 email 사용
                         .rolesCode(user.getRolesCode())
@@ -142,9 +143,9 @@ public class AuthService {
         }
 
         try {
-            // 인증 (비밀번호 확인)
+            // 인증 (비밀번호 확인) - userId를 username으로 사용
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
+                    new UsernamePasswordAuthenticationToken(user.getId().toString(), password)
             );
             return user;
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
@@ -162,15 +163,15 @@ public class AuthService {
             // 공통 인증 로직 호출
             User user = authenticateUser(request.getEmail(), request.getPassword());
 
-            // JWT 토큰 생성
-            String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+            // JWT 토큰 생성 (userId 기반)
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
             // [RTR] Refresh Token을 DB에 저장 (기존 토큰 교체)
-            saveOrUpdateRefreshToken(user.getEmail(), refreshToken, userAgent);
+            saveOrUpdateRefreshToken(user.getId(), refreshToken, userAgent);
 
             // 로그인 성공 로그
-            saveActivityLog(user.getEmail(), "login", "user", null, "로그인 성공 - IP: " + ipAddress);
+            saveActivityLog(user.getId(), "login", "user", null, "로그인 성공 - IP: " + ipAddress);
             log.info("로그인 성공 - 이메일: {}, IP: {}", request.getEmail(), ipAddress);
 
             return AuthResponse.builder()
@@ -179,7 +180,7 @@ public class AuthService {
                     .tokenType("Bearer")
                     .expiresIn(accessTokenExpiration / 1000)
                     .user(AuthResponse.UserInfo.builder()
-                            .id(user.getEmail())
+                            .id(user.getId().toString())
                             .email(user.getEmail())
                             .name(user.getEmail())
                             .rolesCode(user.getRolesCode())
@@ -187,17 +188,19 @@ public class AuthService {
                             .build())
                     .build();
         } catch (RuntimeException e) {
-            // 인증 실패 로그
-            saveActivityLog(request.getEmail(), "login_failed", "user", null,
+            // 인증 실패 로그 - 사용자 조회 시도
+            User failedUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+            UUID userId = failedUser != null ? failedUser.getId() : null;
+            saveActivityLog(userId, "login_failed", "user", null,
                     e.getMessage() + " - IP: " + ipAddress);
             throw e;
         }
     }
 
-    private void saveActivityLog(String userEmail, String action, String targetType, Long targetId, String description) {
+    private void saveActivityLog(UUID userId, String action, String targetType, Long targetId, String description) {
         try {
             ActivityLog activityLog = ActivityLog.builder()
-                    .userEmail(userEmail)
+                    .userId(userId)
                     .action(action)
                     .targetType(targetType)
                     .targetId(targetId)
@@ -213,12 +216,12 @@ public class AuthService {
      * [RTR] Refresh Token을 DB에 저장 또는 업데이트.
      * 기존 토큰이 있으면 새 토큰으로 교체, 없으면 새로 생성.
      */
-    private void saveOrUpdateRefreshToken(String email, String refreshToken, String deviceInfo) {
+    private void saveOrUpdateRefreshToken(UUID userId, String refreshToken, String deviceInfo) {
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000);
 
-        RefreshToken rtEntity = refreshTokenRepository.findByUserEmail(email)
+        RefreshToken rtEntity = refreshTokenRepository.findByUserId(userId)
                 .orElse(RefreshToken.builder()
-                        .userEmail(email)
+                        .userId(userId)
                         .build());
 
         rtEntity.setToken(refreshToken);
@@ -227,7 +230,7 @@ public class AuthService {
         rtEntity.setLastUsedAt(LocalDateTime.now());
 
         refreshTokenRepository.save(rtEntity);
-        log.debug("Refresh Token 저장 완료 - 이메일: {}", email);
+        log.debug("Refresh Token 저장 완료 - userId: {}", userId);
     }
 
     /**
@@ -235,23 +238,30 @@ public class AuthService {
      * DB에서 해당 사용자의 Refresh Token 삭제.
      */
     @Transactional
-    public void invalidateRefreshToken(String email) {
-        refreshTokenRepository.deleteAllByUserEmail(email);
-        log.info("Refresh Token 무효화 완료 - 이메일: {}", email);
+    public void invalidateRefreshToken(UUID userId) {
+        refreshTokenRepository.deleteAllByUserId(userId);
+        log.info("Refresh Token 무효화 완료 - userId: {}", userId);
     }
 
     /**
      * Access Token 생성 (외부 호출용)
      */
-    public String generateAccessToken(String email) {
-        return jwtTokenProvider.generateAccessToken(email);
+    public String generateAccessToken(UUID userId, String email) {
+        return jwtTokenProvider.generateAccessToken(userId, email);
     }
 
     /**
      * Refresh Token 생성 (외부 호출용)
      */
-    public String generateRefreshToken(String email) {
-        return jwtTokenProvider.generateRefreshToken(email);
+    public String generateRefreshToken(UUID userId, String email) {
+        return jwtTokenProvider.generateRefreshToken(userId, email);
+    }
+
+    /**
+     * 토큰에서 userId 추출 (외부 호출용)
+     */
+    public UUID getUserIdFromToken(String token) {
+        return jwtTokenProvider.getUserIdFromToken(token);
     }
 
     /**
@@ -278,11 +288,11 @@ public class AuthService {
             throw new RuntimeException("유효하지 않은 Refresh Token입니다");
         }
 
-        // Refresh Token에서 이메일 추출
-        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+        // Refresh Token에서 userId 추출
+        UUID userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
 
         // 사용자 조회
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
 
         // 비활성화된 계정인지 확인
@@ -291,41 +301,41 @@ public class AuthService {
         }
 
         // [RTR 핵심] DB에 저장된 Refresh Token과 비교
-        RefreshToken storedToken = refreshTokenRepository.findByUserEmail(email).orElse(null);
+        RefreshToken storedToken = refreshTokenRepository.findByUserId(userId).orElse(null);
 
         if (storedToken == null) {
             // DB에 RT가 없음 - 로그아웃된 상태이거나 비정상 접근
-            log.warn("RTR 실패 - DB에 저장된 토큰 없음: {}", email);
+            log.warn("RTR 실패 - DB에 저장된 토큰 없음: userId={}", userId);
             throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
         if (!storedToken.getToken().equals(refreshToken)) {
             // [Token Theft Detection] DB의 RT와 요청된 RT가 불일치
             // 탈취된 RT 재사용 시도로 간주 → 모든 세션 무효화
-            log.warn("RTR 토큰 탈취 의심 - 이메일: {}, 모든 세션 강제 종료", email);
-            refreshTokenRepository.deleteAllByUserEmail(email);
-            saveActivityLog(email, "token_theft_detected", "security", null,
+            log.warn("RTR 토큰 탈취 의심 - userId: {}, 모든 세션 강제 종료", userId);
+            refreshTokenRepository.deleteAllByUserId(userId);
+            saveActivityLog(userId, "token_theft_detected", "security", null,
                     "Refresh Token 재사용 감지, 모든 세션 강제 종료");
             throw new RuntimeException("보안 문제가 감지되었습니다. 다시 로그인해주세요.");
         }
 
         // 토큰 만료 확인
         if (storedToken.isExpired()) {
-            log.info("RTR 실패 - 만료된 토큰: {}", email);
-            refreshTokenRepository.deleteAllByUserEmail(email);
+            log.info("RTR 실패 - 만료된 토큰: userId={}", userId);
+            refreshTokenRepository.deleteAllByUserId(userId);
             throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
         // 새로운 Access Token, Refresh Token 생성
-        String newAccessToken = jwtTokenProvider.generateAccessToken(email);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
         // [RTR] DB의 Refresh Token 교체 (Rotation)
         LocalDateTime newExpiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000);
         storedToken.rotateToken(newRefreshToken, newExpiresAt);
         refreshTokenRepository.save(storedToken);
 
-        log.info("토큰 갱신 성공 (RTR) - 이메일: {}", email);
+        log.info("토큰 갱신 성공 (RTR) - userId: {}", userId);
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
@@ -333,7 +343,7 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(accessTokenExpiration / 1000)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getEmail())
                         .rolesCode(user.getRolesCode())
@@ -367,9 +377,9 @@ public class AuthService {
             if (!existingUser.getIsActive()) {
                 log.info("비활성화된 계정 초기화 후 OAuth 재가입 처리: {}", email);
                 // 관련 데이터 정리
-                activityLogRepository.deleteByUserEmail(existingUser.getEmail());
-                refreshTokenRepository.deleteAllByUserEmail(existingUser.getEmail());
-                socialAccountRepository.deleteByUserEmail(existingUser.getEmail());
+                activityLogRepository.deleteByUserId(existingUser.getId());
+                refreshTokenRepository.deleteAllByUserId(existingUser.getId());
+                socialAccountRepository.deleteByUserId(existingUser.getId());
 
                 // 기존 사용자 정보 초기화 및 재활성화
                 existingUser.setName(request.getName());
@@ -396,24 +406,24 @@ public class AuthService {
 
         // 소셜 계정 연동
         UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .userEmail(user.getEmail())
+                .userId(user.getId())
                 .provider(provider)
                 .providerId(providerId)
                 .build();
         socialAccountRepository.save(socialAccount);
 
         // 회원가입 로그 저장
-        saveActivityLog(user.getEmail(), "oauth_signup", "user", null,
+        saveActivityLog(user.getId(), "oauth_signup", "user", null,
                 "OAuth 회원가입 완료 - Provider: " + provider);
 
         log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}", email, provider);
 
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+        // JWT 토큰 생성 (userId 기반)
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
         // [RTR] Refresh Token을 DB에 저장
-        saveOrUpdateRefreshToken(user.getEmail(), refreshToken, "oauth_signup:" + provider);
+        saveOrUpdateRefreshToken(user.getId(), refreshToken, "oauth_signup:" + provider);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -421,7 +431,7 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(accessTokenExpiration / 1000)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getName())
                         .rolesCode(user.getRolesCode())
@@ -452,14 +462,14 @@ public class AuthService {
             throw new RuntimeException("비활성화된 계정입니다");
         }
 
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(email);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(email);
+        // JWT 토큰 생성 (userId 기반)
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
         // [RTR] Refresh Token을 DB에 저장 (OAuth용 장기 만료)
-        saveOrUpdateRefreshTokenForOAuth(email, refreshToken, "oauth:" + clientId);
+        saveOrUpdateRefreshTokenForOAuth(user.getId(), refreshToken, "oauth:" + clientId);
 
-        saveActivityLog(email, "oauth_token_issued", "oauth", null,
+        saveActivityLog(user.getId(), "oauth_token_issued", "oauth", null,
                 "OAuth 토큰 발급 - client_id: " + clientId);
         log.info("OAuth 토큰 발급 성공 - 이메일: {}, client_id: {}", email, clientId);
 
@@ -469,7 +479,7 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(accessTokenExpiration / 1000)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getName() != null ? user.getName() : user.getEmail())
                         .rolesCode(user.getRolesCode())
@@ -493,9 +503,9 @@ public class AuthService {
             throw new RuntimeException("유효하지 않은 Refresh Token입니다");
         }
 
-        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+        UUID userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
 
         if (!user.getIsActive()) {
@@ -503,38 +513,38 @@ public class AuthService {
         }
 
         // [RTR 핵심] DB에 저장된 Refresh Token과 비교
-        RefreshToken storedToken = refreshTokenRepository.findByUserEmail(email).orElse(null);
+        RefreshToken storedToken = refreshTokenRepository.findByUserId(userId).orElse(null);
 
         if (storedToken == null) {
-            log.warn("OAuth RTR 실패 - DB에 저장된 토큰 없음: {}", email);
+            log.warn("OAuth RTR 실패 - DB에 저장된 토큰 없음: userId={}", userId);
             throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
         if (!storedToken.getToken().equals(refreshToken)) {
             // [Token Theft Detection] 탈취된 RT 재사용 시도
-            log.warn("OAuth RTR 토큰 탈취 의심 - 이메일: {}, 모든 세션 강제 종료", email);
-            refreshTokenRepository.deleteAllByUserEmail(email);
-            saveActivityLog(email, "oauth_token_theft_detected", "security", null,
+            log.warn("OAuth RTR 토큰 탈취 의심 - userId: {}, 모든 세션 강제 종료", userId);
+            refreshTokenRepository.deleteAllByUserId(userId);
+            saveActivityLog(userId, "oauth_token_theft_detected", "security", null,
                     "OAuth Refresh Token 재사용 감지, 모든 세션 강제 종료");
             throw new RuntimeException("보안 문제가 감지되었습니다. 다시 로그인해주세요.");
         }
 
         if (storedToken.isExpired()) {
-            log.info("OAuth RTR 실패 - 만료된 토큰: {}", email);
-            refreshTokenRepository.deleteAllByUserEmail(email);
+            log.info("OAuth RTR 실패 - 만료된 토큰: userId={}", userId);
+            refreshTokenRepository.deleteAllByUserId(userId);
             throw new RuntimeException("세션이 만료되었습니다. 다시 로그인해주세요.");
         }
 
         // 새로운 Access Token, Refresh Token 생성
-        String newAccessToken = jwtTokenProvider.generateAccessToken(email);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
 
         // [RTR] DB의 Refresh Token 교체 (OAuth용 장기 만료)
         LocalDateTime newExpiresAt = LocalDateTime.now().plusSeconds(oauthRefreshTokenExpiration / 1000);
         storedToken.rotateToken(newRefreshToken, newExpiresAt);
         refreshTokenRepository.save(storedToken);
 
-        log.info("OAuth 토큰 갱신 성공 (RTR) - 이메일: {}", email);
+        log.info("OAuth 토큰 갱신 성공 (RTR) - userId: {}", userId);
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
@@ -542,7 +552,7 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(accessTokenExpiration / 1000)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getEmail())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .name(user.getName() != null ? user.getName() : user.getEmail())
                         .rolesCode(user.getRolesCode())
@@ -554,12 +564,12 @@ public class AuthService {
     /**
      * [RTR] OAuth용 Refresh Token을 DB에 저장 (1년 만료).
      */
-    private void saveOrUpdateRefreshTokenForOAuth(String email, String refreshToken, String deviceInfo) {
+    private void saveOrUpdateRefreshTokenForOAuth(UUID userId, String refreshToken, String deviceInfo) {
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(oauthRefreshTokenExpiration / 1000);
 
-        RefreshToken rtEntity = refreshTokenRepository.findByUserEmail(email)
+        RefreshToken rtEntity = refreshTokenRepository.findByUserId(userId)
                 .orElse(RefreshToken.builder()
-                        .userEmail(email)
+                        .userId(userId)
                         .build());
 
         rtEntity.setToken(refreshToken);
@@ -568,6 +578,6 @@ public class AuthService {
         rtEntity.setLastUsedAt(LocalDateTime.now());
 
         refreshTokenRepository.save(rtEntity);
-        log.debug("OAuth Refresh Token 저장 완료 (1년 만료) - 이메일: {}", email);
+        log.debug("OAuth Refresh Token 저장 완료 (1년 만료) - userId: {}", userId);
     }
 }
