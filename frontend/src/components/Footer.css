@@ -36,8 +36,13 @@
   margin: 8px 0;
 }
 
+.footer-sns {
+  text-align: center;
+}
+
 .sns-icons {
   display: flex;
+  justify-content: center;
   gap: 12px;
 }
 

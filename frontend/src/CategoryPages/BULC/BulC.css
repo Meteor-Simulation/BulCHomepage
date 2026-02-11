@@ -465,7 +465,7 @@
 .bulc-values__container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 64px 16px 0;
 }
 
 .bulc-values__header {
@@ -861,22 +861,23 @@
   background: #f8f9fa;
 }
 
-.bulc-report__carousel-track {
-  position: relative;
+.bulc-report__carousel-slider {
+  overflow: hidden;
   width: 100%;
+}
+
+.bulc-report__carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
 }
 
 .bulc-report__carousel-img {
-  display: none;
   width: 100%;
+  height: 400px;
+  flex-shrink: 0;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-
-.bulc-report__carousel-img--active {
-  display: block;
-  opacity: 1;
+  object-position: top;
+  cursor: pointer;
 }
 
 .bulc-report__carousel-btn {
@@ -915,29 +916,108 @@
   color: #334155;
 }
 
-.bulc-report__carousel-dots {
+.bulc-report__carousel-counter {
   position: absolute;
   bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
+  right: 16px;
   z-index: 2;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
 }
 
-.bulc-report__carousel-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+/* Carousel Image Modal */
+.bulc-carousel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bulc-fadeIn 0.2s ease-out;
+}
+
+.bulc-carousel-modal__content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.bulc-carousel-modal__img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+}
+
+.bulc-carousel-modal__close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  background: none;
   border: none;
-  background: rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  padding: 0;
+  padding: 8px;
+  transition: transform 0.2s;
+}
+
+.bulc-carousel-modal__close:hover {
+  transform: scale(1.2);
+}
+
+.bulc-carousel-modal__close-icon {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+}
+
+.bulc-carousel-modal__btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
-.bulc-report__carousel-dot--active {
-  background: var(--accent);
+.bulc-carousel-modal__btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bulc-carousel-modal__btn--prev {
+  left: -60px;
+}
+
+.bulc-carousel-modal__btn--next {
+  right: -60px;
+}
+
+.bulc-carousel-modal__btn-icon {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+}
+
+.bulc-carousel-modal__counter {
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .bulc-report__carousel--empty {

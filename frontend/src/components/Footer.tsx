@@ -48,7 +48,7 @@ const Footer: React.FC = () => {
           <p>찾아오시는 길 : {info.address.full}</p>
           <p>연락처 : {info.contact.tel}  /  {info.contact.email}</p>
         </div>
-        <div className="footer-section">
+        <div className="footer-section footer-sns">
           <h4>SNS</h4>
           <div className="sns-icons">
             {info.sns.youtube && (

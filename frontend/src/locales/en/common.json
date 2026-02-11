@@ -237,18 +237,20 @@
       "title": "Ready to automate your simulations?",
       "subtitle": "Join 500+ fire safety engineers who have switched to BUL:C.",
       "button": "Free Download",
-      "faq1": {
-        "question": "Is there a free trial?",
-        "answer": "Yes, you can start for free with limited simulation hours per month. No credit card required."
-      },
-      "faq2": {
-        "question": "Which operating system do I need?",
-        "answer": "BUL:C runs on Windows (64-bit). A standard Windows PC is enough for typical workflows."
-      },
-      "faq3": {
-        "question": "Is it compatible with Revit?",
-        "answer": "Not yet. We currently don't have direct plugins for Revit, AutoCAD, or SketchUp — but it's on our roadmap."
-      }
+      "faqs": [
+        {
+          "question": "Is there a free trial?",
+          "answer": "Yes, you can start for free with limited simulation hours per month. No credit card required."
+        },
+        {
+          "question": "Which operating system do I need?",
+          "answer": "BUL:C runs on Windows (64-bit). A standard Windows PC is enough for typical workflows."
+        },
+        {
+          "question": "Is it compatible with Revit?",
+          "answer": "Not yet. We currently don't have direct plugins for Revit, AutoCAD, or SketchUp — but it's on our roadmap."
+        }
+      ]
     }
   }
 }
