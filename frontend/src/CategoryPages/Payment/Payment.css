@@ -131,6 +131,59 @@
   border-color: rgba(196, 50, 10, 0.5);
 }
 
+/* Coming Soon */
+.plan-card--coming-soon {
+  cursor: not-allowed;
+  overflow: hidden;
+}
+
+.plan-card--coming-soon::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 20px,
+    rgba(0, 0, 0, 0.03) 20px,
+    rgba(0, 0, 0, 0.03) 22px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plan-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 12px;
+}
+
+.plan-card--coming-soon:hover .plan-card__overlay {
+  opacity: 1;
+}
+
+.plan-card__overlay span {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.plan-card--coming-soon:hover {
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
 .popular-badge {
   position: absolute;
   top: -10px;

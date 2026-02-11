@@ -89,10 +89,11 @@
     },
     "hero": {
       "badge": "New: AI-GPU Acceleration Enabled",
-      "title1": "Automate Authoring to",
-      "title2": "Simulation to Report",
+      "title1": "for Fire Safety Engineering",
+      "title2": "Next-Gen Fire Simulator",
       "description": "Drastically reduce human error and gain full MCP control. BUL:C combines advanced FDS-based physics with AI automation for instant compliance reporting.",
-      "startFree": "Start for Free",
+      "startFree": "Free Download",
+      "downloadAlert": "Please log in to download.",
       "watchDemo": "Watch Demo",
       "videoTitle": "BUL:C Interface Walkthrough",
       "videoSubtitle": "See how automation saves 40+ hours per project"
@@ -148,37 +149,45 @@
       "title": "Seamless 5-Step Workflow",
       "subtitle": "From concept to compliance in record time.",
       "step1": {
-        "title": "Import",
-        "desc": "Upload CAD/BIM models directly. (Coming Soon)"
+        "title1": "Import",
+        "title2": "AI-Powered Floor Plan Recognition",
+        "desc": "Upload CAD/BIM models directly. (Coming Soon)",
+        "feature1": "Direct CAD/BIM import",
+        "feature2": "AI floor plan recognition",
+        "feature3": "iOS RoomPlan integration"
       },
       "step2": {
-        "title": "Setup",
-        "desc": "Set fire loads & boundaries using an LLM-powered AI assistant."
+        "title1": "Setup",
+        "title2": "Effortless Setup with AI Assistant",
+        "desc": "Set fire loads & boundaries using an LLM-powered AI assistant.",
+        "feature1": "AI auto fire load setup",
+        "feature2": "Pre-built libraries",
+        "feature3": "LLM-powered assistant"
       },
       "step3": {
-        "title": "Simulate",
-        "desc": "100x times Fast GPU Processing Compared to CPU."
+        "title1": "Simulate",
+        "title2": "100x Faster GPU Processing vs CPU",
+        "desc": "100x times Fast GPU Processing Compared to CPU.",
+        "feature1": "GPU-accelerated computing",
+        "feature2": "FDS-based physics engine",
+        "feature3": "Real-time progress monitoring"
       },
       "step4": {
-        "title": "Analyze",
-        "desc": "Review AI insights & data."
+        "title1": "Analyze",
+        "title2": "AI-Driven Data Analysis & Insights",
+        "desc": "Review AI insights & data.",
+        "feature1": "ASET/RSET auto-analysis",
+        "feature2": "Evacuation path visualization",
+        "feature3": "AI data insights"
       },
       "step5": {
-        "title": "Report",
-        "desc": "Auto-generate compliance docs."
+        "title1": "Report",
+        "title2": "Reports that Impress Clients",
+        "desc": "Stop struggling with screenshots and Word documents. BUL:C generates professional, interactive web-based reports and standard PDFs that clearly communicate safety outcomes.",
+        "feature1": "Auto-plotted Graphs",
+        "feature2": "Embedded Contours",
+        "feature3": "Compliance Tables"
       }
-    },
-    "report": {
-      "title": "Reports that Impress Clients",
-      "desc": "Stop struggling with screenshots and Word documents. BUL:C generates professional, interactive web-based reports and standard PDFs that clearly communicate safety outcomes.",
-      "feature1": "Auto-plotted Graphs",
-      "feature2": "Embedded Contours",
-      "feature3": "Compliance Tables",
-      "mockupTitle": "Fire Safety Analysis",
-      "mockupMeta": "Project: Skylark Tower | Date: Oct 24, 2023",
-      "mockupPass": "PASS",
-      "chartTemp": "Temperature Rise",
-      "chartEvac": "Evacuation Time"
     },
     "price": {
       "title": "Pricing",
@@ -188,18 +197,46 @@
       "error": "Failed to load pricing information.",
       "retry": "Retry",
       "perYear": "/ year",
+      "comingSoon": "Coming Soon",
       "free": {
         "name": "BUL:C Basic",
         "desc": "14-day free trial",
         "price": "$0",
         "period": "/ 14 days",
-        "button": "Start for Free"
+        "button": "Start for Free",
+        "features": [
+          "CPU-based analysis",
+          "Basic library (Apartment, Officetel)",
+          "AI floor plan auto-design",
+          "EVAC analysis (Collision, Social Force, Multi-floor)",
+          "ASET+RSET auto-analysis report"
+        ]
+      },
+      "pro": {
+        "features": [
+          "GPU-accelerated analysis",
+          "Basic library (Apartment, Officetel)",
+          "AI floor plan auto-design",
+          "EVAC analysis (Collision, Social Force, Multi-floor)",
+          "ASET+RSET auto-analysis report"
+        ]
+      },
+      "premium": {
+        "includes": "All PRO features included",
+        "features": [
+          "Multi-GPU acceleration",
+          "Specialized library (Factory, Semiconductor, EV, Battery)",
+          "High-speed floor plan auto-design",
+          "AI auto-analysis & reporting",
+          "R&D technical service (3 sessions)",
+          "Professional training (1 session)"
+        ]
       }
     },
     "cta": {
       "title": "Ready to automate your simulations?",
       "subtitle": "Join 500+ fire safety engineers who have switched to BUL:C.",
-      "button": "Get Started for Free",
+      "button": "Free Download",
       "faq1": {
         "question": "Is there a free trial?",
         "answer": "Yes, you can start for free with limited simulation hours per month. No credit card required."

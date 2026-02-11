@@ -451,23 +451,31 @@ const PaymentPage: React.FC = () => {
                 <div className="no-selection-message">등록된 요금제가 없습니다.</div>
               ) : (
                 <div className="plans-grid">
-                  {pricePlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedPlan(plan)}
-                    >
-                      <div className="plan-header">
-                        <h3 className="plan-name">{plan.name}</h3>
-                      </div>
-                      <div className="plan-price-row">
-                        <span className="current-price">{formatPrice(plan.price)}</span>
-                        {plan.description && (
-                          <span className="plan-duration">{plan.description}</span>
+                  {pricePlans.map((plan) => {
+                    const isComingSoon = plan.name === 'BUL:C 3D Premium';
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}${isComingSoon ? ' plan-card--coming-soon' : ''}`}
+                        onClick={isComingSoon ? undefined : () => setSelectedPlan(plan)}
+                      >
+                        {isComingSoon && (
+                          <div className="plan-card__overlay">
+                            <span>준비 중인 상품입니다</span>
+                          </div>
                         )}
+                        <div className="plan-header">
+                          <h3 className="plan-name">{plan.name}</h3>
+                        </div>
+                        <div className="plan-price-row">
+                          <span className="current-price">{formatPrice(plan.price)}</span>
+                          {plan.description && (
+                            <span className="plan-duration">{plan.description}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>

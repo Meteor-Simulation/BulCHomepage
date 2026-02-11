@@ -48,14 +48,33 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #333;
-  color: #888;
+  background: transparent;
+  color: #ffffff;
   transition: background 0.2s, color 0.2s;
 }
 
 .sns-icon:hover {
-  background: #C4320A;
   color: #ffffff;
+}
+
+.sns-icon--youtube:hover {
+  background: #FF0000;
+}
+
+.sns-icon--instagram:hover {
+  background: #E4405F;
+}
+
+.sns-icon--facebook:hover {
+  background: #1877F2;
+}
+
+.sns-icon--linkedin:hover {
+  background: #0A66C2;
+}
+
+.sns-icon--threads:hover {
+  background: #444;
 }
 
 .sns-icon svg {

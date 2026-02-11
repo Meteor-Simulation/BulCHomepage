@@ -15,7 +15,6 @@ import {
   ComparisonSection,
   CoreValuesSection,
   WorkflowSection,
-  ReportSection,
   CTASection,
   PriceSection,
 } from './sections';
@@ -51,17 +50,34 @@ const BulCPage: React.FC = () => {
     setActiveSection(sectionId);
   };
 
+  const [loginRedirect, setLoginRedirect] = useState<'payment' | 'cta'>('payment');
+
   const handlePurchaseClick = () => {
     if (isLoggedIn) {
       navigate('/payment');
     } else {
+      setLoginRedirect('payment');
+      setLoginModalOpen(true);
+    }
+  };
+
+  const handleDownloadClick = () => {
+    if (isLoggedIn) {
+      setActiveSection('cta');
+    } else {
+      alert(t('bulc.hero.downloadAlert'));
+      setLoginRedirect('cta');
       setLoginModalOpen(true);
     }
   };
 
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
-    navigate('/payment');
+    if (loginRedirect === 'cta') {
+      setActiveSection('cta');
+    } else {
+      navigate('/payment');
+    }
   };
 
   const renderSection = () => {
@@ -69,7 +85,7 @@ const BulCPage: React.FC = () => {
       case 'hero':
         return (
           <>
-            <HeroSection onPurchaseClick={handlePurchaseClick} />
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
             <ComparisonSection />
             <CoreValuesSection />
           </>
@@ -77,13 +93,13 @@ const BulCPage: React.FC = () => {
       case 'workflow':
         return <WorkflowSection />;
       case 'price':
-        return <PriceSection onPurchaseClick={handlePurchaseClick} />;
+        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} />;
       default:
         return (
           <>
-            <HeroSection onPurchaseClick={handlePurchaseClick} />
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
             <ComparisonSection />
             <CoreValuesSection />
           </>
@@ -100,7 +116,7 @@ const BulCPage: React.FC = () => {
         onSubNavChange={handleSectionChange}
         logoLink="/"
         onLogoClick={handleLogoClick}
-        logoText="BULC"
+        logoText="BUL:C"
         hideUserMenu={false}
       />
 
