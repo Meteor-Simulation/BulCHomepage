@@ -99,6 +99,10 @@ Document/
 - PostgreSQL: 5432 (configurable via DB_PORT)
 - Production Nginx: 80
 
+## Agent 사용 규칙
+
+- Git 관련 요청(커밋, 브랜치, PR 등) 및 이슈 관련 요청(Jira 티켓 생성, 이슈 추적 등)은 반드시 `task-orchestrator` agent를 사용하여 처리할 것.
+
 ## Licensing System
 
 소프트웨어 라이선스 관리 시스템입니다. 자세한 내용은 `Document/licensing_api.md` 참조.
