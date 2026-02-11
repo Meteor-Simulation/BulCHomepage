@@ -34,6 +34,10 @@ npm-debug.log*
 *.log
 logs/
 
+# Claude Code (agents 디렉토리는 추적)
+.claude/*
+!.claude/agents/
+
 # OS 파일
 .DS_Store
 Thumbs.db
