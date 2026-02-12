@@ -6,11 +6,10 @@ import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
 import com.bulc.homepage.entity.PricePlan;
 import com.bulc.homepage.entity.Subscription;
-// TODO: 라이선스 시스템 연결 시 아래 import 활성화
-// import com.bulc.homepage.licensing.domain.OwnerType;
-// import com.bulc.homepage.licensing.domain.UsageCategory;
-// import com.bulc.homepage.licensing.dto.LicenseIssueResult;
-// import com.bulc.homepage.licensing.service.LicenseService;
+import com.bulc.homepage.licensing.domain.OwnerType;
+import com.bulc.homepage.licensing.domain.UsageCategory;
+import com.bulc.homepage.licensing.dto.LicenseIssueResult;
+import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.repository.PaymentRepository;
 import com.bulc.homepage.repository.PricePlanRepository;
 import com.bulc.homepage.repository.SubscriptionRepository;
@@ -41,7 +40,7 @@ public class PaymentService {
     private final PricePlanRepository pricePlanRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
-    // private final LicenseService licenseService;  // TODO: 라이선스 시스템 연결 시 활성화
+    private final LicenseService licenseService;
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -113,7 +112,7 @@ public class PaymentService {
                     return result;
                 }
 
-                // 즉시 완료 상태 (카드, 계좌이체 등) - 구독 생성
+                // 즉시 완료 상태 (카드, 계좌이체 등) - 구독 생성 및 라이선스 발급
                 if ("DONE".equals(paymentStatus)) {
                     // 구독 생성 (1년 구독)
                     Subscription subscription = createSubscriptionForPayment(userEmail, pricePlan);
@@ -123,9 +122,36 @@ public class PaymentService {
                     log.info("결제 승인 및 구독 생성 성공: orderId={}, subscriptionId={}",
                             request.getOrderId(), subscription.getId());
 
-                    // TODO: 라이선스 시스템 연결 시 라이선스 발급 로직 추가
-                    // LicenseIssueResult licenseResult = issueLicense(userEmail, pricePlan, payment.getId());
-                    // result.put("licenseKey", licenseResult.licenseKey());
+                    // 라이선스 발급
+                    if (pricePlan.getLicensePlanId() != null) {
+                        try {
+                            UUID userId = UUID.nameUUIDFromBytes(userEmail.getBytes(StandardCharsets.UTF_8));
+                            UUID orderId = UUID.nameUUIDFromBytes(request.getOrderId().getBytes(StandardCharsets.UTF_8));
+
+                            LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
+                                    OwnerType.USER,
+                                    userId,
+                                    pricePlan.getLicensePlanId(),
+                                    orderId,
+                                    UsageCategory.COMMERCIAL
+                            );
+
+                            result.put("licenseKey", licenseResult.licenseKey());
+                            result.put("licenseId", licenseResult.id().toString());
+                            if (licenseResult.validUntil() != null) {
+                                result.put("licenseValidUntil", licenseResult.validUntil().toString());
+                            }
+
+                            log.info("라이선스 발급 성공: orderId={}, licenseKey={}",
+                                    request.getOrderId(), licenseResult.licenseKey());
+                        } catch (Exception e) {
+                            log.error("라이선스 발급 실패 (결제는 완료됨): orderId={}, error={}",
+                                    request.getOrderId(), e.getMessage(), e);
+                            result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
+                        }
+                    } else {
+                        log.warn("라이선스 플랜이 연결되지 않은 요금제: pricePlanId={}", pricePlan.getId());
+                    }
                 }
 
                 return result;
@@ -160,14 +186,35 @@ public class PaymentService {
         payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        // 구독 생성
+        // 구독 생성 및 라이선스 발급
         PricePlan pricePlan = payment.getPricePlan();
         if (pricePlan != null) {
             Subscription subscription = createSubscriptionForPayment(payment.getUserEmail(), pricePlan);
             log.info("웹훅을 통한 구독 생성 성공: orderId={}, subscriptionId={}",
                     orderId, subscription.getId());
 
-            // TODO: 라이선스 시스템 연결 시 라이선스 발급 로직 추가
+            // 라이선스 발급
+            if (pricePlan.getLicensePlanId() != null) {
+                try {
+                    UUID userId = UUID.nameUUIDFromBytes(payment.getUserEmail().getBytes(StandardCharsets.UTF_8));
+                    UUID orderUuid = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
+
+                    LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
+                            OwnerType.USER,
+                            userId,
+                            pricePlan.getLicensePlanId(),
+                            orderUuid,
+                            UsageCategory.COMMERCIAL
+                    );
+
+                    log.info("웹훅을 통한 라이선스 발급 성공: orderId={}, licenseKey={}",
+                            orderId, licenseResult.licenseKey());
+                } catch (Exception e) {
+                    log.error("웹훅 라이선스 발급 실패: orderId={}, error={}", orderId, e.getMessage(), e);
+                }
+            } else {
+                log.warn("라이선스 플랜이 연결되지 않은 요금제: pricePlanId={}", pricePlan.getId());
+            }
         } else {
             log.warn("요금제가 연결되지 않은 결제: orderId={}", orderId);
         }

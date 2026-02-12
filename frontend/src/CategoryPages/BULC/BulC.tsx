@@ -15,8 +15,8 @@ import {
   ComparisonSection,
   CoreValuesSection,
   WorkflowSection,
-  ReportSection,
   CTASection,
+  PriceSection,
 } from './sections';
 
 const BulCPage: React.FC = () => {
@@ -25,10 +25,8 @@ const BulCPage: React.FC = () => {
 
   const SUB_NAV_ITEMS = useMemo(() => [
     { id: 'hero', label: t('bulc.nav.intro') },
-    { id: 'comparison', label: t('bulc.nav.comparison') },
-    { id: 'core-values', label: t('bulc.nav.coreValues') },
     { id: 'workflow', label: t('bulc.nav.workflow') },
-    { id: 'report', label: t('bulc.nav.report') },
+    { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
   ], [t]);
   const navigate = useNavigate();
@@ -52,35 +50,60 @@ const BulCPage: React.FC = () => {
     setActiveSection(sectionId);
   };
 
+  const [loginRedirect, setLoginRedirect] = useState<'payment' | 'cta'>('payment');
+
   const handlePurchaseClick = () => {
     if (isLoggedIn) {
       navigate('/payment');
     } else {
+      setLoginRedirect('payment');
+      setLoginModalOpen(true);
+    }
+  };
+
+  const handleDownloadClick = () => {
+    if (isLoggedIn) {
+      setActiveSection('cta');
+    } else {
+      alert(t('bulc.hero.downloadAlert'));
+      setLoginRedirect('cta');
       setLoginModalOpen(true);
     }
   };
 
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
-    navigate('/payment');
+    if (loginRedirect === 'cta') {
+      setActiveSection('cta');
+    } else {
+      navigate('/payment');
+    }
   };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'hero':
-        return <HeroSection onPurchaseClick={handlePurchaseClick} />;
-      case 'comparison':
-        return <ComparisonSection />;
-      case 'core-values':
-        return <CoreValuesSection />;
+        return (
+          <>
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
+            <ComparisonSection />
+            <CoreValuesSection />
+          </>
+        );
       case 'workflow':
         return <WorkflowSection />;
-      case 'report':
-        return <ReportSection />;
+      case 'price':
+        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} />;
       default:
-        return <HeroSection onPurchaseClick={handlePurchaseClick} />;
+        return (
+          <>
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
+            <ComparisonSection />
+            <CoreValuesSection />
+          </>
+        );
     }
   };
 
@@ -93,7 +116,8 @@ const BulCPage: React.FC = () => {
         onSubNavChange={handleSectionChange}
         logoLink="/"
         onLogoClick={handleLogoClick}
-        logoText="BULC"
+        logoText="BUL:C"
+        hideUserMenu={false}
       />
 
       <main className="main-content sub-page">

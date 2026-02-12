@@ -102,31 +102,60 @@ const Header: React.FC<HeaderProps> = ({
           <span className="header-logo-text">{logoText}</span>
         </div>
 
-        {/* 통합 네비게이션 (데스크톱) */}
-        {showSubNav && subNavItems.length > 0 && (
-          <nav className="header-nav desktop-only">
+        <div className="header-right">
+          {/* 내 정보 / 로그인 메뉴 */}
+          {isLoggedIn ? (
+            // 로그인 상태: hideUserMenu가 false일 때만 내 정보 버튼 표시
+            !hideUserMenu && (
+              <button className="header-action-btn" onClick={() => navigate('/mypage')}>
+                <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="header-action-text">{t('header.myPage')}</span>
+              </button>
+            )
+          ) : (
+            // 비로그인 상태: 로그인 버튼 항상 표시
+            <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
+              <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="header-action-text">{t('header.login')}</span>
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* 서브 네비게이션 (데스크톱) */}
+      {showSubNav && subNavItems.length > 0 && (
+        <nav className="sub-nav desktop-only">
+          <div className="sub-nav-center">
             {subNavItems.map((item) => (
               <div
                 key={item.id}
-                className={`header-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
+                className={`sub-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
                 onClick={() => onSubNavChange?.(item.id)}
               >
                 {item.label}
               </div>
             ))}
-          </nav>
-        )}
+          </div>
+        </nav>
+      )}
 
-        {/* 모바일 네비게이션 드롭다운 */}
-        {showSubNav && subNavItems.length > 0 && (
-          <div className="header-nav-mobile mobile-only">
+      {/* 서브 네비게이션 (모바일) */}
+      {showSubNav && subNavItems.length > 0 && (
+        <nav className="sub-nav mobile-only">
+          <div className="sub-nav-mobile">
             <button
-              className="header-nav-mobile-btn"
+              className="sub-nav-mobile-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span>{subNavItems.find(item => item.id === activeSubNav)?.label || t('header.menuSelect')}</span>
               <svg
-                className={`header-nav-mobile-arrow ${mobileMenuOpen ? 'open' : ''}`}
+                className={`sub-nav-mobile-arrow ${mobileMenuOpen ? 'open' : ''}`}
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -135,11 +164,11 @@ const Header: React.FC<HeaderProps> = ({
               </svg>
             </button>
             {mobileMenuOpen && (
-              <div className="header-nav-mobile-dropdown">
+              <div className="sub-nav-mobile-dropdown">
                 {subNavItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`header-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
+                    className={`sub-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
                     onClick={() => {
                       onSubNavChange?.(item.id);
                       setMobileMenuOpen(false);
@@ -151,31 +180,8 @@ const Header: React.FC<HeaderProps> = ({
               </div>
             )}
           </div>
-        )}
-
-        <div className="header-right">
-          {/* 내 정보 / 로그인 메뉴 */}
-          {!hideUserMenu && (
-            isLoggedIn ? (
-              <button className="header-action-btn" onClick={() => navigate('/mypage')}>
-                <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="header-action-text">{t('header.myPage')}</span>
-              </button>
-            ) : (
-              <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
-                <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="header-action-text">{t('header.login')}</span>
-              </button>
-            )
-          )}
-        </div>
-      </header>
+        </nav>
+      )}
 
       {/* 플로팅 문의 버튼 */}
       {showSubNav && (

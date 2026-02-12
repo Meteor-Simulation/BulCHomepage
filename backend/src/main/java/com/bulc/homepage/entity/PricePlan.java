@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "price_plans")
@@ -37,6 +38,9 @@ public class PricePlan {
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String currency = "KRW";
+
+    @Column(name = "license_plan_id")
+    private UUID licensePlanId;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

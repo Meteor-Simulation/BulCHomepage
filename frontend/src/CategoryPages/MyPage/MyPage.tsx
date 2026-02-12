@@ -258,12 +258,12 @@ const MyPage: React.FC = () => {
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
   const ADMIN_ITEMS_PER_PAGE = 10;
 
-  // 로그인 체크 - 미로그인 시 로그인 모달 표시
+  // 로그인 체크 - 미로그인 시 에러 페이지로 리다이렉트
   useEffect(() => {
     if (isAuthReady && !isLoggedIn) {
-      setLoginModalOpen(true);
+      navigate('/error', { state: { errorCode: 401 } });
     }
-  }, [isAuthReady, isLoggedIn]);
+  }, [isAuthReady, isLoggedIn, navigate]);
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -1359,7 +1359,7 @@ const MyPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 관리자 정보 대메뉴 (관리자만 표시) */}
+              {/* 관리자 정보 대메뉴 (관리자/매니저만 표시) */}
               {isAdmin && (
               <div className="menu-group admin-menu-group">
                 <div className="menu-parent admin">
@@ -1403,6 +1403,7 @@ const MyPage: React.FC = () => {
                 </div>
               </div>
               )}
+
             </nav>
 
             {/* 로그아웃 버튼 */}

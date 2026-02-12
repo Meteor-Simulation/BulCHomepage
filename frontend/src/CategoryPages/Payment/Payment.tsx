@@ -451,23 +451,31 @@ const PaymentPage: React.FC = () => {
                 <div className="no-selection-message">등록된 요금제가 없습니다.</div>
               ) : (
                 <div className="plans-grid">
-                  {pricePlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedPlan(plan)}
-                    >
-                      <div className="plan-header">
-                        <h3 className="plan-name">{plan.name}</h3>
-                      </div>
-                      <div className="plan-price-row">
-                        <span className="current-price">{formatPrice(plan.price)}</span>
-                        {plan.description && (
-                          <span className="plan-duration">{plan.description}</span>
+                  {pricePlans.map((plan) => {
+                    const isComingSoon = plan.name === 'BUL:C 3D Premium';
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}${isComingSoon ? ' plan-card--coming-soon' : ''}`}
+                        onClick={isComingSoon ? undefined : () => setSelectedPlan(plan)}
+                      >
+                        {isComingSoon && (
+                          <div className="plan-card__overlay">
+                            <span>준비 중인 상품입니다</span>
+                          </div>
                         )}
+                        <div className="plan-header">
+                          <h3 className="plan-name">{plan.name}</h3>
+                        </div>
+                        <div className="plan-price-row">
+                          <span className="current-price">{formatPrice(plan.price)}</span>
+                          {plan.description && (
+                            <span className="plan-duration">{plan.description}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -680,51 +688,79 @@ const PaymentPage: React.FC = () => {
               )}
 
               <div className="terms-agreement">
-                <label className="checkbox-label">
+                {/* 전체 동의하기 */}
+                <label className="checkbox-label checkbox-label--all">
                   <input
                     type="checkbox"
                     checked={agreeTermsOfService && agreePrivacy}
                     onChange={(e) => {
-                      if (e.target.checked && !agreeTermsOfService && !agreePrivacy) {
-                        // 체크박스 클릭 시 순차적 모달 표시
-                        setPendingTermsAgreement(true);
-                        setIsTermsModalOpen(true);
-                      } else if (!e.target.checked) {
-                        // 체크 해제 시 모든 동의 취소
+                      if (e.target.checked) {
+                        setAgreeTermsOfService(true);
+                        setAgreePrivacy(true);
+                      } else {
                         setAgreeTermsOfService(false);
                         setAgreePrivacy(false);
                       }
                     }}
                   />
                   <span className="checkmark"></span>
-                  <span className="terms-text">
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                  <span className="terms-label">전체 동의하기</span>
+                </label>
+
+                <div className="terms-divider"></div>
+
+                {/* 이용약관 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreeTermsOfService}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreeTermsOfService) {
                         setIsTermsModalOpen(true);
-                      }}
-                    >
-                      이용약관
-                      {agreeTermsOfService && <span className="agreed-badge">동의</span>}
-                    </button>
-                    {' 및 '}
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      } else {
+                        setAgreeTermsOfService(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsTermsModalOpen(true);
+                    }}
+                  >
+                    이용약관
+                  </button>
+                </label>
+
+                {/* 개인정보처리방침 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreePrivacy) {
                         setIsPrivacyModalOpen(true);
-                      }}
-                    >
-                      개인정보처리방침
-                      {agreePrivacy && <span className="agreed-badge">동의</span>}
-                    </button>
-                    에 동의합니다
-                  </span>
+                      } else {
+                        setAgreePrivacy(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsPrivacyModalOpen(true);
+                    }}
+                  >
+                    개인정보처리방침
+                  </button>
                 </label>
               </div>
 
