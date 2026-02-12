@@ -88,10 +88,10 @@
       "getStarted": "Get Started"
     },
     "hero": {
-      "badge": "New: AI-GPU Acceleration Enabled",
+      "badge": "Free 14-day license with sign-up",
       "title1": "for Fire Safety Engineering",
       "title2": "Next-Gen Fire Simulator",
-      "description": "Drastically reduce human error and gain full MCP control. BUL:C combines advanced FDS-based physics with AI automation for instant compliance reporting.",
+      "description": "Achieve realistic and highly productive performance-based design with pre-built libraries, fire simulation-linked EVAC analysis, AI auto-configuration, GPU-accelerated computing, and automated report generation.",
       "startFree": "Free Download",
       "downloadAlert": "Please log in to download.",
       "watchDemo": "Watch Demo",
@@ -126,7 +126,7 @@
       }
     },
     "coreValues": {
-      "title": "Built on 3 Core Values",
+      "title": "",
       "accuracy": {
         "title": "Accuracy",
         "desc": "Precision is non-negotiable when lives are at stake. BUL:C utilizes validated FDS physics engines, ensuring every simulation meets rigorous international safety standards (NIST).",
@@ -150,35 +150,35 @@
       "subtitle": "From concept to compliance in record time.",
       "step1": {
         "title1": "Import",
-        "title2": "AI-Powered Floor Plan Recognition",
-        "desc": "Upload CAD/BIM models directly. (Coming Soon)",
-        "feature1": "Direct CAD/BIM import",
-        "feature2": "AI floor plan recognition",
-        "feature3": "iOS RoomPlan integration"
+        "title2": "Import your site and floor plans directly to start your project right away",
+        "desc": "Previously, you had to import drawings to scale, manually trace lines on top, and configure initial settings. Now, with iOS RoomPlan or AI-powered floor plan recognition, spatial data is automatically extracted — so you can spend the time once used for \"setup\" on \"review and simulation\" instead.",
+        "feature1": "RoomPlan-based 3D space extraction",
+        "feature2": "AI floor plan recognition with auto scale/coordinate alignment",
+        "feature3": "Auto-generated initial project configuration"
       },
       "step2": {
         "title1": "Setup",
-        "title2": "Effortless Setup with AI Assistant",
-        "desc": "Set fire loads & boundaries using an LLM-powered AI assistant.",
-        "feature1": "AI auto fire load setup",
-        "feature2": "Pre-built libraries",
-        "feature3": "LLM-powered assistant"
+        "title2": "Complete environment setup quickly and error-free with natural language and libraries",
+        "desc": "Simulation environment setup involves many input parameters with interdependencies, making repetitive tasks and small errors easy to accumulate. BUL:C standardizes environment configuration through MCP-based natural language setup and standardized libraries, reducing setup time while improving both reusability and simulation accuracy.",
+        "feature1": "Natural language configuration",
+        "feature2": "Standardized libraries",
+        "feature3": "Enhanced reusability"
       },
       "step3": {
         "title1": "Simulate",
-        "title2": "100x Faster GPU Processing vs CPU",
-        "desc": "100x times Fast GPU Processing Compared to CPU.",
-        "feature1": "GPU-accelerated computing",
-        "feature2": "FDS-based physics engine",
-        "feature3": "Real-time progress monitoring"
+        "title2": "Cut simulation time by 87x with GPU Solver",
+        "desc": "Fire simulation is a compute-intensive task involving repeated large-scale matrix operations. BUL:C features a purpose-built Solver designed to process these operations on GPUs, dramatically reducing simulation wait times — up to 87x faster based on our internal benchmarks.",
+        "feature1": "GPU-accelerated Solver",
+        "feature2": "87x faster",
+        "feature3": "Reduced wait time"
       },
       "step4": {
         "title1": "Analyze",
-        "title2": "AI-Driven Data Analysis & Insights",
-        "desc": "Review AI insights & data.",
-        "feature1": "ASET/RSET auto-analysis",
-        "feature2": "Evacuation path visualization",
-        "feature3": "AI data insights"
+        "title2": "Automatically analyze ASET/RSET and instantly verify compliance",
+        "desc": "Evacuation simulation results go beyond simply reviewing outputs — they require quantitative assessment of safety margins from both fire code and ASET/RSET perspectives. BUL:C automatically analyzes simulation results against regulatory criteria and the ASET/RSET framework, rapidly deriving key metrics and conclusions needed for decision-making.",
+        "feature1": "Automated code compliance assessment",
+        "feature2": "ASET/RSET",
+        "feature3": "Key metrics summary"
       },
       "step5": {
         "title1": "Report",
@@ -239,16 +239,20 @@
       "button": "Free Download",
       "faqs": [
         {
-          "question": "Is there a free trial?",
-          "answer": "Yes, you can start for free with limited simulation hours per month. No credit card required."
+          "question": "How many devices can I use with one account?",
+          "answer": "You can register up to 3 devices per account (desktops, laptops, etc.)."
         },
         {
-          "question": "Which operating system do I need?",
-          "answer": "BUL:C runs on Windows (64-bit). A standard Windows PC is enough for typical workflows."
+          "question": "What if I change or reinstall my PC?",
+          "answer": "You can re-register your device without any issues.\nHowever, for security purposes, there is a daily limit on the number of device changes."
         },
         {
-          "question": "Is it compatible with Revit?",
-          "answer": "Not yet. We currently don't have direct plugins for Revit, AutoCAD, or SketchUp — but it's on our roadmap."
+          "question": "Can I log in from multiple locations at the same time?",
+          "answer": "Simultaneous use is limited to 1 session.\nIf you are already logged in elsewhere, you can log in from a new device and the previous session will be automatically terminated (force logout)."
+        },
+        {
+          "question": "What is \"force logout\"?",
+          "answer": "When you log in from a new device, any existing active session is automatically terminated. This means you will almost never be locked out due to a stuck session."
         }
       ]
     }

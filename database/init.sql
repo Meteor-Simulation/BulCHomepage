@@ -215,8 +215,8 @@ COMMENT ON COLUMN price_plans.license_plan_id IS '연결된 라이선스 플랜 
 INSERT INTO price_plans (product_code, name, description, price, currency) VALUES
     ('001', 'BUL:C PRO', '1년/365일', 4000000, 'KRW'),
     ('001', 'BUL:C PRO', '1년/365일', 2700, 'USD'),
-    ('001', 'BUL:C 3D Premium', '1년/365일', 5100000, 'KRW'),
-    ('001', 'BUL:C 3D Premium', '1년/365일', 3500, 'USD');
+    ('001', 'BUL:C 3D Premium', '1년/365일', 6000000, 'KRW'),
+    ('001', 'BUL:C 3D Premium', '1년/365일', 4000, 'USD');
 
 -- price_plans와 license_plans 연결 (별도 UPDATE 쿼리로 처리 - 테이블 생성 순서 때문)
 

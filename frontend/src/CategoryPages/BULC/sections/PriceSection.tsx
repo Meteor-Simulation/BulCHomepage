@@ -73,11 +73,6 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
   return (
     <section id="price" className="bulc-price">
       <div className="bulc-price__container">
-        <div className="bulc-price__header">
-          <h2 className="bulc-price__title">{t('bulc.price.title')}</h2>
-          <p className="bulc-price__subtitle">{t('bulc.price.subtitle')}</p>
-        </div>
-
         {loading && (
           <div className="bulc-price__loading">
             <div className="bulc-price__spinner" />

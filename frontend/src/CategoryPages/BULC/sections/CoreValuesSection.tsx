@@ -20,9 +20,11 @@ const CoreValuesSection: React.FC = () => {
   return (
     <section id="core-values" className="bulc-values">
       <div className="bulc-values__container">
-        <div className="bulc-values__header">
-          <h2 className="bulc-values__title">{t('bulc.coreValues.title')}</h2>
-        </div>
+        {t('bulc.coreValues.title') && (
+          <div className="bulc-values__header">
+            <h2 className="bulc-values__title">{t('bulc.coreValues.title')}</h2>
+          </div>
+        )}
 
         <div className="bulc-values__list">
           {/* Value 1: Forensic Accuracy */}

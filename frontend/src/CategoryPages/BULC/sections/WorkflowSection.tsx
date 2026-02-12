@@ -169,13 +169,6 @@ const WorkflowSection: React.FC = () => {
   return (
     <section id="workflow" className="bulc-workflow">
       <div className="bulc-workflow__container">
-        <div className="bulc-workflow__header">
-          <h2 className="bulc-workflow__title">{t('bulc.workflow.title')}</h2>
-          <p className="bulc-workflow__subtitle">
-            {t('bulc.workflow.subtitle')}
-          </p>
-        </div>
-
         <div className="bulc-workflow__track">
           {/* Connector Line */}
           <div className="bulc-workflow__connector" />
