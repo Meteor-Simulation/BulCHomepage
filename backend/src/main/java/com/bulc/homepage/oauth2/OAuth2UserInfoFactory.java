@@ -10,8 +10,7 @@ public class OAuth2UserInfoFactory {
         } else if (registrationId.equalsIgnoreCase("kakao")) {
             return new KakaoOAuth2UserInfo(attributes);
         } else if (registrationId.equalsIgnoreCase("google")) {
-            // TODO: GoogleOAuth2UserInfo 구현 후 추가
-            throw new IllegalArgumentException("구글 로그인은 아직 지원하지 않습니다.");
+            return new GoogleOAuth2UserInfo(attributes);
         } else {
             throw new IllegalArgumentException("지원하지 않는 로그인 제공자입니다: " + registrationId);
         }

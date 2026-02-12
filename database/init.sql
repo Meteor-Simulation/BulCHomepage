@@ -123,6 +123,10 @@ INSERT INTO users (id, email, password_hash, roles_code, name) VALUES
     ('00000000-0000-0000-0000-000000000005', 'laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
     ('00000000-0000-0000-0000-000000000006', 'qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
 
+-- 일반 사용자 계정
+INSERT INTO users (id, email, password_hash, roles_code, name, phone) VALUES
+    ('00000000-0000-0000-0000-000000000007', 'wndnjs6455@naver.com', '$2a$10$qmXYi4vpbKx34mCAwErpb.88ybQarAoIK4iec5PlBN107EeBoxEWy', '002', '강주원', '010-2366-6455');
+
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)
 -- =========================================================

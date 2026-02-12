@@ -22,7 +22,15 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
-        log.error("OAuth2 로그인 실패: {}", exception.getMessage());
+        String errorMessage = exception.getMessage();
+        log.error("OAuth2 로그인 실패: {}", errorMessage);
+
+        // 뒤로가기 등으로 인한 인증 요청 유실 - 홈으로 리다이렉트
+        if (errorMessage != null && errorMessage.contains("authorization_request_not_found")) {
+            String homeUrl = redirectUri.replace("/oauth/callback", "/");
+            getRedirectStrategy().sendRedirect(request, response, homeUrl);
+            return;
+        }
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("error", exception.getLocalizedMessage())
