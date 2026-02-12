@@ -115,10 +115,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     // 신규 사용자로 처리
                     isNewUser = true;
                 } else {
-                    // 기존 이메일 사용자에 소셜 계정 연동
-                    linkSocialAccount(user, provider, providerId);
-                    userEmail = user.getEmail();
-                    log.info("기존 사용자에 소셜 계정 연동: {}", userEmail);
+                    // 기존 이메일 사용자에 소셜 계정 연동 → 신규 가입으로 처리
+                    isNewUser = true;
+                    log.info("기존 사용자에 소셜 계정 연동 (신규 가입 처리): {}", email);
                 }
             } else {
                 // 신규 사용자 - 비밀번호 설정 페이지로 이동 필요

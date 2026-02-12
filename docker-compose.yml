@@ -54,6 +54,8 @@ services:
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-dev_naver_secret}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-dev_kakao_client_id}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-dev_kakao_secret}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-dev_google_client_id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-dev_google_secret}
       OAUTH2_CALLBACK_BASE_URL: ${OAUTH2_CALLBACK_BASE_URL:-http://localhost:8080}
       OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
       # Licensing RS256 Key (Session/Offline Token)
