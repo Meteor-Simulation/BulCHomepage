@@ -87,6 +87,8 @@
       "price": "Price",
       "getStarted": "Get Started"
     },
+    "loginNotice": "Please log in to download the program",
+    "loginPromo": "Free 14-day license on sign-up (no card required)",
     "hero": {
       "badge": "Free 14-day license with sign-up",
       "title1": "for Fire Safety Engineering",
@@ -237,6 +239,7 @@
       "title": "Ready to automate your simulations?",
       "subtitle": "Join 500+ fire safety engineers who have switched to BUL:C.",
       "button": "Free Download",
+      "downloadBtn": "Download Program",
       "faqs": [
         {
           "question": "How many devices can I use with one account?",
