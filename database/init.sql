@@ -581,11 +581,13 @@ COMMENT ON COLUMN license_plan_entitlements.entitlement_key IS '기능 식별자
 
 -- 기본 라이선스 플랜 데이터
 INSERT INTO license_plans (id, product_id, code, name, description, license_type, duration_days, grace_days, max_activations, max_concurrent_sessions, allow_offline_days) VALUES
+    ('c3d4e5f6-a7b8-4c5d-0e1f-2a3b4c5d6e7f', 'a0000000-0000-0000-0000-000000000001', 'BULC-TRIAL-14D', 'BUL:C 무료 체험 14일', '회원가입 시 자동 지급되는 14일 무료 체험 라이선스', 'TRIAL', 14, 0, 3, 2, 0),
     ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'a0000000-0000-0000-0000-000000000001', 'BULC-PRO-1Y', 'BUL:C PRO 1년', 'BUL:C PRO 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7),
     ('b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'a0000000-0000-0000-0000-000000000001', 'BULC-3D-PREMIUM-1Y', 'BUL:C 3D Premium 1년', 'BUL:C 3D Premium 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7);
 
 -- 라이선스 플랜 기능 권한 데이터
 INSERT INTO license_plan_entitlements (id, plan_id, entitlement_key) VALUES
+    (uuid_generate_v4(), 'c3d4e5f6-a7b8-4c5d-0e1f-2a3b4c5d6e7f', 'core-simulation'),
     (uuid_generate_v4(), 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'core-simulation'),
     (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'core-simulation'),
     (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', '3d-visualization');

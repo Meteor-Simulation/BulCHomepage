@@ -197,6 +197,20 @@
 }
 
 /* ========================================
+   HEADER TRIAL BADGE
+======================================== */
+.header-trial-badge {
+  padding: 5px 12px;
+  background: var(--accent, #C4320A);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 50px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* ========================================
    HEADER SIGNUP BUTTON
 ======================================== */
 .header-signup-btn {
@@ -499,6 +513,11 @@
 
   .header-action-btn {
     padding: 8px;
+  }
+
+  .header-trial-badge {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   .header-signup-btn {
