@@ -116,6 +116,10 @@ bulc:
     # 이 시간 이상 heartbeat 없으면 stale로 간주하여 자동 종료 대상
     stale-threshold-minutes: ${LIC_STALE_THRESHOLD_MINUTES:30}
 
+  # Redeem 코드 설정
+  redeem:
+    code-pepper: ${REDEEM_CODE_PEPPER:dev-redeem-pepper-2024}
+
   # OAuth 2.0 클라이언트 설정
   # 등록된 client_id와 redirect_uri만 허용됩니다.
   # 포트 와일드카드: http://localhost:*/path → 모든 포트 허용

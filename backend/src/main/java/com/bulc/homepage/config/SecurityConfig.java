@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,6 +31,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -96,6 +98,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/language/**").permitAll()
                         // 문의하기 API (공개)
                         .requestMatchers("/api/contact").permitAll()
+                        // 리딤 코드 API (인증 필요)
+                        .requestMatchers("/api/v1/redeem").authenticated()
+                        .requestMatchers("/api/v1/admin/redeem-campaigns/**").authenticated()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )

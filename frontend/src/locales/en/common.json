@@ -1,10 +1,12 @@
 {
   "header": {
     "login": "Login",
+    "signup": "Sign Up",
     "myPage": "My Page",
     "admin": "Admin",
     "menuSelect": "Select Menu",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "trialBadge": "Free Trial · D-{{days}}"
   },
   "auth": {
     "loginSuccess": "Welcome! You are now logged in.",
@@ -27,7 +29,8 @@
       "adminPayments": "Payment Management",
       "adminProducts": "Product Management",
       "adminLicenses": "License Management",
-      "adminPromotions": "Promotion Management"
+      "adminPromotions": "Promotion Management",
+      "adminRedeem": "Redeem Campaigns"
     },
     "profile": "Profile",
     "edit": "Edit",
@@ -87,6 +90,8 @@
       "price": "Price",
       "getStarted": "Get Started"
     },
+    "loginNotice": "Please log in to download the program",
+    "loginPromo": "Free 14-day license on sign-up (no card required)",
     "hero": {
       "badge": "Free 14-day license with sign-up",
       "title1": "for Fire Safety Engineering",
@@ -237,6 +242,7 @@
       "title": "Ready to automate your simulations?",
       "subtitle": "Join 500+ fire safety engineers who have switched to BUL:C.",
       "button": "Free Download",
+      "downloadBtn": "Download Program",
       "faqs": [
         {
           "question": "How many devices can I use with one account?",
@@ -255,6 +261,35 @@
           "answer": "When you log in from a new device, any existing active session is automatically terminated. This means you will almost never be locked out due to a stuck session."
         }
       ]
+    }
+  },
+  "download": {
+    "title": "Download BUL:C",
+    "subtitle": "The new standard for fire safety simulation. Install BUL:C now.",
+    "downloadBtn": "Download Program",
+    "version": "Latest Version",
+    "platform": "Windows x64",
+    "systemRequirements": {
+      "title": "System Requirements",
+      "os": "Windows 10/11 (64-bit)",
+      "cpu": "Intel i5 / AMD Ryzen 5 or higher",
+      "ram": "16GB or more",
+      "gpu": "NVIDIA GTX 1060 or higher (CUDA supported)",
+      "storage": "10GB free disk space"
+    },
+    "quickStart": {
+      "title": "Quick Start Guide",
+      "step1": "Click the button above to download the installer.",
+      "step2": "Run the downloaded file to proceed with installation.",
+      "step3": "Launch the program and log in with your account.",
+      "step1Title": "Download",
+      "step2Title": "Install",
+      "step3Title": "Login"
+    },
+    "license": {
+      "title": "Need a license?",
+      "desc": "After your free trial, upgrade to the Pro plan for GPU-accelerated analysis and advanced features.",
+      "button": "Purchase License"
     }
   }
 }

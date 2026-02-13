@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import ContactModal from './ContactModal';
@@ -41,12 +42,51 @@ const Header: React.FC<HeaderProps> = ({
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [alertModal, setAlertModal] = useState<{
     isOpen: boolean;
     title?: string;
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
   }>({ isOpen: false, message: '', type: 'info' });
+
+  // TRIAL 라이선스 남은 일수 조회
+  useEffect(() => {
+    const fetchTrialLicense = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/v1/me/licenses`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const trialLicense = (data.licenses || []).find(
+            (license: any) => license.licenseType === 'TRIAL' && license.status === 'ACTIVE'
+          );
+          if (trialLicense?.validUntil) {
+            const days = Math.ceil(
+              (new Date(trialLicense.validUntil).getTime() - Date.now()) / 86400000
+            );
+            setTrialDaysLeft(days > 0 ? days : null);
+          } else {
+            setTrialDaysLeft(null);
+          }
+        }
+      } catch (error) {
+        console.error('Trial license fetch failed:', error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchTrialLicense();
+    } else {
+      setTrialDaysLeft(null);
+    }
+  }, [isLoggedIn]);
 
   const handleSwitchToSignup = () => {
     setLoginModalOpen(false);
@@ -107,23 +147,35 @@ const Header: React.FC<HeaderProps> = ({
           {isLoggedIn ? (
             // 로그인 상태: hideUserMenu가 false일 때만 내 정보 버튼 표시
             !hideUserMenu && (
-              <button className="header-action-btn" onClick={() => navigate('/mypage')}>
+              <>
+                {trialDaysLeft !== null && (
+                  <div className="header-trial-badge">
+                    {t('header.trialBadge', { days: trialDaysLeft })}
+                  </div>
+                )}
+                <button className="header-action-btn" onClick={() => navigate('/mypage')}>
+                  <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="header-action-text">{t('header.myPage')}</span>
+                </button>
+              </>
+            )
+          ) : (
+            // 비로그인 상태: 로그인 + 회원가입 버튼 표시
+            <>
+              <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
                 <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="header-action-text">{t('header.myPage')}</span>
+                <span className="header-action-text">{t('header.login')}</span>
               </button>
-            )
-          ) : (
-            // 비로그인 상태: 로그인 버튼 항상 표시
-            <button className="header-action-btn" onClick={() => setLoginModalOpen(true)}>
-              <svg className="header-action-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="header-action-text">{t('header.login')}</span>
-            </button>
+              <button className="header-signup-btn" onClick={() => setSignupModalOpen(true)}>
+                <span>{t('header.signup')}</span>
+              </button>
+            </>
           )}
         </div>
       </header>

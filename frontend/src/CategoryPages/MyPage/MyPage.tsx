@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -10,7 +10,7 @@ import { API_URL } from '../../utils/api';
 import './MyPage.css';
 
 // 메뉴 타입 정의
-type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions';
+type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'redeem' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions' | 'admin-redeem';
 
 // 관리자용 인터페이스
 interface AdminUser {
@@ -108,6 +108,36 @@ interface LicensePlan {
   entitlements: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+interface RedeemCampaign {
+  id: string;
+  name: string;
+  description: string | null;
+  productId: string;
+  productName: string;
+  licensePlanId: string;
+  planName: string;
+  usageCategory: string;
+  seatLimit: number | null;
+  seatsUsed: number;
+  perUserLimit: number;
+  status: 'ACTIVE' | 'PAUSED' | 'ENDED';
+  validFrom: string | null;
+  validUntil: string | null;
+  codeCount: number;
+  createdAt: string;
+}
+
+interface RedeemCodeItem {
+  id: string;
+  campaignId: string;
+  codeType: 'RANDOM' | 'CUSTOM';
+  maxRedemptions: number;
+  currentRedemptions: number;
+  active: boolean;
+  expiresAt: string | null;
+  createdAt: string;
 }
 
 interface UserInfo {
@@ -272,6 +302,38 @@ const MyPage: React.FC = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [licensePlans, setLicensePlans] = useState<LicensePlan[]>([]);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+
+  // 리딤 코드 상태
+  const [redeemCode, setRedeemCode] = useState('');
+  const [redeemResult, setRedeemResult] = useState<{
+    success: boolean;
+    licenseId?: string;
+    licenseKey?: string;
+    productName?: string;
+    planName?: string;
+    validUntil?: string;
+    errorMessage?: string;
+  } | null>(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+
+  // 리딤 캠페인 관리자 상태
+  const [redeemCampaigns, setRedeemCampaigns] = useState<RedeemCampaign[]>([]);
+  const [isRedeemCampaignModalOpen, setIsRedeemCampaignModalOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<RedeemCampaign | null>(null);
+  const [redeemCampaignForm, setRedeemCampaignForm] = useState({
+    name: '', description: '', productId: '', licensePlanId: '',
+    usageCategory: 'COMMERCIAL', seatLimit: '', perUserLimit: '1',
+    validFrom: '', validUntil: '',
+  });
+  const [selectedCampaignForCodes, setSelectedCampaignForCodes] = useState<RedeemCampaign | null>(null);
+  const [redeemCodes, setRedeemCodes] = useState<RedeemCodeItem[]>([]);
+  const [isCodeGenerateModalOpen, setIsCodeGenerateModalOpen] = useState(false);
+  const [codeGenerateForm, setCodeGenerateForm] = useState({
+    codeType: 'RANDOM' as 'RANDOM' | 'CUSTOM',
+    customCode: '', count: '10', maxRedemptions: '1', expiresAt: '',
+  });
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const [isGeneratedCodesModalOpen, setIsGeneratedCodesModalOpen] = useState(false);
 
   // 라이선스 플랜 모달 상태
   const [isLicensePlanModalOpen, setIsLicensePlanModalOpen] = useState(false);
@@ -1012,6 +1074,236 @@ const MyPage: React.FC = () => {
     setTimeout(() => setErrorMessage(''), 3000);
   };
 
+  // ========== 리딤 코드 기능 ==========
+  const handleRedeemSubmit = async () => {
+    if (!redeemCode.trim()) return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    setIsRedeeming(true);
+    setRedeemResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/redeem`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: redeemCode }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRedeemResult({
+          success: true,
+          licenseId: data.licenseId,
+          licenseKey: data.licenseKey,
+          productName: data.productName,
+          planName: data.planName,
+          validUntil: data.validUntil,
+        });
+        setRedeemCode('');
+      } else {
+        const error = await response.json();
+        const errorMessages: Record<string, string> = {
+          REDEEM_CODE_INVALID: '유효하지 않은 리딤 코드 형식입니다.',
+          REDEEM_CODE_NOT_FOUND: '리딤 코드를 찾을 수 없습니다.',
+          REDEEM_CODE_EXPIRED: '만료된 리딤 코드입니다.',
+          REDEEM_CODE_DISABLED: '비활성화된 리딤 코드입니다.',
+          REDEEM_CODE_DEPLETED: '사용 횟수가 소진된 코드입니다.',
+          REDEEM_CAMPAIGN_FULL: '캠페인 발급 한도에 도달했습니다.',
+          REDEEM_USER_LIMIT_EXCEEDED: '사용자별 사용 한도를 초과했습니다.',
+          REDEEM_CAMPAIGN_NOT_ACTIVE: '현재 이용할 수 없는 캠페인입니다.',
+          REDEEM_RATE_LIMITED: '요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요.',
+        };
+        setRedeemResult({
+          success: false,
+          errorMessage: errorMessages[error.error] || error.message || '코드 등록에 실패했습니다.',
+        });
+      }
+    } catch {
+      setRedeemResult({ success: false, errorMessage: '네트워크 오류가 발생했습니다.' });
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
+  // ========== 리딤 캠페인 관리자 기능 ==========
+
+  const fetchRedeemCampaigns = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns?size=100`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setRedeemCampaigns(data.content || []);
+    }
+  };
+
+  const fetchRedeemCodes = async (campaignId: string) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/codes?size=100`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setRedeemCodes(data.content || []);
+    }
+  };
+
+  const openRedeemCampaignModal = (campaign?: RedeemCampaign) => {
+    if (campaign) {
+      setEditingCampaign(campaign);
+      setRedeemCampaignForm({
+        name: campaign.name,
+        description: campaign.description || '',
+        productId: campaign.productId,
+        licensePlanId: campaign.licensePlanId,
+        usageCategory: campaign.usageCategory,
+        seatLimit: campaign.seatLimit?.toString() || '',
+        perUserLimit: campaign.perUserLimit.toString(),
+        validFrom: campaign.validFrom ? new Date(campaign.validFrom).toISOString().slice(0, 16) : '',
+        validUntil: campaign.validUntil ? new Date(campaign.validUntil).toISOString().slice(0, 16) : '',
+      });
+    } else {
+      setEditingCampaign(null);
+      setRedeemCampaignForm({
+        name: '', description: '', productId: '', licensePlanId: '',
+        usageCategory: 'COMMERCIAL', seatLimit: '', perUserLimit: '1',
+        validFrom: '', validUntil: '',
+      });
+    }
+    setIsRedeemCampaignModalOpen(true);
+  };
+
+  const closeRedeemCampaignModal = () => {
+    setIsRedeemCampaignModalOpen(false);
+    setEditingCampaign(null);
+  };
+
+  const handleRedeemCampaignSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const body = {
+      name: redeemCampaignForm.name,
+      description: redeemCampaignForm.description || null,
+      productId: redeemCampaignForm.productId,
+      licensePlanId: redeemCampaignForm.licensePlanId,
+      usageCategory: redeemCampaignForm.usageCategory,
+      seatLimit: redeemCampaignForm.seatLimit ? parseInt(redeemCampaignForm.seatLimit) : null,
+      perUserLimit: parseInt(redeemCampaignForm.perUserLimit) || 1,
+      validFrom: redeemCampaignForm.validFrom ? new Date(redeemCampaignForm.validFrom).toISOString() : null,
+      validUntil: redeemCampaignForm.validUntil ? new Date(redeemCampaignForm.validUntil).toISOString() : null,
+    };
+
+    const url = editingCampaign
+      ? `${API_URL}/api/v1/admin/redeem-campaigns/${editingCampaign.id}`
+      : `${API_URL}/api/v1/admin/redeem-campaigns`;
+
+    const response = await fetch(url, {
+      method: editingCampaign ? 'PUT' : 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      closeRedeemCampaignModal();
+      fetchRedeemCampaigns(token);
+    } else {
+      const error = await response.json();
+      alert(error.message || '캠페인 저장에 실패했습니다.');
+    }
+  };
+
+  const handleCampaignStatusChange = async (campaignId: string, action: 'pause' | 'end' | 'resume') => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/${action}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (response.ok) {
+      fetchRedeemCampaigns(token);
+    } else {
+      alert('상태 변경에 실패했습니다.');
+    }
+  };
+
+  const openCodeGenerateModal = (campaign: RedeemCampaign) => {
+    setSelectedCampaignForCodes(campaign);
+    setCodeGenerateForm({ codeType: 'RANDOM', customCode: '', count: '10', maxRedemptions: '1', expiresAt: '' });
+    setIsCodeGenerateModalOpen(true);
+  };
+
+  const handleGenerateCodes = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token || !selectedCampaignForCodes) return;
+
+    const body = {
+      campaignId: selectedCampaignForCodes.id,
+      codeType: codeGenerateForm.codeType,
+      customCode: codeGenerateForm.codeType === 'CUSTOM' ? codeGenerateForm.customCode : null,
+      count: codeGenerateForm.codeType === 'RANDOM' ? parseInt(codeGenerateForm.count) || 1 : 1,
+      maxRedemptions: parseInt(codeGenerateForm.maxRedemptions) || 1,
+      expiresAt: codeGenerateForm.expiresAt ? new Date(codeGenerateForm.expiresAt).toISOString() : null,
+    };
+
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setGeneratedCodes(data.codes || []);
+      setIsCodeGenerateModalOpen(false);
+      setIsGeneratedCodesModalOpen(true);
+      fetchRedeemCampaigns(token);
+    } else {
+      const error = await response.json();
+      alert(error.message || '코드 생성에 실패했습니다.');
+    }
+  };
+
+  const handleDeactivateCode = async (codeId: string) => {
+    if (!window.confirm('이 코드를 비활성화하시겠습니까?')) return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes/${codeId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (response.ok && selectedCampaignForCodes) {
+      fetchRedeemCodes(selectedCampaignForCodes.id);
+    }
+  };
+
+  const copyGeneratedCodes = () => {
+    navigator.clipboard.writeText(generatedCodes.join('\n'));
+    alert('클립보드에 복사되었습니다.');
+  };
+
+  const downloadCodesAsCsv = () => {
+    const csv = 'code\n' + generatedCodes.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `redeem-codes-${selectedCampaignForCodes?.name || 'export'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredLicensePlansForRedeem = useMemo(() => {
+    if (!redeemCampaignForm.productId) return [];
+    return licensePlans.filter(p => p.productId === redeemCampaignForm.productId && !p.deleted);
+  }, [licensePlans, redeemCampaignForm.productId]);
+
   // ========== 관리자 기능 ==========
 
   // 관리자 데이터 조회 함수들
@@ -1118,6 +1410,11 @@ const MyPage: React.FC = () => {
           case 'admin-promotions':
             await fetchPromotions(token);
             await fetchProducts(token);
+            break;
+          case 'admin-redeem':
+            await fetchRedeemCampaigns(token);
+            await fetchProducts(token);
+            await fetchLicensePlans(token);
             break;
         }
       } catch (error) {
@@ -1580,6 +1877,12 @@ const MyPage: React.FC = () => {
                   >
                     {t('myPage.menu.payment')}
                   </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'redeem' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('redeem')}
+                  >
+                    리딤 코드 등록
+                  </button>
                 </div>
               </div>
 
@@ -1623,6 +1926,12 @@ const MyPage: React.FC = () => {
                     onClick={() => setActiveMenu('admin-promotions')}
                   >
                     {t('myPage.menu.adminPromotions')}
+                  </button>
+                  <button
+                    className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`}
+                    onClick={() => setActiveMenu('admin-redeem')}
+                  >
+                    {t('myPage.menu.adminRedeem')}
                   </button>
                 </div>
               </div>
@@ -2210,6 +2519,65 @@ const MyPage: React.FC = () => {
           )}
 
 
+          {/* 리딤 코드 등록 */}
+          {activeMenu === 'redeem' && (
+          <div className="info-card">
+            <div className="card-header">
+              <h2 className="card-title">리딤 코드 등록</h2>
+            </div>
+            <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '14px' }}>
+              리딤 코드를 입력하여 라이선스를 등록하세요.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <input
+                type="text"
+                value={redeemCode}
+                onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && handleRedeemSubmit()}
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px', fontFamily: 'monospace', letterSpacing: '1px' }}
+                disabled={isRedeeming}
+              />
+              <button
+                onClick={handleRedeemSubmit}
+                disabled={isRedeeming || !redeemCode.trim()}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: '#C4320A', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: isRedeeming || !redeemCode.trim() ? 0.5 : 1 }}
+              >
+                {isRedeeming ? '등록 중...' : '등록'}
+              </button>
+            </div>
+
+            {redeemResult && (
+              <div style={{ padding: '1rem', borderRadius: '8px', background: redeemResult.success ? '#f0fdf4' : '#fef2f2', border: `1px solid ${redeemResult.success ? '#86efac' : '#fecaca'}`, marginTop: '1rem' }}>
+                {redeemResult.success ? (
+                  <div>
+                    <p style={{ color: '#166534', fontWeight: 'bold', marginBottom: '0.5rem' }}>라이선스가 성공적으로 등록되었습니다!</p>
+                    <div style={{ fontSize: '14px', color: '#333' }}>
+                      <p>제품: {redeemResult.productName}</p>
+                      <p>플랜: {redeemResult.planName}</p>
+                      <p>라이선스 키: <code style={{ background: '#e5e7eb', padding: '2px 6px', borderRadius: '4px' }}>{redeemResult.licenseKey}</code></p>
+                      {redeemResult.validUntil && (
+                        <p>만료일: {new Date(redeemResult.validUntil).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ color: '#991b1b' }}>{redeemResult.errorMessage}</p>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f9fafb', borderRadius: '8px', fontSize: '13px', color: '#6b7280' }}>
+              <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>안내</p>
+              <ul style={{ paddingLeft: '1.2rem', margin: 0 }}>
+                <li>코드 입력 시 하이픈(-)과 공백은 자동으로 무시됩니다.</li>
+                <li>코드는 대소문자를 구분하지 않습니다.</li>
+                <li>분당 최대 5회까지 시도할 수 있습니다.</li>
+              </ul>
+            </div>
+          </div>
+          )}
+
           {/* 관리자 섹션 - 사용자 관리 */}
           {activeMenu === 'admin-users' && isAdmin && (
             <div className="info-card admin-section-card wide">
@@ -2720,6 +3088,121 @@ const MyPage: React.FC = () => {
             </div>
           )}
 
+          {/* 리딤 캠페인 관리 (관리자) */}
+          {activeMenu === 'admin-redeem' && isAdmin && (
+            <div className="info-card admin-section-card wide">
+              <div className="card-header">
+                <h2 className="card-title">{t('myPage.menu.adminRedeem')}</h2>
+                <button className="btn-action btn-edit" onClick={() => openRedeemCampaignModal()} style={{ marginLeft: 'auto' }}>+ 캠페인 추가</button>
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>캠페인명</th>
+                          <th>상품</th>
+                          <th>플랜</th>
+                          <th>좌석</th>
+                          <th>코드</th>
+                          <th>상태</th>
+                          <th>유효기간</th>
+                          <th>관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {redeemCampaigns.length > 0 ? (
+                          redeemCampaigns.map((campaign) => (
+                            <tr key={campaign.id}>
+                              <td>{campaign.name}</td>
+                              <td>{campaign.productName}</td>
+                              <td>{campaign.planName}</td>
+                              <td>{campaign.seatsUsed}{campaign.seatLimit ? `/${campaign.seatLimit}` : '/∞'}</td>
+                              <td>{campaign.codeCount}개</td>
+                              <td>
+                                <span className={`status-badge status-${campaign.status.toLowerCase()}`}>
+                                  {campaign.status === 'ACTIVE' ? '활성' : campaign.status === 'PAUSED' ? '일시정지' : '종료'}
+                                </span>
+                              </td>
+                              <td>
+                                {campaign.validFrom ? new Date(campaign.validFrom).toLocaleDateString() : '-'}
+                                {' ~ '}
+                                {campaign.validUntil ? new Date(campaign.validUntil).toLocaleDateString() : '무제한'}
+                              </td>
+                              <td>
+                                <div className="action-buttons">
+                                  <button className="btn-action btn-edit" onClick={() => openRedeemCampaignModal(campaign)}>수정</button>
+                                  <button className="btn-action btn-info" onClick={() => openCodeGenerateModal(campaign)}>코드 생성</button>
+                                  <button className="btn-action btn-info" onClick={() => { setSelectedCampaignForCodes(campaign); fetchRedeemCodes(campaign.id); }}>코드 목록</button>
+                                  {campaign.status === 'ACTIVE' && (
+                                    <>
+                                      <button className="btn-action btn-warning" onClick={() => handleCampaignStatusChange(campaign.id, 'pause')}>일시정지</button>
+                                      <button className="btn-action btn-danger" onClick={() => handleCampaignStatusChange(campaign.id, 'end')}>종료</button>
+                                    </>
+                                  )}
+                                  {campaign.status === 'PAUSED' && (
+                                    <>
+                                      <button className="btn-action btn-edit" onClick={() => handleCampaignStatusChange(campaign.id, 'resume')}>재개</button>
+                                      <button className="btn-action btn-danger" onClick={() => handleCampaignStatusChange(campaign.id, 'end')}>종료</button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={8} className="empty-row">등록된 캠페인이 없습니다.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* 코드 목록 (캠페인 선택 시) */}
+                  {selectedCampaignForCodes && redeemCodes.length > 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                      <div className="card-header">
+                        <h2 className="card-title">{selectedCampaignForCodes.name} - 코드 목록</h2>
+                      </div>
+                      <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>유형</th>
+                              <th>사용횟수</th>
+                              <th>활성</th>
+                              <th>만료일</th>
+                              <th>생성일</th>
+                              <th>관리</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {redeemCodes.map((code) => (
+                              <tr key={code.id}>
+                                <td>{code.codeType}</td>
+                                <td>{code.currentRedemptions}/{code.maxRedemptions}</td>
+                                <td>{code.active ? '활성' : '비활성'}</td>
+                                <td>{code.expiresAt ? new Date(code.expiresAt).toLocaleString() : '-'}</td>
+                                <td>{new Date(code.createdAt).toLocaleString()}</td>
+                                <td>
+                                  {code.active && (
+                                    <button className="btn-action btn-danger" onClick={() => handleDeactivateCode(code.id)}>비활성화</button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* 모바일용 로그아웃 버튼 */}
           <div className="mobile-logout-card">
             <button className="logout-btn" onClick={handleLogout}>
@@ -2888,6 +3371,190 @@ const MyPage: React.FC = () => {
             <button className="save-btn" onClick={handleLicensePlanSubmit}>
               {editingLicensePlan ? '수정' : '등록'}
             </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 리딤 캠페인 모달 */}
+    {isRedeemCampaignModalOpen && (
+      <div className="delete-modal-overlay" onClick={closeRedeemCampaignModal}>
+        <div className="delete-modal license-plan-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-modal-header">
+            <h3>{editingCampaign ? '캠페인 수정' : '캠페인 추가'}</h3>
+          </div>
+          <div className="delete-modal-body">
+            <div className="form-group vertical">
+              <label>캠페인명 <span style={{ color: '#dc3545' }}>*</span></label>
+              <input type="text" value={redeemCampaignForm.name}
+                onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, name: e.target.value })}
+                placeholder="예: 2025 신년 프로모션"
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+            </div>
+            <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <label>설명</label>
+              <textarea value={redeemCampaignForm.description}
+                onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, description: e.target.value })}
+                placeholder="캠페인 설명" rows={2}
+                className="license-plan-textarea" />
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>상품 <span style={{ color: '#dc3545' }}>*</span></label>
+                <select value={redeemCampaignForm.productId}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, productId: e.target.value, licensePlanId: '' })}
+                  disabled={!!editingCampaign}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}>
+                  <option value="">상품 선택</option>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group vertical">
+                <label>라이선스 플랜 <span style={{ color: '#dc3545' }}>*</span></label>
+                <select value={redeemCampaignForm.licensePlanId}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, licensePlanId: e.target.value })}
+                  disabled={!!editingCampaign || !redeemCampaignForm.productId}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}>
+                  <option value="">플랜 선택</option>
+                  {filteredLicensePlansForRedeem.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.licenseType})</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>좌석 한도</label>
+                <input type="number" value={redeemCampaignForm.seatLimit}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, seatLimit: e.target.value })}
+                  placeholder="무제한" min={0}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+              <div className="form-group vertical">
+                <label>사용자별 한도</label>
+                <input type="number" value={redeemCampaignForm.perUserLimit}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, perUserLimit: e.target.value })}
+                  min={1}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>시작일</label>
+                <input type="datetime-local" value={redeemCampaignForm.validFrom}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, validFrom: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+              <div className="form-group vertical">
+                <label>종료일</label>
+                <input type="datetime-local" value={redeemCampaignForm.validUntil}
+                  onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, validUntil: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <label>사용 용도</label>
+              <select value={redeemCampaignForm.usageCategory}
+                onChange={(e) => setRedeemCampaignForm({ ...redeemCampaignForm, usageCategory: e.target.value })}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}>
+                <option value="COMMERCIAL">상업용</option>
+                <option value="RESEARCH_NON_COMMERCIAL">비상업 연구용</option>
+                <option value="EDUCATION">교육용</option>
+                <option value="INTERNAL_EVAL">내부 평가용</option>
+              </select>
+            </div>
+          </div>
+          <div className="delete-modal-footer">
+            <button className="cancel-btn" onClick={closeRedeemCampaignModal}>취소</button>
+            <button className="save-btn" onClick={handleRedeemCampaignSubmit}>
+              {editingCampaign ? '수정' : '등록'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 코드 생성 모달 */}
+    {isCodeGenerateModalOpen && selectedCampaignForCodes && (
+      <div className="delete-modal-overlay" onClick={() => setIsCodeGenerateModalOpen(false)}>
+        <div className="delete-modal license-plan-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-modal-header">
+            <h3>리딤 코드 생성 - {selectedCampaignForCodes.name}</h3>
+          </div>
+          <div className="delete-modal-body">
+            <div className="form-group vertical">
+              <label>코드 타입</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '4px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <input type="radio" value="RANDOM" checked={codeGenerateForm.codeType === 'RANDOM'}
+                    onChange={() => setCodeGenerateForm({ ...codeGenerateForm, codeType: 'RANDOM' })} /> 랜덤 코드
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <input type="radio" value="CUSTOM" checked={codeGenerateForm.codeType === 'CUSTOM'}
+                    onChange={() => setCodeGenerateForm({ ...codeGenerateForm, codeType: 'CUSTOM' })} /> 커스텀 코드
+                </label>
+              </div>
+            </div>
+            {codeGenerateForm.codeType === 'RANDOM' ? (
+              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+                <label>생성 수량</label>
+                <input type="number" value={codeGenerateForm.count}
+                  onChange={(e) => setCodeGenerateForm({ ...codeGenerateForm, count: e.target.value })}
+                  min={1} max={1000}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            ) : (
+              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+                <label>커스텀 코드</label>
+                <input type="text" value={codeGenerateForm.customCode}
+                  onChange={(e) => setCodeGenerateForm({ ...codeGenerateForm, customCode: e.target.value.toUpperCase() })}
+                  placeholder="영문 대문자, 숫자 8~64자"
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            )}
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>코드당 최대 사용횟수</label>
+                <input type="number" value={codeGenerateForm.maxRedemptions}
+                  onChange={(e) => setCodeGenerateForm({ ...codeGenerateForm, maxRedemptions: e.target.value })}
+                  min={1}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+              <div className="form-group vertical">
+                <label>코드 만료일</label>
+                <input type="datetime-local" value={codeGenerateForm.expiresAt}
+                  onChange={(e) => setCodeGenerateForm({ ...codeGenerateForm, expiresAt: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+          </div>
+          <div className="delete-modal-footer">
+            <button className="cancel-btn" onClick={() => setIsCodeGenerateModalOpen(false)}>취소</button>
+            <button className="save-btn" onClick={handleGenerateCodes}>생성</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 생성된 코드 결과 모달 */}
+    {isGeneratedCodesModalOpen && (
+      <div className="delete-modal-overlay" onClick={() => setIsGeneratedCodesModalOpen(false)}>
+        <div className="delete-modal license-plan-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-modal-header">
+            <h3>생성된 리딤 코드</h3>
+          </div>
+          <div className="delete-modal-body">
+            <p style={{ color: '#e53e3e', fontWeight: 'bold', marginBottom: '1rem' }}>
+              이 코드는 이 화면에서만 확인할 수 있습니다. 반드시 복사하거나 다운로드하세요.
+            </p>
+            <div style={{ maxHeight: '300px', overflow: 'auto', background: '#f5f5f5', padding: '1rem', borderRadius: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
+              {generatedCodes.map((code, i) => <div key={i}>{code}</div>)}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <button className="save-btn" onClick={copyGeneratedCodes}>전체 복사</button>
+              <button className="save-btn" onClick={downloadCodesAsCsv}>CSV 다운로드</button>
+            </div>
+          </div>
+          <div className="delete-modal-footer">
+            <button className="cancel-btn" onClick={() => setIsGeneratedCodesModalOpen(false)}>닫기</button>
           </div>
         </div>
       </div>

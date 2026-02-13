@@ -32,12 +32,20 @@ public class LicenseExceptionHandler {
             case LICENSE_NOT_FOUND, ACTIVATION_NOT_FOUND, PLAN_NOT_FOUND,
                  LICENSE_NOT_FOUND_FOR_PRODUCT -> HttpStatus.NOT_FOUND;
             case LICENSE_ALREADY_EXISTS, PLAN_CODE_DUPLICATE -> HttpStatus.CONFLICT;
-            case ALL_LICENSES_FULL -> HttpStatus.CONFLICT;  // v0.3.0: 409 - 모든 라이선스 full
+            case ALL_LICENSES_FULL -> HttpStatus.CONFLICT;
             case LICENSE_EXPIRED, LICENSE_SUSPENDED, LICENSE_REVOKED,
                  ACTIVATION_LIMIT_EXCEEDED, ACCESS_DENIED -> HttpStatus.FORBIDDEN;
-            case SESSION_DEACTIVATED, ACTIVATION_DEACTIVATED -> HttpStatus.FORBIDDEN;  // v1.1.1, v1.1.3: 403 - 세션/활성화 비활성화됨
+            case SESSION_DEACTIVATED, ACTIVATION_DEACTIVATED -> HttpStatus.FORBIDDEN;
             case INVALID_LICENSE_STATE, INVALID_ACTIVATION_STATE, PLAN_NOT_AVAILABLE,
                  INVALID_REQUEST, INVALID_ACTIVATION_OWNERSHIP -> HttpStatus.BAD_REQUEST;
+            // Redeem 관련
+            case REDEEM_CODE_INVALID -> HttpStatus.BAD_REQUEST;
+            case REDEEM_CODE_NOT_FOUND, REDEEM_CAMPAIGN_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case REDEEM_CODE_EXPIRED, REDEEM_CODE_DISABLED -> HttpStatus.GONE;
+            case REDEEM_CODE_DEPLETED, REDEEM_CAMPAIGN_FULL,
+                 REDEEM_USER_LIMIT_EXCEEDED, REDEEM_CODE_HASH_DUPLICATE -> HttpStatus.CONFLICT;
+            case REDEEM_CAMPAIGN_NOT_ACTIVE -> HttpStatus.BAD_REQUEST;
+            case REDEEM_RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
         };
     }
 }

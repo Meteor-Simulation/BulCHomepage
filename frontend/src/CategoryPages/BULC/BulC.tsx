@@ -56,9 +56,8 @@ const BulCPage: React.FC = () => {
 
   const handleDownloadClick = () => {
     if (isLoggedIn) {
-      setActiveSection('cta');
+      navigate('/download');
     } else {
-      alert(t('bulc.hero.downloadAlert'));
       setLoginRedirect('cta');
       setLoginModalOpen(true);
     }
@@ -67,7 +66,7 @@ const BulCPage: React.FC = () => {
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
     if (loginRedirect === 'cta') {
-      setActiveSection('cta');
+      navigate('/download');
     } else {
       navigate('/payment');
     }
@@ -78,7 +77,7 @@ const BulCPage: React.FC = () => {
       case 'hero':
         return (
           <>
-            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
             <CoreValuesSection />
           </>
@@ -86,13 +85,13 @@ const BulCPage: React.FC = () => {
       case 'workflow':
         return <WorkflowSection />;
       case 'price':
-        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} />;
+        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
       case 'cta':
-        return <CTASection onPurchaseClick={handlePurchaseClick} />;
+        return <CTASection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
       default:
         return (
           <>
-            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} />
+            <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
             <CoreValuesSection />
           </>
@@ -125,6 +124,7 @@ const BulCPage: React.FC = () => {
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}
+        promotionBadge={loginRedirect === 'cta' ? t('bulc.loginPromo') : undefined}
       />
 
     </div>
