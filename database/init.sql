@@ -183,7 +183,8 @@ COMMENT ON COLUMN password_reset_tokens.expires_at IS '코드 만료 시간 (기
 -- 4. products (상품 종류 테이블)
 -- =========================================================
 CREATE TABLE products (
-    code            VARCHAR(3) PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code            VARCHAR(3) NOT NULL UNIQUE,
     name            VARCHAR(255) NOT NULL,
     description     TEXT NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -192,11 +193,12 @@ CREATE TABLE products (
 );
 
 COMMENT ON TABLE products IS '상품 종류 테이블 - 판매 상품 정의';
-COMMENT ON COLUMN products.code IS '상품 코드 (000~999), PK';
+COMMENT ON COLUMN products.id IS 'UUID 기본키';
+COMMENT ON COLUMN products.code IS '상품 코드 (000~999), UNIQUE';
 
--- 기본 상품 데이터
-INSERT INTO products (code, name, description) VALUES
-    ('001', 'BUL:C', '화재시뮬레이션');
+-- 기본 상품 데이터 (deterministic UUID for compatibility)
+INSERT INTO products (id, code, name, description) VALUES
+    ('a0000000-0000-0000-0000-000000000001', '001', 'BUL:C', '화재시뮬레이션');
 
 -- =========================================================
 -- 5. price_plans (상품 가격 테이블)
@@ -213,7 +215,7 @@ CREATE TABLE price_plans (
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_price_plans_product FOREIGN KEY (product_code) REFERENCES products(code)
+    CONSTRAINT fk_price_plans_product FOREIGN KEY (product_code) REFERENCES products(code) ON UPDATE CASCADE
 );
 
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
@@ -247,7 +249,7 @@ CREATE TABLE promotions (
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_promotions_product FOREIGN KEY (product_code) REFERENCES products(code)
+    CONSTRAINT fk_promotions_product FOREIGN KEY (product_code) REFERENCES products(code) ON UPDATE CASCADE
 );
 
 COMMENT ON TABLE promotions IS '프로모션/쿠폰 테이블 - 할인 쿠폰 및 프로모션 관리';
@@ -277,7 +279,7 @@ CREATE TABLE subscriptions (
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT fk_subscriptions_product FOREIGN KEY (product_code) REFERENCES products(code),
+    CONSTRAINT fk_subscriptions_product FOREIGN KEY (product_code) REFERENCES products(code) ON UPDATE CASCADE,
     CONSTRAINT fk_subscriptions_price_plan FOREIGN KEY (price_plan_id) REFERENCES price_plans(id)
     -- fk_subscriptions_billing_key는 billing_keys 테이블 생성 후 ALTER TABLE로 추가됨
 );
@@ -552,7 +554,9 @@ CREATE TABLE license_plans (
     is_active               BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted              BOOLEAN NOT NULL DEFAULT FALSE,
     created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_license_plans_product FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 COMMENT ON TABLE license_plans IS '라이선스 플랜/정책 템플릿 (Admin UI에서 관리)';
@@ -605,7 +609,9 @@ CREATE TABLE licenses (
     license_key     VARCHAR(50) UNIQUE,
     source_order_id UUID NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_licenses_product FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 COMMENT ON TABLE licenses IS '라이선스 정보 (Licensing BC Aggregate Root)';
@@ -673,7 +679,7 @@ CREATE INDEX idx_email_verifications_expires_at ON email_verifications(expires_a
 CREATE INDEX idx_password_reset_tokens_email ON password_reset_tokens(email);
 CREATE INDEX idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
 
--- products (code가 PK이므로 별도 인덱스 불필요)
+-- products
 CREATE INDEX idx_products_is_active ON products(is_active);
 
 -- price_plans

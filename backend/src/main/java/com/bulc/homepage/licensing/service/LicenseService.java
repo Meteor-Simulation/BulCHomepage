@@ -1363,7 +1363,7 @@ public class LicenseService {
 
     /**
      * productCode 또는 productId를 UUID로 변환.
-     * productCode가 있으면 Product 조회 후 Long id를 UUID로 변환.
+     * productCode가 있으면 Product 조회 후 product.getId()를 반환.
      */
     private UUID resolveProductId(ValidateRequest request) {
         if (request.productId() != null) {
@@ -1373,8 +1373,7 @@ public class LicenseService {
             Product product = productRepository.findByCodeAndIsActiveTrue(request.productCode())
                     .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT,
                             "제품을 찾을 수 없습니다: " + request.productCode()));
-            // product code를 기반으로 deterministic UUID 생성
-            return UUID.nameUUIDFromBytes(product.getCode().getBytes());
+            return product.getId();
         }
         // 둘 다 없으면 null (모든 제품 대상 검색)
         return null;
@@ -1388,9 +1387,7 @@ public class LicenseService {
         if (productId == null) {
             return "UNKNOWN";
         }
-        return productRepository.findAll().stream()
-                .filter(p -> UUID.nameUUIDFromBytes(p.getCode().getBytes()).equals(productId))
-                .findFirst()
+        return productRepository.findById(productId)
                 .map(Product::getCode)
                 .orElse("PRODUCT_" + productId.toString().substring(0, 8));
     }

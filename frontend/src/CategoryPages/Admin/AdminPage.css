@@ -968,3 +968,42 @@
   font-weight: 500;
   color: #00897b;
 }
+
+/* 라이선스 플랜 모달 */
+.license-plan-modal {
+  max-width: 620px;
+}
+
+.license-plan-modal .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.license-plan-modal .form-group textarea:focus {
+  outline: none;
+  border-color: #C4320A;
+}
+
+.license-plan-modal .form-group small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+/* 삭제된 항목 스타일 */
+.admin-table tr.deleted-row {
+  opacity: 0.5;
+}
+
+.status-badge.status-deleted {
+  background: #f3f4f6;
+  color: #9ca3af;
+  text-decoration: line-through;
+}

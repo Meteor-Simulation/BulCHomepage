@@ -17,11 +17,31 @@ interface User {
 }
 
 interface Product {
+  id: string;
   code: string;
   name: string;
   description: string;
   isActive: boolean;
   createdAt: string;
+}
+
+interface LicensePlan {
+  id: string;
+  productId: string;
+  code: string;
+  name: string;
+  description: string | null;
+  licenseType: 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL';
+  durationDays: number;
+  graceDays: number;
+  maxActivations: number;
+  maxConcurrentSessions: number;
+  allowOfflineDays: number;
+  active: boolean;
+  deleted: boolean;
+  entitlements: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PricePlan {
@@ -109,6 +129,7 @@ const AdminPage: React.FC = () => {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [licensePlans, setLicensePlans] = useState<LicensePlan[]>([]);
 
   // 프로모션 모달 상태
   const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
@@ -153,6 +174,23 @@ const AdminPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState('');
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+
+  // 라이선스 플랜 모달 상태
+  const [isLicensePlanModalOpen, setIsLicensePlanModalOpen] = useState(false);
+  const [editingLicensePlan, setEditingLicensePlan] = useState<LicensePlan | null>(null);
+  const [licensePlanForm, setLicensePlanForm] = useState({
+    productId: '',
+    code: '',
+    name: '',
+    description: '',
+    licenseType: 'SUBSCRIPTION' as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL',
+    durationDays: 365,
+    graceDays: 7,
+    maxActivations: 1,
+    maxConcurrentSessions: 1,
+    allowOfflineDays: 0,
+    entitlements: '',
+  });
 
   // 검색 상태
   const [searchQuery, setSearchQuery] = useState('');
@@ -235,6 +273,16 @@ const AdminPage: React.FC = () => {
     );
   }, [promotions, appliedSearch]);
 
+  const filteredLicensePlans = useMemo(() => {
+    if (!appliedSearch) return licensePlans;
+    const query = appliedSearch.toLowerCase();
+    return licensePlans.filter(plan =>
+      plan.code.toLowerCase().includes(query) ||
+      plan.name.toLowerCase().includes(query) ||
+      plan.licenseType.toLowerCase().includes(query)
+    );
+  }, [licensePlans, appliedSearch]);
+
   // 페이징 계산
   const getPaginatedData = <T,>(data: T[]): T[] => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -279,6 +327,8 @@ const AdminPage: React.FC = () => {
             break;
           case 'licenses':
             await fetchLicenses(token);
+            await fetchLicensePlans(token);
+            await fetchProducts(token);
             break;
           case 'payments':
             await fetchPayments(token);
@@ -339,6 +389,16 @@ const AdminPage: React.FC = () => {
     if (response.ok) {
       const data = await response.json();
       setLicenses(data);
+    }
+  };
+
+  const fetchLicensePlans = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/v1/admin/license-plans?size=100`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setLicensePlans(data.content || []);
     }
   };
 
@@ -776,6 +836,146 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // 라이선스 플랜 CRUD 함수들
+  const openLicensePlanModal = (plan?: LicensePlan) => {
+    if (plan) {
+      setEditingLicensePlan(plan);
+      setLicensePlanForm({
+        productId: plan.productId,
+        code: plan.code,
+        name: plan.name,
+        description: plan.description || '',
+        licenseType: plan.licenseType,
+        durationDays: plan.durationDays,
+        graceDays: plan.graceDays,
+        maxActivations: plan.maxActivations,
+        maxConcurrentSessions: plan.maxConcurrentSessions,
+        allowOfflineDays: plan.allowOfflineDays,
+        entitlements: plan.entitlements.join(', '),
+      });
+    } else {
+      setEditingLicensePlan(null);
+      setLicensePlanForm({
+        productId: products.length > 0 ? products[0].id : '',
+        code: '',
+        name: '',
+        description: '',
+        licenseType: 'SUBSCRIPTION',
+        durationDays: 365,
+        graceDays: 7,
+        maxActivations: 1,
+        maxConcurrentSessions: 1,
+        allowOfflineDays: 0,
+        entitlements: 'core-simulation',
+      });
+    }
+    setIsLicensePlanModalOpen(true);
+  };
+
+  const closeLicensePlanModal = () => {
+    setIsLicensePlanModalOpen(false);
+    setEditingLicensePlan(null);
+  };
+
+  const handleLicensePlanSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const entitlementList = licensePlanForm.entitlements
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0);
+
+    const payload = {
+      productId: licensePlanForm.productId,
+      code: licensePlanForm.code,
+      name: licensePlanForm.name,
+      description: licensePlanForm.description || null,
+      licenseType: licensePlanForm.licenseType,
+      durationDays: licensePlanForm.durationDays,
+      graceDays: licensePlanForm.graceDays,
+      maxActivations: licensePlanForm.maxActivations,
+      maxConcurrentSessions: licensePlanForm.maxConcurrentSessions,
+      allowOfflineDays: licensePlanForm.allowOfflineDays,
+      entitlements: entitlementList,
+    };
+
+    try {
+      const url = editingLicensePlan
+        ? `${API_URL}/api/v1/admin/license-plans/${editingLicensePlan.id}`
+        : `${API_URL}/api/v1/admin/license-plans`;
+      const method = editingLicensePlan ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closeLicensePlanModal();
+        await fetchLicensePlans(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 저장 실패:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleToggleLicensePlan = async (id: string, currentActive: boolean) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const action = currentActive ? 'deactivate' : 'activate';
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}/${action}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchLicensePlans(token);
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 토글 실패:', error);
+    }
+  };
+
+  const handleDeleteLicensePlan = async (id: string) => {
+    if (!window.confirm('이 플랜을 삭제하시겠습니까? (기존 라이선스에는 영향 없음)')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok || response.status === 204) {
+        await fetchLicensePlans(token);
+      } else {
+        const error = await response.json();
+        alert(error.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 삭제 실패:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const getProductNameById = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product ? `${product.code} - ${product.name}` : productId;
+  };
+
   // 사용자 권한 수정 모달 함수들
   const openRoleModal = (userToEdit: User) => {
     setEditingUser(userToEdit);
@@ -1119,8 +1319,9 @@ const AdminPage: React.FC = () => {
 
                 {/* 라이선스 관리 */}
                 {activeTab === 'licenses' && (
+                  <>
+                  <SearchBar placeholder="라이선스 키, 소유자 ID, 상태로 검색" />
                   <div className="admin-section">
-                    <SearchBar placeholder="라이선스 키, 소유자 ID, 상태로 검색" />
                     <div className="admin-section-header">
                       <h2>라이선스 목록</h2>
                       <span className="admin-count">
@@ -1191,6 +1392,103 @@ const AdminPage: React.FC = () => {
                     </div>
                     <Pagination totalItems={licenses.length} filteredCount={filteredLicenses.length} />
                   </div>
+
+                    {/* 라이선스 플랜 목록 */}
+                    <div className="admin-section">
+                      <div className="admin-section-header">
+                        <h2>라이선스 플랜 목록</h2>
+                        <div className="admin-header-actions">
+                          <span className="admin-count">
+                            {appliedSearch ? `${filteredLicensePlans.length}개 / 전체 ${licensePlans.length}개` : `${licensePlans.length}개`}
+                          </span>
+                          {canManagePromotions && (
+                            <button className="admin-add-btn" onClick={() => openLicensePlanModal()}>
+                              + 플랜 추가
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>코드</th>
+                              <th>플랜명</th>
+                              <th>상품</th>
+                              <th>라이선스 유형</th>
+                              <th>유효기간</th>
+                              <th>최대 기기</th>
+                              <th>동시 세션</th>
+                              <th>상태</th>
+                              {canManagePromotions && <th>관리</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredLicensePlans.length > 0 ? (
+                              getPaginatedData(filteredLicensePlans).map((plan) => (
+                                <tr key={plan.id} className={plan.deleted ? 'deleted-row' : ''}>
+                                  <td><span className="coupon-code">{plan.code}</span></td>
+                                  <td>{plan.name}</td>
+                                  <td>{getProductNameById(plan.productId)}</td>
+                                  <td>
+                                    <span className={`status-badge status-${plan.licenseType.toLowerCase()}`}>
+                                      {plan.licenseType}
+                                    </span>
+                                  </td>
+                                  <td>{plan.durationDays}일</td>
+                                  <td>{plan.maxActivations}</td>
+                                  <td>{plan.maxConcurrentSessions}</td>
+                                  <td>
+                                    {plan.deleted ? (
+                                      <span className="status-badge status-deleted">삭제됨</span>
+                                    ) : canManagePromotions ? (
+                                      <button
+                                        className={`status-toggle-btn ${plan.active ? 'active' : 'inactive'}`}
+                                        onClick={() => handleToggleLicensePlan(plan.id, plan.active)}
+                                      >
+                                        {plan.active ? '활성' : '비활성'}
+                                      </button>
+                                    ) : (
+                                      <span className={`status-badge ${plan.active ? 'status-active' : 'status-inactive'}`}>
+                                        {plan.active ? '활성' : '비활성'}
+                                      </span>
+                                    )}
+                                  </td>
+                                  {canManagePromotions && (
+                                    <td>
+                                      {!plan.deleted && (
+                                        <div className="action-buttons">
+                                          <button
+                                            className="action-btn edit"
+                                            onClick={() => openLicensePlanModal(plan)}
+                                          >
+                                            수정
+                                          </button>
+                                          <button
+                                            className="action-btn delete"
+                                            onClick={() => handleDeleteLicensePlan(plan.id)}
+                                          >
+                                            삭제
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  )}
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={canManagePromotions ? 9 : 8} className="empty-row">
+                                  {appliedSearch ? '검색 결과가 없습니다.' : '등록된 라이선스 플랜이 없습니다.'}
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      <Pagination totalItems={licensePlans.length} filteredCount={filteredLicensePlans.length} />
+                    </div>
+                  </>
                 )}
 
                 {/* 결제 관리 */}
@@ -1895,6 +2193,140 @@ const AdminPage: React.FC = () => {
               <button className="btn-cancel" onClick={closePricePlanModal}>취소</button>
               <button className="btn-submit" onClick={handlePricePlanSubmit}>
                 {editingPricePlan ? '수정' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 라이선스 플랜 모달 */}
+      {isLicensePlanModalOpen && (
+        <div className="modal-overlay" onClick={closeLicensePlanModal}>
+          <div className="modal-content license-plan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingLicensePlan ? '라이선스 플랜 수정' : '라이선스 플랜 추가'}</h3>
+              <button className="modal-close-btn" onClick={closeLicensePlanModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>상품 <span className="required">*</span></label>
+                  <select
+                    value={licensePlanForm.productId}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, productId: e.target.value })}
+                  >
+                    <option value="">상품 선택</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>플랜 코드 <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    value={licensePlanForm.code}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, code: e.target.value })}
+                    placeholder="예: BULC-PRO-1Y"
+                    maxLength={64}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>플랜명 <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    value={licensePlanForm.name}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, name: e.target.value })}
+                    placeholder="예: BUL:C PRO 1년"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>라이선스 유형 <span className="required">*</span></label>
+                  <select
+                    value={licensePlanForm.licenseType}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}
+                  >
+                    <option value="TRIAL">TRIAL (체험판)</option>
+                    <option value="SUBSCRIPTION">SUBSCRIPTION (구독)</option>
+                    <option value="PERPETUAL">PERPETUAL (영구)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>유효기간 (일) <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={licensePlanForm.durationDays}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })}
+                    min={0}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>유예기간 (일)</label>
+                  <input
+                    type="number"
+                    value={licensePlanForm.graceDays}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })}
+                    min={0}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>최대 기기 수 <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={licensePlanForm.maxActivations}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })}
+                    min={1}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>최대 동시 세션 <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={licensePlanForm.maxConcurrentSessions}
+                    onChange={(e) => setLicensePlanForm({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })}
+                    min={1}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>오프라인 허용 일수</label>
+                <input
+                  type="number"
+                  value={licensePlanForm.allowOfflineDays}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })}
+                  min={0}
+                />
+              </div>
+              <div className="form-group">
+                <label>설명</label>
+                <textarea
+                  value={licensePlanForm.description}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, description: e.target.value })}
+                  placeholder="플랜 설명을 입력하세요"
+                  rows={2}
+                />
+              </div>
+              <div className="form-group">
+                <label>Entitlements</label>
+                <textarea
+                  value={licensePlanForm.entitlements}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, entitlements: e.target.value })}
+                  placeholder="쉼표로 구분 (예: core-simulation, advanced-visualization)"
+                  rows={2}
+                />
+                <small>기능 식별자를 쉼표(,)로 구분하여 입력하세요</small>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closeLicensePlanModal}>취소</button>
+              <button className="btn-submit" onClick={handleLicensePlanSubmit}>
+                {editingLicensePlan ? '수정' : '등록'}
               </button>
             </div>
           </div>
