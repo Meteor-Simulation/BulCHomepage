@@ -14,30 +14,6 @@
   padding-top: 50px;
 }
 
-/* 언어 테스트 버튼 */
-.bulc-lang-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  transition: all 0.2s;
-}
-
-.bulc-lang-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
 .bulc-landing section {
   animation: bulc-fadeIn 0.3s ease-out;
 }

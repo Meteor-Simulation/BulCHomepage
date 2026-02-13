@@ -13,6 +13,10 @@
   gap: 40px;
 }
 
+.footer-section {
+  text-align: center;
+}
+
 .footer-section h4 {
   font-size: 14px;
   font-weight: 600;
