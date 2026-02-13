@@ -4,7 +4,8 @@
     "myPage": "내 정보",
     "admin": "관리자",
     "menuSelect": "메뉴 선택",
-    "contact": "문의하기"
+    "contact": "문의하기",
+    "trialBadge": "무료 체험 중 · D-{{days}}"
   },
   "auth": {
     "loginSuccess": "환영합니다! 로그인 되었습니다.",

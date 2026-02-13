@@ -4,7 +4,8 @@
     "myPage": "My Page",
     "admin": "Admin",
     "menuSelect": "Select Menu",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "trialBadge": "Free Trial · D-{{days}}"
   },
   "auth": {
     "loginSuccess": "Welcome! You are now logged in.",
