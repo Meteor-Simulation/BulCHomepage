@@ -101,9 +101,11 @@ app:
 # Licensing Configuration (v1.1.2)
 bulc:
   licensing:
-    # RS256 개인키 파일 경로 (PKCS#8 PEM 형식)
-    # 운영 환경에서는 반드시 환경변수로 설정
-    # Docker/K8s: /run/secrets/session_token_private_key.pem
+    # RS256 개인키 (PKCS#8 PEM 형식)
+    # 우선순위: private-key-base64 > private-key-path
+    # 방법1: Base64 인코딩된 PEM 문자열 (K8s Secret, AWS SSM 등)
+    private-key-base64: ${LIC_PRIVATE_KEY_BASE64:}
+    # 방법2: PEM 파일 경로 (Docker volume mount 등)
     private-key-path: ${LIC_PRIVATE_KEY_PATH:}
     session-token:
       # sessionToken TTL (분), 기본 15분

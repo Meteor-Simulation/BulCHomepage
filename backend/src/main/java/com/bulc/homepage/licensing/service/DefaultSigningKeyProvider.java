@@ -19,15 +19,15 @@ import java.util.Base64;
 /**
  * 프로덕션용 SigningKeyProvider 구현체.
  *
- * 파일 경로에서 RSA 개인키를 로드합니다.
- * 개인키에서 공개키를 자동으로 추출합니다.
+ * RSA 개인키를 로드하고 공개키를 자동으로 추출합니다.
  *
- * 환경변수:
- * - LIC_PRIVATE_KEY_PATH: RSA 개인키 PEM 파일 경로 (필수)
+ * 키 로드 우선순위:
+ * 1. LIC_PRIVATE_KEY_BASE64: Base64 인코딩된 PEM 문자열 (K8s Secret, AWS SSM 등)
+ * 2. LIC_PRIVATE_KEY_PATH: RSA 개인키 PEM 파일 경로 (Docker volume mount 등)
  *
  * 보안 정책:
- * - prod 프로필: 키 파일 미설정 시 서버 부팅 실패 (fail-fast)
- * - dev 프로필: 키 파일 미설정 시 경고 로그, 토큰 발급 비활성화
+ * - prod 프로필: 키 미설정 시 서버 부팅 실패 (fail-fast)
+ * - dev 프로필: 키 미설정 시 경고 로그, 토큰 발급 비활성화
  */
 @Slf4j
 @Component
@@ -35,6 +35,7 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
 
     private static final String PROD_KEY_ID = "bulc-prod-v1";
 
+    private final String privateKeyBase64;
     private final String privateKeyPath;
     private final String activeProfile;
 
@@ -42,8 +43,10 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
     private PublicKey rsaPublicKey;
 
     public DefaultSigningKeyProvider(
+            @Value("${bulc.licensing.private-key-base64:}") String privateKeyBase64,
             @Value("${bulc.licensing.private-key-path:}") String privateKeyPath,
             @Value("${spring.profiles.active:dev}") String activeProfile) {
+        this.privateKeyBase64 = privateKeyBase64;
         this.privateKeyPath = privateKeyPath;
         this.activeProfile = activeProfile;
     }
@@ -51,50 +54,66 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
     @PostConstruct
     public void init() {
         boolean isProd = activeProfile.contains("prod");
+        boolean hasBase64 = privateKeyBase64 != null && !privateKeyBase64.isBlank();
+        boolean hasPath = privateKeyPath != null && !privateKeyPath.isBlank();
 
-        if (privateKeyPath == null || privateKeyPath.isBlank()) {
-            if (isProd) {
-                throw new IllegalStateException(
-                    "[FATAL] SigningKeyProvider: RS256 개인키 경로가 설정되지 않았습니다. " +
-                    "prod 환경에서는 LIC_PRIVATE_KEY_PATH 환경변수가 필수입니다. " +
-                    "서버를 시작할 수 없습니다."
-                );
-            } else {
-                log.warn("========================================");
-                log.warn("SigningKeyProvider: RS256 개인키 경로가 설정되지 않았습니다.");
-                log.warn("sessionToken/offlineToken 발급이 비활성화됩니다.");
-                log.warn("개발 환경에서도 RS256 키 설정을 권장합니다.");
-                log.warn("키 생성: openssl genpkey -algorithm RSA -out secrets/session_token_private_key.pem -pkeyopt rsa_keygen_bits:2048");
-                log.warn("========================================");
-                this.rsaPrivateKey = null;
-                this.rsaPublicKey = null;
-                return;
-            }
+        if (!hasBase64 && !hasPath) {
+            handleMissingKey(isProd);
+            return;
         }
 
         try {
-            String pemContent = readKeyFile(privateKeyPath);
+            String pemContent;
+            String source;
+
+            if (hasBase64) {
+                pemContent = new String(Base64.getDecoder().decode(privateKeyBase64));
+                source = "LIC_PRIVATE_KEY_BASE64";
+            } else {
+                pemContent = readKeyFile(privateKeyPath);
+                source = "LIC_PRIVATE_KEY_PATH(" + privateKeyPath + ")";
+            }
+
             this.rsaPrivateKey = loadPrivateKey(pemContent);
             this.rsaPublicKey = derivePublicKey(this.rsaPrivateKey);
-            log.info("SigningKeyProvider: RS256 키 로드 성공 (keyId: {}, path: {})", keyId(), privateKeyPath);
+            log.info("SigningKeyProvider: RS256 키 로드 성공 (keyId: {}, source: {})", keyId(), source);
         } catch (IOException e) {
             String errorMsg = String.format("키 파일을 읽을 수 없습니다: %s", privateKeyPath);
-            if (isProd) {
-                throw new IllegalStateException("[FATAL] SigningKeyProvider: " + errorMsg, e);
-            } else {
-                log.error("SigningKeyProvider: {}. 토큰 발급이 비활성화됩니다.", errorMsg, e);
-                this.rsaPrivateKey = null;
-                this.rsaPublicKey = null;
-            }
+            handleKeyLoadError(isProd, errorMsg, e);
         } catch (Exception e) {
             String errorMsg = "RS256 개인키 로드 실패. 키 형식을 확인하세요 (PKCS#8 PEM)";
-            if (isProd) {
-                throw new IllegalStateException("[FATAL] SigningKeyProvider: " + errorMsg + ". 에러: " + e.getMessage(), e);
-            } else {
-                log.error("SigningKeyProvider: {}. 토큰 발급이 비활성화됩니다.", errorMsg, e);
-                this.rsaPrivateKey = null;
-                this.rsaPublicKey = null;
-            }
+            handleKeyLoadError(isProd, errorMsg, e);
+        }
+    }
+
+    private void handleMissingKey(boolean isProd) {
+        if (isProd) {
+            throw new IllegalStateException(
+                "[FATAL] SigningKeyProvider: RS256 개인키가 설정되지 않았습니다. " +
+                "prod 환경에서는 LIC_PRIVATE_KEY_BASE64 또는 LIC_PRIVATE_KEY_PATH 환경변수가 필수입니다. " +
+                "서버를 시작할 수 없습니다."
+            );
+        } else {
+            log.warn("========================================");
+            log.warn("SigningKeyProvider: RS256 개인키가 설정되지 않았습니다.");
+            log.warn("sessionToken/offlineToken 발급이 비활성화됩니다.");
+            log.warn("개발 환경에서도 RS256 키 설정을 권장합니다.");
+            log.warn("방법1 (환경변수): LIC_PRIVATE_KEY_BASE64=<base64-encoded-pem>");
+            log.warn("방법2 (파일): LIC_PRIVATE_KEY_PATH=secrets/session_token_private_key.pem");
+            log.warn("키 생성: openssl genpkey -algorithm RSA -out secrets/session_token_private_key.pem -pkeyopt rsa_keygen_bits:2048");
+            log.warn("========================================");
+            this.rsaPrivateKey = null;
+            this.rsaPublicKey = null;
+        }
+    }
+
+    private void handleKeyLoadError(boolean isProd, String errorMsg, Exception e) {
+        if (isProd) {
+            throw new IllegalStateException("[FATAL] SigningKeyProvider: " + errorMsg + ". 에러: " + e.getMessage(), e);
+        } else {
+            log.error("SigningKeyProvider: {}. 토큰 발급이 비활성화됩니다.", errorMsg, e);
+            this.rsaPrivateKey = null;
+            this.rsaPublicKey = null;
         }
     }
 
