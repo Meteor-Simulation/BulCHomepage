@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
 import './LoginModal.css';
@@ -14,11 +15,13 @@ interface LoginModalProps {
   onClose: () => void;
   onSwitchToSignup?: () => void;
   onSuccess?: () => void;
+  promotionBadge?: string;
 }
 
 type PasswordResetStep = 'email' | 'code' | 'newPassword' | 'success';
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess, promotionBadge }) => {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -439,6 +442,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           </svg>
         </button>
 
+        {promotionBadge && (
+          <p className="modal-download-notice">{t('bulc.loginNotice')}</p>
+        )}
+
         <h2 className="modal-title">로그인</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
@@ -521,6 +528,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
             </button>
           </div>
         </div>
+
+        {promotionBadge && (
+          <div className="modal-promotion-badge-wrapper">
+            <div className="modal-promotion-badge">
+              <span className="modal-promotion-badge__dot">
+                <span className="modal-promotion-badge__ping" />
+                <span className="modal-promotion-badge__core" />
+              </span>
+              {promotionBadge}
+            </div>
+          </div>
+        )}
 
         <div className="modal-signup">
           <span>계정이 없으신가요?</span>

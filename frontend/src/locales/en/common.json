@@ -1,6 +1,7 @@
 {
   "header": {
     "login": "Login",
+    "signup": "Sign Up",
     "myPage": "My Page",
     "admin": "Admin",
     "menuSelect": "Select Menu",
