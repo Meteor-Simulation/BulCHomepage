@@ -581,8 +581,8 @@ COMMENT ON COLUMN license_plan_entitlements.entitlement_key IS '기능 식별자
 
 -- 기본 라이선스 플랜 데이터
 INSERT INTO license_plans (id, product_id, code, name, description, license_type, duration_days, grace_days, max_activations, max_concurrent_sessions, allow_offline_days) VALUES
-    ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', uuid_generate_v5(uuid_ns_url(), 'product:001'), 'BULC-PRO-1Y', 'BUL:C PRO 1년', 'BUL:C PRO 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7),
-    ('b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', uuid_generate_v5(uuid_ns_url(), 'product:001'), 'BULC-3D-PREMIUM-1Y', 'BUL:C 3D Premium 1년', 'BUL:C 3D Premium 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7);
+    ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'a0000000-0000-0000-0000-000000000001', 'BULC-PRO-1Y', 'BUL:C PRO 1년', 'BUL:C PRO 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7),
+    ('b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'a0000000-0000-0000-0000-000000000001', 'BULC-3D-PREMIUM-1Y', 'BUL:C 3D Premium 1년', 'BUL:C 3D Premium 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7);
 
 -- 라이선스 플랜 기능 권한 데이터
 INSERT INTO license_plan_entitlements (id, plan_id, entitlement_key) VALUES

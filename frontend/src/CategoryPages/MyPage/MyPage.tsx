@@ -24,6 +24,7 @@ interface AdminUser {
 }
 
 interface Product {
+  id: string;
   code: string;
   name: string;
   description: string;
@@ -88,6 +89,25 @@ interface Promotion {
   validUntil: string | null;
   isActive: boolean;
   createdAt: string;
+}
+
+interface LicensePlan {
+  id: string;
+  productId: string;
+  code: string;
+  name: string;
+  description: string | null;
+  licenseType: 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL';
+  durationDays: number;
+  graceDays: number;
+  maxActivations: number;
+  maxConcurrentSessions: number;
+  allowOfflineDays: number;
+  active: boolean;
+  deleted: boolean;
+  entitlements: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UserInfo {
@@ -250,7 +270,30 @@ const MyPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [licensePlans, setLicensePlans] = useState<LicensePlan[]>([]);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+
+  // 라이선스 플랜 모달 상태
+  const [isLicensePlanModalOpen, setIsLicensePlanModalOpen] = useState(false);
+  const [editingLicensePlan, setEditingLicensePlan] = useState<LicensePlan | null>(null);
+  const [licensePlanForm, setLicensePlanForm] = useState({
+    productId: '',
+    code: '',
+    name: '',
+    description: '',
+    licenseType: 'SUBSCRIPTION' as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL',
+    durationDays: 365,
+    graceDays: 7,
+    maxActivations: 1,
+    maxConcurrentSessions: 1,
+    allowOfflineDays: 0,
+    entitlements: '',
+  });
+
+  // 라이선스 플랜 검색 (기존 admin 검색과 독립)
+  const [licensePlanSearchQuery, setLicensePlanSearchQuery] = useState('');
+  const [licensePlanAppliedSearch, setLicensePlanAppliedSearch] = useState('');
+  const [licensePlanCurrentPage, setLicensePlanCurrentPage] = useState(1);
 
   // 관리자 검색/페이징
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
@@ -1032,6 +1075,16 @@ const MyPage: React.FC = () => {
     }
   };
 
+  const fetchLicensePlans = async (token: string) => {
+    const response = await fetch(`${API_URL}/api/v1/admin/license-plans?size=100`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setLicensePlans(data.content || []);
+    }
+  };
+
   // 관리자 메뉴 변경 시 데이터 로드
   useEffect(() => {
     if (!isAdmin || !activeMenu.startsWith('admin-')) return;
@@ -1052,6 +1105,8 @@ const MyPage: React.FC = () => {
             break;
           case 'admin-licenses':
             await fetchAdminLicenses(token);
+            await fetchLicensePlans(token);
+            await fetchProducts(token);
             break;
           case 'admin-payments':
             await fetchAdminPayments(token);
@@ -1177,6 +1232,164 @@ const MyPage: React.FC = () => {
     }
   };
 
+  // 라이선스 플랜 CRUD 함수들
+  const openLicensePlanModal = (plan?: LicensePlan) => {
+    if (plan) {
+      setEditingLicensePlan(plan);
+      setLicensePlanForm({
+        productId: plan.productId,
+        code: plan.code,
+        name: plan.name,
+        description: plan.description || '',
+        licenseType: plan.licenseType,
+        durationDays: plan.durationDays,
+        graceDays: plan.graceDays,
+        maxActivations: plan.maxActivations,
+        maxConcurrentSessions: plan.maxConcurrentSessions,
+        allowOfflineDays: plan.allowOfflineDays,
+        entitlements: plan.entitlements.join(', '),
+      });
+    } else {
+      setEditingLicensePlan(null);
+      setLicensePlanForm({
+        productId: products.length > 0 ? products[0].id : '',
+        code: '',
+        name: '',
+        description: '',
+        licenseType: 'SUBSCRIPTION',
+        durationDays: 365,
+        graceDays: 7,
+        maxActivations: 1,
+        maxConcurrentSessions: 1,
+        allowOfflineDays: 0,
+        entitlements: 'core-simulation',
+      });
+    }
+    setIsLicensePlanModalOpen(true);
+  };
+
+  const closeLicensePlanModal = () => {
+    setIsLicensePlanModalOpen(false);
+    setEditingLicensePlan(null);
+  };
+
+  const handleLicensePlanSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const entitlementList = licensePlanForm.entitlements
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0);
+
+    const payload = {
+      productId: licensePlanForm.productId,
+      code: licensePlanForm.code,
+      name: licensePlanForm.name,
+      description: licensePlanForm.description || null,
+      licenseType: licensePlanForm.licenseType,
+      durationDays: licensePlanForm.durationDays,
+      graceDays: licensePlanForm.graceDays,
+      maxActivations: licensePlanForm.maxActivations,
+      maxConcurrentSessions: licensePlanForm.maxConcurrentSessions,
+      allowOfflineDays: licensePlanForm.allowOfflineDays,
+      entitlements: entitlementList,
+    };
+
+    try {
+      const url = editingLicensePlan
+        ? `${API_URL}/api/v1/admin/license-plans/${editingLicensePlan.id}`
+        : `${API_URL}/api/v1/admin/license-plans`;
+      const method = editingLicensePlan ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        closeLicensePlanModal();
+        await fetchLicensePlans(token);
+        showSuccess(editingLicensePlan ? '라이선스 플랜이 수정되었습니다.' : '라이선스 플랜이 등록되었습니다.');
+      } else {
+        const error = await response.json();
+        showError(error.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 저장 실패:', error);
+      showError('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleToggleLicensePlan = async (id: string, currentActive: boolean) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const action = currentActive ? 'deactivate' : 'activate';
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}/${action}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        await fetchLicensePlans(token);
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 토글 실패:', error);
+    }
+  };
+
+  const handleDeleteLicensePlan = async (id: string) => {
+    if (!window.confirm('이 플랜을 삭제하시겠습니까? (기존 라이선스에는 영향 없음)')) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok || response.status === 204) {
+        await fetchLicensePlans(token);
+        showSuccess('라이선스 플랜이 삭제되었습니다.');
+      } else {
+        const error = await response.json();
+        showError(error.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('라이선스 플랜 삭제 실패:', error);
+      showError('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const getProductNameById = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product ? `${product.code} - ${product.name}` : productId;
+  };
+
+  // 라이선스 플랜 검색 핸들러
+  const handleLicensePlanSearch = () => {
+    setLicensePlanAppliedSearch(licensePlanSearchQuery);
+    setLicensePlanCurrentPage(1);
+  };
+
+  const handleLicensePlanSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleLicensePlanSearch();
+  };
+
+  const handleLicensePlanClearSearch = () => {
+    setLicensePlanSearchQuery('');
+    setLicensePlanAppliedSearch('');
+    setLicensePlanCurrentPage(1);
+  };
+
   // 상품/요금제/프로모션 토글
   const handleToggleProduct = async (code: string) => {
     const token = localStorage.getItem('accessToken');
@@ -1278,9 +1491,20 @@ const MyPage: React.FC = () => {
     );
   };
 
+  const getFilteredLicensePlans = () => {
+    if (!licensePlanAppliedSearch) return licensePlans;
+    const query = licensePlanAppliedSearch.toLowerCase();
+    return licensePlans.filter(plan =>
+      plan.code.toLowerCase().includes(query) ||
+      plan.name.toLowerCase().includes(query) ||
+      plan.licenseType.toLowerCase().includes(query)
+    );
+  };
+
   // 페이징
-  const getPaginatedData = <T,>(data: T[]): T[] => {
-    const startIndex = (adminCurrentPage - 1) * ADMIN_ITEMS_PER_PAGE;
+  const getPaginatedData = <T,>(data: T[], page?: number): T[] => {
+    const currentPage = page ?? adminCurrentPage;
+    const startIndex = (currentPage - 1) * ADMIN_ITEMS_PER_PAGE;
     return data.slice(startIndex, startIndex + ADMIN_ITEMS_PER_PAGE);
   };
 
@@ -2235,6 +2459,7 @@ const MyPage: React.FC = () => {
 
           {/* 관리자 섹션 - 라이선스 관리 */}
           {activeMenu === 'admin-licenses' && isAdmin && (
+            <>
             <div className="info-card admin-section-card wide">
               <div className="card-header">
                 <h2 className="card-title">{t('myPage.menu.adminLicenses')}</h2>
@@ -2303,6 +2528,119 @@ const MyPage: React.FC = () => {
                 </>
               )}
             </div>
+
+            {/* 라이선스 플랜 관리 */}
+            <div className="info-card admin-section-card wide" style={{ marginTop: '24px' }}>
+              <div className="card-header">
+                <h2 className="card-title">라이선스 플랜 관리</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="admin-count">
+                    {licensePlanAppliedSearch
+                      ? `${getFilteredLicensePlans().length}개 / 전체 ${licensePlans.length}개`
+                      : `${licensePlans.length}개`
+                    }
+                  </span>
+                  <button className="edit-btn" onClick={() => openLicensePlanModal()}>+ 플랜 추가</button>
+                </div>
+              </div>
+              <div className="admin-search-bar">
+                <input
+                  type="text"
+                  placeholder="플랜 코드, 플랜명, 라이선스 유형으로 검색"
+                  value={licensePlanSearchQuery}
+                  onChange={(e) => setLicensePlanSearchQuery(e.target.value)}
+                  onKeyPress={handleLicensePlanSearchKeyPress}
+                />
+                <button onClick={handleLicensePlanSearch}>조회</button>
+                {licensePlanAppliedSearch && <button className="clear" onClick={handleLicensePlanClearSearch}>초기화</button>}
+              </div>
+              {isAdminLoading ? (
+                <div className="admin-loading">데이터 로딩 중...</div>
+              ) : (
+                <>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>코드</th>
+                          <th>플랜명</th>
+                          <th>상품</th>
+                          <th>라이선스 유형</th>
+                          <th>유효기간</th>
+                          <th>최대 기기</th>
+                          <th>동시 세션</th>
+                          <th>상태</th>
+                          <th>관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getPaginatedData(getFilteredLicensePlans(), licensePlanCurrentPage).length > 0 ? (
+                          getPaginatedData(getFilteredLicensePlans(), licensePlanCurrentPage).map((plan) => (
+                            <tr key={plan.id} className={plan.deleted ? 'deleted-row' : ''}>
+                              <td><span className="coupon-code">{plan.code}</span></td>
+                              <td>{plan.name}</td>
+                              <td>{getProductNameById(plan.productId)}</td>
+                              <td>
+                                <span className={`status-badge status-${plan.licenseType.toLowerCase()}`}>
+                                  {plan.licenseType}
+                                </span>
+                              </td>
+                              <td>{plan.durationDays}일</td>
+                              <td>{plan.maxActivations}</td>
+                              <td>{plan.maxConcurrentSessions}</td>
+                              <td>
+                                {plan.deleted ? (
+                                  <span className="status-badge status-deleted">삭제됨</span>
+                                ) : (
+                                  <button
+                                    className={`status-toggle-btn ${plan.active ? 'active' : 'inactive'}`}
+                                    onClick={() => handleToggleLicensePlan(plan.id, plan.active)}
+                                  >
+                                    {plan.active ? '활성' : '비활성'}
+                                  </button>
+                                )}
+                              </td>
+                              <td>
+                                {!plan.deleted && (
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    <button
+                                      className="action-btn edit"
+                                      onClick={() => openLicensePlanModal(plan)}
+                                    >
+                                      수정
+                                    </button>
+                                    <button
+                                      className="action-btn delete"
+                                      onClick={() => handleDeleteLicensePlan(plan.id)}
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={9} className="empty-row">
+                              {licensePlanAppliedSearch ? '검색 결과가 없습니다.' : '등록된 라이선스 플랜이 없습니다.'}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {getTotalPages(getFilteredLicensePlans().length) > 1 && (
+                    <div className="admin-pagination">
+                      <button disabled={licensePlanCurrentPage === 1} onClick={() => setLicensePlanCurrentPage(p => p - 1)}>&lsaquo;</button>
+                      <span>{licensePlanCurrentPage} / {getTotalPages(getFilteredLicensePlans().length)}</span>
+                      <button disabled={licensePlanCurrentPage === getTotalPages(getFilteredLicensePlans().length)} onClick={() => setLicensePlanCurrentPage(p => p + 1)}>&rsaquo;</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            </>
           )}
 
           {/* 관리자 섹션 - 프로모션 관리 */}
@@ -2410,6 +2748,150 @@ const MyPage: React.FC = () => {
         window.location.reload();
       }}
     />
+
+    {/* 라이선스 플랜 모달 */}
+    {isLicensePlanModalOpen && (
+      <div className="delete-modal-overlay" onClick={closeLicensePlanModal}>
+        <div className="delete-modal license-plan-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-modal-header">
+            <h3>{editingLicensePlan ? '라이선스 플랜 수정' : '라이선스 플랜 추가'}</h3>
+          </div>
+          <div className="delete-modal-body">
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>상품 <span style={{ color: '#dc3545' }}>*</span></label>
+                <select
+                  value={licensePlanForm.productId}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, productId: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
+                >
+                  <option value="">상품 선택</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group vertical">
+                <label>플랜 코드 <span style={{ color: '#dc3545' }}>*</span></label>
+                <input
+                  type="text"
+                  value={licensePlanForm.code}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, code: e.target.value })}
+                  placeholder="예: BULC-PRO-1Y"
+                  maxLength={64}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>플랜명 <span style={{ color: '#dc3545' }}>*</span></label>
+                <input
+                  type="text"
+                  value={licensePlanForm.name}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, name: e.target.value })}
+                  placeholder="예: BUL:C PRO 1년"
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div className="form-group vertical">
+                <label>라이선스 유형 <span style={{ color: '#dc3545' }}>*</span></label>
+                <select
+                  value={licensePlanForm.licenseType}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
+                >
+                  <option value="TRIAL">TRIAL (체험판)</option>
+                  <option value="SUBSCRIPTION">SUBSCRIPTION (구독)</option>
+                  <option value="PERPETUAL">PERPETUAL (영구)</option>
+                </select>
+              </div>
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>유효기간 (일) <span style={{ color: '#dc3545' }}>*</span></label>
+                <input
+                  type="number"
+                  value={licensePlanForm.durationDays}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })}
+                  min={0}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div className="form-group vertical">
+                <label>유예기간 (일)</label>
+                <input
+                  type="number"
+                  value={licensePlanForm.graceDays}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })}
+                  min={0}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+            <div className="license-plan-form-row">
+              <div className="form-group vertical">
+                <label>최대 기기 수 <span style={{ color: '#dc3545' }}>*</span></label>
+                <input
+                  type="number"
+                  value={licensePlanForm.maxActivations}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })}
+                  min={1}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div className="form-group vertical">
+                <label>최대 동시 세션 <span style={{ color: '#dc3545' }}>*</span></label>
+                <input
+                  type="number"
+                  value={licensePlanForm.maxConcurrentSessions}
+                  onChange={(e) => setLicensePlanForm({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })}
+                  min={1}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+            <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <label>오프라인 허용 일수</label>
+              <input
+                type="number"
+                value={licensePlanForm.allowOfflineDays}
+                onChange={(e) => setLicensePlanForm({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })}
+                min={0}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <label>설명</label>
+              <textarea
+                value={licensePlanForm.description}
+                onChange={(e) => setLicensePlanForm({ ...licensePlanForm, description: e.target.value })}
+                placeholder="플랜 설명을 입력하세요"
+                rows={2}
+                className="license-plan-textarea"
+              />
+            </div>
+            <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <label>Entitlements</label>
+              <textarea
+                value={licensePlanForm.entitlements}
+                onChange={(e) => setLicensePlanForm({ ...licensePlanForm, entitlements: e.target.value })}
+                placeholder="쉼표로 구분 (예: core-simulation, advanced-visualization)"
+                rows={2}
+                className="license-plan-textarea"
+              />
+              <small style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: '#888' }}>기능 식별자를 쉼표(,)로 구분하여 입력하세요</small>
+            </div>
+          </div>
+          <div className="delete-modal-footer">
+            <button className="cancel-btn" onClick={closeLicensePlanModal}>취소</button>
+            <button className="save-btn" onClick={handleLicensePlanSubmit}>
+              {editingLicensePlan ? '수정' : '등록'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* 계정 삭제 확인 모달 */}
     {isDeleteModalOpen && (
