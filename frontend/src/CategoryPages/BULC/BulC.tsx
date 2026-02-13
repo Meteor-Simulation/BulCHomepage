@@ -7,7 +7,6 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import LoginModal from '../../components/LoginModal';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 import { isSubdomainAccess } from '../../utils/subdomain';
 
 import {
@@ -21,8 +20,6 @@ import {
 
 const BulCPage: React.FC = () => {
   const { t } = useTranslation();
-  const { language, changeLanguage } = useLanguage();
-
   const SUB_NAV_ITEMS = useMemo(() => [
     { id: 'hero', label: t('bulc.nav.intro') },
     { id: 'workflow', label: t('bulc.nav.workflow') },
@@ -33,10 +30,6 @@ const BulCPage: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-
-  const toggleLanguage = () => {
-    changeLanguage(language === 'ko' ? 'en' : 'ko');
-  };
 
   const handleLogoClick = () => {
     if (isSubdomainAccess()) {
@@ -134,14 +127,6 @@ const BulCPage: React.FC = () => {
         onSuccess={handleLoginSuccess}
       />
 
-      {/* 언어 테스트 버튼 */}
-      <button
-        className="bulc-lang-toggle"
-        onClick={toggleLanguage}
-        title={language === 'ko' ? 'Switch to English' : '한국어로 전환'}
-      >
-        {language === 'ko' ? 'EN' : '한'}
-      </button>
     </div>
   );
 };

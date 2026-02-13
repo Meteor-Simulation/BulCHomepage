@@ -334,7 +334,7 @@
 ======================================== */
 .floating-contact-btn {
   position: fixed;
-  bottom: 100px;
+  bottom: 170px;
   right: 30px;
   display: flex;
   align-items: center;
@@ -534,7 +534,7 @@
   .floating-contact-btn {
     padding: 16px;
     border-radius: 50%;
-    bottom: 90px;
+    bottom: 160px;
     right: 20px;
   }
 
@@ -582,7 +582,7 @@
 
   .floating-contact-btn {
     padding: 14px;
-    bottom: 80px;
+    bottom: 150px;
     right: 16px;
   }
 
