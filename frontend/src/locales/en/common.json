@@ -256,5 +256,34 @@
         }
       ]
     }
+  },
+  "download": {
+    "title": "Download BUL:C",
+    "subtitle": "The new standard for fire safety simulation. Install BUL:C now.",
+    "downloadBtn": "Download Program",
+    "version": "Latest Version",
+    "platform": "Windows x64",
+    "systemRequirements": {
+      "title": "System Requirements",
+      "os": "Windows 10/11 (64-bit)",
+      "cpu": "Intel i5 / AMD Ryzen 5 or higher",
+      "ram": "16GB or more",
+      "gpu": "NVIDIA GTX 1060 or higher (CUDA supported)",
+      "storage": "10GB free disk space"
+    },
+    "quickStart": {
+      "title": "Quick Start Guide",
+      "step1": "Click the button above to download the installer.",
+      "step2": "Run the downloaded file to proceed with installation.",
+      "step3": "Launch the program and log in with your account.",
+      "step1Title": "Download",
+      "step2Title": "Install",
+      "step3Title": "Login"
+    },
+    "license": {
+      "title": "Need a license?",
+      "desc": "After your free trial, upgrade to the Pro plan for GPU-accelerated analysis and advanced features.",
+      "button": "Purchase License"
+    }
   }
 }
