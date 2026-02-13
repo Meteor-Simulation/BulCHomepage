@@ -59,6 +59,9 @@ services:
       OAUTH2_CALLBACK_BASE_URL: ${OAUTH2_CALLBACK_BASE_URL:-http://localhost:8080}
       OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI:-http://localhost:3000/oauth/callback}
       # Licensing RS256 Key (Session/Offline Token)
+      # 방법1: Base64 인코딩된 PEM 문자열 (우선)
+      LIC_PRIVATE_KEY_BASE64: ${LIC_PRIVATE_KEY_BASE64:}
+      # 방법2: 파일 경로 (BASE64 미설정 시 사용)
       LIC_PRIVATE_KEY_PATH: /run/secrets/session_token_private_key.pem
     ports:
       - "${BACKEND_PORT:-8080}:8080"
