@@ -6,7 +6,7 @@ import './Download.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 
-const DOWNLOAD_URL = 'https://github.com/Meteor-Simulation/BULC-EVAC/releases/latest/download/BULC-latest-win-x64.exe';
+const DOWNLOAD_URL = 'https://github.com/Meteor-Simulation/bulc-releases/releases/latest/download/BULC-latest-win-x64.exe';
 
 const DownloadIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
