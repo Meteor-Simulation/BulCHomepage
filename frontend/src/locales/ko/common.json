@@ -88,6 +88,8 @@
       "price": "가격",
       "getStarted": "시작하기"
     },
+    "loginNotice": "로그인 후 프로그램 다운로드가 가능합니다",
+    "loginPromo": "회원가입 시 14일 라이선스 증정 (카드 등록 필요 없음)",
     "hero": {
       "badge": "회원 가입 시 무료 라이선스 14일 지원",
       "title1": "for Fire Safety Engineering",
@@ -238,6 +240,7 @@
       "title": "시뮬레이션을 자동화할 준비가 되셨나요?",
       "subtitle": "BUL:C로 전환한 500명 이상의 소방안전 엔지니어와 함께하세요.",
       "button": "무료 다운로드",
+      "downloadBtn": "프로그램 다운로드",
       "faqs": [
         {
           "question": "한 계정으로 몇 대까지 사용할 수 있나요?",
