@@ -256,5 +256,34 @@
         }
       ]
     }
+  },
+  "download": {
+    "title": "BUL:C 다운로드",
+    "subtitle": "소방안전 시뮬레이션의 새로운 기준, BUL:C를 지금 설치하세요.",
+    "downloadBtn": "프로그램 다운로드",
+    "version": "최신 버전",
+    "platform": "Windows x64",
+    "systemRequirements": {
+      "title": "시스템 요구사항",
+      "os": "Windows 10/11 (64-bit)",
+      "cpu": "Intel i5 / AMD Ryzen 5 이상",
+      "ram": "16GB 이상",
+      "gpu": "NVIDIA GTX 1060 이상 (CUDA 지원)",
+      "storage": "10GB 이상 여유 공간"
+    },
+    "quickStart": {
+      "title": "빠른 시작 가이드",
+      "step1": "위 버튼을 클릭하여 설치 파일을 다운로드합니다.",
+      "step2": "다운로드된 파일을 실행하여 설치를 진행합니다.",
+      "step3": "프로그램을 실행하고 계정으로 로그인합니다.",
+      "step1Title": "다운로드",
+      "step2Title": "설치",
+      "step3Title": "로그인"
+    },
+    "license": {
+      "title": "라이선스가 필요하신가요?",
+      "desc": "무료 체험 후 프로 플랜으로 업그레이드하여 GPU 가속 해석 등 고급 기능을 이용하세요.",
+      "button": "라이선스 구매하기"
+    }
   }
 }
