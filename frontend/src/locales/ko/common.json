@@ -1,6 +1,7 @@
 {
   "header": {
     "login": "로그인",
+    "signup": "회원가입",
     "myPage": "내 정보",
     "admin": "관리자",
     "menuSelect": "메뉴 선택",
