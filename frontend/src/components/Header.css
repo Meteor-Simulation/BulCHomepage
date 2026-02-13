@@ -211,6 +211,29 @@
 }
 
 /* ========================================
+   HEADER SIGNUP BUTTON
+======================================== */
+.header-signup-btn {
+  padding: 8px 16px;
+  border: 1.5px solid var(--accent, #C4320A);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent, #C4320A);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.3s ease;
+}
+
+.header-signup-btn:hover {
+  background: var(--accent, #C4320A);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* ========================================
    USER MENU DROPDOWN
 ======================================== */
 .user-menu-container {
@@ -495,6 +518,11 @@
   .header-trial-badge {
     padding: 4px 8px;
     font-size: 11px;
+  }
+
+  .header-signup-btn {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .header-action-icon {

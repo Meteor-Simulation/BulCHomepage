@@ -14,6 +14,7 @@ interface PricePlan {
 interface PriceSectionProps {
   onPurchaseClick: () => void;
   onFreeClick?: () => void;
+  isLoggedIn?: boolean;
 }
 
 const FEATURE_KEYS: Record<string, string> = {
@@ -23,7 +24,7 @@ const FEATURE_KEYS: Record<string, string> = {
 
 const COMING_SOON_PLANS = ['BUL:C 3D Premium'];
 
-const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick }) => {
+const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, isLoggedIn }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
@@ -107,7 +108,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 ))}
               </ul>
               <button className="bulc-price__card-btn bulc-price__card-btn--free" onClick={onFreeClick || onPurchaseClick}>
-                {t('bulc.price.free.button')}
+                {isLoggedIn ? t('download.downloadBtn') : t('bulc.price.free.button')}
               </button>
             </div>
 

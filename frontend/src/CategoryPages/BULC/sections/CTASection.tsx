@@ -12,9 +12,11 @@ interface FaqItem {
 
 interface CTASectionProps {
   onPurchaseClick: () => void;
+  onDownloadClick?: () => void;
+  isLoggedIn?: boolean;
 }
 
-const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
+const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick, onDownloadClick, isLoggedIn }) => {
   const { t } = useTranslation();
   const faqs = t('bulc.cta.faqs', { returnObjects: true }) as FaqItem[];
 
@@ -29,8 +31,8 @@ const CTASection: React.FC<CTASectionProps> = ({ onPurchaseClick }) => {
         </p>
 
         <div className="bulc-cta__action">
-          <button className="bulc-cta__btn" onClick={onPurchaseClick}>
-            {t('bulc.cta.button')}
+          <button className="bulc-cta__btn" onClick={isLoggedIn && onDownloadClick ? onDownloadClick : onPurchaseClick}>
+            {isLoggedIn ? t('bulc.cta.downloadBtn') : t('bulc.cta.button')}
           </button>
         </div>
 

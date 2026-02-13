@@ -8,9 +8,10 @@ const Download: React.FC<{className?: string}> = ({className}) => (
 interface HeroSectionProps {
   onPurchaseClick: () => void;
   onDownloadClick: () => void;
+  isLoggedIn: boolean;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadClick }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadClick, isLoggedIn }) => {
   const { t } = useTranslation();
 
   return (
@@ -22,13 +23,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadCl
 
       <div className="bulc-hero__container">
         <div className="bulc-hero__content">
-          <div className="bulc-hero__badge">
-            <span className="bulc-hero__badge-dot">
-              <span className="bulc-hero__badge-ping" />
-              <span className="bulc-hero__badge-core" />
-            </span>
-            {t('bulc.hero.badge')}
-          </div>
+          {!isLoggedIn && (
+            <div className="bulc-hero__badge">
+              <span className="bulc-hero__badge-dot">
+                <span className="bulc-hero__badge-ping" />
+                <span className="bulc-hero__badge-core" />
+              </span>
+              {t('bulc.hero.badge')}
+            </div>
+          )}
 
           <h1 className="bulc-hero__title">
             <span className="bulc-hero__title-gradient">
@@ -45,7 +48,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadCl
           <div className="bulc-hero__actions">
             <button className="bulc-hero__btn bulc-hero__btn--primary" onClick={onDownloadClick}>
               <Download className="bulc-hero__btn-icon bulc-hero__btn-icon--left" />
-              {t('bulc.hero.startFree')}
+              {isLoggedIn ? t('download.downloadBtn') : t('bulc.hero.startFree')}
             </button>
           </div>
         </div>

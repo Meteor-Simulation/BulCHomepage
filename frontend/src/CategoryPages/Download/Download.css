@@ -1,0 +1,245 @@
+/* ========================================
+   DOWNLOAD PAGE
+======================================== */
+.download-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* Hero Section */
+.download-hero {
+  text-align: center;
+  padding: 40px 0 48px;
+}
+
+.download-hero__title {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.download-hero__subtitle {
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.download-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 40px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent, #C4320A);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.download-hero__btn:hover {
+  background: #a82908;
+  transform: translateY(-1px);
+}
+
+.download-hero__btn-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.download-hero__meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Sections */
+.download-section {
+  margin-bottom: 48px;
+}
+
+.download-section__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+/* System Requirements */
+.download-requirements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.download-requirements__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.download-requirements__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent, #C4320A);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.download-requirements__label {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-bottom: 2px;
+}
+
+.download-requirements__value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Quick Start */
+.download-steps {
+  display: flex;
+  gap: 16px;
+}
+
+.download-steps__item {
+  flex: 1;
+  text-align: center;
+  padding: 24px 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.download-steps__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent, #C4320A);
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+.download-steps__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.download-steps__desc {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.5;
+}
+
+/* License CTA */
+.download-license {
+  text-align: center;
+  padding: 40px 32px;
+  background: #f8f9fa;
+  border-radius: 16px;
+}
+
+.download-license__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.download-license__desc {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.download-license__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent, #C4320A);
+  background: transparent;
+  border: 2px solid var(--accent, #C4320A);
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.download-license__btn:hover {
+  background: var(--accent, #C4320A);
+  color: #fff;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+@media (max-width: 768px) {
+  .download-hero__title {
+    font-size: 28px;
+  }
+
+  .download-hero__subtitle {
+    font-size: 15px;
+  }
+
+  .download-hero__btn {
+    padding: 14px 32px;
+    font-size: 16px;
+  }
+
+  .download-requirements {
+    grid-template-columns: 1fr;
+  }
+
+  .download-steps {
+    flex-direction: column;
+  }
+
+  .download-section__title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .download-page {
+    padding: 0 16px 60px;
+  }
+
+  .download-hero {
+    padding: 24px 0 36px;
+  }
+
+  .download-hero__title {
+    font-size: 24px;
+  }
+
+  .download-hero__meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
