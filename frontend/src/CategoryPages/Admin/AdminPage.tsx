@@ -1866,6 +1866,7 @@ const AdminPage: React.FC = () => {
                     <Pagination totalItems={promotions.length} filteredCount={filteredPromotions.length} />
                   </div>
                 )}
+
               </>
             )}
           </div>
@@ -2332,6 +2333,7 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
       )}
+
     </>
   );
 };

@@ -29,7 +29,8 @@
       "adminPayments": "Payment Management",
       "adminProducts": "Product Management",
       "adminLicenses": "License Management",
-      "adminPromotions": "Promotion Management"
+      "adminPromotions": "Promotion Management",
+      "adminRedeem": "Redeem Campaigns"
     },
     "profile": "Profile",
     "edit": "Edit",

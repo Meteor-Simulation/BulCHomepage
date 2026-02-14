@@ -1,7 +1,7 @@
 # Licensing System API Documentation
 
 > **API Base URL:** `/api/v1`
-> **Document Version:** `0.3.0`
+> **Document Version:** `0.4.0`
 > **Release Target:** `1.0.0`
 
 ---
@@ -16,6 +16,16 @@
 | v0.2.2 | 2025-12-30 | sessionToken (RS256 JWS) 추가 - CLI 위/변조 방어 |
 | v0.2.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
 | v0.3.0 | 2026-01-08 | Auto-Resolve + Global Session Kick UX |
+| v0.4.0 | 2026-02-13 | Redeem 코드 시스템 추가 - 캠페인 기반 코드 발급/Claim |
+
+### v0.4.0 주요 변경사항
+
+1. **Redeem 코드 시스템**: 캠페인 기반 코드 발급 및 사용자 Claim 기능
+2. **Admin Redeem API**: 캠페인 CRUD, 코드 생성/관리, 상태 관리 (ACTIVE/PAUSED/ENDED)
+3. **보안**: SHA-256 해시 기반 코드 저장 (pepper 적용), 원자적 동시성 제어
+4. **Rate Limiting**: 사용자당 분당 5회 Claim 제한
+5. **새로운 에러 코드**: REDEEM_CODE_INVALID, REDEEM_CODE_NOT_FOUND, REDEEM_CODE_EXPIRED 등 11개 추가
+6. **License 추적**: `source_type` (PAYMENT/REDEEM/ADMIN), `source_redeem_id` 필드 추가
 
 ### v0.3.0 주요 변경사항
 
@@ -58,7 +68,7 @@
 3. **`/api/v1/licenses/validate`, `/heartbeat` 변경**: path에서 licenseKey 제거, 토큰 기반으로 전환
 4. **공개 API 제거**: `/api/v1/licenses/key/*`, `/api/v1/licenses/*/validate`, `/api/v1/licenses/*/heartbeat` 비인증 접근 제거
 
-> **Note:** Claim 기능(라이선스 키 귀속)은 v0.2.0에서 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
+> **Note:** Claim 기능은 v0.4.0에서 Redeem 코드 시스템으로 구현되었습니다. (9장 참조)
 
 ---
 
@@ -1026,6 +1036,17 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | PLAN_NOT_FOUND | 404 | 플랜 없음 |
 | PLAN_CODE_DUPLICATE | 409 | 플랜 코드 중복 |
 | PLAN_NOT_AVAILABLE | 400 | 사용 불가 플랜 |
+| REDEEM_CODE_INVALID | 400 | 유효하지 않은 리딤 코드 형식 |
+| REDEEM_CODE_NOT_FOUND | 404 | 리딤 코드를 찾을 수 없음 |
+| REDEEM_CODE_EXPIRED | 410 | 만료된 리딤 코드 |
+| REDEEM_CODE_DISABLED | 410 | 비활성화된 리딤 코드 |
+| REDEEM_CODE_DEPLETED | 409 | 사용 횟수 소진된 리딤 코드 |
+| REDEEM_CAMPAIGN_FULL | 409 | 캠페인 발급 한도 도달 |
+| REDEEM_CAMPAIGN_NOT_ACTIVE | 403 | 캠페인이 활성 상태 아님 |
+| REDEEM_USER_LIMIT_EXCEEDED | 409 | 사용자별 한도 초과 |
+| REDEEM_CAMPAIGN_NOT_FOUND | 404 | 캠페인을 찾을 수 없음 |
+| REDEEM_CODE_HASH_DUPLICATE | 409 | 동일한 코드가 이미 존재 |
+| REDEEM_RATE_LIMITED | 429 | 요청 빈도 초과 (분당 5회) |
 
 ---
 
@@ -1285,7 +1306,265 @@ bulc:
 
 ---
 
-## 9. 인증/권한 설정 (v0.2.0 변경)
+## 9. Redeem 코드 시스템 (v0.4.0)
+
+캠페인 단위로 리딤 코드를 발급하고, 사용자가 코드를 입력(Claim)하면 라이선스가 자동 발급됩니다.
+
+### 9.1 아키텍처
+
+```
+Admin → Redeem Admin API (캠페인 CRUD, 코드 생성)
+                    ↓
+            RedeemAdminService → DB (campaigns, codes)
+
+User  → POST /api/v1/redeem (코드 입력)
+                    ↓
+            RedeemService.claim() → LicenseService.issueLicenseForRedeem()
+                    ↓
+            License 발급 + Redemption 기록
+```
+
+### 9.2 User API - Redeem Claim
+
+#### `POST /api/v1/redeem`
+
+리딤 코드를 입력하여 라이선스를 발급받습니다.
+
+**인증**: Bearer Token 필수
+
+**Request Body:**
+```json
+{
+  "code": "XXXX-XXXX-XXXX-XXXX"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| code | string | O | 리딤 코드 (8~64자, 영숫자) |
+
+**Response (200 OK):**
+```json
+{
+  "licenseId": "550e8400-e29b-41d4-a716-446655440000",
+  "licenseKey": "BULC-XXXX-XXXX-XXXX",
+  "productName": "BUL:C",
+  "planName": "Pro Annual",
+  "validUntil": "2027-02-13T00:00:00Z"
+}
+```
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| licenseId | UUID | 발급된 라이선스 ID |
+| licenseKey | string | 라이선스 키 |
+| productName | string | 상품명 |
+| planName | string | 플랜명 |
+| validUntil | Instant | 라이선스 유효 기한 |
+
+**Error Responses:**
+
+| HTTP | ErrorCode | 설명 |
+|------|-----------|------|
+| 400 | REDEEM_CODE_INVALID | 코드 형식이 유효하지 않음 |
+| 404 | REDEEM_CODE_NOT_FOUND | 코드를 찾을 수 없음 |
+| 410 | REDEEM_CODE_EXPIRED | 코드가 만료됨 |
+| 410 | REDEEM_CODE_DISABLED | 코드가 비활성화됨 |
+| 409 | REDEEM_CODE_DEPLETED | 코드 사용 횟수 소진 |
+| 409 | REDEEM_CAMPAIGN_FULL | 캠페인 발급 한도 초과 |
+| 403 | REDEEM_CAMPAIGN_NOT_ACTIVE | 캠페인이 비활성 |
+| 409 | REDEEM_USER_LIMIT_EXCEEDED | 사용자별 한도 초과 |
+| 429 | REDEEM_RATE_LIMITED | 분당 5회 초과 |
+
+### 9.3 Admin API - Redeem Campaign
+
+모든 엔드포인트에 `@PreAuthorize("hasRole('ADMIN')")` 적용.
+
+#### `GET /api/v1/admin/redeem-campaigns`
+
+캠페인 목록 조회 (페이지네이션).
+
+**Query Parameters:**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| page | int | N | 페이지 번호 (0-based) |
+| size | int | N | 페이지 크기 (기본 20) |
+| sort | string | N | 정렬 (기본 createdAt,DESC) |
+| status | string | N | 필터: ACTIVE, PAUSED, ENDED |
+
+**Response (200 OK):** `Page<RedeemCampaignResponse>`
+
+#### `GET /api/v1/admin/redeem-campaigns/{id}`
+
+캠페인 상세 조회.
+
+**Response (200 OK):**
+```json
+{
+  "id": "UUID",
+  "name": "교육기관 프로모션",
+  "description": "2026년 교육기관 대상 프로모션",
+  "productId": "UUID",
+  "productName": "BUL:C",
+  "licensePlanId": "UUID",
+  "planName": "Pro Annual",
+  "usageCategory": "EDUCATION",
+  "seatLimit": 100,
+  "seatsUsed": 42,
+  "perUserLimit": 1,
+  "status": "ACTIVE",
+  "validFrom": "2026-01-01T00:00:00Z",
+  "validUntil": "2026-12-31T23:59:59Z",
+  "createdBy": "UUID",
+  "codeCount": 50,
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-01-15T10:30:00Z"
+}
+```
+
+#### `POST /api/v1/admin/redeem-campaigns`
+
+캠페인 생성.
+
+**Request Body:**
+```json
+{
+  "name": "교육기관 프로모션",
+  "description": "2026년 교육기관 대상",
+  "productId": "UUID",
+  "licensePlanId": "UUID",
+  "usageCategory": "EDUCATION",
+  "seatLimit": 100,
+  "perUserLimit": 1,
+  "validFrom": "2026-01-01T00:00:00Z",
+  "validUntil": "2026-12-31T23:59:59Z"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| name | string | O | 캠페인명 |
+| description | string | N | 설명 |
+| productId | UUID | O | 상품 ID |
+| licensePlanId | UUID | O | 라이선스 플랜 ID |
+| usageCategory | string | N | 사용 용도 (기본 COMMERCIAL) |
+| seatLimit | int | N | 발급 한도 (NULL=무제한) |
+| perUserLimit | int | N | 사용자당 한도 (기본 1) |
+| validFrom | Instant | N | 유효 시작일 |
+| validUntil | Instant | N | 유효 종료일 |
+
+**Response (201 Created):** `RedeemCampaignResponse`
+
+#### `PUT /api/v1/admin/redeem-campaigns/{id}`
+
+캠페인 수정.
+
+**Request Body:** `RedeemCampaignRequest`와 동일
+
+**Response (200 OK):** `RedeemCampaignResponse`
+
+#### `PATCH /api/v1/admin/redeem-campaigns/{id}/pause`
+
+캠페인 일시정지. **Response: 204 No Content**
+
+#### `PATCH /api/v1/admin/redeem-campaigns/{id}/end`
+
+캠페인 종료. **Response: 204 No Content**
+
+#### `PATCH /api/v1/admin/redeem-campaigns/{id}/resume`
+
+캠페인 재개 (PAUSED → ACTIVE). **Response: 204 No Content**
+
+### 9.4 Admin API - Redeem Code
+
+#### `POST /api/v1/admin/redeem-campaigns/codes`
+
+코드 생성.
+
+**Request Body:**
+```json
+{
+  "campaignId": "UUID",
+  "codeType": "RANDOM",
+  "customCode": null,
+  "count": 10,
+  "maxRedemptions": 1,
+  "expiresAt": "2026-12-31T23:59:59Z"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| campaignId | UUID | O | 캠페인 ID |
+| codeType | string | O | RANDOM 또는 CUSTOM |
+| customCode | string | N | CUSTOM 시 코드 지정 |
+| count | int | O | 생성 수량 (1~1000) |
+| maxRedemptions | int | O | 코드당 최대 사용 횟수 |
+| expiresAt | Instant | N | 코드 만료일 |
+
+**Response (201 Created):**
+```json
+{
+  "generatedCount": 10,
+  "codes": ["XXXX-XXXX-XXXX-XXXX", "..."]
+}
+```
+
+> **Warning:** 코드 원문은 이 응답에서만 확인 가능합니다. DB에는 SHA-256 해시만 저장됩니다.
+
+#### `GET /api/v1/admin/redeem-campaigns/{campaignId}/codes`
+
+캠페인의 코드 목록 조회 (페이지네이션).
+
+**Response (200 OK):** `Page<RedeemCodeResponse>`
+```json
+{
+  "id": "UUID",
+  "campaignId": "UUID",
+  "codeType": "RANDOM",
+  "maxRedemptions": 1,
+  "currentRedemptions": 0,
+  "active": true,
+  "expiresAt": "2026-12-31T23:59:59Z",
+  "createdAt": "2026-01-15T10:30:00Z"
+}
+```
+
+> 보안상 코드 원문(code_hash)은 목록에서 노출되지 않습니다.
+
+#### `DELETE /api/v1/admin/redeem-campaigns/codes/{codeId}`
+
+코드 비활성화. **Response: 204 No Content**
+
+### 9.5 Claim 처리 흐름
+
+```
+1. normalize → validate → hash → findByCodeHash
+2. 코드 상태 확인 (active, expires_at)
+3. 캠페인 상태 확인 (status=ACTIVE, validUntil)
+4. 원자적 코드 사용횟수 증가 (실패 → CODE_DEPLETED)
+5. 원자적 캠페인 좌석 증가 (실패 → CAMPAIGN_FULL)
+6. 원자적 사용자별 카운터 증가 (실패 → USER_LIMIT_EXCEEDED)
+7. LicenseService.issueLicenseForRedeem() 호출
+8. redeem_redemptions 감사 로그 기록
+※ 중간 실패 시 @Transactional 전체 롤백
+```
+
+### 9.6 보안 설계
+
+| 항목 | 설계 |
+|------|------|
+| 코드 저장 | SHA-256(pepper + ":" + normalizedCode) 해시만 저장 |
+| 코드 정규화 | trim → NFKC → uppercase → 공백/하이픈/언더스코어 제거 |
+| 코드 검증 | A-Z 0-9만, 8~64자 |
+| Rate Limiting | 사용자당 분당 5회 (인메모리 ConcurrentHashMap) |
+| 동시성 제어 | @Modifying @Query 원자적 UPDATE, PESSIMISTIC_WRITE 락 |
+| 코드 노출 | 생성 시 1회만 원문 반환, 이후 해시만 조회 가능 |
+
+---
+
+## 10. 인증/권한 설정 (v0.2.0 변경)
 
 ### Security 설정
 
@@ -1330,7 +1609,7 @@ GET  /api/v1/licenses/key/{licenseKey}         → GET  /api/v1/me/licenses 또�
 
 ---
 
-## 10. UX 플로우 (v0.3.0 업데이트)
+## 11. UX 플로우 (v0.3.0 업데이트)
 
 ### 핵심 원칙: "사용자 선택은 정말 막혔을 때만"
 
@@ -1603,16 +1882,16 @@ bulc:
 - [x] ACTIVATION_DEACTIVATED ErrorCode 추가
 - [x] Force Validate 경쟁 조건 방어 (pessimistic lock)
 
-### M1.9 - v0.3.0 Auto-Resolve + Global Session Kick (예정)
-- [ ] `strategy` 필드 제거 (서버 항상 AUTO_SELECT)
-- [ ] 용량 기반 라이선스 선택 로직 구현
-- [ ] Stale 세션 자동 종료 로직 구현 (30분 임계값)
-- [ ] `resolution` 응답 필드 추가 (OK, AUTO_RECOVERED, USER_ACTION_REQUIRED)
-- [ ] Global Session Kick 응답 구조 (`activeSessions`에 `licenseId`, `productName` 포함)
-- [ ] 에러 코드 통합 (`ALL_LICENSES_FULL`)
-- [ ] AUTO_RECOVERED 응답에 `recoveryAction`, `terminatedSession` 포함
+### M1.9 - v0.3.0 Auto-Resolve + Global Session Kick (완료)
+- [x] `strategy` 필드 제거 (서버 항상 AUTO_SELECT)
+- [x] 용량 기반 라이선스 선택 로직 구현
+- [x] Stale 세션 자동 종료 로직 구현 (30분 임계값)
+- [x] `resolution` 응답 필드 추가 (OK, AUTO_RECOVERED, USER_ACTION_REQUIRED)
+- [x] Global Session Kick 응답 구조 (`activeSessions`에 `licenseId`, `productName` 포함)
+- [x] 에러 코드 통합 (`ALL_LICENSES_FULL`)
+- [x] AUTO_RECOVERED 응답에 `recoveryAction`, `terminatedSession` 포함
 
-> **Note:** Claim 기능은 추후 Redeem 기능으로 별도 구현 예정
+> **Note:** Claim 기능은 v0.4.0에서 Redeem 코드 시스템으로 구현 완료 (9장 참조)
 
 ### M2 - Read 레이어 (완료)
 - [x] Query Service (CQRS 패턴)
@@ -1626,10 +1905,19 @@ bulc:
 - [x] Plan CRUD + activate/deactivate 엔드포인트
 - [x] Soft delete 지원
 
+### M4 - Redeem 코드 시스템 (v0.4.0 완료)
+- [x] RedeemCampaign / RedeemCode / RedeemRedemption 도메인
+- [x] SHA-256 해시 기반 코드 저장 (pepper)
+- [x] RedeemService.claim() 원자적 트랜잭션
+- [x] RedeemAdminController (캠페인 CRUD, 코드 생성)
+- [x] RedeemController (사용자 Claim)
+- [x] 인메모리 Rate Limiter (분당 5회)
+- [x] Admin UI (MyPage 관리자 탭)
+- [x] User UI (MyPage 리딤 등록)
+
 ### 향후 계획
-- M4: Billing 연동
-- M5: Redeem (라이선스 키 귀속) 기능
-- M5: 오프라인 토큰 고도화
+- M5: Billing 연동
+- M6: 오프라인 토큰 고도화
 
 ---
 
@@ -1641,7 +1929,9 @@ backend/src/main/java/com/bulc/homepage/licensing/
 │   ├── LicenseController.java           # 사용자 API (v0.2.0 변경)
 │   ├── MyLicenseController.java         # /api/me/licenses 엔드포인트
 │   ├── LicenseAdminController.java      # 관리자 API
-│   └── LicensePlanAdminController.java  # 플랜 관리 API
+│   ├── LicensePlanAdminController.java  # 플랜 관리 API
+│   ├── RedeemController.java          # 사용자 Redeem Claim API
+│   └── RedeemAdminController.java     # 관리자 Redeem 캠페인/코드 API
 ├── domain/
 │   ├── License.java                     # Aggregate Root
 │   ├── LicenseActivation.java           # 기기 활성화 Entity
@@ -1650,7 +1940,14 @@ backend/src/main/java/com/bulc/homepage/licensing/
 │   ├── LicenseType.java                 # 타입 Enum
 │   ├── UsageCategory.java               # 용도 Enum
 │   ├── OwnerType.java                   # 소유자 유형 Enum
-│   └── ActivationStatus.java            # 활성화 상태 Enum
+│   ├── ActivationStatus.java            # 활성화 상태 Enum
+│   ├── RedeemCampaign.java            # 리딤 캠페인 Entity
+│   ├── RedeemCode.java                # 리딤 코드 Entity
+│   ├── RedeemRedemption.java          # 리딤 감사 로그 Entity
+│   ├── RedeemUserCampaignCounter.java # 사용자별 카운터 Entity
+│   ├── RedeemCampaignStatus.java      # 캠페인 상태 Enum (ACTIVE/PAUSED/ENDED)
+│   ├── RedeemCodeType.java            # 코드 타입 Enum (RANDOM/CUSTOM)
+│   └── LicenseSourceType.java         # 라이선스 소스 Enum (PAYMENT/REDEEM/ADMIN)
 ├── dto/
 │   ├── ActivationRequest.java           # 검증 요청 DTO (v0.1.0 레거시)
 │   ├── ValidateRequest.java             # v0.2.0 검증 요청 DTO
@@ -1659,7 +1956,14 @@ backend/src/main/java/com/bulc/homepage/licensing/
 │   ├── MyLicensesResponse.java          # 내 라이선스 목록 응답
 │   ├── LicenseCandidate.java            # 다중 라이선스 후보
 │   ├── ActiveSessionInfo.java           # 활성 세션 정보
-│   └── ApiResponse.java                 # 공통 응답 DTO
+│   ├── ApiResponse.java                 # 공통 응답 DTO
+│   ├── RedeemClaimRequest.java        # Claim 요청 DTO
+│   ├── RedeemClaimResponse.java       # Claim 응답 DTO
+│   ├── RedeemCampaignRequest.java     # 캠페인 생성/수정 요청
+│   ├── RedeemCampaignResponse.java    # 캠페인 응답
+│   ├── RedeemCodeGenerateRequest.java # 코드 생성 요청
+│   ├── RedeemCodeGenerateResponse.java# 코드 생성 응답
+│   └── RedeemCodeResponse.java        # 코드 목록 응답
 ├── exception/
 │   ├── LicenseException.java            # 커스텀 예외
 │   ├── ErrorCode.java                   # 에러 코드 Enum
@@ -1679,13 +1983,21 @@ backend/src/main/java/com/bulc/homepage/licensing/
 ├── repository/
 │   ├── LicenseRepository.java           # JPA Repository
 │   ├── ActivationRepository.java        # 활성화 Repository
-│   └── LicensePlanRepository.java       # 플랜 Repository
+│   ├── LicensePlanRepository.java       # 플랜 Repository
+│   ├── RedeemCampaignRepository.java  # 캠페인 Repository
+│   ├── RedeemCodeRepository.java      # 코드 Repository
+│   ├── RedeemRedemptionRepository.java# 감사 로그 Repository
+│   └── RedeemUserCampaignCounterRepository.java # 카운터 Repository
 └── service/
     ├── LicenseService.java              # Command Service
     ├── LicensePlanAdminService.java     # 플랜 관리 Service
-    └── SessionTokenService.java         # v0.2.2: sessionToken (JWS) 발급 서비스
+    ├── SessionTokenService.java         # v0.2.2: sessionToken (JWS) 발급 서비스
+    ├── RedeemService.java             # Claim Service (사용자 코드 등록)
+    ├── RedeemAdminService.java        # Admin Service (캠페인/코드 관리)
+    ├── RedeemCodeHashService.java     # 코드 해시 유틸리티
+    └── RedeemRateLimiter.java         # 인메모리 Rate Limiter
 ```
 
 ---
 
-*Last Updated: 2026-01-08 (v0.3.0 Auto-Resolve + Global Session Kick UX)*
+*Last Updated: 2026-02-13 (v0.4.0 Redeem 코드 시스템)*

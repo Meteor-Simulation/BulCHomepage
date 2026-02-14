@@ -40,6 +40,9 @@ bulc:
       renewal-threshold-days: 3
     stale-threshold-minutes: 30
 
+  redeem:
+    code-pepper: test-pepper
+
   # OAuth 테스트용 클라이언트 설정
   # 포트 와일드카드: http://localhost:*/path → 모든 포트 허용
   oauth:

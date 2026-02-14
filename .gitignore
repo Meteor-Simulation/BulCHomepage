@@ -25,6 +25,7 @@ dist/
 target/
 *.jar
 *.war
+.gradle/
 
 # Node.js
 node_modules/

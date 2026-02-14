@@ -29,7 +29,8 @@
       "adminPayments": "결제 관리",
       "adminProducts": "상품 관리",
       "adminLicenses": "라이선스 관리",
-      "adminPromotions": "프로모션 관리"
+      "adminPromotions": "프로모션 관리",
+      "adminRedeem": "리딤 캠페인 발행"
     },
     "profile": "프로필 정보",
     "edit": "수정",

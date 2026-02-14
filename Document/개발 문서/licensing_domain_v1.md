@@ -17,7 +17,7 @@
 3. **Global Session Kick**: 라이선스 선택과 세션 종료를 단일 UX로 통합
 4. **Resolution 상태**: OK, AUTO_RECOVERED, USER_ACTION_REQUIRED 도입
 
-> **Note:** Claim 기능(ClaimToUser, IsUnclaimed)은 제외되었습니다. 추후 Redeem 기능으로 별도 구현 예정입니다.
+> **Note:** Claim 기능은 v0.4.0에서 Redeem 코드 시스템으로 구현되었습니다.
 
 ---  
 초기 릴리스에서는 **개인 라이선스 + 기본 Billing 연동**만 구현하며,  
@@ -608,6 +608,98 @@ v0.3.0에서는 **"사용자 선택은 정말 막혔을 때만"** 원칙을 도�
 - 정상 응답은 최소 5분간 로컬 캐시
 - 네트워크 오류 시 exponential backoff 재시도 (1s → 2s → 4s → ... 최대 60s)
 - 오프라인 모드 진입 시 offlineToken 사용
+
+---
+
+## Redeem 코드 도메인 (v0.4.0)
+
+### 개요
+
+캠페인 단위로 리딤 코드를 발급하고, 사용자가 코드를 입력(Claim)하면 기존 LicenseService를 통해 라이선스를 자동 발급하는 시스템입니다.
+
+### 도메인 모델
+
+#### RedeemCampaign (Aggregate Root)
+캠페인 단위로 코드를 관리합니다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| id | UUID | PK |
+| name | String | 캠페인명 |
+| description | String | 설명 |
+| productId | UUID | 대상 상품 |
+| licensePlanId | UUID | 발급할 플랜 |
+| usageCategory | UsageCategory | 사용 용도 |
+| seatLimit | Integer | 발급 한도 (null=무제한) |
+| seatsUsed | int | 현재 발급 수 |
+| perUserLimit | int | 사용자당 한도 |
+| status | RedeemCampaignStatus | ACTIVE/PAUSED/ENDED |
+| validFrom | Instant | 유효 시작일 |
+| validUntil | Instant | 유효 종료일 |
+| createdBy | UUID | 생성 관리자 |
+
+**도메인 메서드**: `isAvailable()`, `pause()`, `end()`, `resume()`
+
+#### RedeemCode
+코드 정보를 관리합니다. 원문은 저장하지 않고 SHA-256 해시만 저장합니다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| id | UUID | PK |
+| campaignId | UUID | 소속 캠페인 |
+| codeHash | String | SHA-256(pepper:normalizedCode) |
+| codeType | RedeemCodeType | RANDOM/CUSTOM |
+| maxRedemptions | int | 최대 사용 횟수 |
+| currentRedemptions | int | 현재 사용 횟수 |
+| isActive | boolean | 활성 여부 |
+| expiresAt | Instant | 만료일 |
+
+**도메인 메서드**: `isRedeemable()`
+
+#### RedeemRedemption
+코드 사용 감사/추적 로그입니다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| id | UUID | PK |
+| codeId | UUID | 사용된 코드 |
+| campaignId | UUID | 캠페인 |
+| userId | UUID | 사용자 |
+| licenseId | UUID | 발급된 라이선스 (실패 시 null) |
+| redeemedAt | Instant | 사용 일시 |
+| ipAddress | String | IP 주소 |
+| userAgent | String | User-Agent |
+
+#### RedeemUserCampaignCounter
+사용자별 캠페인 사용 횟수를 원자적으로 관리합니다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| userId | UUID | 사용자 |
+| campaignId | UUID | 캠페인 |
+| count | int | 사용 횟수 |
+
+UNIQUE(userId, campaignId)
+
+### Enum 추가
+
+- **RedeemCampaignStatus**: ACTIVE, PAUSED, ENDED
+- **RedeemCodeType**: RANDOM, CUSTOM
+- **LicenseSourceType**: PAYMENT, REDEEM, ADMIN (License 엔티티에 추가)
+
+### Claim 유스케이스 시퀀스
+
+```
+User → RedeemController → RedeemService.claim()
+  1. 코드 정규화 (trim → NFKC → uppercase → 특수문자 제거)
+  2. 코드 검증 (8~64자, A-Z0-9)
+  3. 해시 조회 (SHA-256)
+  4. 코드/캠페인 상태 확인
+  5. 원자적 카운터 증가 (코드, 캠페인, 사용자별)
+  6. LicenseService.issueLicenseForRedeem() 호출
+  7. 감사 로그 기록
+  ※ @Transactional - 실패 시 전체 롤백
+```
 
 ---
 
