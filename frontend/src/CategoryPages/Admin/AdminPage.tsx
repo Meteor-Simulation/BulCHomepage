@@ -1209,7 +1209,7 @@ const AdminPage: React.FC = () => {
 
   return (
     <>
-      <Header logoText="METEOR" />
+      <Header logoText="BUL:C" />
       <div className="admin-container">
         <div className="admin-content">
           <h1 className="admin-title">관리자 페이지</h1>

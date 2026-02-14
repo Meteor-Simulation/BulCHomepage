@@ -1820,7 +1820,7 @@ const MyPage: React.FC = () => {
 
   return (
     <>
-      <Header logoText="BULC" hideUserMenu={true} />
+      <Header logoText="BUL:C" hideUserMenu={true} />
       <div className="mypage-container">
         <div className="mypage-layout">
           {/* 상단 영역 */}

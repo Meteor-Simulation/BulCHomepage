@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = ({
   contactLabel = '문의하기',
   logoLink = '/',
   onLogoClick,
-  logoText = 'METEOR',
+  logoText = 'BUL:C',
   hideUserMenu = false
 }) => {
   const navigate = useNavigate();
