@@ -40,6 +40,9 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed-origins:}")
+    private String corsAllowedOrigins;
+
     /**
      * OAuth 2.0 엔드포인트용 SecurityFilterChain.
      * 세션 기반 인증을 허용하여 브라우저 쿠키를 통한 자동 로그인 지원.
@@ -122,7 +125,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*", "http://192.168.*.*:*"));
+
+        List<String> patterns = new java.util.ArrayList<>(List.of(
+                "http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*", "http://192.168.*.*:*"
+        ));
+        if (corsAllowedOrigins != null && !corsAllowedOrigins.isBlank()) {
+            for (String origin : corsAllowedOrigins.split(",")) {
+                patterns.add(origin.trim());
+            }
+        }
+        configuration.setAllowedOriginPatterns(patterns);
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
