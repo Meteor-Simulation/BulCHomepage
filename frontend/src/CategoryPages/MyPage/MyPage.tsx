@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,6 +11,8 @@ import './MyPage.css';
 
 // 메뉴 타입 정의
 type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'redeem' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions' | 'admin-redeem';
+
+const VALID_MENU_SECTIONS: MenuSection[] = ['profile', 'account', 'subscription', 'payment', 'redeem', 'admin-users', 'admin-payments', 'admin-products', 'admin-licenses', 'admin-promotions', 'admin-redeem'];
 
 // 관리자용 인터페이스
 interface AdminUser {
@@ -290,8 +292,14 @@ const MyPage: React.FC = () => {
   // 로그인 모달
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // 사이드바 메뉴 상태
-  const [activeMenu, setActiveMenu] = useState<MenuSection>('profile');
+  // URL query parameter로 초기 탭 설정
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [activeMenu, setActiveMenu] = useState<MenuSection>(
+    initialTab && VALID_MENU_SECTIONS.includes(initialTab as MenuSection)
+      ? (initialTab as MenuSection)
+      : 'profile'
+  );
 
   // 관리자 데이터 상태
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
@@ -369,6 +377,12 @@ const MyPage: React.FC = () => {
       navigate('/error', { state: { errorCode: 401 } });
     }
   }, [isAuthReady, isLoggedIn, navigate]);
+
+  // 탭 변경 시 URL query parameter 동기화
+  const handleMenuChange = (menu: MenuSection) => {
+    setActiveMenu(menu);
+    setSearchParams(menu === 'profile' ? {} : { tab: menu }, { replace: true });
+  };
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -1843,13 +1857,13 @@ const MyPage: React.FC = () => {
                 <div className="menu-children">
                   <button
                     className={`menu-child ${activeMenu === 'profile' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('profile')}
+                    onClick={() => handleMenuChange('profile')}
                   >
                     {t('myPage.menu.profile')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'account' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('account')}
+                    onClick={() => handleMenuChange('account')}
                   >
                     {t('myPage.menu.account')}
                   </button>
@@ -1867,19 +1881,19 @@ const MyPage: React.FC = () => {
                 <div className="menu-children">
                   <button
                     className={`menu-child ${activeMenu === 'subscription' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('subscription')}
+                    onClick={() => handleMenuChange('subscription')}
                   >
                     {t('myPage.menu.subscription')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'payment' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('payment')}
+                    onClick={() => handleMenuChange('payment')}
                   >
                     {t('myPage.menu.payment')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'redeem' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('redeem')}
+                    onClick={() => handleMenuChange('redeem')}
                   >
                     리딤 코드 등록
                   </button>
@@ -1899,37 +1913,37 @@ const MyPage: React.FC = () => {
                 <div className="menu-children">
                   <button
                     className={`menu-child ${activeMenu === 'admin-users' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-users')}
+                    onClick={() => handleMenuChange('admin-users')}
                   >
                     {t('myPage.menu.adminUsers')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'admin-payments' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-payments')}
+                    onClick={() => handleMenuChange('admin-payments')}
                   >
                     {t('myPage.menu.adminPayments')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'admin-products' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-products')}
+                    onClick={() => handleMenuChange('admin-products')}
                   >
                     {t('myPage.menu.adminProducts')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-licenses')}
+                    onClick={() => handleMenuChange('admin-licenses')}
                   >
                     {t('myPage.menu.adminLicenses')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-promotions')}
+                    onClick={() => handleMenuChange('admin-promotions')}
                   >
                     {t('myPage.menu.adminPromotions')}
                   </button>
                   <button
                     className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`}
-                    onClick={() => setActiveMenu('admin-redeem')}
+                    onClick={() => handleMenuChange('admin-redeem')}
                   >
                     {t('myPage.menu.adminRedeem')}
                   </button>
