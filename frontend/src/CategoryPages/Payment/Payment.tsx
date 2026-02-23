@@ -318,7 +318,6 @@ const PaymentPage: React.FC = () => {
       });
     } catch (error) {
       if (error instanceof Error && error.message.includes('USER_CANCEL')) {
-        console.log('사용자가 결제를 취소했습니다.');
         return;
       }
       console.error('결제 요청 오류:', error);
