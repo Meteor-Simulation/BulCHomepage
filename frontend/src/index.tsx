@@ -15,7 +15,6 @@ import PaymentPage from './CategoryPages/Payment/Payment';
 import PaymentSuccess from './CategoryPages/Payment/PaymentSuccess';
 import PaymentFail from './CategoryPages/Payment/PaymentFail';
 import MyPage from './CategoryPages/MyPage/MyPage';
-import AdminPage from './CategoryPages/Admin/AdminPage';
 import DownloadPage from './CategoryPages/Download/Download';
 import OAuthCallback from './pages/OAuthCallback';
 import OAuthSetupPassword from './pages/OAuthSetupPassword';
@@ -59,7 +58,6 @@ const App: React.FC = () => {
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/fail" element={<PaymentFail />} />
             <Route path="/mypage" element={<MyPage />} />
-            <Route path="/admin" element={<AdminPage />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="/oauth/setup-password" element={<OAuthSetupPassword />} />
             <Route path="/download" element={<DownloadPage />} />
