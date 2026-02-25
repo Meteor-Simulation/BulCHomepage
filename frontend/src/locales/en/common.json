@@ -218,6 +218,18 @@
           "ASET+RSET auto-analysis report"
         ]
       },
+      "student": {
+        "name": "BUL:C Student",
+        "desc": "Student verification required",
+        "button": "Contact Us",
+        "features": [
+          "CPU-based analysis",
+          "Basic library (Apartment, Officetel)",
+          "AI floor plan auto-design",
+          "EVAC analysis (Collision, Social Force, Multi-floor)",
+          "ASET+RSET auto-analysis report"
+        ]
+      },
       "pro": {
         "features": [
           "GPU-accelerated analysis",
