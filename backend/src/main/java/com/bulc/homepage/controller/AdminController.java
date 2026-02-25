@@ -181,6 +181,7 @@ public class AdminController {
 
         List<ProductResponse> products = productRepository.findAll().stream()
                 .map(product -> new ProductResponse(
+                        product.getId() != null ? product.getId().toString() : null,
                         product.getCode(),
                         product.getName(),
                         product.getDescription(),
@@ -207,7 +208,7 @@ public class AdminController {
         if (request.name() == null || request.name().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "상품명은 필수입니다."));
         }
-        if (productRepository.existsById(request.code())) {
+        if (productRepository.findByCode(request.code()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "이미 존재하는 상품 코드입니다."));
         }
 
@@ -220,6 +221,7 @@ public class AdminController {
 
         Product saved = productRepository.save(product);
         return ResponseEntity.ok(new ProductResponse(
+                saved.getId() != null ? saved.getId().toString() : null,
                 saved.getCode(),
                 saved.getName(),
                 saved.getDescription(),
@@ -237,7 +239,7 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
-        return productRepository.findById(code)
+        return productRepository.findByCode(code)
                 .map(product -> {
                     if (request.name() != null && !request.name().isBlank()) {
                         product.setName(request.name());
@@ -250,6 +252,7 @@ public class AdminController {
                     }
                     Product saved = productRepository.save(product);
                     return ResponseEntity.ok(new ProductResponse(
+                            saved.getId() != null ? saved.getId().toString() : null,
                             saved.getCode(),
                             saved.getName(),
                             saved.getDescription(),
@@ -269,7 +272,7 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
-        return productRepository.findById(code)
+        return productRepository.findByCode(code)
                 .map(product -> {
                     product.setIsActive(false);
                     productRepository.save(product);
@@ -287,11 +290,12 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
-        return productRepository.findById(code)
+        return productRepository.findByCode(code)
                 .map(product -> {
                     product.setIsActive(!product.getIsActive());
                     Product saved = productRepository.save(product);
                     return ResponseEntity.ok(new ProductResponse(
+                            saved.getId() != null ? saved.getId().toString() : null,
                             saved.getCode(),
                             saved.getName(),
                             saved.getDescription(),
@@ -345,7 +349,7 @@ public class AdminController {
         if (request.price() == null || request.price() < 0) {
             return ResponseEntity.badRequest().body(Map.of("message", "가격은 0 이상이어야 합니다."));
         }
-        if (!productRepository.existsById(request.productCode())) {
+        if (productRepository.findByCode(request.productCode()).isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "존재하지 않는 상품 코드입니다."));
         }
 
@@ -680,7 +684,7 @@ public class AdminController {
 
     // DTOs
     public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
-    public record ProductResponse(String code, String name, String description, Boolean isActive, String createdAt) {}
+    public record ProductResponse(String id, String code, String name, String description, Boolean isActive, String createdAt) {}
     public record ProductRequest(String code, String name, String description, Boolean isActive) {}
     public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String createdAt) {}
     public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive) {}

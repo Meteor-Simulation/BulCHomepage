@@ -199,7 +199,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
-      console.log('Attempting login for:', email);
       const response = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -209,9 +208,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log('Response status:', response.status);
       const result = await response.json();
-      console.log('Response data:', result);
 
       if (result.success && result.data) {
         const { accessToken, refreshToken, user: userInfo } = result.data;
@@ -237,10 +234,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 사용자 언어 설정 적용
         applyUserLanguage(userInfo.language);
 
-        console.log('Login successful, user:', userData);
         return { success: true };
       }
-      console.log('Login failed - success:', result.success, 'data:', result.data);
       return { success: false, message: result.message || '로그인에 실패했습니다.' };
     } catch (error) {
       console.error('Login error:', error);

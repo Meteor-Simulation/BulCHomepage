@@ -1,7 +1,7 @@
 export type SubdomainType = 'meteor' | 'bulc' | 'vr';
 
 // 서브도메인이 없을 때 기본 카테고리
-const DEFAULT_CATEGORY: SubdomainType = 'meteor';
+const DEFAULT_CATEGORY: SubdomainType = 'bulc';
 
 /**
  * 현재 접속한 서브도메인을 감지합니다.

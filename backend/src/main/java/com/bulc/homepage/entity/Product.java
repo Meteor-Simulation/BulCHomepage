@@ -3,6 +3,7 @@ package com.bulc.homepage.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "products")
@@ -14,7 +15,10 @@ import java.time.LocalDateTime;
 public class Product {
 
     @Id
-    @Column(nullable = false, length = 3)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false, length = 3, unique = true)
     private String code;
 
     @Column(nullable = false, length = 255)

@@ -9,8 +9,8 @@ const LoginPage: React.FC = () => {
     <div className="app">
       <header className="header visible">
         <div className="header-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <img src="/logo_transparent.png" alt="METEOR" className="header-logo-img" />
-          <span className="header-logo-text">METEOR</span>
+          <img src="/logo_transparent.png" alt="BUL:C" className="header-logo-img" />
+          <span className="header-logo-text">BUL:C</span>
         </div>
         <div className="header-right">
           <button className="login-btn" onClick={() => navigate('/login')}>

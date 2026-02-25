@@ -20,17 +20,18 @@ const CoreValuesSection: React.FC = () => {
   return (
     <section id="core-values" className="bulc-values">
       <div className="bulc-values__container">
-        <div className="bulc-values__header">
-          <h2 className="bulc-values__title">{t('bulc.coreValues.title')}</h2>
-        </div>
+        {t('bulc.coreValues.title') && (
+          <div className="bulc-values__header">
+            <h2 className="bulc-values__title">{t('bulc.coreValues.title')}</h2>
+          </div>
+        )}
 
         <div className="bulc-values__list">
           {/* Value 1: Forensic Accuracy */}
           <div className="bulc-values__item">
             <div className="bulc-values__image-wrap">
-              <div className="bulc-values__image-bg bulc-values__image-bg--blue" />
               <img
-                src="https://picsum.photos/seed/security/600/400"
+                src="/images/bulc/accuracy.webp"
                 alt={t('bulc.coreValues.accuracy.title')}
                 className="bulc-values__image"
               />
@@ -61,9 +62,8 @@ const CoreValuesSection: React.FC = () => {
           {/* Value 2: Unrivaled Speed */}
           <div className="bulc-values__item bulc-values__item--reverse">
             <div className="bulc-values__image-wrap">
-              <div className="bulc-values__image-bg bulc-values__image-bg--orange" />
               <img
-                src="https://picsum.photos/seed/server/600/400"
+                src="/images/bulc/speed.webp"
                 alt={t('bulc.coreValues.speed.title')}
                 className="bulc-values__image"
               />
@@ -90,9 +90,8 @@ const CoreValuesSection: React.FC = () => {
           {/* Value 3: Automation */}
           <div className="bulc-values__item">
             <div className="bulc-values__image-wrap">
-              <div className="bulc-values__image-bg bulc-values__image-bg--slate" />
               <img
-                src="https://picsum.photos/seed/robot/600/400"
+                src="/images/bulc/automation.webp"
                 alt={t('bulc.coreValues.automation.title')}
                 className="bulc-values__image"
               />

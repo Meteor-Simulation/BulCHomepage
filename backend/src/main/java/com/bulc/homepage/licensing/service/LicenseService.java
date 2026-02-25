@@ -325,6 +325,46 @@ public class LicenseService {
         return licenseRepository.save(license);
     }
 
+    /**
+     * 리딤 코드를 통한 라이선스 발급.
+     *
+     * RedeemService에서 코드 검증 완료 후 호출합니다.
+     * sourceType=REDEEM으로 설정되며, sourceOrderId는 null입니다.
+     */
+    @Transactional
+    public License issueLicenseForRedeem(UUID userId, UUID planId, UsageCategory usageCategory) {
+        LicensePlan plan = planRepository.findAvailableById(planId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        String licenseKey = generateLicenseKey();
+
+        Map<String, Object> policySnapshot = plan.toPolicySnapshot();
+        policySnapshot.put("source", "REDEEM");
+
+        Instant now = Instant.now();
+        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
+                ? null
+                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+
+        License license = License.builder()
+                .ownerType(OwnerType.USER)
+                .ownerId(userId)
+                .productId(plan.getProductId())
+                .planId(planId)
+                .licenseType(plan.getLicenseType())
+                .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
+                .validFrom(now)
+                .validUntil(validUntil)
+                .policySnapshot(policySnapshot)
+                .licenseKey(licenseKey)
+                .sourceOrderId(null)
+                .sourceType(LicenseSourceType.REDEEM)
+                .build();
+
+        license.activate();
+        return licenseRepository.save(license);
+    }
+
     // ==========================================
     // 클라이언트 API용 메서드 (Controller에서 호출)
     // ==========================================
@@ -1363,7 +1403,7 @@ public class LicenseService {
 
     /**
      * productCode 또는 productId를 UUID로 변환.
-     * productCode가 있으면 Product 조회 후 Long id를 UUID로 변환.
+     * productCode가 있으면 Product 조회 후 product.getId()를 반환.
      */
     private UUID resolveProductId(ValidateRequest request) {
         if (request.productId() != null) {
@@ -1373,8 +1413,7 @@ public class LicenseService {
             Product product = productRepository.findByCodeAndIsActiveTrue(request.productCode())
                     .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT,
                             "제품을 찾을 수 없습니다: " + request.productCode()));
-            // product code를 기반으로 deterministic UUID 생성
-            return UUID.nameUUIDFromBytes(product.getCode().getBytes());
+            return product.getId();
         }
         // 둘 다 없으면 null (모든 제품 대상 검색)
         return null;
@@ -1388,9 +1427,7 @@ public class LicenseService {
         if (productId == null) {
             return "UNKNOWN";
         }
-        return productRepository.findAll().stream()
-                .filter(p -> UUID.nameUUIDFromBytes(p.getCode().getBytes()).equals(productId))
-                .findFirst()
+        return productRepository.findById(productId)
                 .map(Product::getCode)
                 .orElse("PRODUCT_" + productId.toString().substring(0, 8));
     }

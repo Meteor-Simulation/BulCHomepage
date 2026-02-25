@@ -139,6 +139,21 @@ Billing Module → Internal Service (직접 호출) ─┘
 | GET | `/api/v1/admin/licenses` | 라이선스 검색 (관리자) |
 | GET | `/api/v1/admin/licenses/{id}` | 라이선스 상세 조회 (관리자) |
 
+### Redeem API Endpoints (v0.4.0)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/redeem` | 리딤 코드 등록 (Claim) |
+| GET | `/api/v1/admin/redeem-campaigns` | 리딤 캠페인 목록 |
+| GET | `/api/v1/admin/redeem-campaigns/{id}` | 캠페인 상세 |
+| POST | `/api/v1/admin/redeem-campaigns` | 캠페인 생성 |
+| PUT | `/api/v1/admin/redeem-campaigns/{id}` | 캠페인 수정 |
+| PATCH | `/api/v1/admin/redeem-campaigns/{id}/pause` | 캠페인 일시정지 |
+| PATCH | `/api/v1/admin/redeem-campaigns/{id}/end` | 캠페인 종료 |
+| PATCH | `/api/v1/admin/redeem-campaigns/{id}/resume` | 캠페인 재개 |
+| POST | `/api/v1/admin/redeem-campaigns/codes` | 코드 생성 |
+| GET | `/api/v1/admin/redeem-campaigns/{campaignId}/codes` | 코드 목록 |
+| DELETE | `/api/v1/admin/redeem-campaigns/codes/{codeId}` | 코드 비활성화 |
+
 ### Internal Service Methods (HTTP 미노출)
 ```java
 // Billing 모듈에서 직접 호출

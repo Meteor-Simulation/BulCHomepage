@@ -30,7 +30,9 @@ public class ProductController {
                 .collect(Collectors.toList());
 
         List<ProductResponse> response = products.stream()
-                .map(p -> new ProductResponse(p.getCode(), p.getName(), p.getDescription()))
+                .map(p -> new ProductResponse(
+                        p.getId() != null ? p.getId().toString() : null,
+                        p.getCode(), p.getName(), p.getDescription()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
@@ -61,6 +63,6 @@ public class ProductController {
     }
 
     // Response DTOs
-    public record ProductResponse(String code, String name, String description) {}
+    public record ProductResponse(String id, String code, String name, String description) {}
     public record PricePlanResponse(Long id, String name, String description, Long price, String currency) {}
 }

@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+const ChevronLeft: React.FC<{className?: string}> = ({className}) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+);
+const ChevronRight: React.FC<{className?: string}> = ({className}) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+);
 const BarChart: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
 );
@@ -11,8 +17,30 @@ const PlayCircle: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
 );
 
+const CAROUSEL_IMAGES = [
+  '/images/bulc/report-1.webp',
+];
+
+const AUTOPLAY_INTERVAL = 5000;
+
 const ReportSection: React.FC = () => {
   const { t } = useTranslation();
+  const [current, setCurrent] = useState(0);
+  const total = CAROUSEL_IMAGES.length;
+
+  const goNext = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % total);
+  }, [total]);
+
+  const goPrev = useCallback(() => {
+    setCurrent((prev) => (prev - 1 + total) % total);
+  }, [total]);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    const timer = setInterval(goNext, AUTOPLAY_INTERVAL);
+    return () => clearInterval(timer);
+  }, [total, goNext]);
 
   return (
     <section id="report" className="bulc-report">
@@ -47,94 +75,38 @@ const ReportSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Visual Report Mockup */}
-          <div className="bulc-report__mockup-wrap">
-            <div className="bulc-report__mockup">
-              {/* Window Bar */}
-              <div className="bulc-report__mockup-bar">
-                <div className="bulc-report__mockup-dot bulc-report__mockup-dot--red" />
-                <div className="bulc-report__mockup-dot bulc-report__mockup-dot--yellow" />
-                <div className="bulc-report__mockup-dot bulc-report__mockup-dot--green" />
-                <div className="bulc-report__mockup-bar-title">
-                  Compliance_Report_v2.pdf
-                </div>
-              </div>
-
-              <div className="bulc-report__mockup-body">
-                {/* Header of Report */}
-                <div className="bulc-report__mockup-header">
-                  <div>
-                    <h3 className="bulc-report__mockup-heading">
-                      {t('bulc.report.mockupTitle')}
-                    </h3>
-                    <p className="bulc-report__mockup-meta">
-                      {t('bulc.report.mockupMeta')}
-                    </p>
-                  </div>
-                  <div className="bulc-report__mockup-status">
-                    <span className="bulc-report__mockup-badge">{t('bulc.report.mockupPass')}</span>
-                  </div>
-                </div>
-
-                {/* Report Body */}
-                <div className="bulc-report__mockup-charts">
-                  {/* Bar Chart Mockup */}
-                  <div className="bulc-report__mockup-chart">
-                    <div className="bulc-report__mockup-chart-label">
-                      {t('bulc.report.chartTemp')}
-                    </div>
-                    <div className="bulc-report__mockup-bars">
-                      <div className="bulc-report__bar" style={{ height: '25%', background: '#93c5fd' }} />
-                      <div className="bulc-report__bar" style={{ height: '50%', background: '#60a5fa' }} />
-                      <div className="bulc-report__bar" style={{ height: '50%', background: '#3b82f6' }} />
-                      <div className="bulc-report__bar" style={{ height: '75%', background: '#2563eb' }} />
-                      <div className="bulc-report__bar bulc-report__bar--accent" style={{ height: '100%' }} />
-                    </div>
-                  </div>
-
-                  {/* Donut Chart Mockup */}
-                  <div className="bulc-report__mockup-chart">
-                    <div className="bulc-report__mockup-chart-label">
-                      {t('bulc.report.chartEvac')}
-                    </div>
-                    <div className="bulc-report__mockup-donut-wrap">
-                      <div className="bulc-report__mockup-donut">
-                        <svg className="bulc-report__donut-svg" viewBox="0 0 80 80">
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="36"
-                            fill="none"
-                            stroke="#e2e8f0"
-                            strokeWidth="6"
-                          />
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="36"
-                            fill="none"
-                            stroke="var(--accent)"
-                            strokeWidth="6"
-                            strokeDasharray="220"
-                            strokeDashoffset="45"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <div className="bulc-report__donut-label">80%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fake Text Lines */}
-                <div className="bulc-report__mockup-lines">
-                  <div className="bulc-report__mockup-line" style={{ width: '75%' }} />
-                  <div className="bulc-report__mockup-line" style={{ width: '100%' }} />
-                  <div className="bulc-report__mockup-line" style={{ width: '83%' }} />
-                  <div className="bulc-report__mockup-line" style={{ width: '50%' }} />
-                </div>
-              </div>
+          {/* Image Carousel */}
+          <div className="bulc-report__carousel">
+            <div className="bulc-report__carousel-track">
+              {CAROUSEL_IMAGES.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Report ${i + 1}`}
+                  className={`bulc-report__carousel-img${i === current ? ' bulc-report__carousel-img--active' : ''}`}
+                />
+              ))}
             </div>
+
+            {total > 1 && (
+              <>
+                <button className="bulc-report__carousel-btn bulc-report__carousel-btn--prev" onClick={goPrev}>
+                  <ChevronLeft className="bulc-report__carousel-btn-icon" />
+                </button>
+                <button className="bulc-report__carousel-btn bulc-report__carousel-btn--next" onClick={goNext}>
+                  <ChevronRight className="bulc-report__carousel-btn-icon" />
+                </button>
+                <div className="bulc-report__carousel-dots">
+                  {CAROUSEL_IMAGES.map((_, i) => (
+                    <button
+                      key={i}
+                      className={`bulc-report__carousel-dot${i === current ? ' bulc-report__carousel-dot--active' : ''}`}
+                      onClick={() => setCurrent(i)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

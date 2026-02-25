@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,6 +31,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,6 +41,9 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed-origins:}")
+    private String corsAllowedOrigins;
 
     /**
      * OAuth 2.0 엔드포인트용 SecurityFilterChain.
@@ -51,7 +56,7 @@ public class SecurityConfig {
         http
                 .securityMatcher("/oauth/**")
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(oauthCorsConfigurationSource()))
                 // 세션 기반 인증 허용 (IF_REQUIRED: 필요시에만 세션 생성)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
@@ -96,6 +101,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/language/**").permitAll()
                         // 문의하기 API (공개)
                         .requestMatchers("/api/contact").permitAll()
+                        // 리딤 코드 API (인증 필요)
+                        .requestMatchers("/api/v1/redeem").authenticated()
+                        .requestMatchers("/api/v1/admin/redeem-campaigns/**").authenticated()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
@@ -119,10 +127,37 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * OAuth 2.0 엔드포인트용 CORS 설정.
+     * 데스크탑 앱(BUL:C, METEOR)에서 호출하므로 모든 Origin 허용.
+     */
+    private CorsConfigurationSource oauthCorsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*", "http://192.168.*.*:*"));
+
+        List<String> patterns = new java.util.ArrayList<>(List.of(
+                "http://localhost:*", "http://*.localhost:*", "http://127.0.0.1:*", "http://192.168.*.*:*"
+        ));
+        if (corsAllowedOrigins != null && !corsAllowedOrigins.isBlank()) {
+            for (String origin : corsAllowedOrigins.split(",")) {
+                patterns.add(origin.trim());
+            }
+        }
+        configuration.setAllowedOriginPatterns(patterns);
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

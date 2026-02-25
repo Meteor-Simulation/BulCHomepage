@@ -46,6 +46,13 @@ spring:
             scope: account_email, name, phone_number
             client-name: Kakao
             client-authentication-method: client_secret_post
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${OAUTH2_CALLBACK_BASE_URL:http://localhost:8080}/api/auth/oauth2/callback/google
+            authorization-grant-type: authorization_code
+            scope: profile, email
+            client-name: Google
         provider:
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
@@ -57,6 +64,15 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://www.googleapis.com/oauth2/v4/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
 server:
   port: 8080
@@ -89,9 +105,11 @@ app:
 # Licensing Configuration (v1.1.2)
 bulc:
   licensing:
-    # RS256 개인키 파일 경로 (PKCS#8 PEM 형식)
-    # 운영 환경에서는 반드시 환경변수로 설정
-    # Docker/K8s: /run/secrets/session_token_private_key.pem
+    # RS256 개인키 (PKCS#8 PEM 형식)
+    # 우선순위: private-key-base64 > private-key-path
+    # 방법1: Base64 인코딩된 PEM 문자열 (K8s Secret, AWS SSM 등)
+    private-key-base64: ${LIC_PRIVATE_KEY_BASE64:}
+    # 방법2: PEM 파일 경로 (Docker volume mount 등)
     private-key-path: ${LIC_PRIVATE_KEY_PATH:}
     session-token:
       # sessionToken TTL (분), 기본 15분
@@ -101,6 +119,10 @@ bulc:
     # v0.3.0: Auto-Resolve용 stale 판정 기준 (분)
     # 이 시간 이상 heartbeat 없으면 stale로 간주하여 자동 종료 대상
     stale-threshold-minutes: ${LIC_STALE_THRESHOLD_MINUTES:30}
+
+  # Redeem 코드 설정
+  redeem:
+    code-pepper: ${REDEEM_CODE_PEPPER:dev-redeem-pepper-2024}
 
   # OAuth 2.0 클라이언트 설정
   # 등록된 client_id와 redirect_uri만 허용됩니다.
