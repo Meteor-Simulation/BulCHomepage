@@ -218,6 +218,18 @@
           "ASET+RSET 자동 분석 보고서"
         ]
       },
+      "student": {
+        "name": "BUL:C Student",
+        "desc": "학생 인증 필요",
+        "button": "문의하기",
+        "features": [
+          "CPU 기반 해석",
+          "기본 라이브러리 (아파트, 오피스텔)",
+          "AI 도면인식 자동 설계",
+          "EVAC 해석 (콜리젼, 소셜포스, 다층 모델)",
+          "ASET+RSET 자동 분석 보고서"
+        ]
+      },
       "pro": {
         "features": [
           "GPU 가속 해석",

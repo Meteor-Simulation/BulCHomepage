@@ -1044,8 +1044,8 @@
 /* Card Grid */
 .bulc-price__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
 /* Card */
@@ -1142,6 +1142,30 @@
 .bulc-price__card-btn--free:hover {
   background: #0f172a;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+/* Student Card */
+.bulc-price__card--student {
+  border: 2px dashed #bfdbfe;
+  box-shadow: none;
+}
+
+.bulc-price__card--student:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+}
+
+.bulc-price__card-price--empty {
+  height: 48px;
+}
+
+.bulc-price__card-btn--student {
+  background: #3b82f6;
+}
+
+.bulc-price__card-btn--student:hover {
+  background: #2563eb;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
 }
 
 .bulc-price__card-features {
@@ -1435,6 +1459,10 @@
 
   .bulc-report__layout {
     gap: 40px;
+  }
+
+  .bulc-price__grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
 }

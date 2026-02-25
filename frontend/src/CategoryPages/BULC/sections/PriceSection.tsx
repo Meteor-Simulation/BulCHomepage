@@ -14,6 +14,7 @@ interface PricePlan {
 interface PriceSectionProps {
   onPurchaseClick: () => void;
   onFreeClick?: () => void;
+  onContactClick?: () => void;
   isLoggedIn?: boolean;
 }
 
@@ -24,7 +25,7 @@ const FEATURE_KEYS: Record<string, string> = {
 
 const COMING_SOON_PLANS = ['BUL:C 3D Premium'];
 
-const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, isLoggedIn }) => {
+const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, isLoggedIn }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
@@ -109,6 +110,23 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               </ul>
               <button className="bulc-price__card-btn bulc-price__card-btn--free" onClick={onFreeClick || onPurchaseClick}>
                 {isLoggedIn ? t('download.downloadBtn') : t('bulc.price.free.button')}
+              </button>
+            </div>
+
+            {/* 학생 플랜 */}
+            <div className="bulc-price__card bulc-price__card--student">
+              <div className="bulc-price__card-header">
+                <h3 className="bulc-price__card-name">{t('bulc.price.student.name')}</h3>
+                <p className="bulc-price__card-desc">{t('bulc.price.student.desc')}</p>
+              </div>
+              <div className="bulc-price__card-price bulc-price__card-price--empty" />
+              <ul className="bulc-price__card-features">
+                {(t('bulc.price.student.features', { returnObjects: true }) as string[]).map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+              <button className="bulc-price__card-btn bulc-price__card-btn--student" onClick={onContactClick}>
+                {t('bulc.price.student.button')}
               </button>
             </div>
 
