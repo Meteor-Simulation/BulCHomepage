@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadTossPayments, TossPaymentsInstance } from '@tosspayments/payment-sdk';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
@@ -48,6 +49,8 @@ type PaymentType = 'card' | 'bank' | 'vbank' | null;
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn, isAuthReady } = useAuth();
+  const { language } = useLanguage();
+  const currency = language === 'ko' ? 'KRW' : 'USD';
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const hasAlerted = useRef(false);
 
@@ -156,7 +159,7 @@ const PaymentPage: React.FC = () => {
     const fetchPlans = async () => {
       setIsLoadingPlans(true);
       try {
-        const response = await fetch(`${API_URL}/api/products/${selectedProduct.code}/plans?currency=KRW`);
+        const response = await fetch(`${API_URL}/api/products/${selectedProduct.code}/plans?currency=${currency}`);
         if (response.ok) {
           const data = await response.json();
           setPricePlans(data);
@@ -169,7 +172,7 @@ const PaymentPage: React.FC = () => {
     };
 
     fetchPlans();
-  }, [selectedProduct]);
+  }, [selectedProduct, currency]);
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -220,8 +223,17 @@ const PaymentPage: React.FC = () => {
     setSelectedPlan(null); // 플랜 선택 초기화
   };
 
+  // USD일 때 카드만 허용 → 자동 선택
+  useEffect(() => {
+    if (currency === 'USD') {
+      setSelectedPaymentType('card');
+    }
+  }, [currency]);
+
   // 결제 수단 선택 핸들러 (간소화: 모달 없이 바로 선택)
   const handlePaymentMethodSelect = (type: PaymentType) => {
+    // USD일 때 카드 외 결제 수단 선택 차단
+    if (currency === 'USD' && type !== 'card') return;
     setSelectedPaymentType(type);
   };
 
@@ -315,10 +327,13 @@ const PaymentPage: React.FC = () => {
         ...(selectedPaymentType === 'vbank' && {
           validHours: 24,
         }),
+        ...(currency === 'USD' && {
+          currency: 'USD',
+          useInternationalCardOnly: 'true',
+        }),
       });
     } catch (error) {
       if (error instanceof Error && error.message.includes('USER_CANCEL')) {
-        console.log('사용자가 결제를 취소했습니다.');
         return;
       }
       console.error('결제 요청 오류:', error);
@@ -326,8 +341,11 @@ const PaymentPage: React.FC = () => {
     }
   };
 
-  // 가격 포맷
+  // 가격 포맷 (통화별)
   const formatPrice = (price: number) => {
+    if (currency === 'USD') {
+      return '$' + price.toLocaleString();
+    }
     return price.toLocaleString() + '원';
   };
 
@@ -451,23 +469,31 @@ const PaymentPage: React.FC = () => {
                 <div className="no-selection-message">등록된 요금제가 없습니다.</div>
               ) : (
                 <div className="plans-grid">
-                  {pricePlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedPlan(plan)}
-                    >
-                      <div className="plan-header">
-                        <h3 className="plan-name">{plan.name}</h3>
-                      </div>
-                      <div className="plan-price-row">
-                        <span className="current-price">{formatPrice(plan.price)}</span>
-                        {plan.description && (
-                          <span className="plan-duration">{plan.description}</span>
+                  {pricePlans.map((plan) => {
+                    const isComingSoon = plan.name === 'BUL:C 3D Premium';
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}${isComingSoon ? ' plan-card--coming-soon' : ''}`}
+                        onClick={isComingSoon ? undefined : () => setSelectedPlan(plan)}
+                      >
+                        {isComingSoon && (
+                          <div className="plan-card__overlay">
+                            <span>준비 중인 상품입니다</span>
+                          </div>
                         )}
+                        <div className="plan-header">
+                          <h3 className="plan-name">{plan.name}</h3>
+                        </div>
+                        <div className="plan-price-row">
+                          <span className="current-price">{formatPrice(plan.price)}</span>
+                          {plan.description && (
+                            <span className="plan-duration">{plan.description}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -478,7 +504,7 @@ const PaymentPage: React.FC = () => {
                 <span className="step-number">3</span>
                 결제 수단
               </h2>
-              <div className="payment-methods three-options">
+              <div className={`payment-methods ${currency === 'USD' ? 'one-option' : 'three-options'}`}>
                 <button
                   className={`method-option-btn ${selectedPaymentType === 'card' ? 'selected' : ''}`}
                   onClick={() => handlePaymentMethodSelect('card')}
@@ -490,42 +516,46 @@ const PaymentPage: React.FC = () => {
                     </svg>
                   </div>
                   <div className="method-text">
-                    <span className="method-name">신용/체크카드</span>
-                    <span className="method-description">카드사 선택은 결제창에서</span>
+                    <span className="method-name">{currency === 'USD' ? 'Credit Card' : '신용/체크카드'}</span>
+                    <span className="method-description">{currency === 'USD' ? 'VISA, MASTER, JCB' : '카드사 선택은 결제창에서'}</span>
                   </div>
                 </button>
 
-                <button
-                  className={`method-option-btn ${selectedPaymentType === 'bank' ? 'selected' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('bank')}
-                >
-                  <div className="method-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <path d="M3 9h18M9 21V9"/>
-                    </svg>
-                  </div>
-                  <div className="method-text">
-                    <span className="method-name">계좌이체</span>
-                    <span className="method-description">실시간 계좌이체</span>
-                  </div>
-                </button>
+                {currency !== 'USD' && (
+                  <button
+                    className={`method-option-btn ${selectedPaymentType === 'bank' ? 'selected' : ''}`}
+                    onClick={() => handlePaymentMethodSelect('bank')}
+                  >
+                    <div className="method-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                      </svg>
+                    </div>
+                    <div className="method-text">
+                      <span className="method-name">계좌이체</span>
+                      <span className="method-description">실시간 계좌이체</span>
+                    </div>
+                  </button>
+                )}
 
-                <button
-                  className={`method-option-btn ${selectedPaymentType === 'vbank' ? 'selected' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('vbank')}
-                >
-                  <div className="method-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="4" width="20" height="16" rx="2"/>
-                      <path d="M6 8h.01M6 12h.01M6 16h.01M10 8h8M10 12h8M10 16h8"/>
-                    </svg>
-                  </div>
-                  <div className="method-text">
-                    <span className="method-name">무통장입금</span>
-                    <span className="method-description">가상계좌 발급</span>
-                  </div>
-                </button>
+                {currency !== 'USD' && (
+                  <button
+                    className={`method-option-btn ${selectedPaymentType === 'vbank' ? 'selected' : ''}`}
+                    onClick={() => handlePaymentMethodSelect('vbank')}
+                  >
+                    <div className="method-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M6 8h.01M6 12h.01M6 16h.01M10 8h8M10 12h8M10 16h8"/>
+                      </svg>
+                    </div>
+                    <div className="method-text">
+                      <span className="method-name">무통장입금</span>
+                      <span className="method-description">가상계좌 발급</span>
+                    </div>
+                  </button>
+                )}
               </div>
             </section>
 
@@ -680,51 +710,79 @@ const PaymentPage: React.FC = () => {
               )}
 
               <div className="terms-agreement">
-                <label className="checkbox-label">
+                {/* 전체 동의하기 */}
+                <label className="checkbox-label checkbox-label--all">
                   <input
                     type="checkbox"
                     checked={agreeTermsOfService && agreePrivacy}
                     onChange={(e) => {
-                      if (e.target.checked && !agreeTermsOfService && !agreePrivacy) {
-                        // 체크박스 클릭 시 순차적 모달 표시
-                        setPendingTermsAgreement(true);
-                        setIsTermsModalOpen(true);
-                      } else if (!e.target.checked) {
-                        // 체크 해제 시 모든 동의 취소
+                      if (e.target.checked) {
+                        setAgreeTermsOfService(true);
+                        setAgreePrivacy(true);
+                      } else {
                         setAgreeTermsOfService(false);
                         setAgreePrivacy(false);
                       }
                     }}
                   />
                   <span className="checkmark"></span>
-                  <span className="terms-text">
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                  <span className="terms-label">전체 동의하기</span>
+                </label>
+
+                <div className="terms-divider"></div>
+
+                {/* 이용약관 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreeTermsOfService}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreeTermsOfService) {
                         setIsTermsModalOpen(true);
-                      }}
-                    >
-                      이용약관
-                      {agreeTermsOfService && <span className="agreed-badge">동의</span>}
-                    </button>
-                    {' 및 '}
-                    <button
-                      type="button"
-                      className="terms-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      } else {
+                        setAgreeTermsOfService(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsTermsModalOpen(true);
+                    }}
+                  >
+                    이용약관
+                  </button>
+                </label>
+
+                {/* 개인정보처리방침 동의 */}
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy}
+                    onChange={(e) => {
+                      if (e.target.checked && !agreePrivacy) {
                         setIsPrivacyModalOpen(true);
-                      }}
-                    >
-                      개인정보처리방침
-                      {agreePrivacy && <span className="agreed-badge">동의</span>}
-                    </button>
-                    에 동의합니다
-                  </span>
+                      } else {
+                        setAgreePrivacy(e.target.checked);
+                      }
+                    }}
+                  />
+                  <span className="checkmark"></span>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsPrivacyModalOpen(true);
+                    }}
+                  >
+                    개인정보처리방침
+                  </button>
                 </label>
               </div>
 
@@ -733,7 +791,9 @@ const PaymentPage: React.FC = () => {
                 onClick={handlePayment}
                 disabled={!selectedProduct || !selectedPlan || !agreeTermsOfService || !agreePrivacy}
               >
-                {selectedPlan ? formatPrice(getFinalPrice()) + ' 결제하기' : '상품과 요금제를 선택해주세요'}
+                {selectedPlan
+                  ? formatPrice(getFinalPrice()) + (currency === 'USD' ? ' Pay' : ' 결제하기')
+                  : (currency === 'USD' ? 'Select a product and plan' : '상품과 요금제를 선택해주세요')}
               </button>
 
               <div className="payment-security">

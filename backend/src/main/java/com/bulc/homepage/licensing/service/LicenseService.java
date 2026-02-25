@@ -325,6 +325,46 @@ public class LicenseService {
         return licenseRepository.save(license);
     }
 
+    /**
+     * 리딤 코드를 통한 라이선스 발급.
+     *
+     * RedeemService에서 코드 검증 완료 후 호출합니다.
+     * sourceType=REDEEM으로 설정되며, sourceOrderId는 null입니다.
+     */
+    @Transactional
+    public License issueLicenseForRedeem(UUID userId, UUID planId, UsageCategory usageCategory) {
+        LicensePlan plan = planRepository.findAvailableById(planId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        String licenseKey = generateLicenseKey();
+
+        Map<String, Object> policySnapshot = plan.toPolicySnapshot();
+        policySnapshot.put("source", "REDEEM");
+
+        Instant now = Instant.now();
+        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
+                ? null
+                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+
+        License license = License.builder()
+                .ownerType(OwnerType.USER)
+                .ownerId(userId)
+                .productId(plan.getProductId())
+                .planId(planId)
+                .licenseType(plan.getLicenseType())
+                .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
+                .validFrom(now)
+                .validUntil(validUntil)
+                .policySnapshot(policySnapshot)
+                .licenseKey(licenseKey)
+                .sourceOrderId(null)
+                .sourceType(LicenseSourceType.REDEEM)
+                .build();
+
+        license.activate();
+        return licenseRepository.save(license);
+    }
+
     // ==========================================
     // 클라이언트 API용 메서드 (Controller에서 호출)
     // ==========================================

@@ -389,7 +389,13 @@ public class AuthService {
                 existingUser.setDeactivatedAt(null);
                 user = userRepository.save(existingUser);
             } else {
-                throw new RuntimeException("이미 가입된 이메일입니다.");
+                // 기존 활성 사용자 - 소셜 계정 연동 및 정보 갱신
+                log.info("기존 활성 사용자에 소셜 계정 연동: {}", email);
+                existingUser.setName(request.getName() != null ? request.getName() : existingUser.getName());
+                existingUser.setPhone(request.getPhone() != null ? request.getPhone() : existingUser.getPhone());
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                existingUser.setCreatedAt(java.time.LocalDateTime.now());
+                user = userRepository.save(existingUser);
             }
         } else {
             // 신규 사용자 생성

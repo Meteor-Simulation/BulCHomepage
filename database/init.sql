@@ -123,6 +123,10 @@ INSERT INTO users (id, email, password_hash, roles_code, name) VALUES
     ('00000000-0000-0000-0000-000000000005', 'laplace@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '황지인'),
     ('00000000-0000-0000-0000-000000000006', 'qogkstj02@msimul.com', '$2a$10$xbdkjM61f.0H67Ag3wOO0enQf/VbKtEFYlgWAmcqlnIedcZFrKpP6', '001', '배한서');
 
+-- 일반 사용자 계정
+INSERT INTO users (id, email, password_hash, roles_code, name, phone) VALUES
+    ('00000000-0000-0000-0000-000000000007', 'wndnjs6455@naver.com', '$2a$10$qmXYi4vpbKx34mCAwErpb.88ybQarAoIK4iec5PlBN107EeBoxEWy', '002', '강주원', '010-2366-6455');
+
 -- =========================================================
 -- 3-1. user_social_accounts (소셜 계정 연동 테이블)
 -- =========================================================
@@ -206,6 +210,7 @@ CREATE TABLE price_plans (
     description     VARCHAR(100) NULL,
     price           DECIMAL(18,2) NOT NULL,
     currency        VARCHAR(10) NOT NULL DEFAULT 'KRW',
+    license_plan_id UUID NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -215,13 +220,16 @@ CREATE TABLE price_plans (
 
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
 COMMENT ON COLUMN price_plans.description IS '요금제 설명 (예: 1년, 6개월 등)';
+COMMENT ON COLUMN price_plans.license_plan_id IS '연결된 라이선스 플랜 ID (결제 완료 시 해당 플랜으로 라이선스 발급)';
 
--- 기본 요금제 데이터
+-- 기본 요금제 데이터 (license_plan_id는 license_plans 테이블 생성 후 업데이트)
 INSERT INTO price_plans (product_code, name, description, price, currency) VALUES
     ('001', 'BUL:C PRO', '1년/365일', 4000000, 'KRW'),
     ('001', 'BUL:C PRO', '1년/365일', 2700, 'USD'),
-    ('001', 'BUL:C 3D Premium', '1년/365일', 5100000, 'KRW'),
-    ('001', 'BUL:C 3D Premium', '1년/365일', 3500, 'USD');
+    ('001', 'BUL:C 3D Premium', '1년/365일', 6000000, 'KRW'),
+    ('001', 'BUL:C 3D Premium', '1년/365일', 4000, 'USD');
+
+-- price_plans와 license_plans 연결 (별도 UPDATE 쿼리로 처리 - 테이블 생성 순서 때문)
 
 -- =========================================================
 -- 5-2. promotions (프로모션/쿠폰 테이블)
@@ -571,6 +579,19 @@ CREATE TABLE license_plan_entitlements (
 COMMENT ON TABLE license_plan_entitlements IS '플랜별 활성화 기능 목록';
 COMMENT ON COLUMN license_plan_entitlements.entitlement_key IS '기능 식별자 (core-simulation, advanced-visualization 등)';
 
+-- 기본 라이선스 플랜 데이터
+INSERT INTO license_plans (id, product_id, code, name, description, license_type, duration_days, grace_days, max_activations, max_concurrent_sessions, allow_offline_days) VALUES
+    ('c3d4e5f6-a7b8-4c5d-0e1f-2a3b4c5d6e7f', 'a0000000-0000-0000-0000-000000000001', 'BULC-TRIAL-14D', 'BUL:C 무료 체험 14일', '회원가입 시 자동 지급되는 14일 무료 체험 라이선스', 'TRIAL', 14, 0, 3, 2, 0),
+    ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'a0000000-0000-0000-0000-000000000001', 'BULC-PRO-1Y', 'BUL:C PRO 1년', 'BUL:C PRO 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7),
+    ('b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'a0000000-0000-0000-0000-000000000001', 'BULC-3D-PREMIUM-1Y', 'BUL:C 3D Premium 1년', 'BUL:C 3D Premium 버전 1년 구독 라이선스', 'SUBSCRIPTION', 365, 7, 3, 1, 7);
+
+-- 라이선스 플랜 기능 권한 데이터
+INSERT INTO license_plan_entitlements (id, plan_id, entitlement_key) VALUES
+    (uuid_generate_v4(), 'c3d4e5f6-a7b8-4c5d-0e1f-2a3b4c5d6e7f', 'core-simulation'),
+    (uuid_generate_v4(), 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'core-simulation'),
+    (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', 'core-simulation'),
+    (uuid_generate_v4(), 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e', '3d-visualization');
+
 -- =========================================================
 -- 14. licenses (라이선스 테이블)
 -- =========================================================
@@ -589,6 +610,8 @@ CREATE TABLE licenses (
     policy_snapshot JSONB NULL,
     license_key     VARCHAR(50) UNIQUE,
     source_order_id UUID NULL,
+    source_type     VARCHAR(20) NULL,
+    source_redeem_id UUID NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -644,6 +667,94 @@ CREATE TABLE revoked_offline_tokens (
 );
 
 COMMENT ON TABLE revoked_offline_tokens IS '무효화된 오프라인 토큰 목록 (탈취 대응)';
+
+-- =========================================================
+-- 17. redeem_campaigns (리딤 캠페인 테이블)
+-- =========================================================
+CREATE TABLE redeem_campaigns (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            VARCHAR(200) NOT NULL,
+    description     TEXT NULL,
+    product_id      UUID NOT NULL,
+    license_plan_id UUID NOT NULL,
+    usage_category  VARCHAR(30) NOT NULL DEFAULT 'COMMERCIAL',
+    seat_limit      INT NULL,
+    seats_used      INT NOT NULL DEFAULT 0,
+    per_user_limit  INT NOT NULL DEFAULT 1,
+    status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    valid_from      TIMESTAMP NULL,
+    valid_until     TIMESTAMP NULL,
+    created_by      UUID NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_redeem_campaigns_product FOREIGN KEY (product_id) REFERENCES products(id),
+    CONSTRAINT fk_redeem_campaigns_plan FOREIGN KEY (license_plan_id) REFERENCES license_plans(id),
+    CONSTRAINT fk_redeem_campaigns_creator FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+COMMENT ON TABLE redeem_campaigns IS '리딤 캠페인 (코드 발급 단위)';
+COMMENT ON COLUMN redeem_campaigns.seat_limit IS 'NULL이면 무제한';
+COMMENT ON COLUMN redeem_campaigns.status IS 'ACTIVE, PAUSED, ENDED';
+
+-- =========================================================
+-- 18. redeem_codes (리딤 코드 테이블)
+-- =========================================================
+CREATE TABLE redeem_codes (
+    id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    campaign_id          UUID NOT NULL,
+    code_hash            VARCHAR(64) NOT NULL UNIQUE,
+    code_type            VARCHAR(10) NOT NULL DEFAULT 'RANDOM',
+    max_redemptions      INT NOT NULL DEFAULT 1,
+    current_redemptions  INT NOT NULL DEFAULT 0,
+    is_active            BOOLEAN NOT NULL DEFAULT TRUE,
+    expires_at           TIMESTAMP NULL,
+    created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_redeem_codes_campaign FOREIGN KEY (campaign_id) REFERENCES redeem_campaigns(id) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE redeem_codes IS '리딤 코드 (해시만 저장)';
+COMMENT ON COLUMN redeem_codes.code_hash IS 'SHA-256(pepper + ":" + normalizedCode) hex';
+COMMENT ON COLUMN redeem_codes.code_type IS 'RANDOM: 자동 생성, CUSTOM: 관리자 지정';
+
+-- =========================================================
+-- 19. redeem_redemptions (리딤 감사 로그 테이블)
+-- =========================================================
+CREATE TABLE redeem_redemptions (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code_id     UUID NOT NULL,
+    campaign_id UUID NOT NULL,
+    user_id     UUID NOT NULL,
+    license_id  UUID NULL,
+    redeemed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address  VARCHAR(45) NULL,
+    user_agent  VARCHAR(500) NULL,
+
+    CONSTRAINT fk_redeem_redemptions_code FOREIGN KEY (code_id) REFERENCES redeem_codes(id),
+    CONSTRAINT fk_redeem_redemptions_campaign FOREIGN KEY (campaign_id) REFERENCES redeem_campaigns(id),
+    CONSTRAINT fk_redeem_redemptions_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_redeem_redemptions_license FOREIGN KEY (license_id) REFERENCES licenses(id)
+);
+
+COMMENT ON TABLE redeem_redemptions IS '리딤 감사/추적 로그';
+
+-- =========================================================
+-- 20. redeem_user_campaign_counters (사용자별 캠페인 카운터)
+-- =========================================================
+CREATE TABLE redeem_user_campaign_counters (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id     UUID NOT NULL,
+    campaign_id UUID NOT NULL,
+    count       INT NOT NULL DEFAULT 0,
+
+    CONSTRAINT uq_user_campaign UNIQUE (user_id, campaign_id),
+    CONSTRAINT fk_redeem_counters_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_redeem_counters_campaign FOREIGN KEY (campaign_id) REFERENCES redeem_campaigns(id)
+);
+
+COMMENT ON TABLE redeem_user_campaign_counters IS '사용자별 캠페인 사용 횟수 (per_user_limit 원자 enforce)';
 
 -- =========================================================
 -- 인덱스 정의
@@ -731,6 +842,24 @@ CREATE INDEX idx_activations_last_seen ON license_activations(last_seen_at);
 CREATE INDEX idx_revoked_tokens_license ON revoked_offline_tokens(license_id);
 CREATE INDEX idx_revoked_tokens_hash ON revoked_offline_tokens(token_hash);
 
+-- redeem_campaigns
+CREATE INDEX idx_redeem_campaigns_status ON redeem_campaigns(status);
+CREATE INDEX idx_redeem_campaigns_product ON redeem_campaigns(product_id);
+
+-- redeem_codes
+CREATE INDEX idx_redeem_codes_campaign ON redeem_codes(campaign_id);
+CREATE INDEX idx_redeem_codes_hash ON redeem_codes(code_hash);
+
+-- redeem_redemptions
+CREATE INDEX idx_redeem_redemptions_code ON redeem_redemptions(code_id);
+CREATE INDEX idx_redeem_redemptions_campaign ON redeem_redemptions(campaign_id);
+CREATE INDEX idx_redeem_redemptions_user ON redeem_redemptions(user_id);
+CREATE INDEX idx_redeem_redemptions_user_campaign ON redeem_redemptions(user_id, campaign_id);
+
+-- redeem_user_campaign_counters
+CREATE INDEX idx_redeem_counters_user ON redeem_user_campaign_counters(user_id);
+CREATE INDEX idx_redeem_counters_campaign ON redeem_user_campaign_counters(campaign_id);
+
 -- =========================================================
 -- updated_at 자동 갱신 트리거
 -- =========================================================
@@ -771,3 +900,16 @@ CREATE TRIGGER update_licenses_updated_at BEFORE UPDATE ON licenses
 
 CREATE TRIGGER update_license_activations_updated_at BEFORE UPDATE ON license_activations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_redeem_campaigns_updated_at BEFORE UPDATE ON redeem_campaigns
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_redeem_codes_updated_at BEFORE UPDATE ON redeem_codes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================
+-- 마지막 단계: price_plans ↔ license_plans 연결
+-- (테이블 생성 순서 때문에 맨 마지막에 실행)
+-- =========================================================
+UPDATE price_plans SET license_plan_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' WHERE name = 'BUL:C PRO';
+UPDATE price_plans SET license_plan_id = 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e' WHERE name = 'BUL:C 3D Premium';

@@ -6,6 +6,7 @@ import './PaymentResult.css';
 interface PaymentResult {
   orderId: string;
   amount: number;
+  currency: string;
   paymentKey: string;
   orderName?: string;
   licenseKey?: string;
@@ -16,6 +17,13 @@ interface PaymentResult {
   accountNumber?: string;
   dueDate?: string;
 }
+
+const formatAmount = (amount: number, currency: string) => {
+  if (currency === 'USD') {
+    return '$' + amount.toLocaleString();
+  }
+  return amount.toLocaleString() + '원';
+};
 
 const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +55,7 @@ const PaymentSuccess: React.FC = () => {
         setPaymentResult({
           orderId,
           amount: parseInt(amount),
+          currency: 'KRW',
           paymentKey,
         });
         setIsProcessing(false);
@@ -92,6 +101,7 @@ const PaymentSuccess: React.FC = () => {
         setPaymentResult({
           orderId,
           amount: parseInt(amount),
+          currency: result.currency || 'KRW',
           paymentKey,
           orderName: result.orderName,
           licenseKey: result.licenseKey,
@@ -195,7 +205,7 @@ const PaymentSuccess: React.FC = () => {
               </div>
               <div className="detail-row">
                 <span className="label">입금 금액</span>
-                <span className="value highlight">{paymentResult.amount.toLocaleString()}원</span>
+                <span className="value highlight">{formatAmount(paymentResult.amount, paymentResult.currency)}</span>
               </div>
               {paymentResult.dueDate && (
                 <div className="detail-row">
@@ -248,7 +258,7 @@ const PaymentSuccess: React.FC = () => {
               </div>
               <div className="detail-row">
                 <span className="label">결제금액</span>
-                <span className="value">{paymentResult.amount.toLocaleString()}원</span>
+                <span className="value">{formatAmount(paymentResult.amount, paymentResult.currency)}</span>
               </div>
               {paymentResult.licenseKey && (
                 <div className="detail-row license-key">

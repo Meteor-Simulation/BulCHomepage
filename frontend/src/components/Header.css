@@ -197,6 +197,43 @@
 }
 
 /* ========================================
+   HEADER TRIAL BADGE
+======================================== */
+.header-trial-badge {
+  padding: 5px 12px;
+  background: var(--accent, #C4320A);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 50px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* ========================================
+   HEADER SIGNUP BUTTON
+======================================== */
+.header-signup-btn {
+  padding: 8px 16px;
+  border: 1.5px solid var(--accent, #C4320A);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent, #C4320A);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.3s ease;
+}
+
+.header-signup-btn:hover {
+  background: var(--accent, #C4320A);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* ========================================
    USER MENU DROPDOWN
 ======================================== */
 .user-menu-container {
@@ -334,7 +371,7 @@
 ======================================== */
 .floating-contact-btn {
   position: fixed;
-  bottom: 100px;
+  bottom: 170px;
   right: 30px;
   display: flex;
   align-items: center;
@@ -478,6 +515,16 @@
     padding: 8px;
   }
 
+  .header-trial-badge {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .header-signup-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
   .header-action-icon {
     width: 24px;
     height: 24px;
@@ -534,7 +581,7 @@
   .floating-contact-btn {
     padding: 16px;
     border-radius: 50%;
-    bottom: 90px;
+    bottom: 160px;
     right: 20px;
   }
 
@@ -582,7 +629,7 @@
 
   .floating-contact-btn {
     padding: 14px;
-    bottom: 80px;
+    bottom: 150px;
     right: 16px;
   }
 

@@ -78,6 +78,13 @@ public class License {
     @Column(name = "source_order_id")
     private UUID sourceOrderId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_type", length = 20)
+    private LicenseSourceType sourceType;
+
+    @Column(name = "source_redeem_id")
+    private UUID sourceRedeemId;
+
     // === Audit ===
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -94,7 +101,8 @@ public class License {
     private License(OwnerType ownerType, UUID ownerId, UUID productId, UUID planId,
                     LicenseType licenseType, UsageCategory usageCategory,
                     Instant validFrom, Instant validUntil,
-                    Map<String, Object> policySnapshot, String licenseKey, UUID sourceOrderId) {
+                    Map<String, Object> policySnapshot, String licenseKey, UUID sourceOrderId,
+                    LicenseSourceType sourceType, UUID sourceRedeemId) {
         this.ownerType = ownerType;
         this.ownerId = ownerId;
         this.productId = productId;
@@ -108,6 +116,8 @@ public class License {
         this.policySnapshot = policySnapshot;
         this.licenseKey = licenseKey;
         this.sourceOrderId = sourceOrderId;
+        this.sourceType = sourceType;
+        this.sourceRedeemId = sourceRedeemId;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }

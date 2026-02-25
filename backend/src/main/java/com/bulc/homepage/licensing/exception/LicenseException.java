@@ -48,7 +48,20 @@ public class LicenseException extends RuntimeException {
         ACTIVATION_DEACTIVATED("활성화가 다른 기기에 의해 비활성화되었습니다. 재인증이 필요합니다"),
 
         // v0.3.0: Auto-Resolve 통합 에러 코드
-        ALL_LICENSES_FULL("사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요");
+        ALL_LICENSES_FULL("사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요"),
+
+        // Redeem 관련 에러 코드
+        REDEEM_CODE_INVALID("유효하지 않은 리딤 코드 형식입니다"),
+        REDEEM_CODE_NOT_FOUND("리딤 코드를 찾을 수 없습니다"),
+        REDEEM_CODE_EXPIRED("만료된 리딤 코드입니다"),
+        REDEEM_CODE_DISABLED("비활성화된 리딤 코드입니다"),
+        REDEEM_CODE_DEPLETED("사용 횟수가 소진된 리딤 코드입니다"),
+        REDEEM_CAMPAIGN_FULL("캠페인의 발급 한도에 도달했습니다"),
+        REDEEM_CAMPAIGN_NOT_ACTIVE("캠페인이 활성 상태가 아닙니다"),
+        REDEEM_USER_LIMIT_EXCEEDED("사용자별 한도를 초과했습니다"),
+        REDEEM_CAMPAIGN_NOT_FOUND("캠페인을 찾을 수 없습니다"),
+        REDEEM_CODE_HASH_DUPLICATE("동일한 코드가 이미 존재합니다"),
+        REDEEM_RATE_LIMITED("요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요");
 
         private final String message;
 

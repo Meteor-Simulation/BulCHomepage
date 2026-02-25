@@ -1543,6 +1543,125 @@ Authorization: Bearer <access_token>
 
 ---
 
+## 리딤 코드 API
+
+### 사용자 API
+
+#### POST /api/v1/redeem - 리딤 코드 등록
+
+리딤 코드를 입력하여 라이선스를 발급받습니다.
+
+| 항목 | 내용 |
+|------|------|
+| URL | POST /api/v1/redeem |
+| 인증 | Bearer Token 필수 |
+
+**Request Body**
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| code | String | O | 리딤 코드 (8~64자, 영숫자) |
+
+**Response (200 OK)**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| licenseId | UUID | 발급된 라이선스 ID |
+| licenseKey | String | 라이선스 키 |
+| productName | String | 상품명 |
+| planName | String | 플랜명 |
+| validUntil | Instant | 라이선스 유효 기한 |
+
+**에러 응답**
+| HTTP | 코드 | 설명 |
+|------|------|------|
+| 400 | REDEEM_CODE_INVALID | 코드 형식 오류 |
+| 404 | REDEEM_CODE_NOT_FOUND | 코드 미존재 |
+| 410 | REDEEM_CODE_EXPIRED | 코드 만료 |
+| 410 | REDEEM_CODE_DISABLED | 코드 비활성화 |
+| 409 | REDEEM_CODE_DEPLETED | 코드 사용횟수 소진 |
+| 409 | REDEEM_CAMPAIGN_FULL | 캠페인 한도 초과 |
+| 403 | REDEEM_CAMPAIGN_NOT_ACTIVE | 캠페인 비활성 |
+| 409 | REDEEM_USER_LIMIT_EXCEEDED | 사용자 한도 초과 |
+| 429 | REDEEM_RATE_LIMITED | 요청 빈도 초과 |
+
+---
+
+### 관리자 API (Admin)
+
+모든 엔드포인트: `@PreAuthorize("hasRole('ADMIN')")`
+
+#### GET /api/v1/admin/redeem-campaigns - 캠페인 목록
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| page | int | N | 페이지 번호 |
+| size | int | N | 페이지 크기 |
+| status | String | N | ACTIVE/PAUSED/ENDED |
+
+**Response:** `Page<RedeemCampaignResponse>`
+
+#### GET /api/v1/admin/redeem-campaigns/{id} - 캠페인 상세
+
+**Response:** `RedeemCampaignResponse`
+
+#### POST /api/v1/admin/redeem-campaigns - 캠페인 생성
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| name | String | O | 캠페인명 |
+| description | String | N | 설명 |
+| productId | UUID | O | 상품 ID |
+| licensePlanId | UUID | O | 라이선스 플랜 ID |
+| usageCategory | String | N | 사용 용도 (기본 COMMERCIAL) |
+| seatLimit | Integer | N | 발급 한도 (NULL=무제한) |
+| perUserLimit | int | N | 사용자당 한도 (기본 1) |
+| validFrom | Instant | N | 유효 시작일 |
+| validUntil | Instant | N | 유효 종료일 |
+
+**Response (201 Created):** `RedeemCampaignResponse`
+
+#### PUT /api/v1/admin/redeem-campaigns/{id} - 캠페인 수정
+
+요청/응답: 생성과 동일
+
+#### PATCH /api/v1/admin/redeem-campaigns/{id}/pause - 일시정지
+
+**Response:** 204 No Content
+
+#### PATCH /api/v1/admin/redeem-campaigns/{id}/end - 종료
+
+**Response:** 204 No Content
+
+#### PATCH /api/v1/admin/redeem-campaigns/{id}/resume - 재개
+
+**Response:** 204 No Content
+
+#### POST /api/v1/admin/redeem-campaigns/codes - 코드 생성
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| campaignId | UUID | O | 캠페인 ID |
+| codeType | String | O | RANDOM / CUSTOM |
+| customCode | String | N | CUSTOM 시 코드 |
+| count | int | O | 생성 수량 (1~1000) |
+| maxRedemptions | int | O | 코드당 최대 사용횟수 |
+| expiresAt | Instant | N | 코드 만료일 |
+
+**Response (201 Created):**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| generatedCount | int | 생성된 코드 수 |
+| codes | List&lt;String&gt; | 코드 원문 (1회만 노출) |
+
+#### GET /api/v1/admin/redeem-campaigns/{campaignId}/codes - 코드 목록
+
+**Response:** `Page<RedeemCodeResponse>`
+
+#### DELETE /api/v1/admin/redeem-campaigns/codes/{codeId} - 코드 비활성화
+
+**Response:** 204 No Content
+
+---
+
 ## 10. 프로모션 API (Promotion)
 
 ### 10.1 쿠폰 검증
@@ -1643,6 +1762,17 @@ Authorization: Bearer <access_token>
 | `LICENSE_002` | 라이선스가 만료되었습니다 | 만료된 라이선스 |
 | `LICENSE_003` | 활성 세션 수를 초과했습니다 | 세션 충돌 |
 | `LICENSE_004` | 유효하지 않은 세션입니다 | 세션 검증 실패 |
+| REDEEM_CODE_INVALID | 400 | 유효하지 않은 리딤 코드 형식 |
+| REDEEM_CODE_NOT_FOUND | 404 | 리딤 코드 미존재 |
+| REDEEM_CODE_EXPIRED | 410 | 만료된 리딤 코드 |
+| REDEEM_CODE_DISABLED | 410 | 비활성화된 리딤 코드 |
+| REDEEM_CODE_DEPLETED | 409 | 사용 횟수 소진 |
+| REDEEM_CAMPAIGN_FULL | 409 | 캠페인 한도 초과 |
+| REDEEM_CAMPAIGN_NOT_ACTIVE | 403 | 캠페인 비활성 |
+| REDEEM_USER_LIMIT_EXCEEDED | 409 | 사용자 한도 초과 |
+| REDEEM_CAMPAIGN_NOT_FOUND | 404 | 캠페인 미존재 |
+| REDEEM_CODE_HASH_DUPLICATE | 409 | 중복 코드 |
+| REDEEM_RATE_LIMITED | 429 | 요청 빈도 초과 |
 
 ---
 

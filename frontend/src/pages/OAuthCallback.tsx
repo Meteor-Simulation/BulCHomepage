@@ -10,6 +10,16 @@ const OAuthCallback: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 뒤로가기 방지
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     const processOAuth = async () => {
       const accessToken = searchParams.get('accessToken');
@@ -29,7 +39,7 @@ const OAuthCallback: React.FC = () => {
 
         if (result.success) {
           setStatus('success');
-          setTimeout(() => navigate('/'), 1500);
+          setTimeout(() => navigate('/'), 500);
         } else {
           setStatus('error');
           setErrorMessage(result.message || '로그인 처리 중 오류가 발생했습니다.');

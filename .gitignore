@@ -25,6 +25,7 @@ dist/
 target/
 *.jar
 *.war
+.gradle/
 
 # Node.js
 node_modules/
@@ -44,3 +45,4 @@ Thumbs.db
 
 # Docker 볼륨 데이터 (로컬)
 postgres_data/
+nul

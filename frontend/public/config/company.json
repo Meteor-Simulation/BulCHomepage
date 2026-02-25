@@ -1,8 +1,8 @@
 {
   "company": {
-    "name": "메테오 시뮬레이션",
+    "name": "메테오시뮬레이션",
     "nameEn": "Meteor Simulation",
-    "description": "AI 기반 유체 역학 시뮬레이션과 VR 기술의 결합.\n대한민국 안전 교육의 새로운 표준을 만듭니다."
+    "description": "AI 기반 유체 역학 시뮬레이션 \n대한민국 안전 교육의 새로운 표준을 만듭니다."
   },
   "address": {
     "full": "강원특별자치도 원주시 마재2로 10, 305호(원주미래산업진흥원)",
@@ -13,9 +13,10 @@
     "email": "simul@msimul.com"
   },
   "sns": {
-    "youtube": "",
+    "youtube": "https://www.youtube.com/@SimulationMeteor",
     "instagram": "",
     "facebook": "",
-    "linkedin": ""
+    "linkedin": "",
+    "threads": "https://www.threads.com/@meteorsimulation"
   }
 }
