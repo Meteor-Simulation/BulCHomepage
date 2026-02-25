@@ -30,7 +30,8 @@
       "adminProducts": "Product Management",
       "adminLicenses": "License Management",
       "adminPromotions": "Promotion Management",
-      "adminRedeem": "Redeem Campaigns"
+      "adminRedeem": "Redeem Campaigns",
+      "redeem": "Redeem Code"
     },
     "profile": "Profile",
     "edit": "Edit",

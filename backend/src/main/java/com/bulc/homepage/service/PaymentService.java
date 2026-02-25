@@ -93,6 +93,7 @@ public class PaymentService {
                 result.put("orderId", request.getOrderId());
                 result.put("orderName", responseBody.path("orderName").asText());
                 result.put("amount", request.getAmount());
+                result.put("currency", pricePlan.getCurrency());
                 result.put("paymentStatus", paymentStatus);
 
                 // 가상계좌는 입금 대기 상태 - 웹훅에서 라이선스 발급
@@ -270,6 +271,7 @@ public class PaymentService {
         // P: Pending(대기), C: Completed(완료)
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(request.getAmount()))
+                .currency(pricePlan.getCurrency())
                 .orderName(responseBody.path("orderName").asText())
                 .status(isCompleted ? "C" : "P")  // 가상계좌는 입금 대기 상태
                 .userId(userId)
