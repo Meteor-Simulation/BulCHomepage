@@ -1,8 +1,11 @@
-# Licensing System API Documentation
+# BulC Homepage 라이선스 API 정의서
 
-> **API Base URL:** `/api/v1`
-> **Document Version:** `0.4.0`
-> **Release Target:** `1.0.0`
+| 항목 | 내용 |
+|------|------|
+| 문서 버전 | v1.0 |
+| 작성일 | 2026-02-25 |
+| 프로젝트명 | BulC Homepage |
+| API Base URL | `/api/v1` |
 
 ---
 
@@ -17,6 +20,7 @@
 | v0.2.3 | 2026-01-07 | 토큰 구조 명확화 (sessionToken + offlineToken), 문서 정비 |
 | v0.3.0 | 2026-01-08 | Auto-Resolve + Global Session Kick UX |
 | v0.4.0 | 2026-02-13 | Redeem 코드 시스템 추가 - 캠페인 기반 코드 발급/Claim |
+| v1.0 | 2026-02-25 | 문서 컨벤션 통일, 타 문서 중복 내용 정리 (Data Models → 도메인 설계서/테이블정의서 참조) |
 
 ### v0.4.0 주요 변경사항
 
@@ -74,30 +78,25 @@
 
 ## 개요
 
-BulC Homepage 라이선스 시스템의 REST API 문서입니다.
+BulC Homepage 라이선스 시스템의 REST API 상세 문서입니다.
+
+> **관련 문서:**
+> - 도메인 설계: [라이선스 도메인 설계서](licensing_domain_v1.md)
+> - 전체 API 목록: [05_API_정의서](05_API_정의서.md)
+> - 시스템 아키텍처: [04_시스템_아키텍처](04_시스템_아키텍처.md)
+> - 테이블 정의: [테이블정의서](테이블정의서.md)
 
 ### 아키텍처 원칙
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        External Access                          │
-├─────────────────────────────────────────────────────────────────┤
-│  Client App         │  Admin UI           │  Billing Module     │
-│  (라이선스 검증)      │  (플랜 관리)         │  (내부 호출)         │
-│  [Bearer Token]     │  [Bearer Token]     │  [직접 호출]         │
-└────────┬────────────┴────────┬────────────┴────────┬────────────┘
-         │                     │                     │
-         ▼                     ▼                     ▼
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────┐
-│ User API        │  │ Admin API       │  │ Internal Service    │
-│ (HTTP 노출)     │  │ (HTTP 노출)     │  │ (HTTP 미노출)       │
-├─────────────────┤  ├─────────────────┤  ├─────────────────────┤
-│ GET  /me/licenses│  │ GET  /plans     │  │ issueLicense()      │
-│ POST /validate   │  │ POST /plans     │  │ revokeLicense()     │
-│ POST /heartbeat  │  │ PUT  /plans/:id │  │ suspendLicense()    │
-│ GET  /{id}       │  │ ...             │  │ renewLicense()      │
-└─────────────────┴──┴─────────────────┴──┴─────────────────────┘
-```
+> 전체 시스템 아키텍처는 [04_시스템_아키텍처](04_시스템_아키텍처.md)를 참조하세요.
+
+라이선스 시스템은 세 가지 접근 경로를 제공합니다:
+
+| 접근 경로 | 인증 | 주요 API |
+|-----------|------|---------|
+| **Client App** (라이선스 검증) | Bearer Token | `/me/licenses`, `/validate`, `/heartbeat` |
+| **Admin UI** (플랜/라이선스 관리) | Bearer Token (ADMIN) | `/admin/license-plans`, `/admin/licenses` |
+| **Billing Module** (내부 호출) | 직접 호출 (HTTP 미노출) | `issueLicense()`, `revokeLicense()` 등 |
 
 **핵심 원칙:**
 - **모든 클라이언트 API는 Bearer token 인증 필수** (v0.2.0 변경)
@@ -950,58 +949,8 @@ public void processRenewal(RenewalResult result) {
 
 ## 5. Data Models
 
-### 5.1 License Status
-
-```
-PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
-                ↓
-            SUSPENDED (복구 가능)
-                ↓
-            REVOKED (복구 불가)
-```
-
-| 상태 | 설명 | 검증 결과 |
-|-----|------|----------|
-| PENDING | 발급 대기 (결제 확인 중, 관리자 승인 대기 등) | 실패 |
-| ACTIVE | 정상 사용 가능 | 성공 |
-| EXPIRED_GRACE | 유예 기간 (제한적 사용) | 성공 (경고) |
-| EXPIRED_HARD | 완전 만료 | 실패 |
-| SUSPENDED | 관리자 정지 | 실패 |
-| REVOKED | 회수됨 (환불 등) | 실패 |
-
-**PENDING 상태가 되는 경우:**
-- 무통장 입금 대기 (결제 확인 전)
-- 관리자 승인형 플랜 (기관 구매 프로세스)
-- 비동기 결제 처리 중 (PG 응답 대기)
-
-> **Note:** 일반적인 카드/실시간 결제는 즉시 ACTIVE로 전환됩니다.
-> PENDING은 "결제 완료 전" 또는 "승인 프로세스가 있는 플랜"에서만 사용됩니다.
-
-### 5.2 License Type
-
-| 타입 | 설명 |
-|-----|------|
-| TRIAL | 체험판 (기간 제한, 기능 제한) |
-| SUBSCRIPTION | 구독형 (기간 제한, 갱신 가능) |
-| PERPETUAL | 영구 라이선스 (기간 무제한) |
-
-### 5.3 Usage Category
-
-| 카테고리 | 설명 | 특징 |
-|---------|------|------|
-| PERSONAL | 개인 사용 | 비상업적 용도 |
-| COMMERCIAL | 상업적 사용 | 기업/비즈니스 용도 |
-| EDUCATIONAL | 교육용 | 학교/교육기관 |
-| NFR | 비매품 | 데모/파트너/내부 테스트용 |
-
-### 5.4 Activation Status
-
-| 상태 | 설명 |
-|-----|------|
-| ACTIVE | 활성 상태 |
-| STALE | 장기 미접속 (자동 전환) |
-| DEACTIVATED | 사용자 비활성화 |
-| EXPIRED | 만료됨 |
+> 라이선스 상태 흐름, License Type, Usage Category, Activation Status 등 데이터 모델 상세는
+> [라이선스 도메인 설계서](licensing_domain_v1.md)와 [테이블정의서](테이블정의서.md)를 참조하세요.
 
 ---
 
@@ -1693,7 +1642,7 @@ POST /api/v1/licenses/validate/force
 
 ---
 
-## Appendix A: cURL Examples
+## 부록 A. cURL 예시
 
 ### 내 라이선스 목록 조회
 ```bash
@@ -1748,7 +1697,7 @@ curl -X POST http://localhost:8080/api/v1/admin/license-plans \
 
 ---
 
-## Appendix B: 토큰 상세 스펙 (참조)
+## 부록 B. 토큰 상세 스펙
 
 > **Note:** sessionToken과 offlineToken의 상세 스펙은 **섹션 8. 토큰 구조**를 참조하세요.
 
@@ -1800,7 +1749,7 @@ bulc:
 
 ---
 
-## Appendix C: 개인정보 처리 정책
+## 부록 C. 개인정보 처리 정책
 
 라이선스 시스템에서 수집하는 정보와 처리 방침입니다.
 
@@ -1842,7 +1791,7 @@ bulc:
 
 ---
 
-## Appendix D: 구현 현황
+## 부록 D. 구현 현황
 
 ### M1 - 도메인 레이어 (완료)
 - [x] License Aggregate (Entity, Value Objects)
@@ -1921,7 +1870,7 @@ bulc:
 
 ---
 
-## Appendix E: 구현 파일 구조
+## 부록 E. 구현 파일 구조
 
 ```
 backend/src/main/java/com/bulc/homepage/licensing/
@@ -1997,6 +1946,14 @@ backend/src/main/java/com/bulc/homepage/licensing/
     ├── RedeemCodeHashService.java     # 코드 해시 유틸리티
     └── RedeemRateLimiter.java         # 인메모리 Rate Limiter
 ```
+
+---
+
+## 문서 이력
+
+| 버전 | 작성일 | 변경 내용 |
+|------|--------|----------|
+| v1.0 | 2026-02-25 | 문서 컨벤션 통일 (제목/헤더), Data Models 섹션 정리 (도메인 설계서/테이블정의서 참조), 아키텍처 다이어그램 간소화, 참조 링크 추가 |
 
 ---
 
