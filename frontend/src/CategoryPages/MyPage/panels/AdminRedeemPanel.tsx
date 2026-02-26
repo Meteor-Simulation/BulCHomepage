@@ -31,6 +31,7 @@ interface AdminRedeemPanelProps {
   codeGenerateForm: {
     codeType: 'RANDOM' | 'CUSTOM';
     customCode: string; count: string; maxRedemptions: string; expiresAt: string;
+    allowedEmailDomain: string;
   };
   onOpenCodeGenerateModal: (campaign: RedeemCampaign) => void;
   onCloseCodeGenerateModal: () => void;
@@ -43,6 +44,12 @@ interface AdminRedeemPanelProps {
   onCopyGeneratedCodes: () => void;
   onDownloadCodesAsCsv: () => void;
 }
+
+const isValidDomain = (domain: string): boolean => {
+  if (!domain) return true; // 빈 값은 유효 (제한 없음)
+  const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+  return domainRegex.test(domain);
+};
 
 const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
   isLoading,
@@ -161,6 +168,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                         <th>유형</th>
                         <th>사용횟수</th>
                         <th>활성</th>
+                        <th>도메인 제한</th>
                         <th>만료일</th>
                         <th>생성일</th>
                         <th>관리</th>
@@ -172,6 +180,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                           <td>{code.codeType}</td>
                           <td>{code.currentRedemptions}/{code.maxRedemptions}</td>
                           <td>{code.active ? '활성' : '비활성'}</td>
+                          <td>{code.allowedEmailDomain ? `@${code.allowedEmailDomain}` : '-'}</td>
                           <td>{code.expiresAt ? new Date(code.expiresAt).toLocaleString() : '-'}</td>
                           <td>{new Date(code.createdAt).toLocaleString()}</td>
                           <td>
@@ -339,10 +348,32 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
                 </div>
               </div>
+              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+                <label>이메일 도메인 제한</label>
+                <input type="text" value={codeGenerateForm.allowedEmailDomain}
+                  onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, allowedEmailDomain: e.target.value.toLowerCase().trim() })}
+                  placeholder="예: univ.ac.kr (비워두면 제한 없음)"
+                  style={{
+                    width: '100%', padding: '10px 12px',
+                    border: `1px solid ${codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain) ? '#dc3545' : '#e0e0e0'}`,
+                    borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box',
+                  }} />
+                {codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain) && (
+                  <span style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px' }}>
+                    올바른 도메인 형식이 아닙니다 (예: example.ac.kr)
+                  </span>
+                )}
+                {codeGenerateForm.allowedEmailDomain && isValidDomain(codeGenerateForm.allowedEmailDomain) && (
+                  <span style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                    @{codeGenerateForm.allowedEmailDomain} 이메일만 사용 가능
+                  </span>
+                )}
+              </div>
             </div>
             <div className="delete-modal-footer">
               <button className="cancel-btn" onClick={onCloseCodeGenerateModal}>취소</button>
-              <button className="save-btn" onClick={onGenerateCodes}>생성</button>
+              <button className="save-btn" onClick={onGenerateCodes}
+                disabled={!!(codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain))}>생성</button>
             </div>
           </div>
         </div>
