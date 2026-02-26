@@ -128,7 +128,7 @@ const MyPage: React.FC = () => {
   const [isCodeGenerateModalOpen, setIsCodeGenerateModalOpen] = useState(false);
   const [codeGenerateForm, setCodeGenerateForm] = useState({
     codeType: 'RANDOM' as 'RANDOM' | 'CUSTOM',
-    customCode: '', count: '10', maxRedemptions: '1', expiresAt: '',
+    customCode: '', count: '10', maxRedemptions: '1', expiresAt: '', allowedEmailDomain: '',
   });
   const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
   const [isGeneratedCodesModalOpen, setIsGeneratedCodesModalOpen] = useState(false);
@@ -705,7 +705,7 @@ const MyPage: React.FC = () => {
 
   const openCodeGenerateModal = (campaign: RedeemCampaign) => {
     setSelectedCampaignForCodes(campaign);
-    setCodeGenerateForm({ codeType: 'RANDOM', customCode: '', count: '10', maxRedemptions: '1', expiresAt: '' });
+    setCodeGenerateForm({ codeType: 'RANDOM', customCode: '', count: '10', maxRedemptions: '1', expiresAt: '', allowedEmailDomain: '' });
     setIsCodeGenerateModalOpen(true);
   };
 
@@ -718,6 +718,7 @@ const MyPage: React.FC = () => {
       count: codeGenerateForm.codeType === 'RANDOM' ? parseInt(codeGenerateForm.count) || 1 : 1,
       maxRedemptions: parseInt(codeGenerateForm.maxRedemptions) || 1,
       expiresAt: codeGenerateForm.expiresAt ? new Date(codeGenerateForm.expiresAt).toISOString() : null,
+      allowedEmailDomain: codeGenerateForm.allowedEmailDomain.trim() || null,
     };
     const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes`, {
       method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),

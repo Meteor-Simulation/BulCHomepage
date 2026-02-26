@@ -128,6 +128,7 @@ export interface RedeemCodeItem {
   currentRedemptions: number;
   active: boolean;
   expiresAt: string | null;
+  allowedEmailDomain: string | null;
   createdAt: string;
 }
 
