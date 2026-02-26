@@ -134,7 +134,7 @@ class RedeemAdminServiceTest {
             given(codeRepository.save(any())).willReturn(null);
 
             RedeemCodeGenerateRequest request = new RedeemCodeGenerateRequest(
-                    CAMPAIGN_ID, RedeemCodeType.RANDOM, null, 5, 1, null
+                    CAMPAIGN_ID, RedeemCodeType.RANDOM, null, 5, 1, null, null
             );
 
             RedeemCodeGenerateResponse response = adminService.generateCodes(request);
@@ -155,7 +155,7 @@ class RedeemAdminServiceTest {
             given(codeRepository.save(any())).willReturn(null);
 
             RedeemCodeGenerateRequest request = new RedeemCodeGenerateRequest(
-                    CAMPAIGN_ID, RedeemCodeType.CUSTOM, "MYCODE12", 1, 1, null
+                    CAMPAIGN_ID, RedeemCodeType.CUSTOM, "MYCODE12", 1, 1, null, null
             );
 
             RedeemCodeGenerateResponse response = adminService.generateCodes(request);
@@ -173,7 +173,7 @@ class RedeemAdminServiceTest {
             given(codeRepository.existsByCodeHash("duphash")).willReturn(true);
 
             RedeemCodeGenerateRequest request = new RedeemCodeGenerateRequest(
-                    CAMPAIGN_ID, RedeemCodeType.CUSTOM, "MYCODE12", 1, 1, null
+                    CAMPAIGN_ID, RedeemCodeType.CUSTOM, "MYCODE12", 1, 1, null, null
             );
 
             assertThatThrownBy(() -> adminService.generateCodes(request))

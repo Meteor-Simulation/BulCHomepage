@@ -24,6 +24,8 @@ public record RedeemCodeGenerateRequest(
         @Min(value = 1, message = "최대 사용 횟수는 1 이상이어야 합니다")
         int maxRedemptions,
 
-        Instant expiresAt
+        Instant expiresAt,
+
+        String allowedEmailDomain
 ) {
 }

@@ -709,6 +709,7 @@ CREATE TABLE redeem_codes (
     current_redemptions  INT NOT NULL DEFAULT 0,
     is_active            BOOLEAN NOT NULL DEFAULT TRUE,
     expires_at           TIMESTAMP NULL,
+    allowed_email_domain VARCHAR(255) NULL,
     created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
