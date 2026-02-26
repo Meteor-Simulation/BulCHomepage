@@ -56,6 +56,14 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
       TOSS_SUCCESS_URL: ${TOSS_SUCCESS_URL}
       TOSS_FAIL_URL: ${TOSS_FAIL_URL}
+      # Email (Microsoft Graph)
+      MS_TENANT_ID: ${MS_TENANT_ID}
+      MS_CLIENT_ID: ${MS_CLIENT_ID}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_FROM_ACCOUNTS: ${MAIL_FROM_ACCOUNTS}
+      MAIL_FROM_BILLING: ${MAIL_FROM_BILLING}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO}
     volumes:
       - ./secrets/session_token_private_key.pem:/run/secrets/session_token_private_key.pem:ro
       - ./secrets/session_token_public_key.pem:/run/secrets/session_token_public_key.pem:ro
