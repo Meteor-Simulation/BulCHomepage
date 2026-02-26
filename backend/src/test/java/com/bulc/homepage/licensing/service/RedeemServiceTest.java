@@ -1,11 +1,13 @@
 package com.bulc.homepage.licensing.service;
 
 import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.RedeemClaimResponse;
 import com.bulc.homepage.licensing.exception.LicenseException;
 import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.*;
+import com.bulc.homepage.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,7 @@ class RedeemServiceTest {
     @Mock private LicenseService licenseService;
     @Mock private LicensePlanRepository planRepository;
     @Mock private ProductRepository productRepository;
+    @Mock private UserRepository userRepository;
     @Mock private RedeemCodeHashService hashService;
     @Mock private RedeemRateLimiter rateLimiter;
 
@@ -54,7 +57,7 @@ class RedeemServiceTest {
         redeemService = new RedeemService(
                 codeRepository, campaignRepository, redemptionRepository,
                 counterRepository, licenseService, planRepository,
-                productRepository, hashService, rateLimiter
+                productRepository, userRepository, hashService, rateLimiter
         );
 
         // 기본 mock 설정
@@ -191,6 +194,114 @@ class RedeemServiceTest {
                 .matches(e -> ((LicenseException) e).getErrorCode() == ErrorCode.REDEEM_RATE_LIMITED);
     }
 
+    @Test
+    @DisplayName("이메일 도메인 일치 시 정상 Claim 성공")
+    void claim_emailDomainMatch_success() {
+        // given
+        RedeemCode code = createCodeWithDomain("univ.ac.kr");
+        RedeemCampaign campaign = createCampaign();
+        License license = createLicense();
+        User user = createUser("student@univ.ac.kr");
+
+        given(codeRepository.findByCodeHash(any())).willReturn(Optional.of(code));
+        given(campaignRepository.findById(any())).willReturn(Optional.of(campaign));
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(codeRepository.incrementRedemptionsAtomically(any())).willReturn(1);
+        given(campaignRepository.incrementSeatsUsedAtomically(any())).willReturn(1);
+        given(counterRepository.findByUserIdAndCampaignId(any(), any())).willReturn(Optional.empty());
+        given(counterRepository.save(any())).willReturn(null);
+        given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
+        given(redemptionRepository.save(any())).willReturn(null);
+        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
+
+        // when
+        RedeemClaimResponse response = redeemService.claim(USER_ID, "CODE", "127.0.0.1", null);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.licenseId()).isEqualTo(LICENSE_ID);
+    }
+
+    @Test
+    @DisplayName("이메일 도메인 불일치 시 REDEEM_EMAIL_DOMAIN_MISMATCH + 카운터 미증가")
+    void claim_emailDomainMismatch() {
+        // given
+        RedeemCode code = createCodeWithDomain("univ.ac.kr");
+        RedeemCampaign campaign = createCampaign();
+        User user = createUser("student@other.com");
+
+        given(codeRepository.findByCodeHash(any())).willReturn(Optional.of(code));
+        given(campaignRepository.findById(any())).willReturn(Optional.of(campaign));
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> redeemService.claim(USER_ID, "CODE", "127.0.0.1", null))
+                .isInstanceOf(LicenseException.class)
+                .matches(e -> ((LicenseException) e).getErrorCode() == ErrorCode.REDEEM_EMAIL_DOMAIN_MISMATCH);
+
+        // 카운터 증가가 호출되지 않았는지 확인
+        verify(codeRepository, never()).incrementRedemptionsAtomically(any());
+        verify(campaignRepository, never()).incrementSeatsUsedAtomically(any());
+    }
+
+    @Test
+    @DisplayName("allowed_email_domain이 null이면 기존 동작 유지 (도메인 검증 스킵)")
+    void claim_nullDomain_noValidation() {
+        // given
+        RedeemCode code = createCode(); // allowedEmailDomain = null
+        RedeemCampaign campaign = createCampaign();
+        License license = createLicense();
+
+        given(codeRepository.findByCodeHash(any())).willReturn(Optional.of(code));
+        given(campaignRepository.findById(any())).willReturn(Optional.of(campaign));
+        given(codeRepository.incrementRedemptionsAtomically(any())).willReturn(1);
+        given(campaignRepository.incrementSeatsUsedAtomically(any())).willReturn(1);
+        given(counterRepository.findByUserIdAndCampaignId(any(), any())).willReturn(Optional.empty());
+        given(counterRepository.save(any())).willReturn(null);
+        given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
+        given(redemptionRepository.save(any())).willReturn(null);
+        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
+
+        // when
+        RedeemClaimResponse response = redeemService.claim(USER_ID, "CODE", "127.0.0.1", null);
+
+        // then
+        assertThat(response).isNotNull();
+        // userRepository가 호출되지 않았는지 확인 (도메인 검증 스킵)
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("대소문자 혼합 이메일/도메인 매칭 성공")
+    void claim_caseInsensitiveDomainMatch() {
+        // given
+        RedeemCode code = createCodeWithDomain("UNIV.AC.KR"); // 대문자로 설정
+        RedeemCampaign campaign = createCampaign();
+        License license = createLicense();
+        User user = createUser("Student@Univ.AC.kr"); // 혼합 대소문자
+
+        given(codeRepository.findByCodeHash(any())).willReturn(Optional.of(code));
+        given(campaignRepository.findById(any())).willReturn(Optional.of(campaign));
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(codeRepository.incrementRedemptionsAtomically(any())).willReturn(1);
+        given(campaignRepository.incrementSeatsUsedAtomically(any())).willReturn(1);
+        given(counterRepository.findByUserIdAndCampaignId(any(), any())).willReturn(Optional.empty());
+        given(counterRepository.save(any())).willReturn(null);
+        given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
+        given(redemptionRepository.save(any())).willReturn(null);
+        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
+
+        // when
+        RedeemClaimResponse response = redeemService.claim(USER_ID, "CODE", "127.0.0.1", null);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.licenseId()).isEqualTo(LICENSE_ID);
+    }
+
     // === Helper methods ===
 
     private RedeemCode createCode() {
@@ -202,6 +313,25 @@ class RedeemServiceTest {
                 .build();
         ReflectionTestUtils.setField(code, "id", CODE_ID);
         return code;
+    }
+
+    private RedeemCode createCodeWithDomain(String domain) {
+        RedeemCode code = RedeemCode.builder()
+                .campaignId(CAMPAIGN_ID)
+                .codeHash("somehash")
+                .codeType(RedeemCodeType.RANDOM)
+                .maxRedemptions(1)
+                .allowedEmailDomain(domain)
+                .build();
+        ReflectionTestUtils.setField(code, "id", CODE_ID);
+        return code;
+    }
+
+    private User createUser(String email) {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", USER_ID);
+        ReflectionTestUtils.setField(user, "email", email);
+        return user;
     }
 
     private RedeemCampaign createCampaign() {

@@ -14,6 +14,7 @@ public record RedeemCodeResponse(
         int currentRedemptions,
         boolean active,
         Instant expiresAt,
+        String allowedEmailDomain,
         Instant createdAt
 ) {
     public static RedeemCodeResponse fromEntity(RedeemCode code) {
@@ -25,6 +26,7 @@ public record RedeemCodeResponse(
                 code.getCurrentRedemptions(),
                 code.isActive(),
                 code.getExpiresAt(),
+                code.getAllowedEmailDomain(),
                 code.getCreatedAt()
         );
     }

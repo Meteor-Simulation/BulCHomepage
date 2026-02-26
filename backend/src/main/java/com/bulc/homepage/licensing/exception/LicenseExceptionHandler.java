@@ -46,6 +46,7 @@ public class LicenseExceptionHandler {
                  REDEEM_USER_LIMIT_EXCEEDED, REDEEM_CODE_HASH_DUPLICATE -> HttpStatus.CONFLICT;
             case REDEEM_CAMPAIGN_NOT_ACTIVE -> HttpStatus.BAD_REQUEST;
             case REDEEM_RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
+            case REDEEM_EMAIL_DOMAIN_MISMATCH -> HttpStatus.FORBIDDEN;
         };
     }
 }
