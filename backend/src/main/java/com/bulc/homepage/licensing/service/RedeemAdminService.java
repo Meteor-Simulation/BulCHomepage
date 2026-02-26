@@ -141,6 +141,7 @@ public class RedeemAdminService {
                     .codeType(RedeemCodeType.CUSTOM)
                     .maxRedemptions(request.maxRedemptions())
                     .expiresAt(request.expiresAt())
+                    .allowedEmailDomain(request.allowedEmailDomain())
                     .build();
             codeRepository.save(code);
             rawCodes.add(hashService.formatForDisplay(normalized));
@@ -167,6 +168,7 @@ public class RedeemAdminService {
                         .codeType(RedeemCodeType.RANDOM)
                         .maxRedemptions(request.maxRedemptions())
                         .expiresAt(request.expiresAt())
+                        .allowedEmailDomain(request.allowedEmailDomain())
                         .build();
                 codeRepository.save(code);
                 rawCodes.add(hashService.formatForDisplay(rawCode));

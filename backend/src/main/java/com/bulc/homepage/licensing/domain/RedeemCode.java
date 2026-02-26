@@ -41,6 +41,9 @@ public class RedeemCode {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(name = "allowed_email_domain", length = 255)
+    private String allowedEmailDomain;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -49,7 +52,7 @@ public class RedeemCode {
 
     @Builder
     private RedeemCode(UUID campaignId, String codeHash, RedeemCodeType codeType,
-                       int maxRedemptions, Instant expiresAt) {
+                       int maxRedemptions, Instant expiresAt, String allowedEmailDomain) {
         this.campaignId = campaignId;
         this.codeHash = codeHash;
         this.codeType = codeType != null ? codeType : RedeemCodeType.RANDOM;
@@ -57,6 +60,8 @@ public class RedeemCode {
         this.currentRedemptions = 0;
         this.active = true;
         this.expiresAt = expiresAt;
+        this.allowedEmailDomain = allowedEmailDomain != null
+                ? allowedEmailDomain.toLowerCase().trim() : null;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }

@@ -6,6 +6,7 @@ import com.bulc.homepage.licensing.dto.RedeemClaimResponse;
 import com.bulc.homepage.licensing.exception.LicenseException;
 import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.*;
+import com.bulc.homepage.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class RedeemService {
     private final LicenseService licenseService;
     private final LicensePlanRepository planRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
     private final RedeemCodeHashService hashService;
     private final RedeemRateLimiter rateLimiter;
 
@@ -37,6 +39,7 @@ public class RedeemService {
                          LicenseService licenseService,
                          LicensePlanRepository planRepository,
                          ProductRepository productRepository,
+                         UserRepository userRepository,
                          RedeemCodeHashService hashService,
                          RedeemRateLimiter rateLimiter) {
         this.codeRepository = codeRepository;
@@ -46,6 +49,7 @@ public class RedeemService {
         this.licenseService = licenseService;
         this.planRepository = planRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
         this.hashService = hashService;
         this.rateLimiter = rateLimiter;
     }
@@ -79,6 +83,17 @@ public class RedeemService {
 
         if (!campaign.isAvailable()) {
             throw new LicenseException(ErrorCode.REDEEM_CAMPAIGN_NOT_ACTIVE);
+        }
+
+        // 3.5. 이메일 도메인 검증 (카운터 증가 전)
+        if (code.getAllowedEmailDomain() != null) {
+            String userEmail = userRepository.findById(userId)
+                    .orElseThrow(() -> new LicenseException(ErrorCode.ACCESS_DENIED))
+                    .getEmail();
+            String emailDomain = userEmail.substring(userEmail.lastIndexOf('@') + 1).toLowerCase().trim();
+            if (!emailDomain.equals(code.getAllowedEmailDomain().toLowerCase().trim())) {
+                throw new LicenseException(ErrorCode.REDEEM_EMAIL_DOMAIN_MISMATCH);
+            }
         }
 
         // 4. 원자 코드 사용횟수 증가
