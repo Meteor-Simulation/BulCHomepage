@@ -1,0 +1,134 @@
+/* ========================================
+   EDUCATION CONTACT MODAL
+   교육/연구 라이선스 문의 모달 스타일
+======================================== */
+@import '../styles/modal.css';
+
+.education-contact-modal {
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.education-contact-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.education-contact-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.education-contact-form .education-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.education-contact-form .education-field--full {
+  grid-column: 1 / -1;
+}
+
+.education-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.education-field label .required {
+  color: #dc2626;
+}
+
+.education-field select {
+  padding: 14px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--text);
+  font-size: 15px;
+  font-family: var(--font-main);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  appearance: auto;
+}
+
+.education-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
+}
+
+.education-field select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.education-field textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: var(--font-main);
+}
+
+/* Error & submit row spans full width */
+.education-contact-form .education-form-error {
+  grid-column: 1 / -1;
+}
+
+.education-contact-form .education-form-submit {
+  grid-column: 1 / -1;
+}
+
+/* Success screen */
+.education-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.education-success .success-icon {
+  width: 64px;
+  height: 64px;
+  color: #16a34a;
+  margin-bottom: 16px;
+}
+
+.education-success .success-message {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.education-success .success-sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.education-success .modal-submit-btn {
+  width: auto;
+  padding: 12px 48px;
+}
+
+/* Mobile: single column */
+@media (max-width: 480px) {
+  .education-contact-modal {
+    max-width: none;
+    margin: 16px;
+  }
+
+  .education-contact-form {
+    grid-template-columns: 1fr;
+  }
+
+  .education-field label {
+    font-size: 13px;
+  }
+}

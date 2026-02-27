@@ -155,7 +155,7 @@
       "title": "Seamless 5-Step Workflow",
       "subtitle": "From concept to compliance in record time.",
       "step1": {
-        "title1": "Import",
+        "title1": "Import (Coming Soon)",
         "title2": "Import your site and floor plans directly to start your project right away",
         "desc": "Previously, you had to import drawings to scale, manually trace lines on top, and configure initial settings. Now, with iOS RoomPlan or AI-powered floor plan recognition, spatial data is automatically extracted — so you can spend the time once used for \"setup\" on \"review and simulation\" instead.",
         "feature1": "RoomPlan-based 3D space extraction",
@@ -218,25 +218,59 @@
           "ASET+RSET auto-analysis report"
         ]
       },
-      "student": {
-        "name": "BUL:C Student",
-        "desc": "Student verification required",
-        "button": "Contact Us",
+      "education": {
+        "name": "Education / Research",
+        "desc": "For universities & research institutions",
+        "price": "Contact Us",
+        "period": "/ custom",
+        "button": "Request a Quote",
+        "includes": "All Basic features included",
         "features": [
-          "CPU-based analysis",
-          "Basic library (Apartment, Officetel)",
-          "AI floor plan auto-design",
-          "EVAC analysis (Collision, Social Force, Multi-floor)",
-          "ASET+RSET auto-analysis report"
-        ]
+          "Per-student license management"
+        ],
+        "restriction": "No commercial use"
+      },
+      "educationLink": "Need an education or research license?",
+      "educationContact": {
+        "title": "Education / Research License Inquiry",
+        "subtitle": "Fill in the details below and our team will get back to you.",
+        "name": "Contact Name",
+        "namePlaceholder": "John Doe",
+        "email": "Email",
+        "emailPlaceholder": "example@university.edu",
+        "organization": "Organization",
+        "organizationPlaceholder": "University, Research Institute, etc.",
+        "department": "Department",
+        "departmentPlaceholder": "Fire Safety Engineering, etc.",
+        "role": "Role",
+        "roleOptions": ["Professor", "Researcher", "Student (Graduate)", "Student (Undergraduate)", "Other"],
+        "country": "Country",
+        "purpose": "Purpose",
+        "purposeOptions": ["Lecture / Course", "Research Project", "Thesis / Dissertation", "Other"],
+        "courseProject": "Course / Project Name",
+        "courseProjectPlaceholder": "e.g., Fire Safety Engineering Lab",
+        "seatCount": "Expected Seats",
+        "seatCountPlaceholder": "e.g., 30",
+        "duration": "Preferred License Duration",
+        "durationOptions": ["180 days (6 months)", "365 days (1 year)", "Other"],
+        "durationCustomPlaceholder": "e.g., 90 days",
+        "startDate": "Preferred Start Date",
+        "message": "Additional Message (Optional)",
+        "messagePlaceholder": "Any additional details you'd like to share",
+        "submit": "Send Inquiry",
+        "submitting": "Sending...",
+        "success": "Your inquiry has been sent successfully.",
+        "successSub": "Our team will contact you shortly.",
+        "close": "Close",
+        "required": "Please fill in all required fields.",
+        "invalidEmail": "Please enter a valid email address."
       },
       "pro": {
+        "includes": "All Basic features included",
         "features": [
-          "GPU-accelerated analysis",
-          "Basic library (Apartment, Officetel)",
-          "AI floor plan auto-design",
-          "EVAC analysis (Collision, Social Force, Multi-floor)",
-          "ASET+RSET auto-analysis report"
+          "iOS RoomPlan-based environment scanning (coming soon)",
+          "Project cloud storage (coming soon)",
+          "Custom library storage (coming soon)"
         ]
       },
       "premium": {
