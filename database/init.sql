@@ -21,6 +21,8 @@ DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
+DROP TABLE IF EXISTS signup_tickets CASCADE;
+DROP TABLE IF EXISTS email_verification_attempts CASCADE;
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS payment_details CASCADE;
@@ -86,6 +88,8 @@ CREATE TABLE users (
     phone           VARCHAR(20) NULL,
     country_code    VARCHAR(10) NULL DEFAULT 'KR',
     language_code   VARCHAR(5) NULL,
+    email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
+    email_verified_at   TIMESTAMP NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     deactivated_at  TIMESTAMP NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -162,6 +166,50 @@ CREATE TABLE email_verifications (
 
 COMMENT ON TABLE email_verifications IS '이메일 인증 테이블 - 인증 코드 관리';
 COMMENT ON COLUMN email_verifications.email IS '인증할 이메일 (UNIQUE - 이메일당 1개 코드)';
+
+-- =========================================================
+-- 3-1-1. email_verification_attempts (이메일 인증 시도 횟수 제한 테이블)
+-- =========================================================
+CREATE TABLE email_verification_attempts (
+    id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    email               VARCHAR(255) NOT NULL UNIQUE,
+    attempt_count       INT NOT NULL DEFAULT 0,
+    first_attempt_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_until        TIMESTAMP NULL,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE email_verification_attempts IS '이메일 인증 시도 횟수 제한 테이블 - 브루트포스 방지';
+COMMENT ON COLUMN email_verification_attempts.email IS '추적 대상 이메일 (UNIQUE)';
+COMMENT ON COLUMN email_verification_attempts.attempt_count IS '현재 윈도우 내 실패 횟수';
+COMMENT ON COLUMN email_verification_attempts.first_attempt_at IS '현재 윈도우 시작 시각 (1시간 윈도우)';
+COMMENT ON COLUMN email_verification_attempts.locked_until IS '락 만료 시각 (NULL이면 미잠금)';
+
+CREATE INDEX idx_email_verification_attempts_email ON email_verification_attempts(email);
+CREATE INDEX idx_email_verification_attempts_locked_until ON email_verification_attempts(locked_until);
+
+-- =========================================================
+-- 3-2. signup_tickets (회원가입 티켓 테이블)
+-- =========================================================
+CREATE TABLE signup_tickets (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email       VARCHAR(255) NOT NULL,
+    purpose     VARCHAR(20) NOT NULL DEFAULT 'SIGNUP',
+    expires_at  TIMESTAMP NOT NULL,
+    used_at     TIMESTAMP NULL,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE signup_tickets IS '회원가입 티켓 테이블 - 이메일 인증 완료 후 1회용 가입 티켓 발급';
+COMMENT ON COLUMN signup_tickets.id IS 'UUID 기본키 (티켓 ID)';
+COMMENT ON COLUMN signup_tickets.email IS '인증 완료된 이메일';
+COMMENT ON COLUMN signup_tickets.purpose IS '티켓 용도 (SIGNUP)';
+COMMENT ON COLUMN signup_tickets.expires_at IS '티켓 만료 시간 (기본 10분)';
+COMMENT ON COLUMN signup_tickets.used_at IS '티켓 사용 시점 (NULL이면 미사용)';
+
+CREATE INDEX idx_signup_tickets_email_purpose ON signup_tickets(email, purpose);
+CREATE INDEX idx_signup_tickets_expires_at ON signup_tickets(expires_at);
 
 -- =========================================================
 -- 3-1. password_reset_tokens (비밀번호 재설정 토큰 테이블)

@@ -26,6 +26,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   // 이메일 인증 상태
   const [verificationCode, setVerificationCode] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [signupTicket, setSignupTicket] = useState<string | null>(null);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
@@ -59,6 +60,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setEmailCheckMessage('');
       setVerificationCode('');
       setIsEmailVerified(false);
+      setSignupTicket(null);
       setIsSendingCode(false);
       setIsVerifyingCode(false);
       setVerificationMessage('');
@@ -173,6 +175,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     setEmail(newEmail);
     // 이메일이 변경되면 인증 상태 초기화
     setIsEmailVerified(false);
+    setSignupTicket(null);
     setCodeSent(false);
     setVerificationCode('');
     setVerificationMessage('');
@@ -247,6 +250,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
       if (result.success && result.data.verified) {
         setIsEmailVerified(true);
+        setSignupTicket(result.data.signupTicket);
         setCodeError(false);
       } else {
         setCodeError(true);
@@ -409,7 +413,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         },
         credentials: 'include',
         body: JSON.stringify({
-          email,
+          signupTicket,
           password,
         }),
       });
@@ -426,6 +430,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setEmailCheckMessage('');
         setVerificationCode('');
         setIsEmailVerified(false);
+        setSignupTicket(null);
         setCodeSent(false);
         setVerificationMessage('');
         onClose();
