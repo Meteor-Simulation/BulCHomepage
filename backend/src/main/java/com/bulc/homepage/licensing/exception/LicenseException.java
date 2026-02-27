@@ -62,7 +62,7 @@ public class LicenseException extends RuntimeException {
         REDEEM_CAMPAIGN_NOT_FOUND("캠페인을 찾을 수 없습니다"),
         REDEEM_CODE_HASH_DUPLICATE("동일한 코드가 이미 존재합니다"),
         REDEEM_RATE_LIMITED("요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요"),
-        REDEEM_EMAIL_DOMAIN_MISMATCH("이메일 도메인이 일치하지 않습니다");
+        REDEEM_EMAIL_DOMAIN_MISMATCH("이 코드는 현재 계정에서 사용할 수 없습니다");
 
         private final String message;
 
