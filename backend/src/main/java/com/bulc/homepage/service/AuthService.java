@@ -7,6 +7,7 @@ import com.bulc.homepage.dto.request.SignupRequest;
 import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.RefreshToken;
+import com.bulc.homepage.entity.SignupTicket;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.exception.DeactivatedAccountException;
@@ -38,6 +39,7 @@ public class AuthService {
     private final UserSocialAccountRepository socialAccountRepository;
     private final ActivityLogRepository activityLogRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final SignupTicketService signupTicketService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -53,14 +55,20 @@ public class AuthService {
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
-        // 이메일 중복 확인
-        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        // 1. 티켓 소비 (비관적 락 + 유효성 검증 + used_at 설정)
+        SignupTicket ticket = signupTicketService.consumeTicket(request.getSignupTicket());
+
+        // 2. 이메일은 티켓에서 가져옴 (요청 바디에 email 없음)
+        String email = ticket.getEmail();
+
+        // 3. 이메일 중복 확인
+        User existingUser = userRepository.findByEmail(email).orElse(null);
         User user;
 
         if (existingUser != null) {
             // 비활성화된 계정인 경우 초기화 후 재사용
             if (!existingUser.getIsActive()) {
-                log.info("비활성화된 계정 초기화 후 재가입 처리: {}", existingUser.getEmail());
+                log.info("비활성화된 계정 초기화 후 재가입 처리: {}", email);
                 // 관련 데이터 정리
                 activityLogRepository.deleteByUserId(existingUser.getId());
                 refreshTokenRepository.deleteAllByUserId(existingUser.getId());
@@ -71,6 +79,8 @@ public class AuthService {
                 existingUser.setName(null);
                 existingUser.setPhone(null);
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                existingUser.setEmailVerified(true);
+                existingUser.setEmailVerifiedAt(LocalDateTime.now());
                 existingUser.setIsActive(true);
                 existingUser.setDeactivatedAt(null);
                 user = userRepository.save(existingUser);
@@ -83,8 +93,10 @@ public class AuthService {
         } else {
             // 신규 User 생성
             user = User.builder()
-                    .email(request.getEmail())
+                    .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .emailVerified(true)
+                    .emailVerifiedAt(LocalDateTime.now())
                     .rolesCode("002")  // 기본값: 일반 사용자
                     .build();
 

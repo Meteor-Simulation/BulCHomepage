@@ -15,6 +15,7 @@ import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.service.AuthService;
 import com.bulc.homepage.service.EmailVerificationService;
 import com.bulc.homepage.service.PasswordResetService;
+import com.bulc.homepage.service.SignupTicketService;
 import com.bulc.homepage.service.TokenBlacklistService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,13 +39,14 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
+    private final SignupTicketService signupTicketService;
     private final PasswordResetService passwordResetService;
     private final TokenBlacklistService tokenBlacklistService;
     private final UserRepository userRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<AuthResponse>> signup(@Valid @RequestBody SignupRequest request) {
-        log.info("Signup request for email: {}", request.getEmail());
+        log.info("Signup request with ticket: {}", request.getSignupTicket());
         try {
             AuthResponse response = authService.signup(request);
             return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다", response));
@@ -253,14 +255,19 @@ public class AuthController {
 
     /**
      * 이메일 인증 코드 검증
+     * 인증 성공 시 1회용 가입 티켓(signupTicket)을 발급하여 응답에 포함
      */
     @PostMapping("/verify-code")
-    public ResponseEntity<ApiResponse<Map<String, Boolean>>> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
         log.info("Verify code request for email: {}", request.getEmail());
         boolean verified = emailVerificationService.verifyCode(request.getEmail(), request.getCode());
+
+        // 인증 성공 시 가입 티켓 발급
+        UUID ticketId = signupTicketService.createTicket(request.getEmail());
+
         return ResponseEntity.ok(ApiResponse.success(
                 "이메일 인증이 완료되었습니다",
-                Map.of("verified", verified)
+                Map.of("verified", verified, "signupTicket", ticketId.toString())
         ));
     }
 
