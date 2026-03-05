@@ -23,16 +23,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadCl
 
       <div className="bulc-hero__container">
         <div className="bulc-hero__content">
-          {!isLoggedIn && (
-            <div className="bulc-hero__badge">
-              <span className="bulc-hero__badge-dot">
-                <span className="bulc-hero__badge-ping" />
-                <span className="bulc-hero__badge-core" />
-              </span>
-              {t('bulc.hero.badge')}
-            </div>
-          )}
-
           <h1 className="bulc-hero__title">
             <span className="bulc-hero__title-gradient">
               {t('bulc.hero.title2')}
@@ -51,6 +41,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadCl
               {isLoggedIn ? t('download.downloadBtn') : t('bulc.hero.startFree')}
             </button>
           </div>
+
+          {!isLoggedIn && (
+            <div className="bulc-hero__badge">
+              {t('bulc.hero.badge')}
+            </div>
+          )}
         </div>
       </div>
     </section>
