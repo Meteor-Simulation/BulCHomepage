@@ -81,6 +81,25 @@
     "delete": "삭제",
     "loading": "로딩 중..."
   },
+  "contact": {
+    "title": "문의하기",
+    "email": "이메일",
+    "subject": "문의 제목",
+    "subjectPlaceholder": "문의 제목을 입력해주세요",
+    "message": "문의 내용",
+    "messagePlaceholder": "문의 내용을 입력해주세요",
+    "submit": "문의 보내기",
+    "submitting": "전송 중...",
+    "success": "문의가 성공적으로 전송되었습니다.",
+    "successSub": "빠른 시일 내에 답변 드리겠습니다.",
+    "close": "닫기",
+    "errorEmail": "이메일을 입력해주세요.",
+    "errorEmailInvalid": "올바른 이메일 형식을 입력해주세요.",
+    "errorSubject": "문의 제목을 입력해주세요.",
+    "errorMessage": "문의 내용을 입력해주세요.",
+    "errorSendFailed": "문의 전송에 실패했습니다.",
+    "errorSendError": "문의 전송 중 오류가 발생했습니다."
+  },
   "bulc": {
     "nav": {
       "intro": "소개",

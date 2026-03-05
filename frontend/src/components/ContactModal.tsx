@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
 import './ContactModal.css';
@@ -10,6 +11,7 @@ interface ContactModalProps {
 }
 
 const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category = 'METEOR' }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
@@ -61,20 +63,20 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
 
     // 유효성 검사
     if (!email.trim()) {
-      setError('이메일을 입력해주세요.');
+      setError(t('contact.errorEmail'));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
+      setError(t('contact.errorEmailInvalid'));
       return;
     }
     if (!subject.trim()) {
-      setError('문의 제목을 입력해주세요.');
+      setError(t('contact.errorSubject'));
       return;
     }
     if (!message.trim()) {
-      setError('문의 내용을 입력해주세요.');
+      setError(t('contact.errorMessage'));
       return;
     }
 
@@ -99,10 +101,10 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
       if (result.success) {
         setSuccess(true);
       } else {
-        setError(result.message || '문의 전송에 실패했습니다.');
+        setError(result.message || t('contact.errorSendFailed'));
       }
     } catch (err) {
-      setError('문의 전송 중 오류가 발생했습니다.');
+      setError(t('contact.errorSendError'));
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +121,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
           </svg>
         </button>
 
-        <h2 className="modal-title">문의하기</h2>
+        <h2 className="modal-title">{t('contact.title')}</h2>
 
         {success ? (
           <div className="contact-success">
@@ -127,14 +129,14 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p className="success-message">문의가 성공적으로 전송되었습니다.</p>
-            <p className="success-sub">빠른 시일 내에 답변 드리겠습니다.</p>
-            <button className="modal-submit-btn" onClick={onClose}>닫기</button>
+            <p className="success-message">{t('contact.success')}</p>
+            <p className="success-sub">{t('contact.successSub')}</p>
+            <button className="modal-submit-btn" onClick={onClose}>{t('contact.close')}</button>
           </div>
         ) : (
           <form className="modal-form contact-form" onSubmit={handleSubmit}>
             <div className="contact-field">
-              <label className="contact-label">이메일 <span className="required">*</span></label>
+              <label className="contact-label">{t('contact.email')} <span className="required">*</span></label>
               <input
                 type="email"
                 className={`modal-input ${user ? 'input-readonly' : ''}`}
@@ -147,24 +149,24 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
             </div>
 
             <div className="contact-field">
-              <label className="contact-label">문의 제목 <span className="required">*</span></label>
+              <label className="contact-label">{t('contact.subject')} <span className="required">*</span></label>
               <input
                 type="text"
                 className="modal-input"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="문의 제목을 입력해주세요"
+                placeholder={t('contact.subjectPlaceholder')}
                 disabled={isLoading}
               />
             </div>
 
             <div className="contact-field">
-              <label className="contact-label">문의 내용 <span className="required">*</span></label>
+              <label className="contact-label">{t('contact.message')} <span className="required">*</span></label>
               <textarea
                 className="modal-input contact-textarea"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="문의 내용을 입력해주세요"
+                placeholder={t('contact.messagePlaceholder')}
                 disabled={isLoading}
                 rows={5}
               />
@@ -173,7 +175,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, category =
             {error && <p className="modal-error">{error}</p>}
 
             <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-              {isLoading ? '전송 중...' : '문의 보내기'}
+              {isLoading ? t('contact.submitting') : t('contact.submit')}
             </button>
           </form>
         )}
