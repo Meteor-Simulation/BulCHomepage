@@ -293,7 +293,7 @@ public class EmailService {
                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
                                             <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
-                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 10분간 유효합니다</span>
+                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
                                             </td>
                                         </tr>
                                     </table>
@@ -437,7 +437,7 @@ public class EmailService {
                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
                                             <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
-                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 10분간 유효합니다</span>
+                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
                                             </td>
                                         </tr>
                                     </table>
