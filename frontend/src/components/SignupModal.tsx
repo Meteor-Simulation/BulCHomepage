@@ -33,6 +33,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [codeSent, setCodeSent] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const [timerKey, setTimerKey] = useState(0);
   const [codeError, setCodeError] = useState(false);
 
   // 계정 재활성화 상태
@@ -67,6 +68,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setCodeSent(false);
       setTimerSeconds(0);
       setIsTimerExpired(false);
+      setTimerKey(0);
       setCodeError(false);
       setShowReactivation(false);
       setReactivationEmail('');
@@ -95,22 +97,23 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     };
   }, [isOpen, onClose]);
 
-  // 인증 코드 타이머 (5분)
+  // 인증 코드 타이머 (5분) — timerKey가 변경되면 interval 재생성
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (codeSent && timerSeconds > 0 && !isEmailVerified) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => {
-          if (prev <= 1) {
-            setIsTimerExpired(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (!codeSent || isEmailVerified) return;
+
+    const interval = setInterval(() => {
+      setTimerSeconds((prev) => {
+        if (prev <= 1) {
+          setIsTimerExpired(true);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
-  }, [codeSent, timerSeconds, isEmailVerified]);
+  }, [codeSent, isEmailVerified, timerKey]);
 
   // 타이머 포맷 (mm:ss)
   const formatTimer = (seconds: number) => {
@@ -203,6 +206,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     setCodeSent(true);
     setTimerSeconds(300);
     setIsTimerExpired(false);
+    setTimerKey((prev) => prev + 1);
     setVerificationCode('');
     setCodeError(false);
 
