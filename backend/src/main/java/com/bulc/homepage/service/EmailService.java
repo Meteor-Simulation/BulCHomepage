@@ -216,12 +216,12 @@ public class EmailService {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
             </head>
-            <body style="margin:0;padding:0;background-color:#1a1a2e;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#1a1a2e;">
+            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
                     <tr><td style="padding:40px 16px;">
 
                         <!-- Main Card -->
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
                             <!-- Header Bar -->
                             <tr>
@@ -307,9 +307,9 @@ public class EmailService {
                             <!-- Timer Badge -->
                             <tr>
                                 <td style="padding:0 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
-                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;">
+                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
                                                 <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 10분간 유효합니다</span>
                                             </td>
                                         </tr>
@@ -377,12 +377,12 @@ public class EmailService {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
             </head>
-            <body style="margin:0;padding:0;background-color:#1a1a2e;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#1a1a2e;">
+            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
                     <tr><td style="padding:40px 16px;">
 
                         <!-- Main Card -->
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
                             <!-- Header Bar -->
                             <tr>
@@ -468,9 +468,9 @@ public class EmailService {
                             <!-- Timer Badge -->
                             <tr>
                                 <td style="padding:0 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
-                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;">
+                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
                                                 <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 10분간 유효합니다</span>
                                             </td>
                                         </tr>
