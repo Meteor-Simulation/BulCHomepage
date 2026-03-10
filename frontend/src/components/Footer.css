@@ -14,7 +14,7 @@
 }
 
 .footer-section {
-  text-align: center;
+  text-align: left;
 }
 
 .footer-section h4 {
@@ -31,8 +31,8 @@
   white-space: pre-line;
 }
 
+/* 왼쪽: 회사 안내 */
 .footer-contact {
-  text-align: center;
   flex: 1;
 }
 
@@ -40,25 +40,53 @@
   margin: 8px 0;
 }
 
-.footer-sns {
-  text-align: center;
+/* 오른쪽: 약관 및 정책 링크 */
+.footer-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.sns-icons {
+.footer-legal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: #888;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.footer-legal-link:hover {
+  color: #fff;
+}
+
+/* SNS 아이콘 (회사 안내 하단) */
+.footer-sns-row {
   display: flex;
-  justify-content: center;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.footer-sns-label {
+  font-size: 13px;
+  color: #888;
+  margin-right: 2px;
 }
 
 .sns-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: transparent;
-  color: #ffffff;
+  color: #888;
   transition: background 0.2s, color 0.2s;
 }
 
