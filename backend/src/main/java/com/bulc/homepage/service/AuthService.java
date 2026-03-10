@@ -83,6 +83,7 @@ public class AuthService {
                 existingUser.setEmailVerifiedAt(LocalDateTime.now());
                 existingUser.setIsActive(true);
                 existingUser.setDeactivatedAt(null);
+                existingUser.setCreatedAt(LocalDateTime.now());
                 user = userRepository.save(existingUser);
 
                 // 회원가입 로그 저장
@@ -399,6 +400,7 @@ public class AuthService {
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
                 existingUser.setIsActive(true);
                 existingUser.setDeactivatedAt(null);
+                existingUser.setCreatedAt(LocalDateTime.now());
                 user = userRepository.save(existingUser);
             } else {
                 // 기존 활성 사용자 - 소셜 계정 연동 및 정보 갱신
@@ -406,7 +408,6 @@ public class AuthService {
                 existingUser.setName(request.getName() != null ? request.getName() : existingUser.getName());
                 existingUser.setPhone(request.getPhone() != null ? request.getPhone() : existingUser.getPhone());
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-                existingUser.setCreatedAt(java.time.LocalDateTime.now());
                 user = userRepository.save(existingUser);
             }
         } else {
