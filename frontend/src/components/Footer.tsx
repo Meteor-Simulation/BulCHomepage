@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import './Footer.css';
+import PolicyModal, { PolicyType } from './PolicyModal';
 
 interface CompanyInfo {
   company: {
     name: string;
     nameEn: string;
     description: string;
+    representative: string;
+    businessNumber: string;
+    onlineSalesNumber: string;
   };
   address: {
     full: string;
@@ -26,6 +30,7 @@ interface CompanyInfo {
 
 const Footer: React.FC = () => {
   const [info, setInfo] = useState<CompanyInfo | null>(null);
+  const [activePolicyModal, setActivePolicyModal] = useState<PolicyType | null>(null);
 
   useEffect(() => {
     fetch('/config/company.json')
@@ -39,18 +44,17 @@ const Footer: React.FC = () => {
   return (
     <footer className="footer">
       <div className="footer-content">
-        <div className="footer-section">
-          <h4>{info.company.name}</h4>
-          <p>{info.company.description}</p>
-        </div>
+        {/* 왼쪽: 회사 안내 */}
         <div className="footer-section footer-contact">
           <h4>회사 안내</h4>
-          <p>찾아오시는 길 : {info.address.full}</p>
-          <p>연락처 : {info.contact.tel}  /  {info.contact.email}</p>
-        </div>
-        <div className="footer-section footer-sns">
-          <h4>SNS</h4>
-          <div className="sns-icons">
+          <p>대표자 : {info.company.representative}  |  연락처 : {info.contact.tel}  /  {info.contact.email}</p>
+          <p>{info.company.name}  |  사업자등록번호 : {info.company.businessNumber}
+            {/* TODO: 통신판매업 신고번호 발급 후 주석 해제 */}
+            {/* info.company.onlineSalesNumber && <>  |  통신판매업 신고번호 : {info.company.onlineSalesNumber}</> */}
+          </p>
+          <p>주소 : {info.address.full}</p>
+          <div className="footer-sns-row">
+            <span className="footer-sns-label">SNS :</span>
             {info.sns.youtube && (
               <a href={info.sns.youtube} target="_blank" rel="noopener noreferrer" className="sns-icon sns-icon--youtube">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -88,7 +92,24 @@ const Footer: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* 오른쪽: 법적 링크 */}
+        <div className="footer-section footer-legal">
+          <h4>약관 및 정책</h4>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('terms')}>이용약관</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('privacy')}>개인정보처리방침</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('refund')}>환불정책</button>
+        </div>
+
       </div>
+
+      {activePolicyModal && (
+        <PolicyModal
+          isOpen={true}
+          onClose={() => setActivePolicyModal(null)}
+          type={activePolicyModal}
+        />
+      )}
     </footer>
   );
 };

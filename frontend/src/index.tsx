@@ -18,6 +18,7 @@ import MyPage from './CategoryPages/MyPage/MyPage';
 import DownloadPage from './CategoryPages/Download/Download';
 import OAuthCallback from './pages/OAuthCallback';
 import OAuthSetupPassword from './pages/OAuthSetupPassword';
+import RefundPolicyPage from './CategoryPages/Policy/RefundPolicy';
 
 // 404 페이지 래퍼 컴포넌트
 const NotFoundPage: React.FC = () => {
@@ -61,6 +62,7 @@ const App: React.FC = () => {
             <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="/oauth/setup-password" element={<OAuthSetupPassword />} />
             <Route path="/download" element={<DownloadPage />} />
+            <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
             <Route path="*" element={<NotFoundPage />} />

@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -43,6 +45,7 @@ public class EmailService {
 
     private GraphServiceClient graphClient;
     private boolean isConfigured = false;
+    private String initError = null;
 
     @PostConstruct
     public void init() {
@@ -59,15 +62,40 @@ public class EmailService {
 
                 graphClient = new GraphServiceClient(credential, "https://graph.microsoft.com/.default");
                 isConfigured = true;
+                initError = null;
                 log.info("Microsoft Graph 이메일 서비스 초기화 완료");
             } catch (Exception e) {
-                log.error("Microsoft Graph 초기화 실패: {}", e.getMessage());
+                log.error("Microsoft Graph 초기화 실패: {}", e.getMessage(), e);
                 isConfigured = false;
+                initError = "Graph 초기화 실패: " + e.getMessage();
             }
         } else {
-            log.warn("Microsoft Graph 설정이 없습니다. 이메일은 로그로만 출력됩니다.");
+            String missing = "";
+            if (tenantId == null || tenantId.isEmpty()) missing += "MS_TENANT_ID ";
+            if (clientId == null || clientId.isEmpty()) missing += "MS_CLIENT_ID ";
+            if (clientSecret == null || clientSecret.isEmpty()) missing += "MS_CLIENT_SECRET ";
+            initError = "환경변수 누락: " + missing.trim();
+            log.warn("Microsoft Graph 설정이 없습니다. 누락: {}. 이메일은 로그로만 출력됩니다.", missing.trim());
             isConfigured = false;
         }
+    }
+
+    /**
+     * 이메일 서비스 진단 정보 반환
+     */
+    public Map<String, Object> getDiagnostics() {
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("configured", isConfigured);
+        info.put("tenantIdSet", tenantId != null && !tenantId.isEmpty());
+        info.put("clientIdSet", clientId != null && !clientId.isEmpty());
+        info.put("clientSecretSet", clientSecret != null && !clientSecret.isEmpty());
+        info.put("fromAccounts", mailFromAccounts);
+        info.put("fromBilling", mailFromBilling);
+        info.put("replyTo", mailReplyTo);
+        if (initError != null) {
+            info.put("initError", initError);
+        }
+        return info;
     }
 
     /**
@@ -102,7 +130,7 @@ public class EmailService {
         if (!isConfigured) {
             log.info("[이메일 미설정] To: {}, Subject: {}", toEmail, subject);
             log.debug("[이메일 내용]\n{}", htmlContent);
-            return;
+            throw new RuntimeException("이메일 서비스가 설정되지 않았습니다. (" + (initError != null ? initError : "환경변수 확인 필요") + ")");
         }
 
         try {
@@ -134,8 +162,25 @@ public class EmailService {
             graphClient.users().byUserId(fromEmail).sendMail().post(sendMailRequest);
             log.info("이메일 발송 성공: {} -> {}", fromEmail, toEmail);
         } catch (Exception e) {
-            log.error("이메일 발송 실패: {} -> {}, 오류: {}", fromEmail, toEmail, e.getMessage());
-            throw new RuntimeException("이메일 발송에 실패했습니다.", e);
+            log.error("이메일 발송 실패: {} -> {}, 오류: {}", fromEmail, toEmail, e.getMessage(), e);
+
+            // Graph API 에러 메시지 분류
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            String userMessage;
+
+            if (errorMsg.contains("Authorization") || errorMsg.contains("401") || errorMsg.contains("InvalidAuthenticationToken")) {
+                userMessage = "이메일 발송 실패: 인증 오류 (Azure AD Client Secret이 만료되었거나 잘못되었습니다)";
+            } else if (errorMsg.contains("403") || errorMsg.contains("Forbidden") || errorMsg.contains("MailboxNotEnabledForRESTAPI")) {
+                userMessage = "이메일 발송 실패: 권한 부족 (Azure AD에서 Mail.Send 권한을 확인하세요)";
+            } else if (errorMsg.contains("404") || errorMsg.contains("MailboxNotFound") || errorMsg.contains("ResourceNotFound")) {
+                userMessage = "이메일 발송 실패: 발신 메일박스를 찾을 수 없습니다 (" + fromEmail + ")";
+            } else if (errorMsg.contains("connect") || errorMsg.contains("timeout") || errorMsg.contains("UnknownHost")) {
+                userMessage = "이메일 발송 실패: Microsoft Graph API에 연결할 수 없습니다 (네트워크 확인)";
+            } else {
+                userMessage = "이메일 발송에 실패했습니다: " + errorMsg;
+            }
+
+            throw new RuntimeException(userMessage, e);
         }
     }
 
