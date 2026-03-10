@@ -195,19 +195,6 @@ public class EmailService {
      * 인증 코드 이메일 HTML 템플릿
      */
     private String buildVerificationEmailContent(String code) {
-        StringBuilder codeBlocks = new StringBuilder();
-        String[] colors = {"#C4320A", "#D4450E", "#E85D04", "#F07A1A", "#E85D04", "#D4450E"};
-        for (int i = 0; i < code.length(); i++) {
-            String color = colors[i % colors.length];
-            codeBlocks.append(String.format(
-                "<td style=\"width:48px;height:56px;background:%s;border-radius:10px;text-align:center;vertical-align:middle;font-size:26px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:0;line-height:56px;\" width=\"48\">%c</td>",
-                color, code.charAt(i)
-            ));
-            if (i < code.length() - 1) {
-                codeBlocks.append("<td style=\"width:8px;\" width=\"8\"></td>");
-            }
-        }
-
         return """
             <!DOCTYPE html>
             <html lang="ko">
@@ -289,15 +276,11 @@ public class EmailService {
 
                             <!-- Code Blocks -->
                             <tr>
-                                <td style="padding:28px 40px;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="background:#f8f9fb;border-radius:14px;padding:24px;">
+                                <td style="padding:28px 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
-                                            <td style="padding:24px 28px;">
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
-                                                    <tr>
-                                                        %s
-                                                    </tr>
-                                                </table>
+                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
+                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
                                             </td>
                                         </tr>
                                     </table>
@@ -349,26 +332,13 @@ public class EmailService {
                 </table>
             </body>
             </html>
-            """.formatted(codeBlocks.toString());
+            """.formatted(code);
     }
 
     /**
      * 비밀번호 재설정 이메일 HTML 템플릿
      */
     private String buildPasswordResetEmailContent(String code) {
-        StringBuilder codeBlocks = new StringBuilder();
-        String[] colors = {"#C4320A", "#D4450E", "#E85D04", "#F07A1A", "#E85D04", "#D4450E"};
-        for (int i = 0; i < code.length(); i++) {
-            String color = colors[i % colors.length];
-            codeBlocks.append(String.format(
-                "<td style=\"width:48px;height:56px;background:%s;border-radius:10px;text-align:center;vertical-align:middle;font-size:26px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:0;line-height:56px;\" width=\"48\">%c</td>",
-                color, code.charAt(i)
-            ));
-            if (i < code.length() - 1) {
-                codeBlocks.append("<td style=\"width:8px;\" width=\"8\"></td>");
-            }
-        }
-
         return """
             <!DOCTYPE html>
             <html lang="ko">
@@ -448,17 +418,13 @@ public class EmailService {
                                 </td>
                             </tr>
 
-                            <!-- Code Blocks -->
+                            <!-- Code Block -->
                             <tr>
-                                <td style="padding:28px 40px;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="background:#f8f9fb;border-radius:14px;">
+                                <td style="padding:28px 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                                         <tr>
-                                            <td style="padding:24px 28px;">
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
-                                                    <tr>
-                                                        %s
-                                                    </tr>
-                                                </table>
+                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
+                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
                                             </td>
                                         </tr>
                                     </table>
@@ -516,6 +482,6 @@ public class EmailService {
                 </table>
             </body>
             </html>
-            """.formatted(codeBlocks.toString());
+            """.formatted(code);
     }
 }
