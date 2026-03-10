@@ -161,30 +161,29 @@
 }
 
 /* ========================================
-   EMAIL INPUT WITH STATUS
+   EMAIL INPUT ROW (이메일 + 인증 버튼 한 줄)
 ======================================== */
-.email-check-status {
-  position: absolute;
-  right: 12px;
-  font-size: 16px;
-  font-weight: 600;
+.email-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.input-wrapper .modal-input[type="email"] {
-  padding-right: 36px;
+.email-input-row .input-wrapper {
+  flex: 1;
+  min-width: 0;
 }
 
-.email-check-status.checking {
-  color: #6b7280;
+.email-input-row .input-wrapper .modal-input[type="email"] {
+  padding-right: 16px;
 }
 
-.email-check-status.available {
-  color: #16a34a;
-}
-
-.email-check-status.exists,
-.email-check-status.error {
-  color: #dc2626;
+.email-verify-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  border-radius: 8px;
 }
 
 /* 메시지 스타일 */
@@ -358,6 +357,15 @@
   .verification-btn.small {
     padding: 6px 8px;
     font-size: 11px;
+  }
+
+  .email-input-row {
+    gap: 6px;
+  }
+
+  .email-verify-btn {
+    padding: 12px 12px !important;
+    font-size: 13px !important;
   }
 
   .email-available-row {
