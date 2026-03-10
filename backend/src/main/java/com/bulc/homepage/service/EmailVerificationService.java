@@ -25,7 +25,7 @@ public class EmailVerificationService {
     private final EmailService emailService;
 
     private static final int CODE_LENGTH = 6;
-    private static final int EXPIRATION_MINUTES = 10;
+    private static final int EXPIRATION_MINUTES = 5;
     private static final int MAX_ATTEMPTS = 5;
     private static final int WINDOW_MINUTES = 60;
     private static final int LOCKOUT_HOURS = 24;

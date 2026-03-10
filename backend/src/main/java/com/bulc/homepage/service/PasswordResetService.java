@@ -25,7 +25,7 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
 
     private static final int CODE_LENGTH = 6;
-    private static final int EXPIRATION_MINUTES = 10;
+    private static final int EXPIRATION_MINUTES = 5;
 
     /**
      * 비밀번호 재설정 요청 (인증 코드 발송)
