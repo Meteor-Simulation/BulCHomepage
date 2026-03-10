@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -78,8 +79,14 @@ public class EmailVerificationService {
 
         log.info("인증 코드 발송 - 이메일: {}", email);
 
-        // 실제 이메일 발송
-        emailService.sendVerificationEmail(email, code);
+        // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(email, code);
+            } catch (Exception e) {
+                log.error("인증 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
+            }
+        });
 
         return code;
     }

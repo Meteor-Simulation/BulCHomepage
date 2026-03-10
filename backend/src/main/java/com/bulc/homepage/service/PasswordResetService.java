@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -61,8 +62,14 @@ public class PasswordResetService {
 
         log.info("비밀번호 재설정 코드 발송 - 이메일: {}", email);
 
-        // 이메일 발송
-        emailService.sendPasswordResetEmail(email, code);
+        // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendPasswordResetEmail(email, code);
+            } catch (Exception e) {
+                log.error("비밀번호 재설정 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
+            }
+        });
     }
 
     /**

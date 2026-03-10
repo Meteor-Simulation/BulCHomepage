@@ -199,6 +199,12 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
     setIsSendingCode(true);
     setVerificationMessage('');
+    // 재발송 시 타이머 즉시 초기화
+    setCodeSent(true);
+    setTimerSeconds(300);
+    setIsTimerExpired(false);
+    setVerificationCode('');
+    setCodeError(false);
 
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/send-verification`, {
@@ -211,12 +217,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
       const result = await response.json();
 
-      if (result.success) {
-        setCodeSent(true);
-        setTimerSeconds(300); // 5분 타이머 시작
-        setIsTimerExpired(false);
-        setVerificationCode(''); // 재발송 시 입력값 초기화
-      } else {
+      if (!result.success) {
         setVerificationMessage(result.message || '인증 코드 발송에 실패했습니다.');
       }
     } catch (err) {
