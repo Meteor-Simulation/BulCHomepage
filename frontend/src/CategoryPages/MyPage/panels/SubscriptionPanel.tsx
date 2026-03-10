@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { License, Activation, Subscription, BillingKey } from '../types';
+import RefundRequestModal from '../../../components/RefundRequestModal';
 
 interface SubscriptionPanelProps {
   // 라이선스
@@ -47,6 +48,24 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refundTarget, setRefundTarget] = useState<{ productName: string; subscriptionId: number } | null>(null);
+
+  const handleRefundClick = (sub: Subscription) => {
+    setRefundTarget({
+      productName: sub.productName || sub.pricePlanName || '구독',
+      subscriptionId: sub.id,
+    });
+    setRefundModalOpen(true);
+  };
+
+  const handleRefundSubmit = (reason: string, details: string) => {
+    // TODO: 실제 환불 요청 API 연동
+    console.log('환불 요청:', { subscriptionId: refundTarget?.subscriptionId, reason, details });
+    alert('환불 요청이 접수되었습니다. 담당자 검토 후 이메일로 결과를 안내드립니다.');
+    setRefundModalOpen(false);
+    setRefundTarget(null);
+  };
 
   return (
     <>
@@ -230,6 +249,17 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
                       </span>
                     </div>
                   )}
+                  {/* 환불 신청 버튼 - 활성 구독에만 표시 */}
+                  {sub.status === 'A' && (
+                    <div className="refund-action-row">
+                      <button
+                        className="refund-request-btn"
+                        onClick={() => handleRefundClick(sub)}
+                      >
+                        환불 신청
+                      </button>
+                    </div>
+                  )}
                   {/* 개발 테스트 버튼 (관리자 전용) */}
                   {isAdmin && isTestMode && (
                     <div className="subscription-test-actions">
@@ -259,6 +289,14 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* 환불 요청 모달 */}
+      <RefundRequestModal
+        isOpen={refundModalOpen}
+        onClose={() => { setRefundModalOpen(false); setRefundTarget(null); }}
+        productName={refundTarget?.productName || ''}
+        onSubmit={handleRefundSubmit}
+      />
     </>
   );
 };
