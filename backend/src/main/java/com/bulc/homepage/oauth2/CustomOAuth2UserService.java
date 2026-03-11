@@ -57,9 +57,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             log.warn("이메일이 제공되지 않아 대체 이메일 생성: {}", email);
         }
 
-        // 이름이 없는 경우 기본값 설정
-        if (name == null || name.isEmpty()) {
-            name = provider + " 사용자";
+        // 이름이 없는 경우 null 유지 (동의하지 않으면 비워둠)
+        if (name != null && name.isEmpty()) {
+            name = null;
         }
 
         // 소셜 계정으로 이미 가입한 사용자 확인
