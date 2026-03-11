@@ -119,7 +119,7 @@ public class PasswordResetService {
      * 6자리 영숫자 인증 코드 생성
      */
     private String generateResetCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {
