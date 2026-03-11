@@ -103,9 +103,9 @@ public class EmailVerificationService {
         // 1. 락 여부 확인 (코드 검증 전에 체크)
         checkAttemptLock(email);
 
-        // 2. 인증 코드 조회
+        // 2. 인증 코드 조회 (대소문자 무시)
         EmailVerification verification = emailVerificationRepository
-                .findByEmailAndVerificationCode(email, code)
+                .findByEmailAndVerificationCode(email, code.toUpperCase())
                 .orElse(null);
 
         if (verification == null) {
@@ -185,7 +185,7 @@ public class EmailVerificationService {
      * 6자리 영숫자 인증 코드 생성 (대소문자 구별)
      */
     private String generateVerificationCode() {
-        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {
