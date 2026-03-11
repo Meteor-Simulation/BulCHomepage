@@ -51,10 +51,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("OAuth2 로그인 시도 - Provider: {}, ProviderId: {}, Email: {}, Name: {}, Mobile: {}",
                 provider, providerId, email, name, mobile);
 
-        // 이메일이 없는 경우 provider + providerId로 대체 이메일 생성
+        // 이메일이 없는 경우 가입 불가
         if (email == null || email.isEmpty()) {
-            email = providerId + "@" + provider.toLowerCase() + ".user";
-            log.warn("이메일이 제공되지 않아 대체 이메일 생성: {}", email);
+            log.error("이메일이 제공되지 않아 가입 불가 - Provider: {}, ProviderId: {}", provider, providerId);
+            throw new OAuth2AuthenticationException("이메일 정보가 필요합니다. 이메일 제공에 동의해주세요.");
         }
 
         // 이름이 없는 경우 null 유지 (동의하지 않으면 비워둠)
