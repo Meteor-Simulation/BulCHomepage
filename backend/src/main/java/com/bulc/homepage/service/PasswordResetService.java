@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -24,7 +25,7 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
 
     private static final int CODE_LENGTH = 6;
-    private static final int EXPIRATION_MINUTES = 10;
+    private static final int EXPIRATION_MINUTES = 5;
 
     /**
      * 비밀번호 재설정 요청 (인증 코드 발송)
@@ -61,8 +62,14 @@ public class PasswordResetService {
 
         log.info("비밀번호 재설정 코드 발송 - 이메일: {}", email);
 
-        // 이메일 발송
-        emailService.sendPasswordResetEmail(email, code);
+        // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendPasswordResetEmail(email, code);
+            } catch (Exception e) {
+                log.error("비밀번호 재설정 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
+            }
+        });
     }
 
     /**
@@ -71,7 +78,7 @@ public class PasswordResetService {
     @Transactional(readOnly = true)
     public boolean verifyResetCode(String email, String code) {
         PasswordResetToken token = passwordResetTokenRepository
-                .findByEmailAndResetCode(email, code)
+                .findByEmailAndResetCode(email, code.toUpperCase())
                 .orElseThrow(() -> new RuntimeException("인증 코드가 올바르지 않습니다."));
 
         if (token.isExpired()) {
@@ -88,7 +95,7 @@ public class PasswordResetService {
     public void resetPassword(String email, String code, String newPassword) {
         // 코드 검증
         PasswordResetToken token = passwordResetTokenRepository
-                .findByEmailAndResetCode(email, code)
+                .findByEmailAndResetCode(email, code.toUpperCase())
                 .orElseThrow(() -> new RuntimeException("인증 코드가 올바르지 않습니다."));
 
         if (token.isExpired()) {
@@ -112,7 +119,7 @@ public class PasswordResetService {
      * 6자리 영숫자 인증 코드 생성
      */
     private String generateResetCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {

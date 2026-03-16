@@ -138,6 +138,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                       {formatPrice(plan.price, plan.currency)}
                     </span>
                     <span className="bulc-price__card-period">{t('bulc.price.perYear')}</span>
+                    <span className="bulc-price__card-service-period">{t('bulc.price.servicePeriod')}</span>
                   </div>
                   {(includes || features.length > 0) && (
                     <ul className="bulc-price__card-features">

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -24,7 +25,7 @@ public class EmailVerificationService {
     private final EmailService emailService;
 
     private static final int CODE_LENGTH = 6;
-    private static final int EXPIRATION_MINUTES = 10;
+    private static final int EXPIRATION_MINUTES = 5;
     private static final int MAX_ATTEMPTS = 5;
     private static final int WINDOW_MINUTES = 60;
     private static final int LOCKOUT_HOURS = 24;
@@ -78,8 +79,14 @@ public class EmailVerificationService {
 
         log.info("인증 코드 발송 - 이메일: {}", email);
 
-        // 실제 이메일 발송
-        emailService.sendVerificationEmail(email, code);
+        // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(email, code);
+            } catch (Exception e) {
+                log.error("인증 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
+            }
+        });
 
         return code;
     }
@@ -96,9 +103,9 @@ public class EmailVerificationService {
         // 1. 락 여부 확인 (코드 검증 전에 체크)
         checkAttemptLock(email);
 
-        // 2. 인증 코드 조회
+        // 2. 인증 코드 조회 (대소문자 무시)
         EmailVerification verification = emailVerificationRepository
-                .findByEmailAndVerificationCode(email, code)
+                .findByEmailAndVerificationCode(email, code.toUpperCase())
                 .orElse(null);
 
         if (verification == null) {
@@ -178,7 +185,7 @@ public class EmailVerificationService {
      * 6자리 영숫자 인증 코드 생성 (대소문자 구별)
      */
     private String generateVerificationCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {

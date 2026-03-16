@@ -197,45 +197,139 @@ public class EmailService {
     private String buildVerificationEmailContent(String code) {
         return """
             <!DOCTYPE html>
-            <html>
+            <html lang="ko">
             <head>
                 <meta charset="UTF-8">
-                <style>
-                    body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-                    .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-                    .logo { text-align: center; margin-bottom: 30px; }
-                    .logo h1 { color: #FF6B00; font-size: 28px; margin: 0; }
-                    .title { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; text-align: center; }
-                    .message { color: #666; line-height: 1.6; margin-bottom: 30px; text-align: center; }
-                    .code-box { background: #f8f9fa; border: 2px dashed #FF6B00; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-                    .code { font-size: 32px; font-weight: 700; color: #FF6B00; letter-spacing: 8px; }
-                    .note { font-size: 13px; color: #999; text-align: center; margin-top: 20px; }
-                    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
-                </style>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
             </head>
-            <body>
-                <div class="container">
-                    <div class="card">
-                        <div class="logo">
-                            <h1>BUL:C</h1>
-                        </div>
-                        <div class="title">이메일 인증</div>
-                        <div class="message">
-                            아래 인증 코드를 입력하여<br>이메일 인증을 완료해 주세요.
-                        </div>
-                        <div class="code-box">
-                            <div class="code">%s</div>
-                        </div>
-                        <div class="note">
-                            * 인증 코드는 10분간 유효합니다.<br>
-                            * 본인이 요청하지 않은 경우 이 메일을 무시해 주세요.
-                        </div>
-                    </div>
-                    <div class="footer">
-                        &copy; 2024 BulC. All rights reserved.
-                    </div>
-                </div>
+            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
+                    <tr><td style="padding:40px 16px;">
+
+                        <!-- Main Card -->
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                            <!-- Header Bar -->
+                            <tr>
+                                <td style="background:linear-gradient(135deg,#C4320A 0%%,#E85D04 50%%,#F5A623 100%%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td>
+                            </tr>
+
+                            <!-- Logo Section -->
+                            <tr>
+                                <td style="padding:36px 40px 0;text-align:center;">
+                                    <!-- BulC Block Icon -->
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                        <tr>
+                                            <td style="width:10px;height:10px;background:#F5A623;border-radius:2px;" width="10"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:6px;height:6px;" width="6"></td>
+                                        </tr>
+                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                        <tr>
+                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:14px;height:14px;background:#C4320A;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:10px;height:10px;background:#D4450E;border-radius:2px;" width="10"></td>
+                                        </tr>
+                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                        <tr>
+                                            <td style="width:6px;height:6px;" width="6"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:10px;height:10px;background:#C4320A;border-radius:2px;" width="10"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:6px;height:6px;background:#E85D04;border-radius:2px;" width="6"></td>
+                                        </tr>
+                                    </table>
+
+                                    <p style="margin:14px 0 0;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
+                                </td>
+                            </tr>
+
+                            <!-- Divider -->
+                            <tr>
+                                <td style="padding:20px 40px 0;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%">
+                                        <tr><td style="height:1px;background:#f0f0f0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Title -->
+                            <tr>
+                                <td style="padding:28px 40px 0;text-align:center;">
+                                    <p style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">이메일 인증</p>
+                                </td>
+                            </tr>
+
+                            <!-- Description -->
+                            <tr>
+                                <td style="padding:12px 40px 0;text-align:center;">
+                                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
+                                        아래 인증 코드를 입력하여<br>이메일 인증을 완료해 주세요.
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Code Blocks -->
+                            <tr>
+                                <td style="padding:28px 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                                        <tr>
+                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
+                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Timer Badge -->
+                            <tr>
+                                <td style="padding:0 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                                        <tr>
+                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
+                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Note -->
+                            <tr>
+                                <td style="padding:24px 40px 0;text-align:center;">
+                                    <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.7;">
+                                        본인이 요청하지 않은 경우 이 메일을 무시해 주세요.<br>
+                                        이 코드는 타인과 공유하지 마세요.
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Bottom Padding -->
+                            <tr>
+                                <td style="padding:32px 0 0;"></td>
+                            </tr>
+
+                            <!-- Footer Bar -->
+                            <tr>
+                                <td style="background:#f8f9fb;padding:20px 40px;border-top:1px solid #f0f0f0;text-align:center;">
+                                    <p style="margin:0;font-size:11px;color:#9ca3af;">
+                                        &copy; 2025 MSimul Inc. All rights reserved.<br>
+                                        <span style="color:#c4c4c4;">Fire Safety Simulation Platform</span>
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                        <!-- End Main Card -->
+
+                    </td></tr>
+                </table>
             </body>
             </html>
             """.formatted(code);
@@ -247,48 +341,145 @@ public class EmailService {
     private String buildPasswordResetEmailContent(String code) {
         return """
             <!DOCTYPE html>
-            <html>
+            <html lang="ko">
             <head>
                 <meta charset="UTF-8">
-                <style>
-                    body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-                    .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-                    .logo { text-align: center; margin-bottom: 30px; }
-                    .logo h1 { color: #FF6B00; font-size: 28px; margin: 0; }
-                    .title { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; text-align: center; }
-                    .message { color: #666; line-height: 1.6; margin-bottom: 30px; text-align: center; }
-                    .code-box { background: #f8f9fa; border: 2px dashed #FF6B00; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-                    .code { font-size: 32px; font-weight: 700; color: #FF6B00; letter-spacing: 8px; }
-                    .note { font-size: 13px; color: #999; text-align: center; margin-top: 20px; }
-                    .warning { font-size: 13px; color: #e74c3c; text-align: center; margin-top: 15px; }
-                    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
-                </style>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
             </head>
-            <body>
-                <div class="container">
-                    <div class="card">
-                        <div class="logo">
-                            <h1>BUL:C</h1>
-                        </div>
-                        <div class="title">비밀번호 재설정</div>
-                        <div class="message">
-                            아래 인증 코드를 입력하여<br>비밀번호를 재설정해 주세요.
-                        </div>
-                        <div class="code-box">
-                            <div class="code">%s</div>
-                        </div>
-                        <div class="note">
-                            * 인증 코드는 10분간 유효합니다.
-                        </div>
-                        <div class="warning">
-                            * 본인이 요청하지 않은 경우, 계정 보안을 확인해 주세요.
-                        </div>
-                    </div>
-                    <div class="footer">
-                        &copy; 2024 BulC. All rights reserved.
-                    </div>
-                </div>
+            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
+                    <tr><td style="padding:40px 16px;">
+
+                        <!-- Main Card -->
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                            <!-- Header Bar -->
+                            <tr>
+                                <td style="background:linear-gradient(135deg,#C4320A 0%%,#E85D04 50%%,#F5A623 100%%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td>
+                            </tr>
+
+                            <!-- Logo Section -->
+                            <tr>
+                                <td style="padding:36px 40px 0;text-align:center;">
+                                    <!-- BulC Block Icon -->
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                        <tr>
+                                            <td style="width:10px;height:10px;background:#F5A623;border-radius:2px;" width="10"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:6px;height:6px;" width="6"></td>
+                                        </tr>
+                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                        <tr>
+                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:14px;height:14px;background:#C4320A;border-radius:2px;" width="14"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:10px;height:10px;background:#D4450E;border-radius:2px;" width="10"></td>
+                                        </tr>
+                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                        <tr>
+                                            <td style="width:6px;height:6px;" width="6"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:10px;height:10px;background:#C4320A;border-radius:2px;" width="10"></td>
+                                            <td style="width:3px;" width="3"></td>
+                                            <td style="width:6px;height:6px;background:#E85D04;border-radius:2px;" width="6"></td>
+                                        </tr>
+                                    </table>
+
+                                    <p style="margin:14px 0 0;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
+                                </td>
+                            </tr>
+
+                            <!-- Divider -->
+                            <tr>
+                                <td style="padding:20px 40px 0;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%">
+                                        <tr><td style="height:1px;background:#f0f0f0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Shield Icon + Title -->
+                            <tr>
+                                <td style="padding:28px 40px 0;text-align:center;">
+                                    <p style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">&#128274; 비밀번호 재설정</p>
+                                </td>
+                            </tr>
+
+                            <!-- Description -->
+                            <tr>
+                                <td style="padding:12px 40px 0;text-align:center;">
+                                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
+                                        아래 인증 코드를 입력하여<br>비밀번호를 재설정해 주세요.
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Code Block -->
+                            <tr>
+                                <td style="padding:28px 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                                        <tr>
+                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
+                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Timer Badge -->
+                            <tr>
+                                <td style="padding:0 40px;text-align:center;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                                        <tr>
+                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
+                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Security Warning -->
+                            <tr>
+                                <td style="padding:20px 40px 0;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
+                                        <tr>
+                                            <td style="padding:14px 18px;">
+                                                <p style="margin:0;font-size:12px;color:#dc2626;line-height:1.6;font-weight:500;">
+                                                    &#9888; 본인이 요청하지 않은 경우, 계정 보안을 즉시 확인해 주세요.<br>
+                                                    이 코드는 타인과 절대 공유하지 마세요.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Bottom Padding -->
+                            <tr>
+                                <td style="padding:32px 0 0;"></td>
+                            </tr>
+
+                            <!-- Footer Bar -->
+                            <tr>
+                                <td style="background:#f8f9fb;padding:20px 40px;border-top:1px solid #f0f0f0;text-align:center;">
+                                    <p style="margin:0;font-size:11px;color:#9ca3af;">
+                                        &copy; 2025 MSimul Inc. All rights reserved.<br>
+                                        <span style="color:#c4c4c4;">Fire Safety Simulation Platform</span>
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                        <!-- End Main Card -->
+
+                    </td></tr>
+                </table>
             </body>
             </html>
             """.formatted(code);
