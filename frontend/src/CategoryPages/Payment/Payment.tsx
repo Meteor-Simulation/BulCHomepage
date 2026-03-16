@@ -681,6 +681,11 @@ const PaymentPage: React.FC = () => {
                     <span className="product-price">{formatPrice(selectedPlan.price)}</span>
                   </div>
 
+                  <div className="summary-row service-period">
+                    <span>이용기간</span>
+                    <span>1년(구매일 기준 365일)</span>
+                  </div>
+
                   {appliedCoupon && (
                     <div className="summary-row discount">
                       <span>쿠폰 할인 ({appliedCoupon.code})</span>
