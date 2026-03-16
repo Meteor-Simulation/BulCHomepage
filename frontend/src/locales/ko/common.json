@@ -222,6 +222,7 @@
       "error": "가격 정보를 불러오지 못했습니다.",
       "retry": "다시 시도",
       "perYear": "/ 년",
+      "servicePeriod": "이용기간: 1년(구매일 기준 365일)",
       "comingSoon": "준비 중인 상품입니다",
       "free": {
         "name": "BUL:C Basic",

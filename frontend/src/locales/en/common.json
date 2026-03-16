@@ -222,6 +222,7 @@
       "error": "Failed to load pricing information.",
       "retry": "Retry",
       "perYear": "/ year",
+      "servicePeriod": "Service period: 1 year (365 days from purchase)",
       "comingSoon": "Coming Soon",
       "free": {
         "name": "BUL:C Basic",
