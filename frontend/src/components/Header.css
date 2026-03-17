@@ -201,8 +201,8 @@
 ======================================== */
 .header-trial-badge {
   padding: 5px 12px;
-  background: var(--accent, #C4320A);
-  color: #ffffff;
+  background: #f0f0f0;
+  color: #888;
   font-size: 13px;
   font-weight: 600;
   border-radius: 50px;
