@@ -11,6 +11,9 @@ import com.bulc.homepage.entity.SignupTicket;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.exception.DeactivatedAccountException;
+import com.bulc.homepage.licensing.domain.OwnerType;
+import com.bulc.homepage.licensing.domain.UsageCategory;
+import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.repository.ActivityLogRepository;
 import com.bulc.homepage.repository.RefreshTokenRepository;
 import com.bulc.homepage.repository.UserRepository;
@@ -40,9 +43,12 @@ public class AuthService {
     private final ActivityLogRepository activityLogRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final SignupTicketService signupTicketService;
+    private final LicenseService licenseService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+
+    private static final String TRIAL_PLAN_CODE = "BULC-TRIAL-14D";
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -106,6 +112,9 @@ public class AuthService {
             // 회원가입 로그 저장
             saveActivityLog(user.getId(), "signup", "user", null, "회원가입 완료");
         }
+
+        // 14일 무료 체험 라이선스 발급
+        issueTrialLicense(user.getId());
 
         // JWT 토큰 생성 (userId 기반)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
@@ -207,6 +216,20 @@ public class AuthService {
             saveActivityLog(userId, "login_failed", "user", null,
                     e.getMessage() + " - IP: " + ipAddress);
             throw e;
+        }
+    }
+
+    /**
+     * 회원가입 시 14일 무료 체험 라이선스를 발급합니다.
+     * 라이선스 발급 실패가 회원가입을 막지 않도록 예외를 catch합니다.
+     */
+    private void issueTrialLicense(UUID userId) {
+        try {
+            licenseService.issueLicenseWithPlanCode(
+                    OwnerType.USER, userId, TRIAL_PLAN_CODE, null, UsageCategory.INTERNAL_EVAL);
+            log.info("Trial 라이선스 발급 완료 - userId: {}", userId);
+        } catch (Exception e) {
+            log.error("Trial 라이선스 발급 실패 - userId: {}, error: {}", userId, e.getMessage());
         }
     }
 
@@ -436,6 +459,9 @@ public class AuthService {
                 "OAuth 회원가입 완료 - Provider: " + provider);
 
         log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}", email, provider);
+
+        // 14일 무료 체험 라이선스 발급
+        issueTrialLicense(user.getId());
 
         // JWT 토큰 생성 (userId 기반)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
