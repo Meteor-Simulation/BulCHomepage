@@ -1,6 +1,8 @@
 package com.bulc.homepage.service;
 
 import com.bulc.homepage.entity.EmailVerification;
+import com.bulc.homepage.entity.EmailVerificationAttempt;
+import com.bulc.homepage.repository.EmailVerificationAttemptRepository;
 import com.bulc.homepage.repository.EmailVerificationRepository;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -17,11 +20,15 @@ import java.util.Random;
 public class EmailVerificationService {
 
     private final EmailVerificationRepository emailVerificationRepository;
+    private final EmailVerificationAttemptRepository attemptRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
 
     private static final int CODE_LENGTH = 6;
-    private static final int EXPIRATION_MINUTES = 10;
+    private static final int EXPIRATION_MINUTES = 5;
+    private static final int MAX_ATTEMPTS = 5;
+    private static final int WINDOW_MINUTES = 60;
+    private static final int LOCKOUT_HOURS = 24;
 
     /**
      * 이메일 중복 체크
@@ -72,31 +79,98 @@ public class EmailVerificationService {
 
         log.info("인증 코드 발송 - 이메일: {}", email);
 
-        // 실제 이메일 발송
-        emailService.sendVerificationEmail(email, code);
+        // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(email, code);
+            } catch (Exception e) {
+                log.error("인증 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
+            }
+        });
 
         return code;
     }
 
     /**
-     * 인증 코드 검증
+     * 인증 코드 검증 (시도 횟수 제한 적용)
+     *
+     * - 최대 5회 실패 허용 (1시간 윈도우)
+     * - 5회 초과 시 24시간 락
+     * - 인증 성공 시 시도 기록 삭제
      */
     @Transactional
     public boolean verifyCode(String email, String code) {
+        // 1. 락 여부 확인 (코드 검증 전에 체크)
+        checkAttemptLock(email);
+
+        // 2. 인증 코드 조회 (대소문자 무시)
         EmailVerification verification = emailVerificationRepository
-                .findByEmailAndVerificationCode(email, code)
-                .orElseThrow(() -> new RuntimeException("인증 코드가 올바르지 않습니다"));
+                .findByEmailAndVerificationCode(email, code.toUpperCase())
+                .orElse(null);
+
+        if (verification == null) {
+            // 실패: 시도 횟수 기록
+            recordFailedAttempt(email);
+            throw new RuntimeException("인증 코드가 올바르지 않습니다");
+        }
 
         if (verification.isExpired()) {
+            recordFailedAttempt(email);
             throw new RuntimeException("인증 코드가 만료되었습니다. 다시 요청해주세요.");
         }
 
-        // 인증 완료 시 레코드 삭제
+        // 3. 인증 성공 → 시도 기록 삭제 + 인증 레코드 삭제
+        attemptRepository.deleteByEmail(email);
         emailVerificationRepository.delete(verification);
 
         log.info("이메일 인증 완료 - 이메일: {}", email);
 
         return true;
+    }
+
+    /**
+     * 락 여부 확인. 잠금 상태이면 예외 발생.
+     */
+    private void checkAttemptLock(String email) {
+        attemptRepository.findByEmail(email).ifPresent(attempt -> {
+            if (attempt.isLocked()) {
+                log.warn("이메일 인증 잠금 상태 - 이메일: {}, 해제 시각: {}", email, attempt.getLockedUntil());
+                throw new RuntimeException("인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.");
+            }
+        });
+    }
+
+    /**
+     * 실패 시도 기록. 최대 횟수 도달 시 24시간 락.
+     */
+    private void recordFailedAttempt(String email) {
+        EmailVerificationAttempt attempt = attemptRepository.findByEmail(email)
+                .orElse(null);
+
+        if (attempt == null) {
+            // 첫 실패
+            attempt = EmailVerificationAttempt.builder()
+                    .email(email)
+                    .attemptCount(1)
+                    .firstAttemptAt(LocalDateTime.now())
+                    .build();
+        } else if (attempt.isWindowExpired(WINDOW_MINUTES)) {
+            // 윈도우 만료 → 카운트 리셋
+            attempt.setAttemptCount(1);
+            attempt.setFirstAttemptAt(LocalDateTime.now());
+            attempt.setLockedUntil(null);
+        } else {
+            // 윈도우 내 추가 실패
+            attempt.setAttemptCount(attempt.getAttemptCount() + 1);
+        }
+
+        // 최대 횟수 도달 시 락
+        if (attempt.getAttemptCount() >= MAX_ATTEMPTS) {
+            attempt.setLockedUntil(LocalDateTime.now().plusHours(LOCKOUT_HOURS));
+            log.warn("이메일 인증 횟수 초과 → 24시간 잠금 - 이메일: {}", email);
+        }
+
+        attemptRepository.save(attempt);
     }
 
     /**
@@ -111,7 +185,7 @@ public class EmailVerificationService {
      * 6자리 영숫자 인증 코드 생성 (대소문자 구별)
      */
     private String generateVerificationCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < CODE_LENGTH; i++) {

@@ -80,7 +80,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/logs/activity").permitAll()
-                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/health/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         // OAuth 2.0 엔드포인트 (PKCE)
                         .requestMatchers("/oauth/**").permitAll()

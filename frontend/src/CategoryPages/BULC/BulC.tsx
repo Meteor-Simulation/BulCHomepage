@@ -6,6 +6,7 @@ import './BulC.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import LoginModal from '../../components/LoginModal';
+import EducationContactModal from '../../components/EducationContactModal';
 import { useAuth } from '../../context/AuthContext';
 import { isSubdomainAccess } from '../../utils/subdomain';
 
@@ -29,6 +30,7 @@ const BulCPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [educationModalOpen, setEducationModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   const handleLogoClick = () => {
@@ -68,6 +70,10 @@ const BulCPage: React.FC = () => {
     if (contactBtn) contactBtn.click();
   };
 
+  const handleEducationContact = () => {
+    setEducationModalOpen(true);
+  };
+
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
     if (loginRedirect === 'cta') {
@@ -90,7 +96,7 @@ const BulCPage: React.FC = () => {
       case 'workflow':
         return <WorkflowSection />;
       case 'price':
-        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} onContactClick={handleContactClick} isLoggedIn={isLoggedIn} />;
+        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} onContactClick={handleContactClick} onEducationContact={handleEducationContact} isLoggedIn={isLoggedIn} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
       default:
@@ -132,6 +138,10 @@ const BulCPage: React.FC = () => {
         promotionBadge={loginRedirect === 'cta' ? t('bulc.loginPromo') : undefined}
       />
 
+      <EducationContactModal
+        isOpen={educationModalOpen}
+        onClose={() => setEducationModalOpen(false)}
+      />
     </div>
   );
 };

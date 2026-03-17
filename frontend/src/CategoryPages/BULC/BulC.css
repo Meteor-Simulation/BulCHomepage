@@ -1105,6 +1105,14 @@
   font-weight: 500;
 }
 
+.bulc-price__card-service-period {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+  margin-top: 4px;
+}
+
 .bulc-price__card-btn {
   width: 100%;
   padding: 14px 32px;
@@ -1144,28 +1152,73 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
 }
 
-/* Student Card */
-.bulc-price__card--student {
-  border: 2px dashed #bfdbfe;
+/* Education Card */
+.bulc-price__card--education {
+  border: 2px dashed #c7d2e0;
   box-shadow: none;
+  position: relative;
 }
 
-.bulc-price__card--student:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+.bulc-price__card--education:hover {
+  border-color: #7a9cc6;
+  box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.1);
+}
+
+.bulc-price__card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #7a9cc6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
 }
 
 .bulc-price__card-price--empty {
   height: 48px;
 }
 
-.bulc-price__card-btn--student {
-  background: #3b82f6;
+.bulc-price__card-btn--education {
+  background: #7a9cc6;
 }
 
-.bulc-price__card-btn--student:hover {
-  background: #2563eb;
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+.bulc-price__card-btn--education:hover {
+  background: #6889b0;
+  box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.3);
+}
+
+/* Education Link */
+.bulc-price__education-link {
+  text-align: center;
+  margin-top: 32px;
+  color: #7a9cc6;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.bulc-price__education-link:hover {
+  color: #6889b0;
+  text-decoration: underline;
+}
+
+/* Restriction item (x mark) */
+.bulc-price__card-features-restriction {
+  color: #94a3b8 !important;
+  padding-left: 20px !important;
+  position: relative;
+}
+
+.bulc-price__card-features li.bulc-price__card-features-restriction::before {
+  content: '\2717';
+  position: absolute;
+  left: 0;
+  color: #ef4444;
+  font-weight: 700;
 }
 
 .bulc-price__card-features {

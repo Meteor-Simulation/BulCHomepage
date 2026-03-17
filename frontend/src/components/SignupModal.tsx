@@ -26,12 +26,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   // 이메일 인증 상태
   const [verificationCode, setVerificationCode] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [signupTicket, setSignupTicket] = useState<string | null>(null);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const [timerKey, setTimerKey] = useState(0);
   const [codeError, setCodeError] = useState(false);
 
   // 계정 재활성화 상태
@@ -59,12 +61,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setEmailCheckMessage('');
       setVerificationCode('');
       setIsEmailVerified(false);
+      setSignupTicket(null);
       setIsSendingCode(false);
       setIsVerifyingCode(false);
       setVerificationMessage('');
       setCodeSent(false);
       setTimerSeconds(0);
       setIsTimerExpired(false);
+      setTimerKey(0);
       setCodeError(false);
       setShowReactivation(false);
       setReactivationEmail('');
@@ -93,22 +97,23 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     };
   }, [isOpen, onClose]);
 
-  // 인증 코드 타이머 (5분)
+  // 인증 코드 타이머 (5분) — timerKey가 변경되면 interval 재생성
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (codeSent && timerSeconds > 0 && !isEmailVerified) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => {
-          if (prev <= 1) {
-            setIsTimerExpired(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (!codeSent || isEmailVerified) return;
+
+    const interval = setInterval(() => {
+      setTimerSeconds((prev) => {
+        if (prev <= 1) {
+          setIsTimerExpired(true);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
-  }, [codeSent, timerSeconds, isEmailVerified]);
+  }, [codeSent, isEmailVerified, timerKey]);
 
   // 타이머 포맷 (mm:ss)
   const formatTimer = (seconds: number) => {
@@ -124,55 +129,13 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     }
   };
 
-  // 이메일 중복 체크
-  const checkEmailDuplicate = async (emailToCheck: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailToCheck)) {
-      setEmailCheckStatus('idle');
-      setEmailCheckMessage('');
-      return;
-    }
-
-    setEmailCheckStatus('checking');
-    setEmailCheckMessage('확인 중...');
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/api/auth/check-email?email=${encodeURIComponent(emailToCheck)}`);
-      const result = await response.json();
-
-      if (result.success) {
-        if (result.data.deactivated) {
-          // 비활성화된 계정 - 재가입 가능 (사용 가능으로 처리)
-          setEmailCheckStatus('available');
-          setEmailCheckMessage('사용 가능한 이메일입니다');
-        } else if (result.data.exists) {
-          setEmailCheckStatus('exists');
-          setEmailCheckMessage('이미 가입된 이메일입니다');
-          // 이메일이 중복이면 인증 상태 초기화
-          setIsEmailVerified(false);
-          setCodeSent(false);
-          setVerificationCode('');
-          setVerificationMessage('');
-        } else {
-          setEmailCheckStatus('available');
-          setEmailCheckMessage('사용 가능한 이메일입니다');
-        }
-      } else {
-        setEmailCheckStatus('error');
-        setEmailCheckMessage('이메일 확인에 실패했습니다');
-      }
-    } catch (err) {
-      setEmailCheckStatus('error');
-      setEmailCheckMessage('이메일 확인 중 오류가 발생했습니다');
-    }
-  };
-
   // 이메일 변경 핸들러
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     setEmail(newEmail);
     // 이메일이 변경되면 인증 상태 초기화
     setIsEmailVerified(false);
+    setSignupTicket(null);
     setCodeSent(false);
     setVerificationCode('');
     setVerificationMessage('');
@@ -180,22 +143,54 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     setEmailCheckMessage('');
   };
 
-  // 이메일 입력 완료 시 중복 체크 (blur)
-  const handleEmailBlur = () => {
-    if (email.trim()) {
-      checkEmailDuplicate(email);
-    }
-  };
-
-  // 인증 코드 발송
+  // 인증 코드 발송 (이메일 중복 체크 포함)
   const sendVerificationCode = async () => {
-    if (emailCheckStatus !== 'available') {
-      setError('먼저 이메일 중복 확인을 해주세요.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email)) {
+      setError('올바른 이메일 형식을 입력해주세요.');
       return;
     }
 
     setIsSendingCode(true);
+    setError('');
     setVerificationMessage('');
+
+    // 이메일 중복 체크 (재발송 시에는 스킵)
+    if (emailCheckStatus !== 'available') {
+      try {
+        const checkResponse = await fetch(`${getApiBaseUrl()}/api/auth/check-email?email=${encodeURIComponent(email)}`);
+        const checkResult = await checkResponse.json();
+
+        if (checkResult.success) {
+          if (checkResult.data.deactivated) {
+            setEmailCheckStatus('available');
+          } else if (checkResult.data.exists) {
+            setEmailCheckStatus('exists');
+            setEmailCheckMessage('이미 가입된 이메일입니다');
+            setIsSendingCode(false);
+            return;
+          } else {
+            setEmailCheckStatus('available');
+          }
+        } else {
+          setError('이메일 확인에 실패했습니다.');
+          setIsSendingCode(false);
+          return;
+        }
+      } catch (err) {
+        setError('이메일 확인 중 오류가 발생했습니다.');
+        setIsSendingCode(false);
+        return;
+      }
+    }
+
+    // 타이머 즉시 초기화
+    setCodeSent(true);
+    setTimerSeconds(300);
+    setIsTimerExpired(false);
+    setTimerKey((prev) => prev + 1);
+    setVerificationCode('');
+    setCodeError(false);
 
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/send-verification`, {
@@ -208,12 +203,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
       const result = await response.json();
 
-      if (result.success) {
-        setCodeSent(true);
-        setTimerSeconds(300); // 5분 타이머 시작
-        setIsTimerExpired(false);
-        setVerificationCode(''); // 재발송 시 입력값 초기화
-      } else {
+      if (!result.success) {
         setVerificationMessage(result.message || '인증 코드 발송에 실패했습니다.');
       }
     } catch (err) {
@@ -247,6 +237,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
       if (result.success && result.data.verified) {
         setIsEmailVerified(true);
+        setSignupTicket(result.data.signupTicket);
         setCodeError(false);
       } else {
         setCodeError(true);
@@ -409,7 +400,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         },
         credentials: 'include',
         body: JSON.stringify({
-          email,
+          signupTicket,
           password,
         }),
       });
@@ -426,6 +417,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setEmailCheckMessage('');
         setVerificationCode('');
         setIsEmailVerified(false);
+        setSignupTicket(null);
         setCodeSent(false);
         setVerificationMessage('');
         onClose();
@@ -546,96 +538,91 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="input-group">
-            <div className="input-wrapper">
-              <input
-                type="email"
-                className={`modal-input ${emailCheckStatus === 'exists' ? 'input-error' : emailCheckStatus === 'available' ? 'input-success' : ''}`}
-                placeholder="아이디(이메일)"
-                value={email}
-                onChange={handleEmailChange}
-                onBlur={handleEmailBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    passwordInputRef.current?.focus();
-                  }
-                }}
-                disabled={isLoading || isEmailVerified}
-                maxLength={255}
-              />
-              {emailCheckStatus !== 'idle' && (
-                <span className={`email-check-status ${emailCheckStatus}`}>
-                  {emailCheckStatus === 'checking' && '...'}
-                  {emailCheckStatus === 'available' && '✓'}
-                  {emailCheckStatus === 'exists' && '✗'}
-                  {emailCheckStatus === 'error' && '!'}
-                </span>
+            <div className="email-input-row">
+              <div className="input-wrapper" style={{flex: 1}}>
+                <input
+                  type="email"
+                  className={`modal-input ${emailCheckStatus === 'exists' ? 'input-error' : isEmailVerified ? 'input-success' : ''}`}
+                  placeholder="아이디(이메일)"
+                  value={email}
+                  onChange={handleEmailChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (!isEmailVerified && !codeSent) {
+                        sendVerificationCode();
+                      } else if (codeSent && !isEmailVerified) {
+                        verifyCode();
+                      } else {
+                        passwordInputRef.current?.focus();
+                      }
+                    }
+                  }}
+                  disabled={isLoading || isEmailVerified}
+                  maxLength={255}
+                />
+              </div>
+              {!isEmailVerified && !codeSent && (
+                <button
+                  type="button"
+                  className="verification-btn email-verify-btn"
+                  onClick={sendVerificationCode}
+                  disabled={isSendingCode || isLoading || !email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
+                >
+                  {isSendingCode ? '발송 중...' : '이메일 인증'}
+                </button>
+              )}
+              {!isEmailVerified && codeSent && (
+                <button
+                  type="button"
+                  className="verification-btn email-verify-btn secondary"
+                  onClick={sendVerificationCode}
+                  disabled={isSendingCode || isLoading}
+                >
+                  {isSendingCode ? '...' : '재발송'}
+                </button>
               )}
             </div>
+
             {/* 에러 메시지 (이메일 중복, 오류 등) */}
             {emailCheckMessage && (emailCheckStatus === 'exists' || emailCheckStatus === 'error') && (
-              <p className={`input-message error`}>
-                {emailCheckMessage}
-              </p>
+              <p className="input-message error">{emailCheckMessage}</p>
             )}
 
-            {/* 이메일 인증 영역 */}
-            {emailCheckStatus === 'available' && !isEmailVerified && (
-              <div className="email-verification-section">
-                {!codeSent ? (
-                  <div className="email-available-row">
-                    <span className="input-message success inline">사용 가능한 이메일입니다</span>
-                    <button
-                      type="button"
-                      className="verification-btn inline"
-                      onClick={sendVerificationCode}
-                      disabled={isSendingCode || isLoading}
-                    >
-                      {isSendingCode ? '발송 중...' : '인증 메일 발송'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="verification-code-row">
-                    <input
-                      type="text"
-                      placeholder="인증코드"
-                      className={`verification-code-input ${codeError ? 'input-error' : ''}`}
-                      value={verificationCode}
-                      onChange={(e) => {
-                        setVerificationCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6));
-                        setCodeError(false);
-                      }}
-                      disabled={isVerifyingCode || isLoading || isTimerExpired}
-                      maxLength={6}
-                    />
-                    <span className={`verification-timer ${isTimerExpired ? 'expired' : ''}`}>
-                      {isTimerExpired ? '만료' : formatTimer(timerSeconds)}
-                    </span>
-                    {codeError && <span className="code-error-msg">코드 불일치</span>}
-                    <button
-                      type="button"
-                      className="verification-btn small"
-                      onClick={verifyCode}
-                      disabled={isVerifyingCode || isLoading || verificationCode.length !== 6 || isTimerExpired}
-                    >
-                      {isVerifyingCode ? '...' : '확인'}
-                    </button>
-                    <button
-                      type="button"
-                      className="verification-btn small secondary"
-                      onClick={sendVerificationCode}
-                      disabled={isSendingCode || isLoading}
-                    >
-                      {isSendingCode ? '...' : '재발송'}
-                    </button>
-                  </div>
-                )}
+            {/* 인증 코드 입력 영역 */}
+            {codeSent && !isEmailVerified && (
+              <div className="verification-code-row">
+                <input
+                  type="text"
+                  placeholder="인증코드 6자리"
+                  className={`verification-code-input ${codeError ? 'input-error' : ''}`}
+                  value={verificationCode}
+                  onChange={(e) => {
+                    setVerificationCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6));
+                    setCodeError(false);
+                  }}
+                  disabled={isVerifyingCode || isLoading || isTimerExpired}
+                  maxLength={6}
+                />
+                <span className={`verification-timer ${isTimerExpired ? 'expired' : ''}`}>
+                  {isTimerExpired ? '만료' : formatTimer(timerSeconds)}
+                </span>
+                {codeError && <span className="code-error-msg">코드 불일치</span>}
+                <button
+                  type="button"
+                  className="verification-btn small"
+                  onClick={verifyCode}
+                  disabled={isVerifyingCode || isLoading || verificationCode.length !== 6 || isTimerExpired}
+                >
+                  {isVerifyingCode ? '...' : '확인'}
+                </button>
               </div>
             )}
+
             {isEmailVerified && (
               <p className="input-message success verified">이메일 인증이 완료되었습니다 ✓</p>
             )}
-            {verificationMessage && !isEmailVerified && !codeSent && (
+            {verificationMessage && !isEmailVerified && (
               <p className="input-message error">{verificationMessage}</p>
             )}
           </div>

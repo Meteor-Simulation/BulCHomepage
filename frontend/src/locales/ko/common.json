@@ -81,6 +81,25 @@
     "delete": "삭제",
     "loading": "로딩 중..."
   },
+  "contact": {
+    "title": "문의하기",
+    "email": "이메일",
+    "subject": "문의 제목",
+    "subjectPlaceholder": "문의 제목을 입력해주세요",
+    "message": "문의 내용",
+    "messagePlaceholder": "문의 내용을 입력해주세요",
+    "submit": "문의 보내기",
+    "submitting": "전송 중...",
+    "success": "문의가 성공적으로 전송되었습니다.",
+    "successSub": "빠른 시일 내에 답변 드리겠습니다.",
+    "close": "닫기",
+    "errorEmail": "이메일을 입력해주세요.",
+    "errorEmailInvalid": "올바른 이메일 형식을 입력해주세요.",
+    "errorSubject": "문의 제목을 입력해주세요.",
+    "errorMessage": "문의 내용을 입력해주세요.",
+    "errorSendFailed": "문의 전송에 실패했습니다.",
+    "errorSendError": "문의 전송 중 오류가 발생했습니다."
+  },
   "bulc": {
     "nav": {
       "intro": "소개",
@@ -155,7 +174,7 @@
       "title": "간편한 5단계 워크플로우",
       "subtitle": "컨셉부터 법규 준수까지 기록적인 시간 내에 완료합니다.",
       "step1": {
-        "title1": "가져오기",
+        "title1": "가져오기 (지원 예정)",
         "title2": "현장·도면을 그대로 가져와, 프로젝트를 바로 시작하세요",
         "desc": "기존에는 도면을 축척에 맞춰 임포트하고, 그 위에 다시 선을 따라 그리며 초기 세팅을 해야 했습니다. 이제는 iOS RoomPlan 또는 AI 도면 자동 인식으로 공간 정보를 자동 추출해, \"세팅\"에 쓰이던 시간을 \"검토/시뮬레이션\"에 집중할 수 있습니다",
         "feature1": "RoomPlan 기반 3D 공간 추출",
@@ -203,6 +222,7 @@
       "error": "가격 정보를 불러오지 못했습니다.",
       "retry": "다시 시도",
       "perYear": "/ 년",
+      "servicePeriod": "이용기간: 1년(구매일 기준 365일)",
       "comingSoon": "준비 중인 상품입니다",
       "free": {
         "name": "BUL:C Basic",
@@ -218,29 +238,63 @@
           "ASET+RSET 자동 분석 보고서"
         ]
       },
-      "student": {
-        "name": "BUL:C Student",
-        "desc": "학생 인증 필요",
-        "button": "문의하기",
+      "education": {
+        "name": "교육/연구",
+        "desc": "대학·연구기관 전용 라이선스",
+        "price": "가격 문의",
+        "period": "/ 기간",
+        "button": "견적 문의하기",
+        "includes": "Basic의 모든 기능 포함",
         "features": [
-          "CPU 기반 해석",
-          "기본 라이브러리 (아파트, 오피스텔)",
-          "AI 도면인식 자동 설계",
-          "EVAC 해석 (콜리젼, 소셜포스, 다층 모델)",
-          "ASET+RSET 자동 분석 보고서"
-        ]
+          "학생 계정별 라이선스 관리"
+        ],
+        "restriction": "상업적 이용 제한"
+      },
+      "educationLink": "교육/연구용 라이선스가 필요하신가요?",
+      "educationContact": {
+        "title": "교육/연구 라이선스 문의",
+        "subtitle": "아래 정보를 입력해 주시면 담당자가 확인 후 안내 드립니다.",
+        "name": "담당자 이름",
+        "namePlaceholder": "홍길동",
+        "email": "이메일",
+        "emailPlaceholder": "example@univ.ac.kr",
+        "organization": "소속 기관",
+        "organizationPlaceholder": "○○대학교, ○○연구원 등",
+        "department": "학과/부서",
+        "departmentPlaceholder": "소방방재학과, 안전공학과 등",
+        "role": "직책/직급",
+        "roleOptions": ["교수", "연구원", "학생(대학원)", "학생(학부)", "기타"],
+        "country": "국가",
+        "purpose": "사용 목적",
+        "purposeOptions": ["강의/수업", "연구 프로젝트", "졸업논문/학위논문", "기타"],
+        "courseProject": "강의명/프로젝트명",
+        "courseProjectPlaceholder": "예: 화재안전공학 실습, 피난 시뮬레이션 연구",
+        "seatCount": "예상 사용 인원 (seat)",
+        "seatCountPlaceholder": "예: 30",
+        "duration": "희망 라이선스 기간",
+        "durationOptions": ["180일 (6개월)", "365일 (1년)", "기타"],
+        "durationCustomPlaceholder": "예: 90일",
+        "startDate": "희망 시작일",
+        "message": "추가 메시지 (선택)",
+        "messagePlaceholder": "추가로 알려주실 내용이 있으면 입력해 주세요",
+        "submit": "문의 보내기",
+        "submitting": "전송 중...",
+        "success": "문의가 성공적으로 전송되었습니다.",
+        "successSub": "빠른 시일 내에 담당자가 연락드리겠습니다.",
+        "close": "닫기",
+        "required": "필수 항목을 모두 입력해 주세요.",
+        "invalidEmail": "올바른 이메일 형식을 입력해 주세요."
       },
       "pro": {
+        "includes": "Basic의 모든 기능 포함",
         "features": [
-          "GPU 가속 해석",
-          "기본 라이브러리 (아파트, 오피스텔)",
-          "AI 도면인식 자동 설계",
-          "EVAC 해석 (콜리젼, 소셜포스, 다층 모델)",
-          "ASET+RSET 자동 분석 보고서"
+          "iOS RoomPlan 기반 환경 스캔 기능 (지원 예정)",
+          "프로젝트 클라우드 저장 기능 (지원 예정)",
+          "커스텀 라이브러리 저장 기능 (지원 예정)"
         ]
       },
       "premium": {
-        "includes": "PRO 전체 기능 포함",
+        "includes": "PRO의 모든 기능 포함",
         "features": [
           "다중 GPU 가속",
           "특수 라이브러리 (공장, 반도체, 전기차, 배터리)",

@@ -15,6 +15,7 @@ interface PriceSectionProps {
   onPurchaseClick: () => void;
   onFreeClick?: () => void;
   onContactClick?: () => void;
+  onEducationContact?: () => void;
   isLoggedIn?: boolean;
 }
 
@@ -25,7 +26,7 @@ const FEATURE_KEYS: Record<string, string> = {
 
 const COMING_SOON_PLANS = ['BUL:C 3D Premium'];
 
-const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, isLoggedIn }) => {
+const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
@@ -92,6 +93,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
         )}
 
         {!loading && !error && (
+          <>
           <div className="bulc-price__grid">
             {/* 무료 플랜 */}
             <div className="bulc-price__card bulc-price__card--free">
@@ -110,23 +112,6 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               </ul>
               <button className="bulc-price__card-btn bulc-price__card-btn--free" onClick={onFreeClick || onPurchaseClick}>
                 {isLoggedIn ? t('download.downloadBtn') : t('bulc.price.free.button')}
-              </button>
-            </div>
-
-            {/* 학생 플랜 */}
-            <div className="bulc-price__card bulc-price__card--student">
-              <div className="bulc-price__card-header">
-                <h3 className="bulc-price__card-name">{t('bulc.price.student.name')}</h3>
-                <p className="bulc-price__card-desc">{t('bulc.price.student.desc')}</p>
-              </div>
-              <div className="bulc-price__card-price bulc-price__card-price--empty" />
-              <ul className="bulc-price__card-features">
-                {(t('bulc.price.student.features', { returnObjects: true }) as string[]).map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
-              <button className="bulc-price__card-btn bulc-price__card-btn--student" onClick={onContactClick}>
-                {t('bulc.price.student.button')}
               </button>
             </div>
 
@@ -153,6 +138,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                       {formatPrice(plan.price, plan.currency)}
                     </span>
                     <span className="bulc-price__card-period">{t('bulc.price.perYear')}</span>
+                    <span className="bulc-price__card-service-period">{t('bulc.price.servicePeriod')}</span>
                   </div>
                   {(includes || features.length > 0) && (
                     <ul className="bulc-price__card-features">
@@ -172,7 +158,35 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 </div>
               );
             })}
+
+            {/* 교육/연구 플랜 */}
+            <div className="bulc-price__card bulc-price__card--education">
+              <div className="bulc-price__card-header">
+                <h3 className="bulc-price__card-name">{t('bulc.price.education.name')}</h3>
+                <p className="bulc-price__card-desc">{t('bulc.price.education.desc')}</p>
+              </div>
+              <div className="bulc-price__card-price">
+                <span className="bulc-price__card-amount">{t('bulc.price.education.price')}</span>
+                <span className="bulc-price__card-period">{t('bulc.price.education.period')}</span>
+              </div>
+              <ul className="bulc-price__card-features">
+                {t('bulc.price.education.includes') && (
+                  <li className="bulc-price__card-features-includes">{t('bulc.price.education.includes')}</li>
+                )}
+                {(t('bulc.price.education.features', { returnObjects: true }) as string[]).map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+                <li className="bulc-price__card-features-restriction">{t('bulc.price.education.restriction')}</li>
+              </ul>
+              <button className="bulc-price__card-btn bulc-price__card-btn--education" onClick={onEducationContact}>
+                {t('bulc.price.education.button')}
+              </button>
+            </div>
           </div>
+          <p className="bulc-price__education-link" onClick={onEducationContact}>
+            {t('bulc.price.educationLink')}
+          </p>
+          </>
         )}
       </div>
     </section>

@@ -1,0 +1,332 @@
+@import '../styles/modal.css';
+
+/* ========================================
+   환불 요청 모달
+======================================== */
+.refund-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: refundModalSlideIn 0.3s ease;
+}
+
+@keyframes refundModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.refund-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.refund-modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  flex: 1;
+}
+
+.refund-step-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.refund-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+/* Step 1: 환불 대상 정보 */
+.refund-product-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.refund-product-label {
+  font-size: 13px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.refund-product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Step 1: 정책 요약 */
+.refund-policy-summary {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.refund-policy-summary h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 20px 0 8px;
+}
+
+.refund-policy-summary h3:first-child {
+  margin-top: 0;
+}
+
+.refund-policy-summary ul,
+.refund-policy-summary ol {
+  margin: 0 0 4px;
+  padding-left: 20px;
+}
+
+.refund-policy-summary li {
+  margin-bottom: 4px;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.refund-policy-summary strong {
+  color: #C4320A;
+  font-weight: 600;
+}
+
+.refund-notice {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.6;
+}
+
+/* Step 2: 사유 선택 */
+.refund-reason-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+.refund-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.refund-reason-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refund-reason-item:hover {
+  border-color: #C4320A;
+  background: rgba(196, 50, 10, 0.02);
+}
+
+.refund-reason-item.selected {
+  border-color: #C4320A;
+  background: rgba(196, 50, 10, 0.05);
+}
+
+.refund-reason-item input[type="radio"] {
+  display: none;
+}
+
+.refund-reason-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.refund-reason-item.selected .refund-reason-radio {
+  border-color: #C4320A;
+}
+
+.refund-reason-item.selected .refund-reason-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background: #C4320A;
+  border-radius: 50%;
+}
+
+.refund-reason-text {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 상세 사유 */
+.refund-details-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.refund-details-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.refund-details-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.refund-details-textarea:focus {
+  outline: none;
+  border-color: #C4320A;
+}
+
+.refund-details-textarea::placeholder {
+  color: #aaa;
+}
+
+.refund-details-count {
+  align-self: flex-end;
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* 모달 하단 버튼 */
+.refund-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 28px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+}
+
+.refund-cancel-btn {
+  padding: 12px 24px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.refund-cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+.refund-next-btn {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refund-next-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.3);
+}
+
+.refund-submit-btn {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refund-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.3);
+}
+
+.refund-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 640px) {
+  .refund-modal {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .refund-modal-header {
+    padding: 20px;
+  }
+
+  .refund-modal-content {
+    padding: 20px;
+  }
+
+  .refund-modal-footer {
+    padding: 16px 20px;
+    border-radius: 0;
+  }
+
+  .refund-reason-item {
+    padding: 12px 14px;
+  }
+}
