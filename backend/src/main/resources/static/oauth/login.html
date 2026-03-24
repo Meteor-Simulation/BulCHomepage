@@ -145,6 +145,20 @@
             box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
         }
 
+        .form-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-input.input-success {
+            border-color: #16a34a !important;
+            background: rgba(22, 163, 74, 0.03);
+        }
+
+        .form-input.input-error-border {
+            border-color: #dc2626 !important;
+        }
+
         .password-wrapper {
             position: relative;
             display: flex;
@@ -355,13 +369,23 @@
            MOBILE RESPONSIVE
         ======================================== */
         @media (max-width: 480px) {
-            .login-card {
+            .login-card,
+            .signup-card {
                 margin: 20px;
                 padding: 30px 24px;
             }
 
             .login-title {
                 font-size: 24px;
+            }
+
+            .email-row,
+            .code-row {
+                flex-direction: column;
+            }
+
+            .verify-btn {
+                width: 100%;
             }
         }
 
@@ -399,6 +423,131 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* ========================================
+           SIGNUP CARD
+        ======================================== */
+        .signup-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            animation: slideUp 0.3s ease;
+            display: none;
+        }
+
+        .email-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .email-row .form-input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .verify-btn {
+            padding: 14px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font-main);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .verify-btn:hover:not(:disabled) {
+            opacity: 0.85;
+        }
+
+        .verify-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .verify-btn.secondary {
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text);
+        }
+
+        .code-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-row .form-input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .code-timer {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            white-space: nowrap;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .code-timer.expired {
+            color: #dc2626;
+        }
+
+        .form-message {
+            font-size: 13px;
+            margin-top: 6px;
+            padding: 0 2px;
+        }
+
+        .form-message.success {
+            color: #16a34a;
+        }
+
+        .form-message.error {
+            color: #dc2626;
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.4);
+            margin: -6px 0 0 2px;
+        }
+
+        .signup-success-view {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .signup-success-view .success-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: rgba(22, 163, 74, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signup-success-view .success-icon svg {
+            width: 32px;
+            height: 32px;
+            color: #16a34a;
+        }
+
+        .signup-success-view p {
+            font-size: 15px;
+            color: rgba(0, 0, 0, 0.6);
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -411,7 +560,7 @@
     </header>
 
     <!-- Login Card -->
-    <div class="login-card">
+    <div class="login-card" id="loginCard">
         <h1 class="login-title">로그인</h1>
         <p class="login-subtitle">
             <span class="client-info" id="clientName">BUL-C Fire Simulator</span>에 로그인합니다
@@ -475,7 +624,87 @@
         <!-- Signup Link -->
         <div class="signup-section">
             <span>계정이 없으신가요?</span>
-            <a href="/" class="signup-link">회원가입</a>
+            <a href="#" class="signup-link" onclick="switchToSignup(); return false;">회원가입</a>
+        </div>
+    </div>
+
+    <!-- Signup Card -->
+    <div class="signup-card" id="signupCard">
+        <h1 class="login-title">회원가입</h1>
+        <p class="login-subtitle">BUL:C 계정을 생성합니다</p>
+
+        <!-- Signup Form -->
+        <div id="signupFormView">
+            <form class="login-form" id="signupForm">
+                <!-- Email + Verify Button -->
+                <div>
+                    <div class="email-row">
+                        <input type="email" class="form-input" id="signupEmail" placeholder="이메일" required maxlength="255">
+                        <button type="button" class="verify-btn" id="sendCodeBtn">이메일 인증</button>
+                    </div>
+                    <p class="form-message" id="emailMessage"></p>
+                </div>
+
+                <!-- Verification Code (hidden until code sent) -->
+                <div id="codeStep" style="display: none;">
+                    <div class="code-row">
+                        <input type="text" class="form-input" id="verificationCode" placeholder="인증코드 6자리" maxlength="6">
+                        <span class="code-timer" id="codeTimer">5:00</span>
+                        <button type="button" class="verify-btn" id="verifyCodeBtn" style="padding: 14px 12px;">확인</button>
+                    </div>
+                    <p class="form-message" id="codeMessage"></p>
+                </div>
+
+                <!-- Password (hidden until email verified) -->
+                <div id="passwordStep" style="display: none;">
+                    <div class="password-wrapper">
+                        <input type="password" class="form-input" id="signupPassword" placeholder="비밀번호">
+                        <button type="button" class="password-toggle" id="signupPwToggle">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="signupEyeIcon">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="password-hint">영문, 숫자, 특수문자 포함 8자 이상</p>
+                    <p class="form-message" id="passwordMessage"></p>
+
+                    <div class="password-wrapper" style="margin-top: 14px;">
+                        <input type="password" class="form-input" id="signupPasswordConfirm" placeholder="비밀번호 확인">
+                        <button type="button" class="password-toggle" id="signupPwConfirmToggle">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="signupEyeConfirmIcon">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="form-message" id="passwordConfirmMessage"></p>
+                </div>
+
+                <p class="form-error" id="signupError"></p>
+
+                <button type="submit" class="submit-btn" id="signupSubmitBtn">회원가입</button>
+            </form>
+        </div>
+
+        <!-- Signup Success -->
+        <div id="signupSuccessView" style="display: none;">
+            <div class="signup-success-view">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2 class="login-title">회원가입 완료</h2>
+                <p>계정이 생성되었습니다. 로그인해주세요.</p>
+            </div>
+            <button type="button" class="submit-btn" onclick="switchToLogin()" style="margin-top: 24px; width: 100%;">로그인하기</button>
+        </div>
+
+        <!-- Switch to Login -->
+        <div class="signup-section" id="signupToLoginSection">
+            <span>이미 계정이 있으신가요?</span>
+            <a href="#" class="signup-link" onclick="switchToLogin(); return false;">로그인</a>
         </div>
     </div>
 
@@ -486,14 +715,14 @@
 
     <script>
         // Parse URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
+        var urlParams = new URLSearchParams(window.location.search);
 
         // Set OAuth parameters to hidden fields
-        const clientId = urlParams.get('client_id') || '';
-        const redirectUri = urlParams.get('redirect_uri') || '';
-        const codeChallenge = urlParams.get('code_challenge') || '';
-        const codeChallengeMethod = urlParams.get('code_challenge_method') || 'S256';
-        const state = urlParams.get('state') || '';
+        var clientId = urlParams.get('client_id') || '';
+        var redirectUri = urlParams.get('redirect_uri') || '';
+        var codeChallenge = urlParams.get('code_challenge') || '';
+        var codeChallengeMethod = urlParams.get('code_challenge_method') || 'S256';
+        var state = urlParams.get('state') || '';
 
         document.getElementById('clientId').value = clientId;
         document.getElementById('redirectUri').value = redirectUri;
@@ -502,94 +731,69 @@
         document.getElementById('state').value = state;
 
         // Display client name
-        const clientNames = {
+        var clientNames = {
             'meteor-app': 'BUL-C Fire Simulator',
             'bulc-app': 'BulC'
         };
         document.getElementById('clientName').textContent = clientNames[clientId] || clientId || 'BUL-C Fire Simulator';
 
         // Password toggle
-        const passwordInput = document.getElementById('passwordInput');
-        const passwordToggle = document.getElementById('passwordToggle');
-        const eyeIcon = document.getElementById('eyeIcon');
-        let showPassword = false;
+        var passwordInput = document.getElementById('passwordInput');
+        var passwordToggle = document.getElementById('passwordToggle');
+        var eyeIcon = document.getElementById('eyeIcon');
+        var showPassword = false;
 
-        passwordToggle.addEventListener('click', () => {
+        passwordToggle.addEventListener('click', function() {
             showPassword = !showPassword;
             passwordInput.type = showPassword ? 'text' : 'password';
-
-            // Update icon
             if (showPassword) {
-                eyeIcon.innerHTML = `
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                `;
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
             } else {
-                eyeIcon.innerHTML = `
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                `;
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
             }
         });
 
         // Form submission
-        const loginForm = document.getElementById('loginForm');
-        const errorMessage = document.getElementById('errorMessage');
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingOverlay = document.getElementById('loadingOverlay');
+        var loginForm = document.getElementById('loginForm');
+        var errorMessage = document.getElementById('errorMessage');
+        var submitBtn = document.getElementById('submitBtn');
+        var loadingOverlay = document.getElementById('loadingOverlay');
 
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Validate OAuth params
             if (!clientId || !redirectUri || !codeChallenge) {
                 showError('OAuth 파라미터가 누락되었습니다. 앱에서 다시 로그인을 시도해주세요.');
                 return;
             }
 
-            const formData = new FormData(loginForm);
-            const email = formData.get('email');
-            const password = formData.get('password');
+            var formData = new FormData(loginForm);
+            var email = formData.get('email');
+            var password = formData.get('password');
 
-            // Frontend validation
-            if (!email) {
-                showError('이메일을 입력해주세요.');
-                return;
-            }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showError('올바른 이메일 형식을 입력해주세요.');
-                return;
-            }
-            if (!password) {
-                showError('비밀번호를 입력해주세요.');
-                return;
-            }
+            if (!email) { showError('이메일을 입력해주세요.'); return; }
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) { showError('올바른 이메일 형식을 입력해주세요.'); return; }
+            if (!password) { showError('비밀번호를 입력해주세요.'); return; }
 
-            // Show loading
             submitBtn.disabled = true;
             submitBtn.textContent = '로그인 중...';
             loadingOverlay.classList.add('visible');
             hideError();
 
             try {
-                const response = await fetch('/oauth/login-process', {
+                var response = await fetch('/oauth/login-process', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams(formData),
-                    redirect: 'manual'  // Don't auto-follow redirects
+                    redirect: 'manual'
                 });
 
                 if (response.type === 'opaqueredirect' || response.status === 302) {
-                    // Success - the browser will handle the redirect
-                    // For custom schemes, we need to get the Location header
-                    const location = response.headers.get('Location');
+                    var location = response.headers.get('Location');
                     if (location) {
                         window.location.href = location;
                     } else {
-                        // Fallback: re-submit with normal redirect behavior
                         loginForm.action = '/oauth/login-process';
                         loginForm.method = 'POST';
                         loginForm.submit();
@@ -598,15 +802,13 @@
                 }
 
                 if (response.status === 401) {
-                    const data = await response.json();
+                    var data = await response.json();
                     showError(data.error_description || '이메일 또는 비밀번호가 올바르지 않습니다.');
                 } else if (!response.ok) {
-                    const data = await response.json();
-                    showError(data.error_description || '로그인 중 오류가 발생했습니다.');
+                    var data2 = await response.json();
+                    showError(data2.error_description || '로그인 중 오류가 발생했습니다.');
                 }
-            } catch (error) {
-                // Network error or redirect to custom scheme
-                // Try direct form submission for custom schemes
+            } catch (err) {
                 loginForm.action = '/oauth/login-process';
                 loginForm.method = 'POST';
                 loginForm.submit();
@@ -627,11 +829,326 @@
             errorMessage.classList.remove('visible');
         }
 
-        // Check if OAuth params are missing
         if (!clientId || !redirectUri || !codeChallenge) {
             showError('잘못된 접근입니다. 앱에서 로그인을 다시 시도해주세요.');
             submitBtn.disabled = true;
         }
+
+        // ========================================
+        // SIGNUP LOGIC
+        // ========================================
+
+        var loginCard = document.getElementById('loginCard');
+        var signupCard = document.getElementById('signupCard');
+        var signupTicket = null;
+        var timerInterval = null;
+        var timerSeconds = 0;
+
+        function switchToSignup() {
+            loginCard.style.display = 'none';
+            signupCard.style.display = 'block';
+            resetSignupForm();
+        }
+
+        function switchToLogin() {
+            signupCard.style.display = 'none';
+            loginCard.style.display = 'block';
+        }
+
+        function resetSignupForm() {
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupEmail').disabled = false;
+            document.getElementById('signupEmail').className = 'form-input';
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('signupPassword').value = '';
+            document.getElementById('signupPasswordConfirm').value = '';
+            document.getElementById('codeStep').style.display = 'none';
+            document.getElementById('passwordStep').style.display = 'none';
+            document.getElementById('signupFormView').style.display = 'block';
+            document.getElementById('signupSuccessView').style.display = 'none';
+            document.getElementById('signupToLoginSection').style.display = 'block';
+            var sendBtn = document.getElementById('sendCodeBtn');
+            sendBtn.textContent = '이메일 인증';
+            sendBtn.disabled = false;
+            sendBtn.className = 'verify-btn';
+            sendBtn.style.display = '';
+            hideMsg('emailMessage');
+            hideMsg('codeMessage');
+            hideMsg('passwordMessage');
+            hideMsg('passwordConfirmMessage');
+            hideSignupError();
+            signupTicket = null;
+            clearTimer();
+        }
+
+        function showMsg(id, msg, type) {
+            var el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = 'form-message ' + type;
+        }
+
+        function hideMsg(id) {
+            var el = document.getElementById(id);
+            el.textContent = '';
+            el.className = 'form-message';
+        }
+
+        function showSignupError(msg) {
+            var el = document.getElementById('signupError');
+            el.textContent = msg;
+            el.classList.add('visible');
+        }
+
+        function hideSignupError() {
+            document.getElementById('signupError').classList.remove('visible');
+        }
+
+        function startTimer(seconds) {
+            clearTimer();
+            timerSeconds = seconds;
+            updateTimerDisplay();
+            timerInterval = setInterval(function() {
+                timerSeconds--;
+                updateTimerDisplay();
+                if (timerSeconds <= 0) {
+                    clearTimer();
+                    var timerEl = document.getElementById('codeTimer');
+                    timerEl.classList.add('expired');
+                    timerEl.textContent = '만료';
+                    document.getElementById('verifyCodeBtn').disabled = true;
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            var mins = Math.floor(timerSeconds / 60);
+            var secs = timerSeconds % 60;
+            var timerEl = document.getElementById('codeTimer');
+            timerEl.textContent = mins + ':' + secs.toString().padStart(2, '0');
+            timerEl.classList.remove('expired');
+        }
+
+        function clearTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // Send verification code
+        document.getElementById('sendCodeBtn').addEventListener('click', async function() {
+            var email = document.getElementById('signupEmail').value.trim();
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                showMsg('emailMessage', '올바른 이메일 형식을 입력해주세요.', 'error');
+                return;
+            }
+
+            var sendBtn = document.getElementById('sendCodeBtn');
+            var isResend = sendBtn.className.indexOf('secondary') !== -1;
+            sendBtn.disabled = true;
+            sendBtn.textContent = '확인 중...';
+            hideMsg('emailMessage');
+
+            try {
+                var checkRes = await fetch('/api/auth/check-email?email=' + encodeURIComponent(email));
+                var checkData = await checkRes.json();
+
+                if (checkData.success) {
+                    if (checkData.data.exists && !checkData.data.deactivated) {
+                        showMsg('emailMessage', '이미 가입된 이메일입니다.', 'error');
+                        sendBtn.disabled = false;
+                        sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                        return;
+                    }
+                } else {
+                    showMsg('emailMessage', '이메일 확인에 실패했습니다.', 'error');
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                    return;
+                }
+
+                sendBtn.textContent = '발송 중...';
+                var sendRes = await fetch('/api/auth/send-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                var sendData = await sendRes.json();
+
+                if (sendData.success) {
+                    document.getElementById('codeStep').style.display = 'block';
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationCode').focus();
+                    document.getElementById('verifyCodeBtn').disabled = false;
+                    sendBtn.textContent = '재발송';
+                    sendBtn.className = 'verify-btn secondary';
+                    sendBtn.disabled = false;
+                    startTimer(300);
+                    hideMsg('codeMessage');
+                } else {
+                    showMsg('emailMessage', sendData.message || '인증 코드 발송에 실패했습니다.', 'error');
+                    sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                    sendBtn.disabled = false;
+                }
+            } catch (err) {
+                showMsg('emailMessage', '인증 코드 발송 중 오류가 발생했습니다.', 'error');
+                sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                sendBtn.disabled = false;
+            }
+        });
+
+        // Verify code
+        document.getElementById('verifyCodeBtn').addEventListener('click', async function() {
+            var email = document.getElementById('signupEmail').value.trim();
+            var code = document.getElementById('verificationCode').value.trim();
+
+            if (!code || code.length !== 6) {
+                showMsg('codeMessage', '6자리 인증 코드를 입력해주세요.', 'error');
+                document.getElementById('verificationCode').classList.add('input-error-border');
+                return;
+            }
+
+            var verifyBtn = document.getElementById('verifyCodeBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = '...';
+
+            try {
+                var res = await fetch('/api/auth/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, code: code })
+                });
+                var data = await res.json();
+
+                if (data.success && data.data.verified) {
+                    signupTicket = data.data.signupTicket;
+                    clearTimer();
+                    document.getElementById('signupEmail').disabled = true;
+                    document.getElementById('signupEmail').classList.add('input-success');
+                    document.getElementById('codeStep').style.display = 'none';
+                    document.getElementById('sendCodeBtn').style.display = 'none';
+                    showMsg('emailMessage', '이메일 인증이 완료되었습니다 \u2713', 'success');
+                    document.getElementById('passwordStep').style.display = 'block';
+                    document.getElementById('signupPassword').focus();
+                } else {
+                    showMsg('codeMessage', '인증 코드가 일치하지 않습니다.', 'error');
+                    document.getElementById('verificationCode').classList.add('input-error-border');
+                }
+            } catch (err) {
+                showMsg('codeMessage', '인증 확인 중 오류가 발생했습니다.', 'error');
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '확인';
+            }
+        });
+
+        // Verification code input cleanup
+        document.getElementById('verificationCode').addEventListener('input', function() {
+            this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
+            this.classList.remove('input-error-border');
+            hideMsg('codeMessage');
+        });
+
+        // Password toggle for signup
+        function setupPwToggle(toggleId, inputId, iconId) {
+            var visible = false;
+            document.getElementById(toggleId).addEventListener('click', function() {
+                visible = !visible;
+                document.getElementById(inputId).type = visible ? 'text' : 'password';
+                var icon = document.getElementById(iconId);
+                if (visible) {
+                    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+                } else {
+                    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+                }
+            });
+        }
+        setupPwToggle('signupPwToggle', 'signupPassword', 'signupEyeIcon');
+        setupPwToggle('signupPwConfirmToggle', 'signupPasswordConfirm', 'signupEyeConfirmIcon');
+
+        // Real-time password validation
+        document.getElementById('signupPassword').addEventListener('input', function() {
+            var pw = this.value;
+            if (!pw) { hideMsg('passwordMessage'); checkPwMatch(); return; }
+            var hasLetter = /[a-zA-Z]/.test(pw);
+            var hasDigit = /[0-9]/.test(pw);
+            var hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(pw);
+            if (!hasLetter || !hasDigit || !hasSpecial) {
+                showMsg('passwordMessage', '영문, 숫자, 특수문자를 포함해주세요.', 'error');
+            } else if (pw.length < 8) {
+                showMsg('passwordMessage', '8자 이상으로 입력해주세요.', 'error');
+            } else {
+                hideMsg('passwordMessage');
+            }
+            checkPwMatch();
+        });
+
+        document.getElementById('signupPasswordConfirm').addEventListener('input', checkPwMatch);
+
+        function checkPwMatch() {
+            var pw = document.getElementById('signupPassword').value;
+            var pwConfirm = document.getElementById('signupPasswordConfirm').value;
+            if (pwConfirm && pw !== pwConfirm) {
+                showMsg('passwordConfirmMessage', '비밀번호가 일치하지 않습니다.', 'error');
+            } else {
+                hideMsg('passwordConfirmMessage');
+            }
+        }
+
+        // Prevent copy/paste on password fields
+        ['signupPassword', 'signupPasswordConfirm'].forEach(function(id) {
+            var el = document.getElementById(id);
+            el.addEventListener('copy', function(e) { e.preventDefault(); });
+            el.addEventListener('paste', function(e) { e.preventDefault(); });
+            el.addEventListener('cut', function(e) { e.preventDefault(); });
+        });
+
+        // Signup form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideSignupError();
+
+            var password = document.getElementById('signupPassword').value;
+            var passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+
+            if (!signupTicket) { showSignupError('이메일 인증을 완료해주세요.'); return; }
+            if (!password) { showSignupError('비밀번호를 입력해주세요.'); return; }
+            if (password.length < 8) { showSignupError('비밀번호는 8자 이상이어야 합니다.'); return; }
+            if (!/[a-zA-Z]/.test(password)) { showSignupError('비밀번호에 영문자를 포함해야 합니다.'); return; }
+            if (!/[0-9]/.test(password)) { showSignupError('비밀번호에 숫자를 포함해야 합니다.'); return; }
+            if (!/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) { showSignupError('비밀번호에 특수문자를 포함해야 합니다.'); return; }
+            if (password !== passwordConfirm) { showSignupError('비밀번호가 일치하지 않습니다.'); return; }
+
+            var signupSubmitBtn = document.getElementById('signupSubmitBtn');
+            signupSubmitBtn.disabled = true;
+            signupSubmitBtn.textContent = '가입 중...';
+            loadingOverlay.classList.add('visible');
+
+            try {
+                var res = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ signupTicket: signupTicket, password: password })
+                });
+                var data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('signupFormView').style.display = 'none';
+                    document.getElementById('signupSuccessView').style.display = 'block';
+                    document.getElementById('signupToLoginSection').style.display = 'none';
+                } else {
+                    showSignupError(data.message || '회원가입에 실패했습니다.');
+                }
+            } catch (err) {
+                showSignupError('회원가입 중 오류가 발생했습니다.');
+            } finally {
+                signupSubmitBtn.disabled = false;
+                signupSubmitBtn.textContent = '회원가입';
+                loadingOverlay.classList.remove('visible');
+            }
+        });
     </script>
 </body>
 </html>

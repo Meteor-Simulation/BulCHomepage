@@ -135,7 +135,6 @@ const BulCPage: React.FC = () => {
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}
-        promotionBadge={loginRedirect === 'cta' ? t('bulc.loginPromo') : undefined}
       />
 
       <EducationContactModal
