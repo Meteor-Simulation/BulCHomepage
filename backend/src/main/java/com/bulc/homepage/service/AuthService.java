@@ -71,10 +71,12 @@ public class AuthService {
         User existingUser = userRepository.findByEmail(email).orElse(null);
         User user;
 
+        boolean isNewUser = false;
+
         if (existingUser != null) {
-            // 비활성화된 계정인 경우 초기화 후 재사용
+            // 비활성화된 계정인 경우 재활성화 (라이선스는 기존 것 유지)
             if (!existingUser.getIsActive()) {
-                log.info("비활성화된 계정 초기화 후 재가입 처리: {}", email);
+                log.info("비활성화된 계정 재활성화 처리: {}", email);
                 // 관련 데이터 정리
                 activityLogRepository.deleteByUserId(existingUser.getId());
                 refreshTokenRepository.deleteAllByUserId(existingUser.getId());
@@ -99,6 +101,7 @@ public class AuthService {
             }
         } else {
             // 신규 User 생성
+            isNewUser = true;
             user = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -113,8 +116,10 @@ public class AuthService {
             saveActivityLog(user.getId(), "signup", "user", null, "회원가입 완료");
         }
 
-        // 14일 무료 체험 라이선스 발급
-        issueTrialLicense(user.getId());
+        // 14일 무료 체험 라이선스 발급 (신규 가입만, 재활성화 계정은 기존 라이선스 유지)
+        if (isNewUser) {
+            issueTrialLicense(user.getId());
+        }
 
         // JWT 토큰 생성 (userId 기반)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
@@ -408,10 +413,12 @@ public class AuthService {
         User existingUser = userRepository.findByEmail(email).orElse(null);
         User user;
 
+        boolean isNewUser = false;
+
         if (existingUser != null) {
-            // 비활성화된 계정이면 초기화 후 재사용
+            // 비활성화된 계정이면 재활성화 (라이선스는 기존 것 유지)
             if (!existingUser.getIsActive()) {
-                log.info("비활성화된 계정 초기화 후 OAuth 재가입 처리: {}", email);
+                log.info("비활성화된 계정 재활성화 후 OAuth 재가입 처리: {}", email);
                 // 관련 데이터 정리
                 activityLogRepository.deleteByUserId(existingUser.getId());
                 refreshTokenRepository.deleteAllByUserId(existingUser.getId());
@@ -435,6 +442,7 @@ public class AuthService {
             }
         } else {
             // 신규 사용자 생성
+            isNewUser = true;
             user = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -460,8 +468,10 @@ public class AuthService {
 
         log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}", email, provider);
 
-        // 14일 무료 체험 라이선스 발급
-        issueTrialLicense(user.getId());
+        // 14일 무료 체험 라이선스 발급 (신규 가입만, 재활성화 계정은 기존 라이선스 유지)
+        if (isNewUser) {
+            issueTrialLicense(user.getId());
+        }
 
         // JWT 토큰 생성 (userId 기반)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
