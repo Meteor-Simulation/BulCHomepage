@@ -834,6 +834,43 @@
             submitBtn.disabled = true;
         }
 
+        // URL에 social_error 파라미터가 있으면 표시
+        var socialError = urlParams.get('social_error');
+        if (socialError) {
+            showError(socialError);
+        }
+
+        // ========================================
+        // SOCIAL LOGIN (PKCE 브릿지)
+        // ========================================
+        document.querySelectorAll('.social-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (!clientId || !redirectUri || !codeChallenge) {
+                    showError('OAuth 파라미터가 누락되었습니다. 앱에서 다시 로그인을 시도해주세요.');
+                    return;
+                }
+
+                var pkceParams = JSON.stringify({
+                    client_id: clientId,
+                    redirect_uri: redirectUri,
+                    code_challenge: codeChallenge,
+                    code_challenge_method: codeChallengeMethod,
+                    state: state
+                });
+                document.cookie = 'pkce_params=' + encodeURIComponent(pkceParams) + '; path=/; max-age=600; SameSite=Lax';
+
+                var provider = '';
+                if (this.classList.contains('naver')) provider = 'naver';
+                else if (this.classList.contains('kakao')) provider = 'kakao';
+                else if (this.classList.contains('google')) provider = 'google';
+
+                if (provider) {
+                    loadingOverlay.classList.add('visible');
+                    window.location.href = '/api/auth/oauth2/authorize/' + provider;
+                }
+            });
+        });
+
         // ========================================
         // SIGNUP LOGIC
         // ========================================
