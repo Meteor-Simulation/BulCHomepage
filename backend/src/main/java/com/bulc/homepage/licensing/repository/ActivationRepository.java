@@ -117,6 +117,13 @@ public interface ActivationRepository extends JpaRepository<Activation, UUID> {
     List<Activation> findStaleSessions(@Param("licenseId") UUID licenseId, @Param("staleThreshold") Instant staleThreshold);
 
     /**
+     * STALE 상태의 활성화 목록 조회 (세션 정리 스케줄러용).
+     * License를 JOIN FETCH하여 policySnapshot(sessionTtlMinutes) 접근 시 N+1 방지.
+     */
+    @Query("SELECT a FROM Activation a JOIN FETCH a.license WHERE a.status = 'STALE'")
+    List<Activation> findAllStaleWithLicense();
+
+    /**
      * 여러 라이선스의 활성 세션 일괄 조회 (Global Session Kick용).
      * 모든 후보 라이선스의 세션을 한 번에 조회.
      *
