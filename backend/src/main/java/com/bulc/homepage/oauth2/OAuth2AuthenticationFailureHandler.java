@@ -34,8 +34,10 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         log.error("OAuth2 로그인 실패: {}", errorMessage);
 
         // PKCE 브릿지: 데스크톱 앱에서 소셜 로그인 실패 시 login.html로 복귀
-        String pkceParamsJson = getCookieValue(request, PKCE_PARAMS_COOKIE_NAME);
-        if (pkceParamsJson != null) {
+        String pkceParamsRaw = getCookieValue(request, PKCE_PARAMS_COOKIE_NAME);
+        if (pkceParamsRaw != null) {
+            // JS의 encodeURIComponent()로 인코딩된 쿠키값을 디코딩
+            String pkceParamsJson = java.net.URLDecoder.decode(pkceParamsRaw, java.nio.charset.StandardCharsets.UTF_8);
             clearCookie(response, PKCE_PARAMS_COOKIE_NAME);
             handlePkceFailure(request, response, pkceParamsJson, errorMessage);
             return;
