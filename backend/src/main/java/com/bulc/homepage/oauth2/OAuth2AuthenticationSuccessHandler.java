@@ -50,8 +50,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         // PKCE 브릿지: 데스크톱 앱에서 소셜 로그인 시 쿠키로 PKCE 파라미터 전달
-        String pkceParamsJson = getCookieValue(request, PKCE_PARAMS_COOKIE_NAME);
-        if (pkceParamsJson != null) {
+        String pkceParamsRaw = getCookieValue(request, PKCE_PARAMS_COOKIE_NAME);
+        if (pkceParamsRaw != null) {
+            // JS의 encodeURIComponent()로 인코딩된 쿠키값을 디코딩
+            String pkceParamsJson = java.net.URLDecoder.decode(pkceParamsRaw, StandardCharsets.UTF_8);
             clearCookie(response, PKCE_PARAMS_COOKIE_NAME);
             handlePkceSocialLogin(request, response, oAuth2User, pkceParamsJson);
             return;
