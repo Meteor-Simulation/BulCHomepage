@@ -5,17 +5,154 @@
     <link rel="icon" href="%PUBLIC_URL%/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#C4320A" />
-    <meta name="description" content="메테오시뮬레이션 | AI 화재 시뮬레이션의 새로운 기준. BUL:C 프로그램으로 화재를 예측하고 생명을 보호합니다." />
+    <meta name="description" content="메테오시뮬레이션 | AI 화재 시뮬레이션의 새로운 기준. BUL:C 프로그램으로 화재를 예측하고 생명을 보호합니다. GPU 가속 CFD 시뮬레이션, 피난 분석, 성능위주설계(PBD) 자동 보고서 생성." />
 
     <!-- SEO Meta Tags -->
-    <meta name="keywords" content="화재 시뮬레이션, CFD 시뮬레이션, 화재 안전, BUL:C, 피난 시뮬레이션, 성능위주설계, PBD, 화재 분석" />
+    <meta name="keywords" content="화재 시뮬레이션, CFD 시뮬레이션, 화재 안전, BUL:C, 피난 시뮬레이션, 성능위주설계, PBD, 화재 분석, GPU 시뮬레이션, FDS, EVAC, 화재 안전 소프트웨어, fire simulation, fire safety engineering" />
     <meta name="author" content="메테오시뮬레이션 (Meteor Simulation)" />
+    <link rel="canonical" href="https://bulc.msimul.com" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="메테오시뮬레이션" />
     <meta property="og:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
-    <meta property="og:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션" />
+    <meta property="og:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속으로 기존 대비 87배 빠른 CFD 분석, AI 자동 설정, 피난 분석(EVAC), 자동 보고서 생성." />
+    <meta property="og:url" content="https://bulc.msimul.com" />
+    <meta property="og:image" content="https://bulc.msimul.com/logo.png" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
+    <meta name="twitter:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속 CFD, 피난 분석, 자동 보고서." />
+    <meta name="twitter:image" content="https://bulc.msimul.com/logo.png" />
+
+    <!-- JSON-LD: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "주식회사 메테오시뮬레이션",
+      "alternateName": ["Meteor Simulation", "메테오시뮬레이션"],
+      "url": "https://bulc.msimul.com",
+      "logo": "https://bulc.msimul.com/logo.png",
+      "description": "AI 기반 유체 역학 시뮬레이션으로 대한민국 안전 교육의 새로운 표준을 만듭니다.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "원주시",
+        "addressRegion": "강원특별자치도",
+        "addressCountry": "KR",
+        "streetAddress": "마재2로 10, 305호(원주미래산업진흥원)"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+82-10-2747-2056",
+        "email": "simul@msimul.com",
+        "contactType": "customer service",
+        "availableLanguage": ["Korean", "English"]
+      },
+      "sameAs": [
+        "https://www.youtube.com/@SimulationMeteor",
+        "https://www.threads.com/@meteorsimulation"
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: SoftwareApplication (BUL:C) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "BUL:C",
+      "alternateName": "BUL:C Fire Simulator",
+      "applicationCategory": "EngineeringApplication",
+      "operatingSystem": "Windows 10/11 (64-bit)",
+      "description": "GPU 가속 기반 차세대 화재 시뮬레이션 소프트웨어. FDS 물리 엔진으로 정확한 화재·연기 확산 분석, EVAC 피난 시뮬레이션, AI 자동 설정, 성능위주설계(PBD) 보고서 자동 생성을 지원합니다.",
+      "url": "https://bulc.msimul.com",
+      "featureList": [
+        "GPU 가속 CFD 시뮬레이션 (CPU 대비 87배 빠름)",
+        "NIST 검증 FDS 물리 엔진 기반",
+        "EVAC 피난 시뮬레이션 (충돌, 사회력, 다층)",
+        "AI 기반 자동 환경 설정",
+        "ASET/RSET 자동 분석",
+        "성능위주설계(PBD) 보고서 자동 생성",
+        "기본 라이브러리 (아파트, 오피스텔 등)",
+        "AI 도면 자동 인식"
+      ],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "BUL:C Basic (Free Trial)",
+          "price": "0",
+          "priceCurrency": "KRW",
+          "description": "14일 무료 체험판. CPU 기반 분석, 기본 라이브러리, EVAC 분석 포함.",
+          "availability": "https://schema.org/InStock"
+        },
+        {
+          "@type": "Offer",
+          "name": "BUL:C PRO",
+          "priceCurrency": "KRW",
+          "description": "1년 라이선스. GPU 가속, 전체 기능 포함.",
+          "availability": "https://schema.org/InStock"
+        }
+      ],
+      "softwareRequirements": "Intel i5 / AMD Ryzen 5 이상, RAM 16GB 이상, NVIDIA GTX 1060 이상 (CUDA 지원), 저장공간 10GB 이상",
+      "author": {
+        "@type": "Organization",
+        "name": "주식회사 메테오시뮬레이션"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "BUL:C는 몇 대의 기기에서 사용할 수 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "하나의 계정당 최대 3대의 기기에 등록할 수 있습니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "기기를 변경할 수 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "네, 기기 변경이 가능합니다. 일일 변경 횟수 제한이 있으며, 고객지원을 통해 도움받으실 수 있습니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "여러 기기에서 동시에 로그인할 수 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "동시 로그인은 1세션으로 제한됩니다. 다른 기기에서 로그인하면 기존 세션은 강제 로그아웃됩니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "BUL:C의 시스템 요구사항은 무엇인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Windows 10/11 (64-bit), Intel i5 또는 AMD Ryzen 5 이상, RAM 16GB 이상, NVIDIA GTX 1060 이상 (CUDA 지원), 저장공간 10GB 이상이 필요합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "BUL:C는 무료로 사용할 수 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "네, 회원가입 시 14일 무료 체험 라이선스가 제공됩니다. 체험판에서는 CPU 기반 분석, 기본 라이브러리, EVAC 피난 분석 등 핵심 기능을 사용할 수 있습니다."
+          }
+        }
+      ]
+    }
+    </script>
 
     <!-- Google Fonts - DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
