@@ -32,13 +32,11 @@ public class PasswordResetService {
      */
     @Transactional
     public void requestPasswordReset(String email) {
-        // 사용자 존재 여부 확인
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("등록되지 않은 이메일입니다."));
-
-        // 비활성화된 계정 체크
-        if (!user.getIsActive()) {
-            throw new RuntimeException("비활성화된 계정입니다. 계정 재활성화를 먼저 진행해주세요.");
+        // 사용자 존재 여부 확인 (미가입/비활성화 이메일은 조용히 무시 - 계정 존재 여부 미노출)
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null || !user.getIsActive()) {
+            log.info("비밀번호 재설정 요청 - 미가입 또는 비활성화 이메일: {}", email);
+            return;
         }
 
         // 6자리 인증 코드 생성
