@@ -364,9 +364,12 @@ public class AuthController {
         log.info("Password reset request for email: {}", request.getEmail());
         try {
             passwordResetService.requestPasswordReset(request.getEmail());
-            return ResponseEntity.ok(ApiResponse.success("비밀번호 재설정 코드가 발송되었습니다", null));
+            return ResponseEntity.ok(ApiResponse.success(
+                    "가입된 이메일인 경우 인증 코드가 발송됩니다. 메일함을 확인해 주세요.", null));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            log.error("비밀번호 재설정 요청 처리 중 오류: {}", e.getMessage());
+            return ResponseEntity.ok(ApiResponse.success(
+                    "가입된 이메일인 경우 인증 코드가 발송됩니다. 메일함을 확인해 주세요.", null));
         }
     }
 
