@@ -152,6 +152,7 @@ toss:
   payments:
     client-key: ${TOSS_CLIENT_KEY:test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP}
     secret-key: ${TOSS_SECRET_KEY:test_sk_GePWvyJnrKK7xZb1lNdOrgLzN97E}
+    webhook-secret-key: ${TOSS_WEBHOOK_SECRET_KEY:}
     success-url: ${TOSS_SUCCESS_URL:http://localhost:3000/payment/success}
     fail-url: ${TOSS_FAIL_URL:http://localhost:3000/payment/fail}
 

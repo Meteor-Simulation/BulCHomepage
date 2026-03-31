@@ -11,8 +11,8 @@ const OAuthSetupPassword: React.FC = () => {
 
   const [token] = useState(searchParams.get('token') || '');
   const [email] = useState(decodeURIComponent(searchParams.get('email') || ''));
-  const [name] = useState(decodeURIComponent(searchParams.get('name') || ''));
-  const [phone] = useState(decodeURIComponent(searchParams.get('mobile') || ''));
+  const [name, setName] = useState(decodeURIComponent(searchParams.get('name') || ''));
+  const [phone, setPhone] = useState(decodeURIComponent(searchParams.get('mobile') || ''));
   const [provider] = useState(searchParams.get('provider') || '');
 
   const [password, setPassword] = useState('');
@@ -126,22 +126,26 @@ const OAuthSetupPassword: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label>이름</label>
+            <label>이름 <span className="optional-label">(선택)</span></label>
             <input
               type="text"
               value={name}
-              disabled
-              className="form-input disabled"
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름을 입력해주세요"
+              className="form-input"
+              disabled={isLoading}
             />
           </div>
 
           <div className="form-group">
-            <label>전화번호</label>
+            <label>전화번호 <span className="optional-label">(선택)</span></label>
             <input
               type="tel"
-              value={phone || '-'}
-              disabled
-              className="form-input disabled"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="전화번호를 입력해주세요"
+              className="form-input"
+              disabled={isLoading}
             />
           </div>
 

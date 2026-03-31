@@ -136,16 +136,25 @@ public class LicensePlan {
     }
 
     /**
-     * Entitlements 설정.
+     * Entitlements 설정 (변경분만 반영).
+     * 기존에 있는 키는 유지, 새 키만 추가, 없어진 키만 삭제.
      */
     public void setEntitlements(Collection<String> keys) {
-        this.entitlements.clear();
-        if (keys != null) {
-            for (String key : keys) {
-                LicensePlanEntitlement entitlement = new LicensePlanEntitlement(this, key);
-                this.entitlements.add(entitlement);
+        Set<String> newKeys = keys != null ? new HashSet<>(keys) : Set.of();
+
+        // 기존 키 중 새 목록에 없는 것 삭제
+        this.entitlements.removeIf(e -> !newKeys.contains(e.getEntitlementKey()));
+
+        // 기존에 이미 있는 키
+        Set<String> existingKeys = getEntitlementKeys();
+
+        // 새 목록 중 기존에 없는 것만 추가
+        for (String key : newKeys) {
+            if (!existingKeys.contains(key)) {
+                this.entitlements.add(new LicensePlanEntitlement(this, key));
             }
         }
+
         this.updatedAt = Instant.now();
     }
 
