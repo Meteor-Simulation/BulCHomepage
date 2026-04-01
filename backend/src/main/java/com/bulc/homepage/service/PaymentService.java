@@ -367,6 +367,30 @@ public class PaymentService {
     }
 
     /**
+     * 토스페이먼츠 API로 결제 상태 직접 조회 (웹훅 위변조 방지)
+     */
+    public String verifyPaymentStatus(String paymentKey) {
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    TossPaymentsConfig.TOSS_API_URL + "/" + paymentKey,
+                    org.springframework.http.HttpMethod.GET,
+                    entity,
+                    String.class
+            );
+
+            JsonNode body = objectMapper.readTree(response.getBody());
+            return body.path("status").asText();
+        } catch (Exception e) {
+            log.error("토스 결제 상태 조회 실패: paymentKey={}, error={}", paymentKey, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * 토스페이먼츠 인증 헤더 생성
      */
     private HttpHeaders createAuthHeaders() {

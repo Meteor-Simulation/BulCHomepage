@@ -54,7 +54,6 @@ services:
       # Toss Payments
       TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY}
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
-      TOSS_WEBHOOK_SECRET_KEY: ${TOSS_WEBHOOK_SECRET_KEY}
       TOSS_SUCCESS_URL: ${TOSS_SUCCESS_URL}
       TOSS_FAIL_URL: ${TOSS_FAIL_URL}
       # Email (Microsoft Graph)
