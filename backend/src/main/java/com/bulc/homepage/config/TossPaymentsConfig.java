@@ -13,7 +13,6 @@ public class TossPaymentsConfig {
 
     private String clientKey;
     private String secretKey;
-    private String webhookSecretKey;
     private String successUrl;
     private String failUrl;
 
