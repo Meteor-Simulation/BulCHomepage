@@ -49,8 +49,7 @@ const Footer: React.FC = () => {
           <h4>회사 안내</h4>
           <p>대표자 : {info.company.representative}  |  연락처 : {info.contact.tel}  /  {info.contact.email}</p>
           <p>{info.company.name}  |  사업자등록번호 : {info.company.businessNumber}
-            {/* TODO: 통신판매업 신고번호 발급 후 주석 해제 */}
-            {/* info.company.onlineSalesNumber && <>  |  통신판매업 신고번호 : {info.company.onlineSalesNumber}</> */}
+            {info.company.onlineSalesNumber && <>  |  통신판매업 신고번호 : {info.company.onlineSalesNumber}</>}
           </p>
           <p>주소 : {info.address.full}</p>
           <div className="footer-sns-row">
