@@ -52,9 +52,12 @@ public class EmailVerificationService {
      */
     @Transactional
     public String sendVerificationCode(String email) {
+        log.info("이메일 인증 코드 요청 - 이메일: {}", email);
+
         // 이메일 중복 체크 (비활성화된 계정은 재가입 허용)
         Boolean isActive = checkEmailStatus(email);
         if (isActive != null && isActive) {
+            log.warn("이메일 인증 코드 요청 거부 - 이미 가입된 이메일: {}", email);
             throw new RuntimeException("이미 가입된 이메일입니다");
         }
 
@@ -110,11 +113,13 @@ public class EmailVerificationService {
 
         if (verification == null) {
             // 실패: 시도 횟수 기록
+            log.warn("이메일 인증 실패 - 코드 불일치, 이메일: {}", email);
             recordFailedAttempt(email);
             throw new RuntimeException("인증 코드가 올바르지 않습니다");
         }
 
         if (verification.isExpired()) {
+            log.warn("이메일 인증 실패 - 코드 만료, 이메일: {}", email);
             recordFailedAttempt(email);
             throw new RuntimeException("인증 코드가 만료되었습니다. 다시 요청해주세요.");
         }

@@ -39,14 +39,19 @@ public class SignupTicketService {
     @Transactional
     public SignupTicket consumeTicket(UUID ticketId) {
         // 비관적 락으로 조회
-        SignupTicket ticket = signupTicketRepository.findByIdWithLock(ticketId)
-                .orElseThrow(() -> new RuntimeException("유효하지 않은 가입 티켓입니다"));
+        SignupTicket ticket = signupTicketRepository.findByIdWithLock(ticketId).orElse(null);
+        if (ticket == null) {
+            log.warn("가입 티켓 소비 실패 - 존재하지 않는 티켓: {}", ticketId);
+            throw new RuntimeException("유효하지 않은 가입 티켓입니다");
+        }
 
         if (ticket.getUsedAt() != null) {
+            log.warn("가입 티켓 소비 실패 - 이미 사용된 티켓: {}, 이메일: {}", ticketId, ticket.getEmail());
             throw new RuntimeException("이미 사용된 티켓입니다");
         }
 
         if (ticket.getExpiresAt().isBefore(LocalDateTime.now())) {
+            log.warn("가입 티켓 소비 실패 - 만료된 티켓: {}, 이메일: {}", ticketId, ticket.getEmail());
             throw new RuntimeException("만료된 티켓입니다");
         }
 
