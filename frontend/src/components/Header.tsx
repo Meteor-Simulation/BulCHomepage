@@ -14,6 +14,7 @@ interface HeaderProps {
   subNavItems?: Array<{
     id: string;
     label: string;
+    href?: string;
   }>;
   activeSubNav?: string;
   onSubNavChange?: (id: string) => void;
@@ -185,13 +186,25 @@ const Header: React.FC<HeaderProps> = ({
         <nav className="sub-nav desktop-only">
           <div className="sub-nav-center">
             {subNavItems.map((item) => (
-              <div
-                key={item.id}
-                className={`sub-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
-                onClick={() => onSubNavChange?.(item.id)}
-              >
-                {item.label}
-              </div>
+              item.href ? (
+                <a
+                  key={item.id}
+                  className="sub-nav-item"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <div
+                  key={item.id}
+                  className={`sub-nav-item ${activeSubNav === item.id ? 'active' : ''}`}
+                  onClick={() => onSubNavChange?.(item.id)}
+                >
+                  {item.label}
+                </div>
+              )
             ))}
           </div>
         </nav>
@@ -218,16 +231,29 @@ const Header: React.FC<HeaderProps> = ({
             {mobileMenuOpen && (
               <div className="sub-nav-mobile-dropdown">
                 {subNavItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`sub-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
-                    onClick={() => {
-                      onSubNavChange?.(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </div>
+                  item.href ? (
+                    <a
+                      key={item.id}
+                      className="sub-nav-mobile-item"
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <div
+                      key={item.id}
+                      className={`sub-nav-mobile-item ${activeSubNav === item.id ? 'active' : ''}`}
+                      onClick={() => {
+                        onSubNavChange?.(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      {item.label}
+                    </div>
+                  )
                 ))}
               </div>
             )}

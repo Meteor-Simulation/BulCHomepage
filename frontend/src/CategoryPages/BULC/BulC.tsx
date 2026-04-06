@@ -26,6 +26,7 @@ const BulCPage: React.FC = () => {
     { id: 'workflow', label: t('bulc.nav.workflow') },
     { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
+    { id: 'tutorial', label: t('bulc.nav.tutorial'), href: 'https://www.youtube.com/@SimulationMeteor' },
   ], [t]);
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
