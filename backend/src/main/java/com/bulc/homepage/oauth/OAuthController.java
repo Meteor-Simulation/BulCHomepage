@@ -490,6 +490,48 @@ public class OAuthController {
     }
 
     /**
+     * OAuth 2.0 UserInfo Endpoint.
+     *
+     * 데스크톱 앱에서 로그인 후 사용자 정보를 조회할 때 호출합니다.
+     * Authorization 헤더의 Bearer 토큰으로 인증합니다.
+     *
+     * GET /oauth/userinfo
+     * Authorization: Bearer {access_token}
+     *
+     * @return 사용자 정보 (sub, email, name, roles_code)
+     */
+    @GetMapping("/userinfo")
+    public ResponseEntity<?> userInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserDetails)) {
+            log.warn("OAuth userinfo 요청 실패 - 인증되지 않은 사용자");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "unauthorized", "error_description", "Valid access token required"));
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UUID userId = UUID.fromString(userDetails.getUsername());
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || !user.getIsActive()) {
+            log.warn("OAuth userinfo 요청 실패 - 사용자 없음 또는 비활성화: userId={}", userId);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "invalid_user", "error_description", "User not found or deactivated"));
+        }
+
+        log.info("OAuth userinfo 조회 성공 - email={}", user.getEmail());
+
+        return ResponseEntity.ok(Map.of(
+                "sub", user.getId().toString(),
+                "email", user.getEmail(),
+                "name", user.getName() != null ? user.getName() : "",
+                "roles_code", user.getRolesCode() != null ? user.getRolesCode() : "002"
+        ));
+    }
+
+    /**
      * URL 마스킹 (로깅용).
      */
     private String maskUrl(String url) {
