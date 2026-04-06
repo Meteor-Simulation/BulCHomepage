@@ -54,11 +54,11 @@ public class EmailVerificationService {
     public String sendVerificationCode(String email) {
         log.info("이메일 인증 코드 요청 - 이메일: {}", email);
 
-        // 이메일 중복 체크 (비활성화된 계정은 재가입 허용)
+        // 이메일 중복 체크 (활성 계정만 차단, 비활성화 계정은 재가입 허용)
         Boolean isActive = checkEmailStatus(email);
         if (isActive != null && isActive) {
-            log.warn("이메일 인증 코드 요청 거부 - 이미 가입된 이메일: {}", email);
-            throw new RuntimeException("이미 가입된 이메일입니다");
+            log.warn("이메일 인증 코드 요청 거부 - 이미 가입된 활성 이메일: {}", email);
+            throw new RuntimeException("인증 코드 발송에 실패했습니다. 다시 시도해주세요.");
         }
 
         // 6자리 인증 코드 생성

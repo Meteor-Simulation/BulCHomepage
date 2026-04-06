@@ -222,23 +222,17 @@ public class AuthController {
         log.info("Email check request: {}", email);
         Boolean isActive = emailVerificationService.checkEmailStatus(email);
 
-        if (isActive == null) {
-            // 미가입 이메일
+        if (isActive == null || !isActive) {
+            // 미가입 또는 비활성화 계정 → 가입 가능
             return ResponseEntity.ok(ApiResponse.success(
                     "사용 가능한 이메일입니다",
                     Map.of("exists", false, "deactivated", false)
             ));
-        } else if (isActive) {
+        } else {
             // 활성화된 계정
             return ResponseEntity.ok(ApiResponse.success(
                     "이미 가입된 이메일입니다",
                     Map.of("exists", true, "deactivated", false)
-            ));
-        } else {
-            // 비활성화된 계정
-            return ResponseEntity.ok(ApiResponse.success(
-                    "비활성화된 계정이 존재합니다",
-                    Map.of("exists", true, "deactivated", true)
             ));
         }
     }

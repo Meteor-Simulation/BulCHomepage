@@ -36,12 +36,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [timerKey, setTimerKey] = useState(0);
   const [codeError, setCodeError] = useState(false);
 
-  // 계정 재활성화 상태
-  const [showReactivation, setShowReactivation] = useState(false);
-  const [reactivationEmail, setReactivationEmail] = useState('');
-  const [reactivationCode, setReactivationCode] = useState('');
-  const [reactivationCodeSent, setReactivationCodeSent] = useState(false);
-  const [reactivationMessage, setReactivationMessage] = useState('');
 
   // 새로고침 방지 - 모달이 열려있고 입력값이 있을 때만 활성화
   const hasUserInput = email.length > 0 || password.length > 0 || passwordConfirm.length > 0;
@@ -70,11 +64,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setIsTimerExpired(false);
       setTimerKey(0);
       setCodeError(false);
-      setShowReactivation(false);
-      setReactivationEmail('');
-      setReactivationCode('');
-      setReactivationCodeSent(false);
-      setReactivationMessage('');
     }
   }, [isOpen]);
 
@@ -162,9 +151,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         const checkResult = await checkResponse.json();
 
         if (checkResult.success) {
-          if (checkResult.data.deactivated) {
-            setEmailCheckStatus('available');
-          } else if (checkResult.data.exists) {
+          if (checkResult.data.exists) {
             setEmailCheckStatus('exists');
             setEmailCheckMessage('이미 가입된 이메일입니다');
             setIsSendingCode(false);
@@ -254,83 +241,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     e.preventDefault();
   };
 
-  // 계정 재활성화 - 인증 코드 발송
-  const sendReactivationCode = async () => {
-    setIsSendingCode(true);
-    setReactivationMessage('');
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/api/auth/reactivate/request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: reactivationEmail }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setReactivationCodeSent(true);
-        setReactivationMessage('인증 코드가 발송되었습니다. 이메일을 확인해주세요.');
-      } else {
-        setReactivationMessage(result.message || '인증 코드 발송에 실패했습니다.');
-      }
-    } catch (err) {
-      console.error('Reactivation error:', err);
-      setReactivationMessage('인증 코드 발송 중 오류가 발생했습니다.');
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
-
-  // 계정 재활성화 - 인증 확인 및 활성화
-  const confirmReactivation = async () => {
-    if (!reactivationCode || reactivationCode.length !== 6) {
-      setReactivationMessage('6자리 인증 코드를 입력해주세요.');
-      return;
-    }
-
-    setIsVerifyingCode(true);
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/api/auth/reactivate/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: reactivationEmail, code: reactivationCode }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert('계정이 재활성화되었습니다. 로그인해주세요.');
-        // 상태 초기화
-        setShowReactivation(false);
-        setReactivationEmail('');
-        setReactivationCode('');
-        setReactivationCodeSent(false);
-        setReactivationMessage('');
-        setEmail('');
-        setPassword('');
-        setPasswordConfirm('');
-        onClose();
-        onSwitchToLogin();
-      } else {
-        setReactivationMessage(result.message || '계정 재활성화에 실패했습니다.');
-      }
-    } catch (err) {
-      setReactivationMessage('계정 재활성화 중 오류가 발생했습니다.');
-    } finally {
-      setIsVerifyingCode(false);
-    }
-  };
-
-  // 재활성화 취소
-  const cancelReactivation = () => {
-    setShowReactivation(false);
-    setReactivationEmail('');
-    setReactivationCode('');
-    setReactivationCodeSent(false);
-    setReactivationMessage('');
-  };
 
   // 회원가입 핸들러
   const handleSubmit = async (e: React.FormEvent) => {
@@ -422,11 +332,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setVerificationMessage('');
         onClose();
         onSwitchToLogin();
-      } else if (result.errorCode === 'ACCOUNT_DEACTIVATED') {
-        // 비활성화된 계정 - 재활성화 옵션 표시
-        setReactivationEmail(email);
-        setShowReactivation(true);
-        setError('');
       } else {
         setError(result.message || '회원가입에 실패했습니다.');
       }
@@ -439,91 +344,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   };
 
   if (!isOpen) return null;
-
-  // 재활성화 화면
-  if (showReactivation) {
-    return (
-      <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
-        <div className="modal-content signup-modal">
-          <button className="modal-close-btn" onClick={onClose}>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          <h2 className="modal-title">계정 재활성화</h2>
-          <p className="reactivation-description">
-            비활성화된 계정이 존재합니다.<br/>
-            이메일 인증을 통해 계정을 재활성화할 수 있습니다.
-          </p>
-
-          <div className="reactivation-form">
-            <div className="input-group">
-              <input
-                type="email"
-                className="modal-input"
-                value={reactivationEmail}
-                disabled
-              />
-            </div>
-
-            {!reactivationCodeSent ? (
-              <button
-                type="button"
-                className="modal-submit-btn"
-                onClick={sendReactivationCode}
-                disabled={isSendingCode}
-              >
-                {isSendingCode ? '발송 중...' : '인증 코드 발송'}
-              </button>
-            ) : (
-              <div className="reactivation-verify-section">
-                <div className="verification-code-wrapper">
-                  <input
-                    type="text"
-                    placeholder="6자리 인증 코드"
-                    className="verification-code-input"
-                    value={reactivationCode}
-                    onChange={(e) => setReactivationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                    disabled={isVerifyingCode}
-                    maxLength={6}
-                  />
-                  <button
-                    type="button"
-                    className="verification-btn small"
-                    onClick={confirmReactivation}
-                    disabled={isVerifyingCode || reactivationCode.length !== 6}
-                  >
-                    {isVerifyingCode ? '확인 중...' : '확인'}
-                  </button>
-                  <button
-                    type="button"
-                    className="resend-btn"
-                    onClick={sendReactivationCode}
-                    disabled={isSendingCode}
-                  >
-                    재발송
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {reactivationMessage && (
-              <p className="input-message info">{reactivationMessage}</p>
-            )}
-
-            <button
-              type="button"
-              className="cancel-reactivation-btn"
-              onClick={cancelReactivation}
-            >
-              취소하고 돌아가기
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
