@@ -75,14 +75,23 @@ public class PasswordResetService {
      */
     @Transactional(readOnly = true)
     public boolean verifyResetCode(String email, String code) {
+        log.info("비밀번호 재설정 코드 검증 시도 - 이메일: {}", email);
+
         PasswordResetToken token = passwordResetTokenRepository
                 .findByEmailAndResetCode(email, code.toUpperCase())
-                .orElseThrow(() -> new RuntimeException("인증 코드가 올바르지 않습니다."));
+                .orElse(null);
+
+        if (token == null) {
+            log.warn("비밀번호 재설정 코드 검증 실패 - 코드 불일치, 이메일: {}", email);
+            throw new RuntimeException("인증 코드가 올바르지 않습니다.");
+        }
 
         if (token.isExpired()) {
+            log.warn("비밀번호 재설정 코드 검증 실패 - 코드 만료, 이메일: {}", email);
             throw new RuntimeException("인증 코드가 만료되었습니다. 다시 요청해주세요.");
         }
 
+        log.info("비밀번호 재설정 코드 검증 성공 - 이메일: {}", email);
         return true;
     }
 

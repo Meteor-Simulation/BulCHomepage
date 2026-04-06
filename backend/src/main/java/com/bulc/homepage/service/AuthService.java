@@ -67,6 +67,8 @@ public class AuthService {
         // 2. 이메일은 티켓에서 가져옴 (요청 바디에 email 없음)
         String email = ticket.getEmail();
 
+        log.info("이메일 회원가입 시도 - 이메일: {}", email);
+
         // 3. 이메일 중복 확인
         User existingUser = userRepository.findByEmail(email).orElse(null);
         User user;
@@ -97,6 +99,7 @@ public class AuthService {
                 // 회원가입 로그 저장
                 saveActivityLog(user.getId(), "signup", "user", null, "회원가입 완료 (비활성화 계정 재가입)");
             } else {
+                log.warn("이메일 회원가입 실패 - 이미 가입된 이메일: {}", email);
                 throw new RuntimeException("이미 가입된 이메일입니다");
             }
         } else {
@@ -120,6 +123,8 @@ public class AuthService {
         if (isNewUser) {
             issueTrialLicense(user.getId());
         }
+
+        log.info("이메일 회원가입 완료 - 이메일: {}, 신규: {}, userId: {}", email, isNewUser, user.getId());
 
         // JWT 토큰 생성 (userId 기반)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
@@ -326,18 +331,24 @@ public class AuthService {
 
         // Refresh Token JWT 유효성 검사
         if (!jwtTokenProvider.validateToken(refreshToken)) {
+            log.warn("토큰 갱신 실패 - 유효하지 않은 Refresh Token");
             throw new RuntimeException("유효하지 않은 Refresh Token입니다");
         }
 
         // Refresh Token에서 userId 추출
         UUID userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        log.info("토큰 갱신 시도 - userId: {}", userId);
 
         // 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.warn("토큰 갱신 실패 - 사용자 없음: userId={}", userId);
+            throw new RuntimeException("사용자를 찾을 수 없습니다");
+        }
 
         // 비활성화된 계정인지 확인
         if (!user.getIsActive()) {
+            log.warn("토큰 갱신 실패 - 비활성화 계정: userId={}, email={}", userId, user.getEmail());
             throw new RuntimeException("비활성화된 계정입니다. 고객센터에 문의해주세요.");
         }
 
@@ -400,6 +411,7 @@ public class AuthService {
     public AuthResponse oauthSignup(OAuthSignupRequest request) {
         // 임시 토큰 검증
         if (!jwtTokenProvider.validateTempToken(request.getToken())) {
+            log.warn("OAuth 회원가입 실패 - 유효하지 않은 임시 토큰");
             throw new RuntimeException("유효하지 않은 토큰입니다. 다시 시도해주세요.");
         }
 
@@ -408,6 +420,8 @@ public class AuthService {
         String email = claims.getSubject();
         String provider = claims.get("provider", String.class);
         String providerId = claims.get("providerId", String.class);
+
+        log.info("OAuth 회원가입 시도 - 이메일: {}, Provider: {}", email, provider);
 
         // 이미 가입된 이메일인지 확인
         User existingUser = userRepository.findByEmail(email).orElse(null);
@@ -466,7 +480,8 @@ public class AuthService {
         saveActivityLog(user.getId(), "oauth_signup", "user", null,
                 "OAuth 회원가입 완료 - Provider: " + provider);
 
-        log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}", email, provider);
+        String signupType = isNewUser ? "신규" : (existingUser != null && !existingUser.getIsActive() ? "재활성화" : "소셜연동");
+        log.info("OAuth 회원가입 완료 - 이메일: {}, Provider: {}, 유형: {}, userId: {}", email, provider, signupType, user.getId());
 
         // 14일 무료 체험 라이선스 발급 (신규 가입만, 재활성화 계정은 기존 라이선스 유지)
         if (isNewUser) {
