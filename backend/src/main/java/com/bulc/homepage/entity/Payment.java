@@ -68,6 +68,12 @@ public class Payment {
     @Column(name = "refund_reason", columnDefinition = "TEXT")
     private String refundReason;
 
+    @Column(name = "fail_reason", columnDefinition = "TEXT")
+    private String failReason;
+
+    @Column(name = "client_ip", length = 45)
+    private String clientIp;
+
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaymentDetail paymentDetail;
 
