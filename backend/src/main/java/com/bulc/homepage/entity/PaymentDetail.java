@@ -72,6 +72,12 @@ public class PaymentDetail {
     @Column(name = "settlement_status", length = 20)
     private String settlementStatus;
 
+    @Column(name = "toss_status", length = 50)
+    private String tossStatus;
+
+    @Column(name = "toss_response_summary", columnDefinition = "TEXT")
+    private String tossResponseSummary;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

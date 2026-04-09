@@ -122,7 +122,7 @@ const PaymentPage: React.FC = () => {
     fetch('/config/company.json')
       .then(res => res.json())
       .then(data => setCompanyInfo(data))
-      .catch(err => console.error('회사 정보 로드 실패:', err));
+      .catch(() => { /* 회사 정보 로드 실패 */ });
   }, []);
 
   // 상품 목록 로드
@@ -139,7 +139,7 @@ const PaymentPage: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('상품 목록 로드 실패:', error);
+        // 상품 목록 로드 실패
       } finally {
         setIsLoadingProducts(false);
       }
@@ -165,7 +165,7 @@ const PaymentPage: React.FC = () => {
           setPricePlans(data);
         }
       } catch (error) {
-        console.error('요금제 로드 실패:', error);
+        // 요금제 로드 실패
       } finally {
         setIsLoadingPlans(false);
       }
@@ -199,7 +199,7 @@ const PaymentPage: React.FC = () => {
           setUserInfoLoaded(true);
         }
       } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
+        // 사용자 정보 로드 실패
       }
     };
 
@@ -279,7 +279,7 @@ const PaymentPage: React.FC = () => {
         }),
       });
     } catch (error) {
-      console.error('사용자 정보 저장 실패:', error);
+      // 사용자 정보 저장 실패
     }
   };
 
@@ -336,7 +336,7 @@ const PaymentPage: React.FC = () => {
       if (error instanceof Error && error.message.includes('USER_CANCEL')) {
         return;
       }
-      console.error('결제 요청 오류:', error);
+      // 결제 요청 오류
       alert('결제 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
   };
@@ -395,7 +395,7 @@ const PaymentPage: React.FC = () => {
         setCouponError(error.message || '유효하지 않은 쿠폰입니다.');
       }
     } catch (error) {
-      console.error('쿠폰 확인 오류:', error);
+      // 쿠폰 확인 오류
       setCouponError('쿠폰 확인 중 오류가 발생했습니다.');
     } finally {
       setIsCheckingCoupon(false);

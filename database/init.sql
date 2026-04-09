@@ -422,6 +422,8 @@ CREATE TABLE payments (
     refunded_at         TIMESTAMP NULL,
     refund_amount       DECIMAL(18,2) NULL,
     refund_reason       TEXT NULL,
+    fail_reason         TEXT NULL,
+    client_ip           VARCHAR(45) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -434,6 +436,8 @@ COMMENT ON TABLE payments IS '결제 테이블 - 결제/환불 정보 관리';
 COMMENT ON COLUMN payments.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN payments.user_email IS '결제 시점 이메일 스냅샷 (FK 아님)';
 COMMENT ON COLUMN payments.status IS 'P: 대기(Pending), C: 완료(Completed), F: 실패(Failed), R: 환불(Refunded)';
+COMMENT ON COLUMN payments.fail_reason IS '결제 실패/오류 사유 (디버깅용)';
+COMMENT ON COLUMN payments.client_ip IS '결제 요청 클라이언트 IP (감사 추적용)';
 
 -- =========================================================
 -- 8. payment_details (결제 상세 테이블)
@@ -458,6 +462,8 @@ CREATE TABLE payment_details (
     due_date            TIMESTAMP NULL,
     depositor_name      VARCHAR(100) NULL,
     settlement_status   VARCHAR(20) NULL,
+    toss_status         VARCHAR(50) NULL,
+    toss_response_summary TEXT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -469,6 +475,8 @@ COMMENT ON COLUMN payment_details.order_id IS '토스페이먼츠 주문 ID';
 COMMENT ON COLUMN payment_details.payment_key IS '토스페이먼츠 결제 키';
 COMMENT ON COLUMN payment_details.card_company IS '카드사명';
 COMMENT ON COLUMN payment_details.card_number IS '마스킹된 카드번호';
+COMMENT ON COLUMN payment_details.toss_status IS '토스페이먼츠 결제 상태 (DONE, WAITING_FOR_DEPOSIT, CANCELED 등)';
+COMMENT ON COLUMN payment_details.toss_response_summary IS '토스 API 응답 요약 (민감정보 제외, 디버깅용)';
 COMMENT ON COLUMN payment_details.installment_months IS '할부 개월수 (0: 일시불)';
 COMMENT ON COLUMN payment_details.approve_no IS '카드 승인번호';
 COMMENT ON COLUMN payment_details.easy_pay_provider IS '간편결제 제공자 (토스페이, 네이버페이, 카카오페이 등)';

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import './PaymentResult.css';
 
@@ -73,7 +74,7 @@ const PaymentSuccess: React.FC = () => {
 
         // 백엔드에 결제 승인 요청
         const token = localStorage.getItem('accessToken');
-        const response = await fetch('/api/payments/confirm', {
+        const response = await fetch(`${API_URL}/api/payments/confirm`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -88,8 +89,14 @@ const PaymentSuccess: React.FC = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || '결제 승인에 실패했습니다.');
+          let errorMessage = '결제 승인에 실패했습니다.';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            // 응답 본문이 비어있거나 JSON이 아닌 경우
+          }
+          throw new Error(errorMessage);
         }
 
         const result = await response.json();

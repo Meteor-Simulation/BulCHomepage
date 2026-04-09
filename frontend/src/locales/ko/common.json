@@ -108,7 +108,8 @@
       "workflow": "워크플로우",
       "report": "리포트",
       "price": "가격",
-      "getStarted": "시작하기"
+      "getStarted": "시작하기",
+      "tutorial": "사용법"
     },
     "loginNotice": "로그인 후 프로그램 다운로드가 가능합니다",
     "loginPromo": "회원가입 시 14일 라이선스 증정 (카드 등록 필요 없음)",
@@ -116,7 +117,7 @@
       "badge": "회원 가입 시 무료 라이선스 14일 지원",
       "title1": "for Fire Safety Engineering",
       "title2": "Next-Gen Fire Simulator",
-      "description": "미리 설정된 라이브러리, 화재 시뮬레이션 연동 EVAC 해석, AI 자동 설정, GPU 기반 고속 해석, 리포트 자동 생성 기능으로 현실성 있고 생산성 높은 성능 위주 설계를 수행하세요",
+      "description": "미리 설정된 라이브러리, 화재 시뮬레이션 연동 EVAC 해석, AI 자동 설정,\nGPU 기반 고속 해석, 리포트 자동 생성 기능으로 현실성 있고\n생산성 높은 성능 위주 설계를 수행하세요",
       "startFree": "무료 다운로드",
       "downloadAlert": "로그인을 해야 다운받을 수 있습니다.",
       "watchDemo": "데모 보기",
@@ -126,7 +127,7 @@
     "comparison": {
       "label": "비교",
       "title": "지금 BUL:C로 전환해야 하는 이유",
-      "subtitle": "기존 방식은 느리고, 오류가 많으며, 비용이 많이 듭니다. 이제 워크플로우를 업그레이드할 때입니다.",
+      "subtitle": "기존 방식은 느리고, 오류가 많으며, 비용이 많이 듭니다.\n검증되고 믿을 수 있는 워크플로우로 업그레이드 하세요.",
       "card1": {
         "title": "수동 문서 작성",
         "problem1": "구문 오류 발생 가능성",
