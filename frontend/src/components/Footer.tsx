@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
     fetch('/config/company.json')
       .then(res => res.json())
       .then(data => setInfo(data))
-      .catch(err => console.error('회사 정보 로드 실패:', err));
+      .catch(() => { /* 회사 정보 로드 실패 */ });
   }, []);
 
   if (!info) return null;

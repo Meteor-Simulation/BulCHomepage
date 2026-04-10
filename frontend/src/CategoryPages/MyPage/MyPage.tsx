@@ -190,7 +190,7 @@ const MyPage: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
+        // 사용자 정보 로드 실패
       } finally {
         setIsLoading(false);
       }
@@ -213,7 +213,7 @@ const MyPage: React.FC = () => {
           setLicenses(data.licenses || []);
         }
       } catch (error) {
-        console.error('라이선스 정보 로드 실패:', error);
+        // 라이선스 정보 로드 실패
       } finally {
         setIsLoadingLicenses(false);
       }
@@ -236,7 +236,7 @@ const MyPage: React.FC = () => {
           setSubscriptions(data.data || []);
         }
       } catch (error) {
-        console.error('구독 정보 로드 실패:', error);
+        // 구독 정보 로드 실패
       } finally {
         setIsLoadingSubscriptions(false);
       }
@@ -259,7 +259,7 @@ const MyPage: React.FC = () => {
           setBillingKeys(data.data || []);
         }
       } catch (error) {
-        console.error('등록된 카드 로드 실패:', error);
+        // 등록된 카드 로드 실패
       } finally {
         setIsLoadingBillingKeys(false);
       }
@@ -302,7 +302,7 @@ const MyPage: React.FC = () => {
             break;
         }
       } catch (error) {
-        console.error('관리자 데이터 로드 실패:', error);
+        // 관리자 데이터 로드 실패
       } finally {
         setIsAdminLoading(false);
       }
@@ -483,7 +483,7 @@ const MyPage: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) { const data = await response.json(); setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] })); }
-    } catch (error) { console.error('기기 목록 로드 실패:', error); }
+    } catch (error) { /* 기기 목록 로드 실패 */ }
     finally { setIsLoadingActivations(null); }
   };
 
@@ -493,7 +493,7 @@ const MyPage: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) { const data = await response.json(); setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] })); }
-    } catch (error) { console.error('기기 목록 재조회 실패:', error); }
+    } catch (error) { /* 기기 목록 재조회 실패 */ }
   };
 
   const handleDeactivateDevice = async (licenseId: string, deviceFingerprint: string) => {
@@ -764,7 +764,7 @@ const MyPage: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/products/${code}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) await fetchProducts(token);
-    } catch (error) { console.error('상품 토글 실패:', error); }
+    } catch (error) { /* 상품 토글 실패 */ }
   };
 
   const handleTogglePricePlan = async (id: number) => {
@@ -773,7 +773,7 @@ const MyPage: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/price-plans/${id}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) await fetchPricePlans(token);
-    } catch (error) { console.error('요금제 토글 실패:', error); }
+    } catch (error) { /* 요금제 토글 실패 */ }
   };
 
   const handleTogglePromotion = async (id: number) => {
@@ -782,7 +782,7 @@ const MyPage: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/api/promotions/${id}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) await fetchPromotions(token);
-    } catch (error) { console.error('프로모션 토글 실패:', error); }
+    } catch (error) { /* 프로모션 토글 실패 */ }
   };
 
   const handleActivateLicense = async (licenseId: string) => {
@@ -863,7 +863,7 @@ const MyPage: React.FC = () => {
       const action = currentActive ? 'deactivate' : 'activate';
       const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}/${action}`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
       if (response.ok) await fetchLicensePlans(token);
-    } catch (error) { console.error('라이선스 플랜 토글 실패:', error); }
+    } catch (error) { /* 라이선스 플랜 토글 실패 */ }
   };
 
   const handleDeleteLicensePlan = async (id: string) => {

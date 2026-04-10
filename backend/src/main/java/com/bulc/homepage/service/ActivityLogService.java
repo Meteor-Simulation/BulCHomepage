@@ -83,6 +83,54 @@ public class ActivityLogService {
         activityLogRepository.save(activityLog);
     }
 
+    /**
+     * 결제 활동 로그 (성공/실패 모두 기록)
+     */
+    @Async
+    @Transactional
+    public void logPaymentActivity(UUID userId, String orderId, String status,
+                                    String description, String ipAddress, String userAgent) {
+        try {
+            String action = "DONE".equals(status) ? "payment_success" : "payment_failed";
+
+            ActivityLog activityLog = ActivityLog.builder()
+                    .userId(userId)
+                    .action(action)
+                    .targetType("payment")
+                    .description(description)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .build();
+
+            activityLogRepository.save(activityLog);
+        } catch (Exception e) {
+            log.error("결제 활동 로그 저장 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 비정상 접근 로그 (인증 실패, 권한 없음 등)
+     */
+    @Async
+    @Transactional
+    public void logSecurityEvent(UUID userId, String action, String description,
+                                  String ipAddress, String userAgent) {
+        try {
+            ActivityLog activityLog = ActivityLog.builder()
+                    .userId(userId)
+                    .action(action)
+                    .targetType("security")
+                    .description(description)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .build();
+
+            activityLogRepository.save(activityLog);
+        } catch (Exception e) {
+            log.error("보안 이벤트 로그 저장 실패: {}", e.getMessage());
+        }
+    }
+
     @Transactional
     public void logSignupActivity(User user, HttpServletRequest httpRequest) {
         ActivityLog activityLog = ActivityLog.builder()

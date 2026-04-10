@@ -32,7 +32,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
 
     // 에러 로깅 서비스에 에러를 기록
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // ErrorBoundary caught an error
 
     // 프로덕션 환경에서는 에러 리포팅 서비스로 전송할 수 있음
     // if (process.env.NODE_ENV === 'production') {

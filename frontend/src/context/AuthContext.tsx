@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           },
         });
       } catch (error) {
-        console.error('Logout API error:', error);
+        // logout API error
       }
     }
 
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error) {
-      console.error('Token refresh error:', error);
+      // token refresh error
       return false;
     }
   }, []);
@@ -238,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return { success: false, message: result.message || '로그인에 실패했습니다.' };
     } catch (error) {
-      console.error('Login error:', error);
+      // login error
       return { success: false, message: '로그인 중 오류가 발생했습니다.' };
     }
   };
@@ -291,7 +291,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return { success: false, message: result.message || '사용자 정보를 가져올 수 없습니다.' };
     } catch (error) {
-      console.error('OAuth login error:', error);
+      // OAuth login error
       // 실패 시 토큰 정리
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

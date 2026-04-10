@@ -194,7 +194,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setVerificationMessage(result.message || '인증 코드 발송에 실패했습니다.');
       }
     } catch (err) {
-      console.error('Verification error:', err);
+      // verification error
       setVerificationMessage('인증 코드 발송에 실패했습니다.');
     } finally {
       setIsSendingCode(false);
@@ -336,7 +336,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setError(result.message || '회원가입에 실패했습니다.');
       }
     } catch (err) {
-      console.error('Signup error:', err);
+      // signup error
       setError('회원가입 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
