@@ -1,6 +1,7 @@
 package com.bulc.homepage.controller;
 
 import com.bulc.homepage.dto.PaymentConfirmRequest;
+import com.bulc.homepage.service.ActivityLogService;
 import com.bulc.homepage.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -21,6 +23,7 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final ActivityLogService activityLogService;
 
     /**
      * 결제 승인 API
@@ -38,26 +41,51 @@ public class PaymentController {
                 clientIp, userAgent);
 
         try {
-            // 인증된 사용자 이메일 가져오기
+            // 인증된 사용자 ID 가져오기 (getName()은 userId UUID를 반환)
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String userEmail = null;
+            String userId = null;
             if (authentication != null && authentication.isAuthenticated()
                     && !"anonymousUser".equals(authentication.getPrincipal())) {
-                userEmail = authentication.getName();
+                userId = authentication.getName();
             }
 
-            log.info("[결제승인 인증] orderId={}, userEmail={}, authenticated={}",
-                    request.getOrderId(), userEmail, userEmail != null);
+            log.info("[결제승인 인증] orderId={}, userId={}, authenticated={}",
+                    request.getOrderId(), userId, userId != null);
 
-            Map<String, Object> result = paymentService.confirmPayment(request, userEmail, clientIp);
+            Map<String, Object> result = paymentService.confirmPayment(request, userId, clientIp);
 
+            String paymentStatus = (String) result.get("paymentStatus");
             log.info("[결제승인 성공] orderId={}, paymentStatus={}",
-                    request.getOrderId(), result.get("paymentStatus"));
+                    request.getOrderId(), paymentStatus);
+
+            // DB 활동 로그 기록 (결제 성공)
+            UUID userUuid = userId != null ? UUID.fromString(userId) : null;
+            activityLogService.logPaymentActivity(
+                    userUuid, request.getOrderId(), paymentStatus,
+                    String.format("결제 승인 성공: %s, %d원, pricePlanId=%d",
+                            request.getOrderId(), request.getAmount(), request.getPricePlanId()),
+                    clientIp, userAgent);
 
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("[결제승인 실패] orderId={}, IP={}, error={}",
                     request.getOrderId(), clientIp, e.getMessage(), e);
+
+            // DB 활동 로그 기록 (결제 실패)
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                UUID userUuid = null;
+                if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                    userUuid = UUID.fromString(auth.getName());
+                }
+                activityLogService.logPaymentActivity(
+                        userUuid, request.getOrderId(), "FAILED",
+                        String.format("결제 승인 실패: %s, %d원, error=%s",
+                                request.getOrderId(), request.getAmount(), e.getMessage()),
+                        clientIp, userAgent);
+            } catch (Exception logError) {
+                log.warn("결제 실패 로그 기록 오류: {}", logError.getMessage());
+            }
 
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
@@ -93,7 +121,6 @@ public class PaymentController {
         for (String header : headerNames) {
             String ip = request.getHeader(header);
             if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
-                // X-Forwarded-For는 쉼표로 구분된 목록일 수 있음 (첫 번째가 원본)
                 return ip.contains(",") ? ip.split(",")[0].trim() : ip;
             }
         }

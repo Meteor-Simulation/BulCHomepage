@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({
           }
         }
       } catch (error) {
-        console.error('Trial license fetch failed:', error);
+        // trial license fetch failed
       }
     };
 
@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({
     });
   };
 
-  // 로그인 성공 콜백 - 마이페이지로 이동
+  // 로그인 성공 콜백 - 홈으로 이동
   const handleLoginSuccess = () => {
     setLoginModalOpen(false);
     setAlertModal({
@@ -121,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({
       message: t('auth.loginSuccess'),
       type: 'success',
     });
-    navigate('/mypage');
+    navigate('/');
   };
 
   const closeAlert = () => {

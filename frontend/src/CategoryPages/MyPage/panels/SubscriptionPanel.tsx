@@ -61,7 +61,6 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
 
   const handleRefundSubmit = (reason: string, details: string) => {
     // TODO: 실제 환불 요청 API 연동
-    console.log('환불 요청:', { subscriptionId: refundTarget?.subscriptionId, reason, details });
     alert('환불 요청이 접수되었습니다. 담당자 검토 후 이메일로 결과를 안내드립니다.');
     setRefundModalOpen(false);
     setRefundTarget(null);
