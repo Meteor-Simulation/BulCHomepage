@@ -835,6 +835,45 @@
   color: #fff;
 }
 
+.action-btn.info {
+  background: transparent;
+  border-color: #0969da;
+  color: #0969da;
+}
+
+.action-btn.info:hover {
+  background: #0969da;
+  color: #fff;
+}
+
+.action-btn.warning {
+  background: transparent;
+  border-color: #e6a817;
+  color: #b58a00;
+}
+
+.action-btn.warning:hover {
+  background: #e6a817;
+  color: #fff;
+}
+
+.action-btn.danger {
+  background: transparent;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.action-btn.danger:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+.action-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 /* 관리자 페이지네이션 */
 .admin-pagination {
   display: flex;
