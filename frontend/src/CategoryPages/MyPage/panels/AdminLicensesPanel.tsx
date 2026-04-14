@@ -259,7 +259,7 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
                         </td>
                         <td>
                           {!plan.deleted && (
-                            <div style={{ display: 'flex', gap: '4px' }}>
+                            <div className="action-btn-group">
                               <button className="action-btn edit" onClick={() => onOpenLicensePlanModal(plan)}>수정</button>
                               <button className="action-btn delete" onClick={() => onDeleteLicensePlan(plan.id)}>삭제</button>
                             </div>

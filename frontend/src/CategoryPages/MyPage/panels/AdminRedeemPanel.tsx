@@ -88,7 +88,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
       <div className="info-card admin-section-card wide">
         <div className="card-header">
           <h2 className="card-title">{t('myPage.menu.adminRedeem')}</h2>
-          <button className="btn-action btn-edit" onClick={() => onOpenCampaignModal()} style={{ marginLeft: 'auto' }}>+ 캠페인 추가</button>
+          <button className="action-btn edit" onClick={() => onOpenCampaignModal()} style={{ marginLeft: 'auto' }}>+ 캠페인 추가</button>
         </div>
         {isLoading ? (
           <div className="admin-loading">데이터 로딩 중...</div>
@@ -128,20 +128,20 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                           {campaign.validUntil ? new Date(campaign.validUntil).toLocaleDateString() : '무제한'}
                         </td>
                         <td>
-                          <div className="action-buttons">
-                            <button className="btn-action btn-edit" onClick={() => onOpenCampaignModal(campaign)}>수정</button>
-                            <button className="btn-action btn-info" onClick={() => onOpenCodeGenerateModal(campaign)}>코드 생성</button>
-                            <button className="btn-action btn-info" onClick={() => { onSelectCampaignForCodes(campaign); onFetchRedeemCodes(campaign.id); }}>코드 목록</button>
+                          <div className="action-btn-group">
+                            <button className="action-btn edit" onClick={() => onOpenCampaignModal(campaign)}>수정</button>
+                            <button className="action-btn info" onClick={() => onOpenCodeGenerateModal(campaign)}>코드 생성</button>
+                            <button className="action-btn info" onClick={() => { onSelectCampaignForCodes(campaign); onFetchRedeemCodes(campaign.id); }}>코드 목록</button>
                             {campaign.status === 'ACTIVE' && (
                               <>
-                                <button className="btn-action btn-warning" onClick={() => onCampaignStatusChange(campaign.id, 'pause')}>일시정지</button>
-                                <button className="btn-action btn-danger" onClick={() => onCampaignStatusChange(campaign.id, 'end')}>종료</button>
+                                <button className="action-btn warning" onClick={() => onCampaignStatusChange(campaign.id, 'pause')}>일시정지</button>
+                                <button className="action-btn danger" onClick={() => onCampaignStatusChange(campaign.id, 'end')}>종료</button>
                               </>
                             )}
                             {campaign.status === 'PAUSED' && (
                               <>
-                                <button className="btn-action btn-edit" onClick={() => onCampaignStatusChange(campaign.id, 'resume')}>재개</button>
-                                <button className="btn-action btn-danger" onClick={() => onCampaignStatusChange(campaign.id, 'end')}>종료</button>
+                                <button className="action-btn edit" onClick={() => onCampaignStatusChange(campaign.id, 'resume')}>재개</button>
+                                <button className="action-btn danger" onClick={() => onCampaignStatusChange(campaign.id, 'end')}>종료</button>
                               </>
                             )}
                           </div>
@@ -185,7 +185,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                           <td>{new Date(code.createdAt).toLocaleString()}</td>
                           <td>
                             {code.active && (
-                              <button className="btn-action btn-danger" onClick={() => onDeactivateCode(code.id)}>비활성화</button>
+                              <button className="action-btn danger" onClick={() => onDeactivateCode(code.id)}>비활성화</button>
                             )}
                           </td>
                         </tr>
