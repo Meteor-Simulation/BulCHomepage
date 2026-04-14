@@ -132,7 +132,6 @@
   font-size: 20px;
   color: #475569;
   line-height: 1.6;
-  white-space: pre-line;
 }
 
 /* Action Buttons */
@@ -226,7 +225,7 @@
 }
 
 .bulc-comparison__title {
-  font-size: 44px;
+  font-size: 32px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.025em;
@@ -236,175 +235,10 @@
 .bulc-comparison__subtitle {
   margin-top: 16px;
   max-width: 672px;
-  font-size: 24px;
-  white-space: pre-line;
+  font-size: 18px;
   color: #475569;
   margin-left: auto;
   margin-right: auto;
-}
-
-/* Logo Marquee */
-.bulc-comparison__marquee-wrap {
-  margin-top: 48px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.bulc-comparison__marquee-fade {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: linear-gradient(to right, var(--bg, #fff) 0%, transparent 10%, transparent 90%, var(--bg, #fff) 100%);
-}
-
-.bulc-comparison__marquee {
-  overflow: hidden;
-}
-
-.bulc-comparison__marquee-track {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-  width: max-content;
-}
-
-.bulc-comparison__marquee--left .bulc-comparison__marquee-track {
-  animation: marquee-left 40s linear infinite;
-}
-
-.bulc-comparison__marquee--right .bulc-comparison__marquee-track {
-  animation: marquee-right 40s linear infinite;
-}
-
-.bulc-comparison__marquee-item {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 72px;
-  padding: 10px 20px;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid var(--border, #e2e8f0);
-}
-
-.bulc-comparison__marquee-item--dark {
-  background: #000000;
-}
-
-.bulc-comparison__marquee-item img {
-  height: 52px;
-  width: auto;
-  max-width: 180px;
-  object-fit: contain;
-}
-
-@keyframes marquee-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-@keyframes marquee-right {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
-}
-
-/* Carousel */
-.bulc-comparison__carousel {
-  position: relative;
-  margin-top: 48px;
-  width: 100%;
-  max-width: 960px;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #000;
-}
-
-.bulc-comparison__carousel-viewport {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-
-.bulc-comparison__carousel-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.bulc-comparison__carousel-img--active {
-  opacity: 1;
-}
-
-.bulc-comparison__carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 2;
-}
-
-.bulc-comparison__carousel:hover .bulc-comparison__carousel-btn {
-  opacity: 1;
-}
-
-.bulc-comparison__carousel-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.bulc-comparison__carousel-btn--prev {
-  left: 12px;
-}
-
-.bulc-comparison__carousel-btn--next {
-  right: 12px;
-}
-
-.bulc-comparison__carousel-dots {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 2;
-}
-
-.bulc-comparison__carousel-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.3s;
-}
-
-.bulc-comparison__carousel-dot--active {
-  background: #fff;
 }
 
 /* Cards Grid */
@@ -1707,7 +1541,7 @@
   }
 
   .bulc-comparison__title {
-    font-size: 34px;
+    font-size: 28px;
   }
 
   .bulc-comparison__grid {
