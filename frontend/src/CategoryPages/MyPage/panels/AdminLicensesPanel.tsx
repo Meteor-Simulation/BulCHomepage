@@ -290,139 +290,90 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
 
       {/* 라이선스 플랜 모달 */}
       {isLicensePlanModalOpen && (
-        <div className="delete-modal-overlay" onClick={onCloseLicensePlanModal}>
-          <div className="delete-modal license-plan-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="delete-modal-header">
+        <div className="admin-modal-overlay" onClick={onCloseLicensePlanModal}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="admin-modal-close" onClick={onCloseLicensePlanModal}>&times;</button>
+            <div className="admin-modal-header">
               <h3>{editingLicensePlan ? '라이선스 플랜 수정' : '라이선스 플랜 추가'}</h3>
             </div>
-            <div className="delete-modal-body">
-              <div className="license-plan-form-row">
+            <div className="admin-modal-body">
+              <div className="admin-modal-form-row">
                 <div className="form-group vertical">
-                  <label>상품 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <select
-                    value={licensePlanForm.productId}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, productId: e.target.value })}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
-                  >
+                  <label>상품 <span>*</span></label>
+                  <select className="admin-modal-input" value={licensePlanForm.productId}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, productId: e.target.value })}>
                     <option value="">상품 선택</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                    ))}
+                    {products.map(p => (<option key={p.id} value={p.id}>{p.code} - {p.name}</option>))}
                   </select>
                 </div>
                 <div className="form-group vertical">
-                  <label>플랜 코드 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <input
-                    type="text"
-                    value={licensePlanForm.code}
+                  <label>플랜 코드 <span>*</span></label>
+                  <input type="text" className="admin-modal-input" value={licensePlanForm.code}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, code: e.target.value })}
-                    placeholder="예: BULC-PRO-1Y"
-                    maxLength={64}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                    placeholder="예: BULC-PRO-1Y" maxLength={64} />
                 </div>
               </div>
-              <div className="license-plan-form-row">
+              <div className="admin-modal-form-row">
                 <div className="form-group vertical">
-                  <label>플랜명 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <input
-                    type="text"
-                    value={licensePlanForm.name}
+                  <label>플랜명 <span>*</span></label>
+                  <input type="text" className="admin-modal-input" value={licensePlanForm.name}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, name: e.target.value })}
-                    placeholder="예: BUL:C PRO 1년"
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                    placeholder="예: BUL:C PRO 1년" />
                 </div>
                 <div className="form-group vertical">
-                  <label>라이선스 유형 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <select
-                    value={licensePlanForm.licenseType}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
-                  >
+                  <label>라이선스 유형 <span>*</span></label>
+                  <select className="admin-modal-input" value={licensePlanForm.licenseType}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}>
                     <option value="TRIAL">TRIAL (체험판)</option>
                     <option value="SUBSCRIPTION">SUBSCRIPTION (구독)</option>
                     <option value="PERPETUAL">PERPETUAL (영구)</option>
                   </select>
                 </div>
               </div>
-              <div className="license-plan-form-row">
+              <div className="admin-modal-form-row">
                 <div className="form-group vertical">
-                  <label>유효기간 (일) <span style={{ color: '#dc3545' }}>*</span></label>
-                  <input
-                    type="number"
-                    value={licensePlanForm.durationDays}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })}
-                    min={0}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                  <label>유효기간 (일) <span>*</span></label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.durationDays}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })} min={0} />
                 </div>
                 <div className="form-group vertical">
                   <label>유예기간 (일)</label>
-                  <input
-                    type="number"
-                    value={licensePlanForm.graceDays}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })}
-                    min={0}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.graceDays}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })} min={0} />
                 </div>
               </div>
-              <div className="license-plan-form-row">
+              <div className="admin-modal-form-row">
                 <div className="form-group vertical">
-                  <label>최대 기기 수 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <input
-                    type="number"
-                    value={licensePlanForm.maxActivations}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })}
-                    min={1}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                  <label>최대 기기 수 <span>*</span></label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.maxActivations}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })} min={1} />
                 </div>
                 <div className="form-group vertical">
-                  <label>최대 동시 세션 <span style={{ color: '#dc3545' }}>*</span></label>
-                  <input
-                    type="number"
-                    value={licensePlanForm.maxConcurrentSessions}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })}
-                    min={1}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
+                  <label>최대 동시 세션 <span>*</span></label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.maxConcurrentSessions}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })} min={1} />
                 </div>
               </div>
-              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <div className="form-group vertical">
                 <label>오프라인 허용 일수</label>
-                <input
-                  type="number"
-                  value={licensePlanForm.allowOfflineDays}
-                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                />
+                <input type="number" className="admin-modal-input" value={licensePlanForm.allowOfflineDays}
+                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })} min={0} />
               </div>
-              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <div className="form-group vertical">
                 <label>설명</label>
-                <textarea
-                  value={licensePlanForm.description}
+                <textarea className="admin-modal-input" value={licensePlanForm.description}
                   onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, description: e.target.value })}
-                  placeholder="플랜 설명을 입력하세요"
-                  rows={2}
-                  className="license-plan-textarea"
-                />
+                  placeholder="플랜 설명을 입력하세요" rows={2} />
               </div>
-              <div className="form-group vertical" style={{ marginTop: '12px' }}>
+              <div className="form-group vertical">
                 <label>Entitlements</label>
-                <textarea
-                  value={licensePlanForm.entitlements}
+                <textarea className="admin-modal-input" value={licensePlanForm.entitlements}
                   onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, entitlements: e.target.value })}
-                  placeholder="쉼표로 구분 (예: core-simulation, advanced-visualization)"
-                  rows={2}
-                  className="license-plan-textarea"
-                />
-                <small style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: '#888' }}>기능 식별자를 쉼표(,)로 구분하여 입력하세요</small>
+                  placeholder="쉼표로 구분 (예: core-simulation, advanced-visualization)" rows={2} />
+                <span className="admin-modal-input-hint">기능 식별자를 쉼표(,)로 구분하여 입력하세요</span>
               </div>
             </div>
-            <div className="delete-modal-footer">
+            <div className="admin-modal-footer">
               <button className="cancel-btn" onClick={onCloseLicensePlanModal}>취소</button>
               <button className="save-btn" onClick={onLicensePlanSubmit}>
                 {editingLicensePlan ? '수정' : '등록'}
