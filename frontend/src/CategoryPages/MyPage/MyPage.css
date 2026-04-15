@@ -2544,6 +2544,16 @@ textarea.admin-modal-input {
   padding: 10px 8px;
 }
 
+.admin-modal-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.admin-modal-input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
 .admin-modal-radio-group {
   display: flex;
   gap: 1rem;
