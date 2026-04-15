@@ -208,64 +208,56 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
               <h3>{editingCampaign ? '캠페인 수정' : '캠페인 추가'}</h3>
             </div>
             <div className="admin-modal-body">
-              <div className="form-group vertical">
+              <div className="form-group">
                 <label>캠페인명 <span>*</span></label>
                 <input type="text" className="admin-modal-input" value={redeemCampaignForm.name}
                   onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, name: e.target.value })}
                   placeholder="예: 2025 신년 프로모션" />
               </div>
-              <div className="form-group vertical">
-                <label>설명</label>
-                <textarea className="admin-modal-input" value={redeemCampaignForm.description}
-                  onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, description: e.target.value })}
-                  placeholder="캠페인 설명" rows={2} />
+              <div className="form-group">
+                <label>상품 <span>*</span></label>
+                <select className="admin-modal-input" value={redeemCampaignForm.productId}
+                  onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, productId: e.target.value, licensePlanId: '' })}
+                  disabled={!!editingCampaign}>
+                  <option value="">상품 선택</option>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>라이선스 플랜 <span>*</span></label>
+                <select className="admin-modal-input" value={redeemCampaignForm.licensePlanId}
+                  onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, licensePlanId: e.target.value })}
+                  disabled={!!editingCampaign || !redeemCampaignForm.productId}>
+                  <option value="">플랜 선택</option>
+                  {filteredLicensePlansForRedeem.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.licenseType})</option>)}
+                </select>
               </div>
               <div className="admin-modal-form-row">
-                <div className="form-group vertical">
-                  <label>상품 <span>*</span></label>
-                  <select className="admin-modal-input" value={redeemCampaignForm.productId}
-                    onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, productId: e.target.value, licensePlanId: '' })}
-                    disabled={!!editingCampaign}>
-                    <option value="">상품 선택</option>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group vertical">
-                  <label>라이선스 플랜 <span>*</span></label>
-                  <select className="admin-modal-input" value={redeemCampaignForm.licensePlanId}
-                    onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, licensePlanId: e.target.value })}
-                    disabled={!!editingCampaign || !redeemCampaignForm.productId}>
-                    <option value="">플랜 선택</option>
-                    {filteredLicensePlansForRedeem.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.licenseType})</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="admin-modal-form-row">
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>좌석 한도</label>
                   <input type="number" className="admin-modal-input" value={redeemCampaignForm.seatLimit}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, seatLimit: e.target.value })}
                     placeholder="무제한" min={0} />
                 </div>
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>사용자별 한도</label>
                   <input type="number" className="admin-modal-input" value={redeemCampaignForm.perUserLimit}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, perUserLimit: e.target.value })} min={1} />
                 </div>
               </div>
               <div className="admin-modal-form-row">
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>시작일</label>
                   <input type="datetime-local" className="admin-modal-input" value={redeemCampaignForm.validFrom}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, validFrom: e.target.value })} />
                 </div>
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>종료일</label>
                   <input type="datetime-local" className="admin-modal-input" value={redeemCampaignForm.validUntil}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, validUntil: e.target.value })} />
                 </div>
               </div>
-              <div className="form-group vertical">
+              <div className="form-group">
                 <label>사용 용도</label>
                 <select className="admin-modal-input" value={redeemCampaignForm.usageCategory}
                   onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, usageCategory: e.target.value })}>
@@ -274,6 +266,12 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                   <option value="EDUCATION">교육용</option>
                   <option value="INTERNAL_EVAL">내부 평가용</option>
                 </select>
+              </div>
+              <div className="form-group vertical">
+                <label>설명</label>
+                <textarea className="admin-modal-input" value={redeemCampaignForm.description}
+                  onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, description: e.target.value })}
+                  placeholder="캠페인 설명" rows={2} />
               </div>
             </div>
             <div className="admin-modal-footer">
@@ -295,7 +293,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
               <h3>리딤 코드 생성 - {selectedCampaignForCodes.name}</h3>
             </div>
             <div className="admin-modal-body">
-              <div className="form-group vertical">
+              <div className="form-group">
                 <label>코드 타입</label>
                 <div className="admin-modal-radio-group">
                   <label>
@@ -309,14 +307,14 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                 </div>
               </div>
               {codeGenerateForm.codeType === 'RANDOM' ? (
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>생성 수량</label>
                   <input type="number" className="admin-modal-input" value={codeGenerateForm.count}
                     onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, count: e.target.value })}
                     min={1} max={1000} />
                 </div>
               ) : (
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>커스텀 코드</label>
                   <input type="text" className="admin-modal-input" value={codeGenerateForm.customCode}
                     onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, customCode: e.target.value.toUpperCase() })}
@@ -324,30 +322,30 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                 </div>
               )}
               <div className="admin-modal-form-row">
-                <div className="form-group vertical">
-                  <label>코드당 최대 사용횟수</label>
+                <div className="form-group">
+                  <label>최대 사용횟수</label>
                   <input type="number" className="admin-modal-input" value={codeGenerateForm.maxRedemptions}
                     onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, maxRedemptions: e.target.value })} min={1} />
                 </div>
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>코드 만료일</label>
                   <input type="datetime-local" className="admin-modal-input" value={codeGenerateForm.expiresAt}
                     onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, expiresAt: e.target.value })} />
                 </div>
               </div>
-              <div className="form-group vertical">
-                <label>이메일 도메인 제한</label>
+              <div className="form-group">
+                <label>도메인 제한</label>
                 <input type="text" className="admin-modal-input" value={codeGenerateForm.allowedEmailDomain}
                   onChange={(e) => onCodeGenerateFormChange({ ...codeGenerateForm, allowedEmailDomain: e.target.value.toLowerCase().trim() })}
                   placeholder="예: univ.ac.kr (비워두면 제한 없음)"
                   style={codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain) ? { borderColor: '#dc3545' } : {}} />
-                {codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain) && (
-                  <span className="admin-modal-input-hint" style={{ color: '#dc3545' }}>올바른 도메인 형식이 아닙니다 (예: example.ac.kr)</span>
-                )}
-                {codeGenerateForm.allowedEmailDomain && isValidDomain(codeGenerateForm.allowedEmailDomain) && (
-                  <span className="admin-modal-input-hint">@{codeGenerateForm.allowedEmailDomain} 이메일만 사용 가능</span>
-                )}
               </div>
+              {codeGenerateForm.allowedEmailDomain && !isValidDomain(codeGenerateForm.allowedEmailDomain) && (
+                <span className="admin-modal-input-hint" style={{ color: '#dc3545' }}>올바른 도메인 형식이 아닙니다 (예: example.ac.kr)</span>
+              )}
+              {codeGenerateForm.allowedEmailDomain && isValidDomain(codeGenerateForm.allowedEmailDomain) && (
+                <span className="admin-modal-input-hint">@{codeGenerateForm.allowedEmailDomain} 이메일만 사용 가능</span>
+              )}
             </div>
             <div className="admin-modal-footer">
               <button className="cancel-btn" onClick={onCloseCodeGenerateModal}>취소</button>
