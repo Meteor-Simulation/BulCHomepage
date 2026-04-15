@@ -2544,6 +2544,38 @@ textarea.admin-modal-input {
   padding: 10px 8px;
 }
 
+.admin-modal-date-range {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+}
+
+.admin-modal-date-range .admin-modal-input {
+  font-size: 13px;
+  padding: 10px 8px;
+}
+
+.admin-modal-date-range .admin-modal-input:first-child {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+
+.admin-modal-date-range .admin-modal-input:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.admin-modal-date-separator {
+  padding: 10px 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-left: none;
+  border-right: none;
+  color: #666;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
 .admin-modal-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
