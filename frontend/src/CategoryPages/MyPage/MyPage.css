@@ -846,6 +846,17 @@
   color: #fff;
 }
 
+.action-btn.success {
+  background: transparent;
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.action-btn.success:hover {
+  background: #2e7d32;
+  color: #fff;
+}
+
 .action-btn.warning {
   background: transparent;
   border-color: #e6a817;

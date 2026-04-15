@@ -130,8 +130,8 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                         <td>
                           <div className="action-btn-group">
                             <button className="action-btn edit" onClick={() => onOpenCampaignModal(campaign)}>수정</button>
-                            <button className="action-btn info" onClick={() => onOpenCodeGenerateModal(campaign)}>코드 생성</button>
-                            <button className="action-btn info" onClick={() => { onSelectCampaignForCodes(campaign); onFetchRedeemCodes(campaign.id); }}>코드 목록</button>
+                            <button className="action-btn success" onClick={() => onOpenCodeGenerateModal(campaign)}>코드 생성</button>
+                            <button className="action-btn success" onClick={() => { onSelectCampaignForCodes(campaign); onFetchRedeemCodes(campaign.id); }}>코드 목록</button>
                             {campaign.status === 'ACTIVE' && (
                               <>
                                 <button className="action-btn warning" onClick={() => onCampaignStatusChange(campaign.id, 'pause')}>일시정지</button>
