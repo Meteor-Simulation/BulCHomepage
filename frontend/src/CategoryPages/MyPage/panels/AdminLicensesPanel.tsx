@@ -297,65 +297,61 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
               <h3>{editingLicensePlan ? '라이선스 플랜 수정' : '라이선스 플랜 추가'}</h3>
             </div>
             <div className="admin-modal-body">
-              <div className="admin-modal-form-row">
-                <div className="form-group vertical">
-                  <label>상품 <span>*</span></label>
-                  <select className="admin-modal-input" value={licensePlanForm.productId}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, productId: e.target.value })}>
-                    <option value="">상품 선택</option>
-                    {products.map(p => (<option key={p.id} value={p.id}>{p.code} - {p.name}</option>))}
-                  </select>
-                </div>
-                <div className="form-group vertical">
-                  <label>플랜 코드 <span>*</span></label>
-                  <input type="text" className="admin-modal-input" value={licensePlanForm.code}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, code: e.target.value })}
-                    placeholder="예: BULC-PRO-1Y" maxLength={64} />
-                </div>
+              <div className="form-group">
+                <label>상품 <span>*</span></label>
+                <select className="admin-modal-input" value={licensePlanForm.productId}
+                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, productId: e.target.value })}>
+                  <option value="">상품 선택</option>
+                  {products.map(p => (<option key={p.id} value={p.id}>{p.code} - {p.name}</option>))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>플랜 코드 <span>*</span></label>
+                <input type="text" className="admin-modal-input" value={licensePlanForm.code}
+                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, code: e.target.value })}
+                  placeholder="예: BULC-PRO-1Y" maxLength={64} />
+              </div>
+              <div className="form-group">
+                <label>플랜명 <span>*</span></label>
+                <input type="text" className="admin-modal-input" value={licensePlanForm.name}
+                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, name: e.target.value })}
+                  placeholder="예: BUL:C PRO 1년" />
+              </div>
+              <div className="form-group">
+                <label>라이선스 유형 <span>*</span></label>
+                <select className="admin-modal-input" value={licensePlanForm.licenseType}
+                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}>
+                  <option value="TRIAL">TRIAL (체험판)</option>
+                  <option value="SUBSCRIPTION">SUBSCRIPTION (구독)</option>
+                  <option value="PERPETUAL">PERPETUAL (영구)</option>
+                </select>
               </div>
               <div className="admin-modal-form-row">
-                <div className="form-group vertical">
-                  <label>플랜명 <span>*</span></label>
-                  <input type="text" className="admin-modal-input" value={licensePlanForm.name}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, name: e.target.value })}
-                    placeholder="예: BUL:C PRO 1년" />
-                </div>
-                <div className="form-group vertical">
-                  <label>라이선스 유형 <span>*</span></label>
-                  <select className="admin-modal-input" value={licensePlanForm.licenseType}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, licenseType: e.target.value as 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL' })}>
-                    <option value="TRIAL">TRIAL (체험판)</option>
-                    <option value="SUBSCRIPTION">SUBSCRIPTION (구독)</option>
-                    <option value="PERPETUAL">PERPETUAL (영구)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="admin-modal-form-row">
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>유효기간 (일) <span>*</span></label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.durationDays}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })} min={0} />
                 </div>
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>유예기간 (일)</label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.graceDays}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })} min={0} />
                 </div>
               </div>
               <div className="admin-modal-form-row">
-                <div className="form-group vertical">
+                <div className="form-group">
                   <label>최대 기기 수 <span>*</span></label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.maxActivations}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })} min={1} />
                 </div>
-                <div className="form-group vertical">
-                  <label>최대 동시 세션 <span>*</span></label>
+                <div className="form-group">
+                  <label>최대 세션 <span>*</span></label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.maxConcurrentSessions}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })} min={1} />
                 </div>
               </div>
-              <div className="form-group vertical">
-                <label>오프라인 허용 일수</label>
+              <div className="form-group">
+                <label>오프라인 (일)</label>
                 <input type="number" className="admin-modal-input" value={licensePlanForm.allowOfflineDays}
                   onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })} min={0} />
               </div>
