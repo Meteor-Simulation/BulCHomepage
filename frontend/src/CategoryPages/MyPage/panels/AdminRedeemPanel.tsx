@@ -246,7 +246,7 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                 </div>
               </div>
               <div className="form-group">
-                <label>캠페인 기간</label>
+                <label>유효 기간</label>
                 <div className="admin-modal-date-range">
                   <input type="datetime-local" className="admin-modal-input" value={redeemCampaignForm.validFrom}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, validFrom: e.target.value })} />

@@ -2554,25 +2554,14 @@ textarea.admin-modal-input {
 .admin-modal-date-range .admin-modal-input {
   font-size: 13px;
   padding: 10px 8px;
-}
-
-.admin-modal-date-range .admin-modal-input:first-child {
-  border-radius: 8px 0 0 8px;
-  border-right: none;
-}
-
-.admin-modal-date-range .admin-modal-input:last-child {
-  border-radius: 0 8px 8px 0;
+  max-width: 180px;
 }
 
 .admin-modal-date-separator {
-  padding: 10px 6px;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-left: none;
-  border-right: none;
-  color: #666;
+  padding: 0 8px;
+  color: #333;
   font-size: 13px;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
