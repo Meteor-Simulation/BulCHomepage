@@ -305,17 +305,19 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
                   {products.map(p => (<option key={p.id} value={p.id}>{p.code} - {p.name}</option>))}
                 </select>
               </div>
-              <div className="form-group">
-                <label>플랜 코드 <span>*</span></label>
-                <input type="text" className="admin-modal-input" value={licensePlanForm.code}
-                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, code: e.target.value })}
-                  placeholder="예: BULC-PRO-1Y" maxLength={64} />
-              </div>
-              <div className="form-group">
-                <label>플랜명 <span>*</span></label>
-                <input type="text" className="admin-modal-input" value={licensePlanForm.name}
-                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, name: e.target.value })}
-                  placeholder="예: BUL:C PRO 1년" />
+              <div className="admin-modal-form-row">
+                <div className="form-group">
+                  <label>플랜 코드 <span>*</span></label>
+                  <input type="text" className="admin-modal-input" value={licensePlanForm.code}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, code: e.target.value })}
+                    placeholder="예: BULC-PRO-1Y" maxLength={64} />
+                </div>
+                <div className="form-group">
+                  <label>플랜명 <span>*</span></label>
+                  <input type="text" className="admin-modal-input" value={licensePlanForm.name}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, name: e.target.value })}
+                    placeholder="예: BUL:C PRO 1년" />
+                </div>
               </div>
               <div className="form-group">
                 <label>라이선스 유형 <span>*</span></label>
