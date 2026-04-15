@@ -355,6 +355,7 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
                   <label>오프라인</label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.allowOfflineDays}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })} min={0} />
+                </div>
               </div>
               <div className="form-group vertical">
                 <label>설명</label>
