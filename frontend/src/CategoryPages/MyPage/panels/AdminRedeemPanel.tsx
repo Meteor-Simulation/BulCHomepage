@@ -201,8 +201,8 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
 
       {/* 리딤 캠페인 모달 */}
       {isRedeemCampaignModalOpen && (
-        <div className="admin-modal-overlay" onClick={onCloseCampaignModal}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseCampaignModal(); }}>
+          <div className="admin-modal">
             <button className="admin-modal-close" onClick={onCloseCampaignModal}>&times;</button>
             <div className="admin-modal-header">
               <h3>{editingCampaign ? '캠페인 수정' : '캠페인 추가'}</h3>
@@ -286,8 +286,8 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
 
       {/* 코드 생성 모달 */}
       {isCodeGenerateModalOpen && selectedCampaignForCodes && (
-        <div className="admin-modal-overlay" onClick={onCloseCodeGenerateModal}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseCodeGenerateModal(); }}>
+          <div className="admin-modal">
             <button className="admin-modal-close" onClick={onCloseCodeGenerateModal}>&times;</button>
             <div className="admin-modal-header">
               <h3>리딤 코드 생성 - {selectedCampaignForCodes.name}</h3>
@@ -358,8 +358,8 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
 
       {/* 생성된 코드 결과 모달 */}
       {isGeneratedCodesModalOpen && (
-        <div className="admin-modal-overlay" onClick={onCloseGeneratedCodesModal}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseGeneratedCodesModal(); }}>
+          <div className="admin-modal">
             <button className="admin-modal-close" onClick={onCloseGeneratedCodesModal}>&times;</button>
             <div className="admin-modal-header">
               <h3>생성된 리딤 코드</h3>

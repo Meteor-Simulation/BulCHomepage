@@ -290,8 +290,8 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
 
       {/* 라이선스 플랜 모달 */}
       {isLicensePlanModalOpen && (
-        <div className="admin-modal-overlay" onClick={onCloseLicensePlanModal}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseLicensePlanModal(); }}>
+          <div className="admin-modal">
             <button className="admin-modal-close" onClick={onCloseLicensePlanModal}>&times;</button>
             <div className="admin-modal-header">
               <h3>{editingLicensePlan ? '라이선스 플랜 수정' : '라이선스 플랜 추가'}</h3>
@@ -330,18 +330,6 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
               </div>
               <div className="admin-modal-form-row">
                 <div className="form-group">
-                  <label>유효기간 (일) <span>*</span></label>
-                  <input type="number" className="admin-modal-input" value={licensePlanForm.durationDays}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })} min={0} />
-                </div>
-                <div className="form-group">
-                  <label>유예기간 (일)</label>
-                  <input type="number" className="admin-modal-input" value={licensePlanForm.graceDays}
-                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })} min={0} />
-                </div>
-              </div>
-              <div className="admin-modal-form-row">
-                <div className="form-group">
                   <label>최대 기기 수 <span>*</span></label>
                   <input type="number" className="admin-modal-input" value={licensePlanForm.maxActivations}
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxActivations: parseInt(e.target.value) || 1 })} min={1} />
@@ -352,10 +340,21 @@ const AdminLicensesPanel: React.FC<AdminLicensesPanelProps> = ({
                     onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, maxConcurrentSessions: parseInt(e.target.value) || 1 })} min={1} />
                 </div>
               </div>
-              <div className="form-group">
-                <label>오프라인 (일)</label>
-                <input type="number" className="admin-modal-input" value={licensePlanForm.allowOfflineDays}
-                  onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })} min={0} />
+              <div className="admin-modal-form-row three-col">
+                <div className="form-group">
+                  <label>유효기간 <span>*</span></label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.durationDays}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, durationDays: parseInt(e.target.value) || 0 })} min={0} />
+                </div>
+                <div className="form-group">
+                  <label>유예기간</label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.graceDays}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, graceDays: parseInt(e.target.value) || 0 })} min={0} />
+                </div>
+                <div className="form-group">
+                  <label>오프라인</label>
+                  <input type="number" className="admin-modal-input" value={licensePlanForm.allowOfflineDays}
+                    onChange={(e) => onLicensePlanFormChange({ ...licensePlanForm, allowOfflineDays: parseInt(e.target.value) || 0 })} min={0} />
               </div>
               <div className="form-group vertical">
                 <label>설명</label>

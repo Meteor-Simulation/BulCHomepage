@@ -2424,7 +2424,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #333;
-  min-width: 110px;
+  min-width: 90px;
   flex-shrink: 0;
 }
 
@@ -2529,6 +2529,10 @@ textarea.admin-modal-input {
 
 .admin-modal-form-row .form-group {
   flex: 1;
+}
+
+.admin-modal-form-row.three-col .form-group > label {
+  min-width: 55px;
 }
 
 .admin-modal-radio-group {
