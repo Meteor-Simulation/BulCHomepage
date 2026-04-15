@@ -2338,35 +2338,193 @@
    라이선스 플랜 관리
    ========================================== */
 
-/* 라이선스 플랜 모달 */
-.license-plan-modal {
-  max-width: 620px;
-}
-
-.license-plan-form-row {
+/* ========================================
+   관리자 모달 (modal.css 디자인 통일)
+======================================== */
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
 }
 
-.license-plan-form-row .form-group {
+.admin-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 620px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  position: relative;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  z-index: 1;
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.admin-modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.admin-modal-header {
+  padding: 28px 28px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-modal-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.admin-modal-body {
+  padding: 24px 28px;
+  overflow-y: auto;
   flex: 1;
 }
 
-.license-plan-textarea {
+.admin-modal-body .form-group.vertical {
+  margin-bottom: 16px;
+}
+
+.admin-modal-body .form-group.vertical label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.admin-modal-input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
   font-size: 14px;
-  resize: vertical;
   font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
-.license-plan-textarea:focus {
+.admin-modal-input:focus {
   outline: none;
   border-color: #C4320A;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.1);
+}
+
+.admin-modal-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+textarea.admin-modal-input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.admin-modal-input-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.admin-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 28px 24px;
+  justify-content: flex-end;
+  border-top: 1px solid #f0f0f0;
+}
+
+.admin-modal-footer .cancel-btn {
+  padding: 10px 24px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-modal-footer .cancel-btn:hover {
+  background: #e8e8e8;
+}
+
+.admin-modal-footer .save-btn {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #C4320A 0%, #E85D04 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-modal-footer .save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.4);
+}
+
+.admin-modal-form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-modal-form-row .form-group {
+  flex: 1;
+}
+
+.admin-modal-radio-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 4px;
+}
+
+.admin-modal-radio-group label {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-weight: 400 !important;
 }
 
 /* 삭제된 항목 스타일 */
@@ -2380,13 +2538,13 @@
   text-decoration: line-through;
 }
 
-@media (max-width: 480px) {
-  .license-plan-form-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .license-plan-modal {
+@media (max-width: 640px) {
+  .admin-modal {
     max-width: 100%;
+    margin: 10px;
+  }
+  .admin-modal-form-row {
+    flex-direction: column;
+    gap: 0;
   }
 }
