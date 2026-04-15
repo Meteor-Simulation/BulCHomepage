@@ -89,6 +89,20 @@ const Header: React.FC<HeaderProps> = ({
     }
   }, [isLoggedIn]);
 
+  // 세션 만료 알림 체크
+  useEffect(() => {
+    const expired = sessionStorage.getItem('sessionExpiredAlert');
+    if (expired) {
+      sessionStorage.removeItem('sessionExpiredAlert');
+      setAlertModal({
+        isOpen: true,
+        title: '세션 만료',
+        message: '세션이 만료되었습니다. 다시 로그인해주세요.',
+        type: 'info',
+      });
+    }
+  }, []);
+
   const handleSwitchToSignup = () => {
     setLoginModalOpen(false);
     setSignupModalOpen(true);

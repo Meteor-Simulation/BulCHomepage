@@ -155,10 +155,11 @@ const MyPage: React.FC = () => {
 
   // ========== Effects ==========
 
-  // 로그인 체크
+  // 로그인 체크 - 미인증 시 홈으로 이동 + 알림
   useEffect(() => {
     if (isAuthReady && !isLoggedIn) {
-      navigate('/error', { state: { errorCode: 401 } });
+      sessionStorage.setItem('sessionExpiredAlert', 'true');
+      navigate('/', { replace: true });
     }
   }, [isAuthReady, isLoggedIn, navigate]);
 
