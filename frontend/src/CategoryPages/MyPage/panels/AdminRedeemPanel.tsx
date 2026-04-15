@@ -245,14 +245,14 @@ const AdminRedeemPanel: React.FC<AdminRedeemPanelProps> = ({
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, perUserLimit: e.target.value })} min={1} />
                 </div>
               </div>
-              <div className="admin-modal-form-row">
+              <div className="admin-modal-form-row compact">
                 <div className="form-group">
-                  <label>시작일</label>
+                  <label>시작</label>
                   <input type="datetime-local" className="admin-modal-input" value={redeemCampaignForm.validFrom}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, validFrom: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label>종료일</label>
+                  <label>종료</label>
                   <input type="datetime-local" className="admin-modal-input" value={redeemCampaignForm.validUntil}
                     onChange={(e) => onCampaignFormChange({ ...redeemCampaignForm, validUntil: e.target.value })} />
                 </div>

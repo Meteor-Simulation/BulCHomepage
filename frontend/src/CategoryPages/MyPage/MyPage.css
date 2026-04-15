@@ -2535,6 +2535,15 @@ textarea.admin-modal-input {
   min-width: 55px;
 }
 
+.admin-modal-form-row.compact .form-group > label {
+  min-width: 40px;
+}
+
+.admin-modal-form-row.compact .admin-modal-input {
+  font-size: 13px;
+  padding: 10px 8px;
+}
+
 .admin-modal-radio-group {
   display: flex;
   gap: 1rem;
