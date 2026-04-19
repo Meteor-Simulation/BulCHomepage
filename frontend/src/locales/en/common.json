@@ -108,7 +108,8 @@
       "workflow": "Workflow",
       "report": "Report",
       "price": "Price",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "tutorial": "Tutorial"
     },
     "loginNotice": "Please log in to download the program",
     "loginPromo": "Free 14-day license on sign-up (no card required)",
@@ -126,7 +127,7 @@
     "comparison": {
       "label": "Comparison",
       "title": "Why Switch to BUL:C Now?",
-      "subtitle": "Traditional methods are slow, error-prone, and expensive. It's time to upgrade your workflow.",
+      "subtitle": "Traditional methods are slow, error-prone, and expensive.\nUpgrade to a proven and reliable workflow.",
       "card1": {
         "title": "Manual Authoring",
         "problem1": "Prone to syntax errors",
