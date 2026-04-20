@@ -73,13 +73,10 @@ const PaymentSuccess: React.FC = () => {
         }
 
         // 백엔드에 결제 승인 요청
-        const token = localStorage.getItem('accessToken');
         const response = await fetch(`${API_URL}/api/payments/confirm`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             paymentKey,
             orderId,

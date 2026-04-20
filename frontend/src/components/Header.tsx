@@ -54,14 +54,9 @@ const Header: React.FC<HeaderProps> = ({
   // TRIAL 라이선스 남은 일수 조회
   useEffect(() => {
     const fetchTrialLicense = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
       try {
         const response = await fetch(`${API_URL}/api/v1/me/licenses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();

@@ -22,8 +22,6 @@ const OAuthCallback: React.FC = () => {
 
   useEffect(() => {
     const processOAuth = async () => {
-      const accessToken = searchParams.get('accessToken');
-      const refreshToken = searchParams.get('refreshToken');
       const error = searchParams.get('error');
 
       if (error) {
@@ -33,21 +31,15 @@ const OAuthCallback: React.FC = () => {
         return;
       }
 
-      if (accessToken && refreshToken) {
-        // 토큰으로 로그인 처리
-        const result = await loginWithToken(accessToken, refreshToken);
+      // 쿠키가 이미 설정된 상태 — /api/auth/me로 사용자 정보 조회
+      const result = await loginWithToken();
 
-        if (result.success) {
-          setStatus('success');
-          setTimeout(() => navigate('/'), 500);
-        } else {
-          setStatus('error');
-          setErrorMessage(result.message || '로그인 처리 중 오류가 발생했습니다.');
-          setTimeout(() => navigate('/'), 3000);
-        }
+      if (result.success) {
+        setStatus('success');
+        setTimeout(() => navigate('/'), 500);
       } else {
         setStatus('error');
-        setErrorMessage('로그인 정보를 받지 못했습니다.');
+        setErrorMessage(result.message || '로그인 처리 중 오류가 발생했습니다.');
         setTimeout(() => navigate('/'), 3000);
       }
     };
