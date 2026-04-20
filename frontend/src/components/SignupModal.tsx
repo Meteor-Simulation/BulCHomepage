@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
 import { getApiBaseUrl } from '../utils/api';
+import PolicyModal, { PolicyType } from './PolicyModal';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -36,6 +37,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [timerKey, setTimerKey] = useState(0);
   const [codeError, setCodeError] = useState(false);
 
+  // 약관 동의 상태
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+  const [activePolicyModal, setActivePolicyModal] = useState<PolicyType | null>(null);
 
   // 새로고침 방지 - 모달이 열려있고 입력값이 있을 때만 활성화
   const hasUserInput = email.length > 0 || password.length > 0 || passwordConfirm.length > 0;
@@ -64,6 +70,10 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setIsTimerExpired(false);
       setTimerKey(0);
       setCodeError(false);
+      setAgreeTerms(false);
+      setAgreePrivacy(false);
+      setAgreeMarketing(false);
+      setActivePolicyModal(null);
     }
   }, [isOpen]);
 
@@ -299,6 +309,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setError('비밀번호가 일치하지 않습니다.');
       return;
     }
+    if (!agreeTerms) {
+      setError('이용약관에 동의해주세요.');
+      return;
+    }
+    if (!agreePrivacy) {
+      setError('개인정보처리방침에 동의해주세요.');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -312,6 +330,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         body: JSON.stringify({
           signupTicket,
           password,
+          marketingAgreed: agreeMarketing,
         }),
       });
 
@@ -330,6 +349,9 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         setSignupTicket(null);
         setCodeSent(false);
         setVerificationMessage('');
+        setAgreeTerms(false);
+        setAgreePrivacy(false);
+        setAgreeMarketing(false);
         onClose();
         onSwitchToLogin();
       } else {
@@ -530,6 +552,56 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
             )}
           </div>
 
+          {/* 약관 동의 */}
+          <div className="signup-agreements">
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeTerms && agreePrivacy && agreeMarketing}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setAgreeTerms(checked);
+                  setAgreePrivacy(checked);
+                  setAgreeMarketing(checked);
+                }}
+              />
+              <span className="agreement-text all">전체 동의</span>
+            </label>
+            <div className="agreement-divider" />
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="required-badge">[필수]</span> 이용약관 동의
+              </span>
+              <button type="button" className="agreement-view-btn" onClick={() => setActivePolicyModal('terms')}>보기</button>
+            </label>
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreePrivacy}
+                onChange={(e) => setAgreePrivacy(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="required-badge">[필수]</span> 개인정보처리방침 동의
+              </span>
+              <button type="button" className="agreement-view-btn" onClick={() => setActivePolicyModal('privacy')}>보기</button>
+            </label>
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeMarketing}
+                onChange={(e) => setAgreeMarketing(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="optional-badge">[선택]</span> 광고성 정보 수신 동의
+              </span>
+            </label>
+          </div>
+
           {error && <p className="modal-error">{error}</p>}
 
           <button type="submit" className="modal-submit-btn" disabled={isLoading}>
@@ -544,6 +616,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           </button>
         </div>
       </div>
+
+      {activePolicyModal && (
+        <PolicyModal
+          isOpen={true}
+          onClose={() => setActivePolicyModal(null)}
+          type={activePolicyModal}
+        />
+      )}
     </div>
   );
 };

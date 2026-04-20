@@ -98,6 +98,7 @@ const Footer: React.FC = () => {
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('terms')}>이용약관</button>
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('privacy')}>개인정보처리방침</button>
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('refund')}>환불정책</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('electronic')}>전자금융거래 이용약관</button>
         </div>
 
       </div>
