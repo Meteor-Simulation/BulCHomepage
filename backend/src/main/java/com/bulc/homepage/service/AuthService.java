@@ -44,6 +44,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final SignupTicketService signupTicketService;
     private final LicenseService licenseService;
+    private final LoginAttemptService loginAttemptService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -191,6 +192,9 @@ public class AuthService {
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
         log.info("로그인 시도 - 이메일: {}, IP: {}, User-Agent: {}", request.getEmail(), ipAddress, userAgent);
 
+        // 로그인 잠금 상태 확인
+        loginAttemptService.checkLocked(request.getEmail());
+
         try {
             // 공통 인증 로직 호출
             User user = authenticateUser(request.getEmail(), request.getPassword());
@@ -201,6 +205,9 @@ public class AuthService {
 
             // [RTR] Refresh Token을 DB에 저장 (기존 토큰 교체)
             saveOrUpdateRefreshToken(user.getId(), refreshToken, userAgent);
+
+            // 로그인 성공 → 실패 카운트 초기화
+            loginAttemptService.resetAttempts(request.getEmail());
 
             // 로그인 성공 로그
             saveActivityLog(user.getId(), "login", "user", null, "로그인 성공 - IP: " + ipAddress);
@@ -220,6 +227,9 @@ public class AuthService {
                             .build())
                     .build();
         } catch (RuntimeException e) {
+            // 로그인 실패 → 실패 횟수 기록
+            loginAttemptService.recordFailure(request.getEmail());
+
             // 인증 실패 로그 - 사용자 조회 시도
             User failedUser = userRepository.findByEmail(request.getEmail()).orElse(null);
             UUID userId = failedUser != null ? failedUser.getId() : null;
