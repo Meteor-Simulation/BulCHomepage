@@ -172,11 +172,9 @@ const MyPage: React.FC = () => {
   // 사용자 정보 로드
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
       try {
         const response = await fetch(`${API_URL}/api/users/me`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           const data = await response.json();
@@ -202,12 +200,10 @@ const MyPage: React.FC = () => {
   // 라이선스 정보 로드
   useEffect(() => {
     const fetchLicenses = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
       setIsLoadingLicenses(true);
       try {
         const response = await fetch(`${API_URL}/api/v1/me/licenses`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           const data = await response.json();
@@ -225,12 +221,10 @@ const MyPage: React.FC = () => {
   // 구독 정보 로드
   useEffect(() => {
     const fetchSubscriptions = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
       setIsLoadingSubscriptions(true);
       try {
         const response = await fetch(`${API_URL}/api/subscriptions`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           const data = await response.json();
@@ -248,12 +242,10 @@ const MyPage: React.FC = () => {
   // 등록된 카드 로드
   useEffect(() => {
     const fetchBillingKeys = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
       setIsLoadingBillingKeys(true);
       try {
         const response = await fetch(`${API_URL}/api/subscriptions/billing-keys`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           const data = await response.json();
@@ -271,8 +263,6 @@ const MyPage: React.FC = () => {
   // 관리자 메뉴 변경 시 데이터 로드
   useEffect(() => {
     if (!isAdmin || !activeMenu.startsWith('admin-')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
 
     const loadAdminData = async () => {
       setIsAdminLoading(true);
@@ -281,25 +271,25 @@ const MyPage: React.FC = () => {
       setAdminCurrentPage(1);
       try {
         switch (activeMenu) {
-          case 'admin-users': await fetchAdminUsers(token); break;
+          case 'admin-users': await fetchAdminUsers(); break;
           case 'admin-licenses':
-            await fetchAdminLicenses(token);
-            await fetchLicensePlans(token);
-            await fetchProducts(token);
+            await fetchAdminLicenses();
+            await fetchLicensePlans();
+            await fetchProducts();
             break;
-          case 'admin-payments': await fetchAdminPayments(token); break;
+          case 'admin-payments': await fetchAdminPayments(); break;
           case 'admin-products':
-            await fetchProducts(token);
-            await fetchPricePlans(token);
+            await fetchProducts();
+            await fetchPricePlans();
             break;
           case 'admin-promotions':
-            await fetchPromotions(token);
-            await fetchProducts(token);
+            await fetchPromotions();
+            await fetchProducts();
             break;
           case 'admin-redeem':
-            await fetchRedeemCampaigns(token);
-            await fetchProducts(token);
-            await fetchLicensePlans(token);
+            await fetchRedeemCampaigns();
+            await fetchProducts();
+            await fetchLicensePlans();
             break;
         }
       } catch (error) {
@@ -343,62 +333,58 @@ const MyPage: React.FC = () => {
 
   // ========== 관리자 데이터 조회 함수 ==========
 
-  const fetchAdminUsers = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchAdminUsers = async () => {
+    const response = await fetch(`${API_URL}/api/admin/users`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setAdminUsers(await response.json());
   };
 
-  const fetchAdminLicenses = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/license-list`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchAdminLicenses = async () => {
+    const response = await fetch(`${API_URL}/api/admin/license-list`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setAdminLicenses(await response.json());
   };
 
-  const fetchAdminPayments = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/payments`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchAdminPayments = async () => {
+    const response = await fetch(`${API_URL}/api/admin/payments`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setAdminPayments(await response.json());
   };
 
-  const fetchProducts = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/products`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchProducts = async () => {
+    const response = await fetch(`${API_URL}/api/admin/products`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setProducts(await response.json());
   };
 
-  const fetchPricePlans = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/admin/price-plans`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchPricePlans = async () => {
+    const response = await fetch(`${API_URL}/api/admin/price-plans`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setPricePlans(await response.json());
   };
 
-  const fetchPromotions = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/promotions`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchPromotions = async () => {
+    const response = await fetch(`${API_URL}/api/promotions`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setPromotions(await response.json());
   };
 
-  const fetchLicensePlans = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/v1/admin/license-plans?size=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchLicensePlans = async () => {
+    const response = await fetch(`${API_URL}/api/v1/admin/license-plans?size=100`, { credentials: 'include' as RequestCredentials });
     if (response.ok) { const data = await response.json(); setLicensePlans(data.content || []); }
   };
 
-  const fetchRedeemCampaigns = async (token: string) => {
-    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns?size=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+  const fetchRedeemCampaigns = async () => {
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns?size=100`, { credentials: 'include' as RequestCredentials });
     if (response.ok) { const data = await response.json(); setRedeemCampaigns(data.content || []); }
   };
 
   const fetchRedeemCodes = async (campaignId: string) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/codes?size=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/codes?size=100`, { credentials: 'include' as RequestCredentials });
     if (response.ok) { const data = await response.json(); setRedeemCodes(data.content || []); }
   };
 
   // ========== 프로필 핸들러 ==========
 
   const handleSaveProfile = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
         body: JSON.stringify({ name: editName, phone: cleanPhoneNumber(editPhone), country: userInfo.country, language: tempLanguage }),
       });
       if (response.ok) {
@@ -424,12 +410,10 @@ const MyPage: React.FC = () => {
   const handleStartEditSettings = () => { setTempCountry(selectedCountry); setIsEditingSettings(true); };
 
   const handleSaveSettings = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
         body: JSON.stringify({ name: userInfo.name, phone: userInfo.phone, country: tempCountry }),
       });
       if (response.ok) {
@@ -448,12 +432,10 @@ const MyPage: React.FC = () => {
     const validationError = validatePassword(newPassword);
     if (validationError) { setPasswordError(validationError); return; }
     if (newPassword !== confirmPassword) { setPasswordError('새 비밀번호가 일치하지 않습니다.'); return; }
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/users/me/password`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await response.json();
@@ -478,37 +460,31 @@ const MyPage: React.FC = () => {
     if (expandedLicenseId === licenseId) { setExpandedLicenseId(null); return; }
     setExpandedLicenseId(licenseId);
     if (activations[licenseId]) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     setIsLoadingActivations(licenseId);
     try {
-      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { credentials: 'include' as RequestCredentials });
       if (response.ok) { const data = await response.json(); setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] })); }
     } catch (error) { /* 기기 목록 로드 실패 */ }
     finally { setIsLoadingActivations(null); }
   };
 
   const refreshActivations = async (licenseId: string) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}`, { credentials: 'include' as RequestCredentials });
       if (response.ok) { const data = await response.json(); setActivations(prev => ({ ...prev, [licenseId]: data.activations || [] })); }
     } catch (error) { /* 기기 목록 재조회 실패 */ }
   };
 
   const handleDeactivateDevice = async (licenseId: string, deviceFingerprint: string) => {
     if (!window.confirm('이 기기를 해제하시겠습니까?')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/v1/licenses/${licenseId}/activations/${deviceFingerprint}`, {
-        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` },
+        method: 'DELETE', credentials: 'include' as RequestCredentials,
       });
       if (response.ok) {
         showSuccess('기기가 해제되었습니다.');
         await refreshActivations(licenseId);
-        const licResponse = await fetch(`${API_URL}/api/v1/me/licenses`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const licResponse = await fetch(`${API_URL}/api/v1/me/licenses`, { credentials: 'include' as RequestCredentials });
         if (licResponse.ok) { const licData = await licResponse.json(); setLicenses(licData.licenses || []); }
       } else { showError('기기 해제에 실패했습니다.'); }
     } catch { showError('기기 해제 중 오류가 발생했습니다.'); }
@@ -520,9 +496,8 @@ const MyPage: React.FC = () => {
     if (deleteConfirmText !== '계정삭제') { setDeleteModalError('확인 문구를 정확히 입력해주세요.'); return; }
     setIsDeleting(true); setDeleteModalError('');
     try {
-      const token = localStorage.getItem('accessToken');
       const response = await fetch(`${API_URL}/api/users/me/deactivate`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
       });
       if (response.ok) {
         setIsDeleteModalOpen(false); setDeleteConfirmText('');
@@ -538,12 +513,10 @@ const MyPage: React.FC = () => {
   // ========== 구독 핸들러 ==========
 
   const handleToggleAutoRenew = async (subscriptionId: number, currentState: boolean) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       if (currentState) {
         const response = await fetch(`${API_URL}/api/subscriptions/${subscriptionId}/auto-renew`, {
-          method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` },
+          method: 'DELETE', credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           setSubscriptions(prev => prev.map(sub => sub.id === subscriptionId ? { ...sub, autoRenew: false, nextBillingDate: null } : sub));
@@ -553,7 +526,7 @@ const MyPage: React.FC = () => {
         const defaultCard = billingKeys.find(b => b.isDefault);
         if (!defaultCard) { showError('기본 결제 수단을 먼저 등록해주세요.'); return; }
         const response = await fetch(`${API_URL}/api/subscriptions/${subscriptionId}/auto-renew?billingKeyId=${defaultCard.id}&billingCycle=YEARLY`, {
-          method: 'POST', headers: { 'Authorization': `Bearer ${token}` },
+          method: 'POST', credentials: 'include' as RequestCredentials,
         });
         if (response.ok) {
           const data = await response.json();
@@ -565,11 +538,9 @@ const MyPage: React.FC = () => {
   };
 
   const handleSetDefaultCard = async (billingKeyId: number) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/subscriptions/billing-keys/${billingKeyId}/default`, {
-        method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` },
+        method: 'PATCH', credentials: 'include' as RequestCredentials,
       });
       if (response.ok) {
         setBillingKeys(prev => prev.map(b => ({ ...b, isDefault: b.id === billingKeyId })));
@@ -580,11 +551,9 @@ const MyPage: React.FC = () => {
 
   const handleDeleteCard = async (billingKeyId: number) => {
     if (!window.confirm('이 카드를 삭제하시겠습니까?')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/api/subscriptions/billing-keys/${billingKeyId}`, {
-        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` },
+        method: 'DELETE', credentials: 'include' as RequestCredentials,
       });
       if (response.ok) { setBillingKeys(prev => prev.filter(b => b.id !== billingKeyId)); showSuccess('카드가 삭제되었습니다.'); }
       else { showError('카드 삭제에 실패했습니다.'); }
@@ -594,16 +563,14 @@ const MyPage: React.FC = () => {
   // ========== 구독 테스트 함수 (개발 환경 전용) ==========
 
   const handleSimulateNearExpiry = async (subscriptionId: number, days: number = 3) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     setTestLoading(`simulate-${subscriptionId}`);
     try {
       const response = await fetch(`${API_URL}/api/test/subscriptions/${subscriptionId}/simulate-near-expiry?daysUntilExpiry=${days}`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` },
+        method: 'POST', credentials: 'include' as RequestCredentials,
       });
       if (response.ok) {
         showSuccess(`구독 종료일이 ${days}일 후로 설정되었습니다.`);
-        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, { credentials: 'include' as RequestCredentials });
         if (subsResponse.ok) { const subsData = await subsResponse.json(); setSubscriptions(subsData.data || []); }
       } else { const err = await response.json(); showError(err.error || '테스트 실행 실패'); }
     } catch { showError('테스트 실행 중 오류 발생'); }
@@ -611,16 +578,14 @@ const MyPage: React.FC = () => {
   };
 
   const handleMakeDueNow = async (subscriptionId: number) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     setTestLoading(`due-${subscriptionId}`);
     try {
       const response = await fetch(`${API_URL}/api/test/subscriptions/${subscriptionId}/make-due-now`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` },
+        method: 'POST', credentials: 'include' as RequestCredentials,
       });
       if (response.ok) {
         showSuccess('구독이 즉시 갱신 대상으로 설정되었습니다.');
-        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const subsResponse = await fetch(`${API_URL}/api/subscriptions`, { credentials: 'include' as RequestCredentials });
         if (subsResponse.ok) { const subsData = await subsResponse.json(); setSubscriptions(subsData.data || []); }
       } else { const err = await response.json(); showError(err.error || '테스트 실행 실패'); }
     } catch { showError('테스트 실행 중 오류 발생'); }
@@ -631,12 +596,10 @@ const MyPage: React.FC = () => {
 
   const handleRedeemSubmit = async () => {
     if (!redeemCode.trim()) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     setIsRedeeming(true); setRedeemResult(null);
     try {
       const response = await fetch(`${API_URL}/api/v1/redeem`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
         body: JSON.stringify({ code: redeemCode }),
       });
       if (response.ok) {
@@ -680,8 +643,6 @@ const MyPage: React.FC = () => {
   const closeRedeemCampaignModal = () => { setIsRedeemCampaignModalOpen(false); setEditingCampaign(null); };
 
   const handleRedeemCampaignSubmit = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     const body = {
       name: redeemCampaignForm.name, description: redeemCampaignForm.description || null,
       productId: redeemCampaignForm.productId, licensePlanId: redeemCampaignForm.licensePlanId,
@@ -692,16 +653,14 @@ const MyPage: React.FC = () => {
       validUntil: redeemCampaignForm.validUntil ? new Date(redeemCampaignForm.validUntil).toISOString() : null,
     };
     const url = editingCampaign ? `${API_URL}/api/v1/admin/redeem-campaigns/${editingCampaign.id}` : `${API_URL}/api/v1/admin/redeem-campaigns`;
-    const response = await fetch(url, { method: editingCampaign ? 'PUT' : 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (response.ok) { closeRedeemCampaignModal(); fetchRedeemCampaigns(token); }
+    const response = await fetch(url, { method: editingCampaign ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials, body: JSON.stringify(body) });
+    if (response.ok) { closeRedeemCampaignModal(); fetchRedeemCampaigns(); }
     else { const error = await response.json(); alert(error.message || '캠페인 저장에 실패했습니다.'); }
   };
 
   const handleCampaignStatusChange = async (campaignId: string, action: 'pause' | 'end' | 'resume') => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/${action}`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-    if (response.ok) { fetchRedeemCampaigns(token); } else { alert('상태 변경에 실패했습니다.'); }
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/${action}`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+    if (response.ok) { fetchRedeemCampaigns(); } else { alert('상태 변경에 실패했습니다.'); }
   };
 
   const openCodeGenerateModal = (campaign: RedeemCampaign) => {
@@ -711,8 +670,7 @@ const MyPage: React.FC = () => {
   };
 
   const handleGenerateCodes = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token || !selectedCampaignForCodes) return;
+    if (!selectedCampaignForCodes) return;
     const body = {
       campaignId: selectedCampaignForCodes.id, codeType: codeGenerateForm.codeType,
       customCode: codeGenerateForm.codeType === 'CUSTOM' ? codeGenerateForm.customCode : null,
@@ -722,20 +680,18 @@ const MyPage: React.FC = () => {
       allowedEmailDomain: codeGenerateForm.allowedEmailDomain.trim() || null,
     };
     const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes`, {
-      method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials, body: JSON.stringify(body),
     });
     if (response.ok) {
       const data = await response.json();
       setGeneratedCodes(data.codes || []); setIsCodeGenerateModalOpen(false); setIsGeneratedCodesModalOpen(true);
-      fetchRedeemCampaigns(token);
+      fetchRedeemCampaigns();
     } else { const error = await response.json(); alert(error.message || '코드 생성에 실패했습니다.'); }
   };
 
   const handleDeactivateCode = async (codeId: string) => {
     if (!window.confirm('이 코드를 비활성화하시겠습니까?')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes/${codeId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/codes/${codeId}`, { method: 'DELETE', credentials: 'include' as RequestCredentials });
     if (response.ok && selectedCampaignForCodes) { fetchRedeemCodes(selectedCampaignForCodes.id); }
   };
 
@@ -760,50 +716,40 @@ const MyPage: React.FC = () => {
   const handleLicensePlanClearSearch = () => { setLicensePlanSearchQuery(''); setLicensePlanAppliedSearch(''); setLicensePlanCurrentPage(1); };
 
   const handleToggleProduct = async (code: string) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/products/${code}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) await fetchProducts(token);
+      const response = await fetch(`${API_URL}/api/admin/products/${code}/toggle`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) await fetchProducts();
     } catch (error) { /* 상품 토글 실패 */ }
   };
 
   const handleTogglePricePlan = async (id: number) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/price-plans/${id}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) await fetchPricePlans(token);
+      const response = await fetch(`${API_URL}/api/admin/price-plans/${id}/toggle`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) await fetchPricePlans();
     } catch (error) { /* 요금제 토글 실패 */ }
   };
 
   const handleTogglePromotion = async (id: number) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/promotions/${id}/toggle`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) await fetchPromotions(token);
+      const response = await fetch(`${API_URL}/api/promotions/${id}/toggle`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) await fetchPromotions();
     } catch (error) { /* 프로모션 토글 실패 */ }
   };
 
   const handleActivateLicense = async (licenseId: string) => {
     if (!window.confirm('이 라이선스를 활성화하시겠습니까?')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/activate`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) { await fetchAdminLicenses(token); showSuccess('라이선스가 활성화되었습니다.'); }
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/activate`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) { await fetchAdminLicenses(); showSuccess('라이선스가 활성화되었습니다.'); }
       else { showError('활성화에 실패했습니다.'); }
     } catch { showError('활성화 중 오류가 발생했습니다.'); }
   };
 
   const handleSuspendLicense = async (licenseId: string) => {
     if (!window.confirm('이 라이선스를 비활성화하시겠습니까?')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/suspend`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) { await fetchAdminLicenses(token); showSuccess('라이선스가 비활성화되었습니다.'); }
+      const response = await fetch(`${API_URL}/api/admin/licenses/${licenseId}/suspend`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) { await fetchAdminLicenses(); showSuccess('라이선스가 비활성화되었습니다.'); }
       else { showError('비활성화에 실패했습니다.'); }
     } catch { showError('비활성화 중 오류가 발생했습니다.'); }
   };
@@ -833,8 +779,6 @@ const MyPage: React.FC = () => {
   const closeLicensePlanModal = () => { setIsLicensePlanModalOpen(false); setEditingLicensePlan(null); };
 
   const handleLicensePlanSubmit = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     const entitlementList = licensePlanForm.entitlements.split(',').map(e => e.trim()).filter(e => e.length > 0);
     const payload = {
       productId: licensePlanForm.productId, code: licensePlanForm.code, name: licensePlanForm.name,
@@ -847,33 +791,29 @@ const MyPage: React.FC = () => {
       const url = editingLicensePlan ? `${API_URL}/api/v1/admin/license-plans/${editingLicensePlan.id}` : `${API_URL}/api/v1/admin/license-plans`;
       const response = await fetch(url, {
         method: editingLicensePlan ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
         body: JSON.stringify(payload),
       });
       if (response.ok) {
-        closeLicensePlanModal(); await fetchLicensePlans(token);
+        closeLicensePlanModal(); await fetchLicensePlans();
         showSuccess(editingLicensePlan ? '라이선스 플랜이 수정되었습니다.' : '라이선스 플랜이 등록되었습니다.');
       } else { const error = await response.json(); showError(error.message || '저장에 실패했습니다.'); }
     } catch { showError('저장 중 오류가 발생했습니다.'); }
   };
 
   const handleToggleLicensePlan = async (id: string, currentActive: boolean) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
       const action = currentActive ? 'deactivate' : 'activate';
-      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}/${action}`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) await fetchLicensePlans(token);
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}/${action}`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
+      if (response.ok) await fetchLicensePlans();
     } catch (error) { /* 라이선스 플랜 토글 실패 */ }
   };
 
   const handleDeleteLicensePlan = async (id: string) => {
     if (!window.confirm('이 플랜을 삭제하시겠습니까? (기존 라이선스에는 영향 없음)')) return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
     try {
-      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok || response.status === 204) { await fetchLicensePlans(token); showSuccess('라이선스 플랜이 삭제되었습니다.'); }
+      const response = await fetch(`${API_URL}/api/v1/admin/license-plans/${id}`, { method: 'DELETE', credentials: 'include' as RequestCredentials });
+      if (response.ok || response.status === 204) { await fetchLicensePlans(); showSuccess('라이선스 플랜이 삭제되었습니다.'); }
       else { const error = await response.json(); showError(error.message || '삭제에 실패했습니다.'); }
     } catch { showError('삭제 중 오류가 발생했습니다.'); }
   };

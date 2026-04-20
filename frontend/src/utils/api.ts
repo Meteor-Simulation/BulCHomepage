@@ -1,6 +1,7 @@
 /**
  * API 통신 유틸리티
  * 모든 API 호출에서 사용하는 공통 함수들
+ * 인증은 HttpOnly 쿠키 기반 (credentials: 'include')
  */
 
 // API Base URL 가져오기
@@ -17,19 +18,12 @@ export const getApiBaseUrl = (): string => {
 // API_URL 상수 (레거시 호환용)
 export const API_URL = getApiBaseUrl();
 
-// 인증 헤더 생성
+// 기본 헤더 생성
 export const createAuthHeaders = (additionalHeaders?: Record<string, string>): Record<string, string> => {
-  const headers: Record<string, string> = {
+  return {
     'Content-Type': 'application/json',
     ...additionalHeaders,
   };
-
-  const accessToken = localStorage.getItem('accessToken');
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-
-  return headers;
 };
 
 // 기본 헤더 생성 (인증 없음)
@@ -50,7 +44,7 @@ interface ApiResponse<T = unknown> {
   message?: string;
 }
 
-// 인증된 fetch 요청
+// 인증된 fetch 요청 (쿠키 기반)
 export const fetchWithAuth = async <T = unknown>(
   endpoint: string,
   options: FetchOptions = {}
