@@ -21,6 +21,7 @@ import OAuthSetupPassword from './pages/OAuthSetupPassword';
 import RefundPolicyPage from './CategoryPages/Policy/RefundPolicy';
 import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
+import PostEditorPage from './CategoryPages/Board/PostEditorPage';
 
 // 404 페이지 래퍼 컴포넌트
 const NotFoundPage: React.FC = () => {
@@ -66,6 +67,8 @@ const App: React.FC = () => {
             <Route path="/download" element={<DownloadPage />} />
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/board" element={<BoardPage />} />
+            <Route path="/board/write" element={<PostEditorPage />} />
+            <Route path="/board/edit/:id" element={<PostEditorPage />} />
             <Route path="/board/:id" element={<PostDetailPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
