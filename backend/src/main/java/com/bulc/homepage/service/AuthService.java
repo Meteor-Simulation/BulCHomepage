@@ -105,12 +105,15 @@ public class AuthService {
         } else {
             // 신규 User 생성
             isNewUser = true;
+            boolean marketing = Boolean.TRUE.equals(request.getMarketingAgreed());
             user = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
                     .emailVerified(true)
                     .emailVerifiedAt(LocalDateTime.now())
                     .rolesCode("002")  // 기본값: 일반 사용자
+                    .marketingAgreed(marketing)
+                    .marketingAgreedAt(marketing ? LocalDateTime.now() : null)
                     .build();
 
             user = userRepository.save(user);
