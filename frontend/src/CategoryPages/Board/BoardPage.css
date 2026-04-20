@@ -1,0 +1,250 @@
+.board-page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.board-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 100px 24px 60px;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.board-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.board-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.board-search {
+  display: flex;
+  gap: 6px;
+}
+
+.board-search-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+  font-family: var(--font-main);
+}
+
+.board-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.board-search-btn {
+  padding: 8px 16px;
+  background: #374151;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-main);
+}
+
+.board-search-btn:hover {
+  background: #1f2937;
+}
+
+.board-write-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: background 0.2s;
+}
+
+.board-write-btn:hover {
+  background: #E85D04;
+}
+
+/* 테이블 */
+.board-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.board-table thead {
+  background: #f3f4f6;
+}
+
+.board-table th {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.board-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.board-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.board-row:hover {
+  background: #f9fafb;
+}
+
+.board-row.locked {
+  opacity: 0.7;
+}
+
+.col-id { width: 60px; text-align: center; }
+.col-title { min-width: 200px; }
+.col-author { width: 100px; }
+.col-date { width: 100px; }
+.col-views { width: 60px; text-align: center; }
+
+.post-title {
+  font-weight: 500;
+}
+
+.lock-icon {
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+.visibility-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.visibility-badge.member {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.visibility-badge.staff {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* 페이지네이션 */
+.board-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 24px;
+}
+
+.board-pagination button {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: all 0.15s;
+}
+
+.board-pagination button:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.board-pagination button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.board-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 상태 메시지 */
+.board-loading,
+.board-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #9ca3af;
+  font-size: 15px;
+}
+
+.board-footer-info {
+  text-align: right;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .board-container {
+    padding: 80px 16px 40px;
+  }
+
+  .board-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .board-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .board-search {
+    width: 100%;
+  }
+
+  .board-search-input {
+    width: 100%;
+  }
+
+  .board-write-btn {
+    width: 100%;
+  }
+
+  .col-author,
+  .col-views {
+    display: none;
+  }
+
+  .board-table th,
+  .board-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
