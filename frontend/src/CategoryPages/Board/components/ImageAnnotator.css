@@ -1,0 +1,257 @@
+.annotator-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.annotator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.annotator-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.annotator-delete-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.annotator-delete-btn:hover {
+  color: #dc2626;
+}
+
+/* 마커 도구 선택 */
+.annotator-tools {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.15s;
+}
+
+.tool-btn:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.tool-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff5f0;
+}
+
+/* 이미지 영역 */
+.annotator-image-area {
+  position: relative;
+  cursor: crosshair;
+  user-select: none;
+  line-height: 0;
+}
+
+.annotator-image-area img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.annotator-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* 마커 핀 */
+.marker-pin {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: var(--accent, #C4320A);
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s;
+  z-index: 10;
+}
+
+.marker-pin:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.marker-pin.dragging {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* 도형 마커 (사각형/타원) */
+.marker-shape {
+  position: absolute;
+  border: 2px dashed var(--accent, #C4320A);
+  background: rgba(196, 50, 10, 0.08);
+  cursor: grab;
+  z-index: 9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.marker-shape:hover {
+  background: rgba(196, 50, 10, 0.15);
+}
+
+.marker-shape.dragging {
+  cursor: grabbing;
+  border-style: solid;
+}
+
+.shape-number {
+  width: 22px;
+  height: 22px;
+  background: var(--accent, #C4320A);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  position: absolute;
+  top: -11px;
+  left: -11px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 마커 설명 목록 */
+.annotator-descriptions {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.annotator-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desc-number {
+  width: 24px;
+  height: 24px;
+  background: var(--accent, #C4320A);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.desc-label-input {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: var(--font-main);
+  font-weight: 500;
+}
+
+.desc-description-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: var(--font-main);
+}
+
+.desc-label-input:focus,
+.desc-description-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.desc-delete-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.desc-delete-btn:hover {
+  color: #dc2626;
+}
+
+/* 읽기 전용 */
+.desc-readonly {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .annotator-desc-row {
+    flex-wrap: wrap;
+  }
+
+  .desc-label-input {
+    width: 80px;
+  }
+
+  .desc-description-input {
+    width: 100%;
+    flex: none;
+  }
+}

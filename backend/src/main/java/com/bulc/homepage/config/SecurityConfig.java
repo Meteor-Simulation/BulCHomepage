@@ -97,6 +97,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/**").permitAll()
                         // 프로모션 쿠폰 검증 API (공개)
                         .requestMatchers("/api/promotions/validate").permitAll()
+                        // 게시판 API (목록/상세 조회는 공개, 작성/수정/삭제는 인증 필요)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/posts/**").permitAll()
                         // 언어 감지 API (공개)
                         .requestMatchers("/api/language/**").permitAll()
                         // 문의하기 API (공개)

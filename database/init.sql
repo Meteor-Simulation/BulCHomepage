@@ -10,6 +10,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =========================================================
 -- Drop existing tables (reverse dependency order)
 -- =========================================================
+DROP TABLE IF EXISTS post_images CASCADE;
+DROP TABLE IF EXISTS posts CASCADE;
 DROP TABLE IF EXISTS revoked_offline_tokens CASCADE;
 DROP TABLE IF EXISTS license_activations CASCADE;
 DROP TABLE IF EXISTS license_plan_entitlements CASCADE;
@@ -984,6 +986,46 @@ CREATE TRIGGER update_redeem_campaigns_updated_at BEFORE UPDATE ON redeem_campai
 
 CREATE TRIGGER update_redeem_codes_updated_at BEFORE UPDATE ON redeem_codes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================
+-- 게시판 테이블
+-- =========================================================
+CREATE TABLE posts (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    author_id       UUID NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content_html    TEXT,
+    visibility      VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
+    view_count      INT NOT NULL DEFAULT 0,
+    is_deleted      BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_posts_author ON posts(author_id);
+CREATE INDEX idx_posts_visibility ON posts(visibility);
+CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX idx_posts_is_deleted ON posts(is_deleted);
+
+COMMENT ON TABLE posts IS '게시판 게시글';
+COMMENT ON COLUMN posts.visibility IS '공개 범위: PUBLIC(전체), MEMBER(회원), STAFF(매니저/관리자)';
+
+CREATE TABLE post_images (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    post_id         BIGINT,
+    image_url       VARCHAR(500) NOT NULL,
+    original_name   VARCHAR(255),
+    file_size       BIGINT,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_post_images_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_post_images_post ON post_images(post_id);
+
+COMMENT ON TABLE post_images IS '게시글 이미지';
 
 -- =========================================================
 -- 마지막 단계: price_plans ↔ license_plans 연결
