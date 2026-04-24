@@ -77,8 +77,8 @@ const OAuthSetupPassword: React.FC = () => {
 
       if (result.success && result.data) {
         // 로그인 처리
-        const { accessToken, refreshToken } = result.data;
-        const loginResult = await loginWithToken(accessToken, refreshToken);
+        // 쿠키가 이미 설정된 상태 — 사용자 정보 조회
+        const loginResult = await loginWithToken();
 
         if (loginResult.success) {
           navigate('/');

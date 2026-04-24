@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getApiBaseUrl } from '../utils/api';
 
@@ -21,22 +21,12 @@ interface AuthContextType {
   isAuthReady: boolean; // 인증 상태 초기화 완료 여부
   isAdmin: boolean; // 관리자 여부 (admin 또는 manager)
   login: (email: string, password: string) => Promise<LoginResult>;
-  loginWithToken: (accessToken: string, refreshToken: string) => Promise<LoginResult>;
+  loginWithToken: () => Promise<LoginResult>;
   logout: () => Promise<void>;
   sessionTimeLeft: number | null; // 남은 세션 시간 (초)
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// JWT 토큰에서 만료 시간 추출
-const getTokenExpiration = (token: string): number | null => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp ? payload.exp * 1000 : null; // 밀리초로 변환
-  } catch {
-    return null;
-  }
-};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -50,11 +40,15 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Access Token 만료 시간 (초) — 백엔드 기본값과 동일
+const ACCESS_TOKEN_LIFETIME_SEC = 600; // 10분
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false); // 인증 상태 초기화 완료 여부
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
+  const tokenExpiresAtRef = useRef<number | null>(null);
 
   // 사용자 언어 설정 적용 함수
   const applyUserLanguage = useCallback((language: string | undefined) => {
@@ -66,65 +60,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 로그아웃 함수
   const logout = useCallback(async () => {
-    const accessToken = localStorage.getItem('accessToken');
-
-    // 백엔드 로그아웃 API 호출 (토큰 블랙리스트 등록)
-    if (accessToken) {
-      try {
-        await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        });
-      } catch (error) {
-        // logout API error
-      }
+    try {
+      await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      // logout API error
     }
 
     setUser(null);
     setSessionTimeLeft(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('tokenExpiration');
+    tokenExpiresAtRef.current = null;
   }, []);
 
-  // 토큰 갱신 함수
+  // 토큰 갱신 함수 (쿠키 기반 — REFRESH_TOKEN 쿠키가 자동 전송됨)
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) return false;
-
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({}),
       });
 
       const result = await response.json();
 
       if (result.success && result.data) {
-        const { accessToken, refreshToken: newRefreshToken } = result.data;
-        localStorage.setItem('accessToken', accessToken);
-        if (newRefreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken);
+        // 토큰 만료 시간 갱신 (쿠키는 백엔드가 자동 설정)
+        const expiresIn = result.data.expiresIn;
+        if (expiresIn) {
+          tokenExpiresAtRef.current = Date.now() + expiresIn * 1000;
         }
-
-        const expiration = getTokenExpiration(accessToken);
-        if (expiration) {
-          localStorage.setItem('tokenExpiration', expiration.toString());
-        }
-
         return true;
       }
       return false;
     } catch (error) {
-      // token refresh error
       return false;
+    }
+  }, []);
+
+  // /api/auth/me로 현재 로그인 상태 확인
+  const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) return null;
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        return {
+          id: result.data.id,
+          email: result.data.email,
+          name: result.data.name || result.data.email,
+          rolesCode: result.data.rolesCode,
+          language: result.data.language,
+        };
+      }
+      return null;
+    } catch {
+      return null;
     }
   }, []);
 
@@ -133,77 +131,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) return;
 
     const checkSession = async () => {
-      const expiration = localStorage.getItem('tokenExpiration');
-      if (!expiration) return;
+      if (!tokenExpiresAtRef.current) return;
 
-      const expirationTime = parseInt(expiration, 10);
-      const now = Date.now();
-      const timeLeft = Math.floor((expirationTime - now) / 1000);
+      const timeLeft = Math.floor((tokenExpiresAtRef.current - Date.now()) / 1000);
 
       if (timeLeft <= 0) {
-        // 토큰 만료됨 - 갱신 시도
+        // 토큰 만료됨 — 갱신 시도
         const refreshed = await refreshAccessToken();
         if (!refreshed) {
           alert('세션이 만료되었습니다. 다시 로그인해주세요.');
           logout();
         }
       } else if (timeLeft <= 60) {
-        // 1분 이하 남았을 때 자동 갱신 시도
+        // 1분 이하 남았을 때 자동 갱신
         await refreshAccessToken();
       } else {
         setSessionTimeLeft(timeLeft);
       }
     };
 
-    // 초기 체크
     checkSession();
-
-    // 매초 세션 시간 업데이트
     const interval = setInterval(checkSession, 1000);
-
     return () => clearInterval(interval);
   }, [user, logout, refreshAccessToken]);
 
-  // 페이지 로드 시 로컬 스토리지에서 사용자 정보 복원
+  // 페이지 로드 시 쿠키 기반으로 로그인 상태 복원
   useEffect(() => {
     const initAuth = async () => {
-      const storedUser = localStorage.getItem('user');
-      const storedToken = localStorage.getItem('accessToken');
-
-      if (storedUser && storedToken) {
-        const parsedUser = JSON.parse(storedUser);
-        // 토큰 만료 확인
-        const expiration = getTokenExpiration(storedToken);
-        if (expiration && expiration > Date.now()) {
-          setUser(parsedUser);
-          localStorage.setItem('tokenExpiration', expiration.toString());
-          // 사용자 언어 설정 적용 (localStorage에 없을 경우 대비)
-          applyUserLanguage(parsedUser.language);
-        } else {
-          // 토큰이 만료되었으면 갱신 시도
-          const success = await refreshAccessToken();
-          if (success) {
-            setUser(parsedUser);
-            // 사용자 언어 설정 적용
-            applyUserLanguage(parsedUser.language);
-          } else {
-            logout();
+      const userData = await fetchCurrentUser();
+      if (userData) {
+        setUser(userData);
+        tokenExpiresAtRef.current = Date.now() + ACCESS_TOKEN_LIFETIME_SEC * 1000;
+        applyUserLanguage(userData.language);
+      } else {
+        // 쿠키 만료 — refresh 시도
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          const refreshedUser = await fetchCurrentUser();
+          if (refreshedUser) {
+            setUser(refreshedUser);
+            applyUserLanguage(refreshedUser.language);
           }
         }
       }
-      setIsAuthReady(true); // 초기화 완료
+      setIsAuthReady(true);
     };
 
     initAuth();
-  }, [logout, refreshAccessToken, applyUserLanguage]);
+  }, [fetchCurrentUser, refreshAccessToken, applyUserLanguage]);
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
@@ -211,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await response.json();
 
       if (result.success && result.data) {
-        const { accessToken, refreshToken, user: userInfo } = result.data;
+        const userInfo = result.data.user;
         const userData: User = {
           id: userInfo.id,
           email: userInfo.email,
@@ -221,86 +202,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
 
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
 
-        // 토큰 만료 시간 저장
-        const expiration = getTokenExpiration(accessToken);
-        if (expiration) {
-          localStorage.setItem('tokenExpiration', expiration.toString());
-        }
+        // 토큰 만료 시간 추적 (쿠키는 백엔드가 설정, 여기선 타이머용)
+        const expiresIn = result.data.expiresIn;
+        tokenExpiresAtRef.current = Date.now() + (expiresIn ? expiresIn * 1000 : ACCESS_TOKEN_LIFETIME_SEC * 1000);
 
-        // 사용자 언어 설정 적용
         applyUserLanguage(userInfo.language);
 
         return { success: true };
       }
       return { success: false, message: result.message || '로그인에 실패했습니다.' };
     } catch (error) {
-      // login error
       return { success: false, message: '로그인 중 오류가 발생했습니다.' };
     }
   };
 
-  // OAuth 토큰으로 로그인 (소셜 로그인용)
-  const loginWithToken = async (accessToken: string, refreshToken: string): Promise<LoginResult> => {
+  // OAuth 소셜 로그인용 — 쿠키가 이미 설정된 상태에서 사용자 정보 조회
+  const loginWithToken = async (): Promise<LoginResult> => {
     try {
-      // 토큰 저장
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-
-      // 토큰 만료 시간 저장
-      const expiration = getTokenExpiration(accessToken);
-      if (expiration) {
-        localStorage.setItem('tokenExpiration', expiration.toString());
-      }
-
-      // 백엔드에서 사용자 정보 조회
-      const response = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('사용자 정보를 가져올 수 없습니다.');
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        const userInfo = result.data;
-        const userData: User = {
-          id: userInfo.id,
-          email: userInfo.email,
-          name: userInfo.name || userInfo.email,
-          rolesCode: userInfo.rolesCode,
-          language: userInfo.language,
-        };
-
+      const userData = await fetchCurrentUser();
+      if (userData) {
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-
-        // 사용자 언어 설정 적용
-        applyUserLanguage(userInfo.language);
-
+        tokenExpiresAtRef.current = Date.now() + ACCESS_TOKEN_LIFETIME_SEC * 1000;
+        applyUserLanguage(userData.language);
         return { success: true };
       }
-
-      return { success: false, message: result.message || '사용자 정보를 가져올 수 없습니다.' };
+      return { success: false, message: '사용자 정보를 가져올 수 없습니다.' };
     } catch (error) {
-      // OAuth login error
-      // 실패 시 토큰 정리
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('tokenExpiration');
       return { success: false, message: '로그인 중 오류가 발생했습니다.' };
     }
   };
 
-  // 관리자 여부 확인 (000: admin, 001: manager)
   const isAdmin = user?.rolesCode === '000' || user?.rolesCode === '001';
 
   return (

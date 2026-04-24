@@ -128,10 +128,34 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest request,
+            @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         log.info("Token refresh request");
-        AuthResponse response = authService.refreshToken(request);
+
+        // 쿠키에서 refreshToken 읽기 (body가 없거나 body에 토큰이 없는 경우)
+        String refreshToken = null;
+        if (request != null && request.getRefreshToken() != null) {
+            refreshToken = request.getRefreshToken();
+        } else {
+            Cookie[] cookies = httpRequest.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("REFRESH_TOKEN".equals(cookie.getName())) {
+                        refreshToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Refresh Token이 없습니다."));
+        }
+
+        RefreshTokenRequest tokenRequest = new RefreshTokenRequest();
+        tokenRequest.setRefreshToken(refreshToken);
+        AuthResponse response = authService.refreshToken(tokenRequest);
 
         // [RTR] 새 토큰으로 쿠키 갱신
         setAuthCookie(httpResponse, response.getAccessToken());
@@ -269,9 +293,15 @@ public class AuthController {
      * OAuth 회원가입 완료 (비밀번호 설정)
      */
     @PostMapping("/oauth/signup")
-    public ResponseEntity<ApiResponse<AuthResponse>> oauthSignup(@Valid @RequestBody OAuthSignupRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> oauthSignup(
+            @Valid @RequestBody OAuthSignupRequest request,
+            HttpServletResponse httpResponse) {
         log.info("OAuth signup request");
         AuthResponse response = authService.oauthSignup(request);
+
+        setAuthCookie(httpResponse, response.getAccessToken());
+        setRefreshTokenCookie(httpResponse, response.getRefreshToken());
+
         return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다", response));
     }
 

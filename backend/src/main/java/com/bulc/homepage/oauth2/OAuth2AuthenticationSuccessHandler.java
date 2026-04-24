@@ -186,12 +186,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             log.info("OAuth2 로그인 성공 - Email: {}, Provider: {}", email, provider);
 
-            String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .queryParam("accessToken", accessToken)
-                    .queryParam("refreshToken", refreshToken)
-                    .build().toUriString();
+            // HttpOnly 쿠키로 토큰 설정 (URL에 토큰 노출 방지)
+            setAuthCookie(response, "AUTH_TOKEN", accessToken, "/", 60 * 60);
+            setAuthCookie(response, "REFRESH_TOKEN", refreshToken, "/api/auth/refresh", 7 * 24 * 60 * 60);
 
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+            getRedirectStrategy().sendRedirect(request, response, redirectUri);
         }
     }
 
@@ -267,6 +266,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         Cookie cookie = new Cookie(name, "");
         cookie.setPath("/");
         cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
+    private void setAuthCookie(HttpServletResponse response, String name, String value, String path, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // 운영환경에서는 true로 변경 필요
+        cookie.setPath(path);
+        cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
     }
 

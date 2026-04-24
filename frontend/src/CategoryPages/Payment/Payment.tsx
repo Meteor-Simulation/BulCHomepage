@@ -176,15 +176,12 @@ const PaymentPage: React.FC = () => {
 
   // 사용자 정보 로드
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!isLoggedIn || !token || userInfoLoaded) return;
+    if (!isLoggedIn || userInfoLoaded) return;
 
     const fetchUserInfo = async () => {
       try {
         const response = await fetch(`${API_URL}/api/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
@@ -262,16 +259,11 @@ const PaymentPage: React.FC = () => {
 
   // 구매자 정보 저장 (결제 시에만 호출)
   const saveUserInfo = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
     try {
       await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: paymentInfo.name,
           // 전화번호는 숫자만 추출하여 저장
@@ -365,13 +357,10 @@ const PaymentPage: React.FC = () => {
     setCouponError('');
 
     try {
-      const token = localStorage.getItem('accessToken');
       const response = await fetch(`${API_URL}/api/promotions/validate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           code: couponCode.trim().toUpperCase(),
           productCode: selectedProduct?.code,
