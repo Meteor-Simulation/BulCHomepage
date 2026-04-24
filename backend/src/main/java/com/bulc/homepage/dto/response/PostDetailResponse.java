@@ -21,6 +21,7 @@ public class PostDetailResponse {
     private String authorName;
     private String visibility;
     private Integer viewCount;
+    private String annotatedImagesJson;
     private boolean restricted;
     private String restrictedMessage;
     private LocalDateTime createdAt;
@@ -31,6 +32,7 @@ public class PostDetailResponse {
                 .id(post.getId())
                 .title(post.getTitle())
                 .contentHtml(post.getContentHtml())
+                .annotatedImagesJson(post.getAnnotatedImagesJson())
                 .authorId(post.getAuthorId().toString())
                 .authorName(authorName)
                 .visibility(post.getVisibility())

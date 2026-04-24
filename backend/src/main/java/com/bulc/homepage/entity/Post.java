@@ -32,9 +32,19 @@ public class Post {
     @Column(name = "content_html", columnDefinition = "TEXT")
     private String contentHtml;
 
+    @Column(name = "annotated_images_json", columnDefinition = "TEXT")
+    private String annotatedImagesJson;
+
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String visibility = "PUBLIC";
+
+    @Column(name = "parent_id")
+    private Long parentId;
+
+    @Column(name = "sort_order", nullable = false)
+    @Builder.Default
+    private Integer sortOrder = 0;
 
     @Column(name = "view_count", nullable = false)
     @Builder.Default

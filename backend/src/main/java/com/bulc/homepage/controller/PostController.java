@@ -59,8 +59,12 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostDetailResponse>> createPost(
             @Valid @RequestBody PostRequest request) {
         UUID userId = getCurrentUserId();
+        String rolesCode = getCurrentUserRolesCode();
         if (userId == null) {
             return ResponseEntity.status(401).body(ApiResponse.error("로그인이 필요합니다."));
+        }
+        if (!"000".equals(rolesCode) && !"001".equals(rolesCode)) {
+            return ResponseEntity.status(403).body(ApiResponse.error("스태프 권한이 필요합니다."));
         }
         PostDetailResponse post = postService.createPost(request, userId);
         return ResponseEntity.ok(ApiResponse.success("게시글이 작성되었습니다.", post));
@@ -94,6 +98,20 @@ public class PostController {
         }
         postService.deletePost(id, userId, rolesCode);
         return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다.", null));
+    }
+
+    /**
+     * 게시글 이동 (부모 변경 + 순서 변경)
+     */
+    @PatchMapping("/{id}/move")
+    public ResponseEntity<ApiResponse<Void>> movePost(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> body) {
+        Long parentId = body.get("parentId") != null ? Long.valueOf(body.get("parentId").toString()) : null;
+        int sortOrder = body.get("sortOrder") != null ? Integer.parseInt(body.get("sortOrder").toString()) : 0;
+
+        postService.movePost(id, parentId, sortOrder);
+        return ResponseEntity.ok(ApiResponse.success("이동되었습니다.", null));
     }
 
     // ========== 헬퍼 ==========

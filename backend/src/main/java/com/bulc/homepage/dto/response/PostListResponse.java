@@ -18,6 +18,8 @@ public class PostListResponse {
     private String title;
     private String authorName;
     private String visibility;
+    private Long parentId;
+    private Integer sortOrder;
     private Integer viewCount;
     private LocalDateTime createdAt;
 
@@ -27,6 +29,8 @@ public class PostListResponse {
                 .title(post.getTitle())
                 .authorName(authorName)
                 .visibility(post.getVisibility())
+                .parentId(post.getParentId())
+                .sortOrder(post.getSortOrder())
                 .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .build();

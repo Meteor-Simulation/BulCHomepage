@@ -3,14 +3,22 @@ export interface PostListItem {
   title: string;
   authorName: string;
   visibility: 'PUBLIC' | 'MEMBER' | 'STAFF';
+  parentId: number | null;
+  sortOrder: number;
   viewCount: number;
   createdAt: string;
+}
+
+export interface TreeNode extends PostListItem {
+  children: TreeNode[];
+  expanded: boolean;
 }
 
 export interface PostDetail {
   id: number;
   title: string;
   contentHtml: string;
+  annotatedImagesJson?: string;
   authorId: string;
   authorName: string;
   visibility: 'PUBLIC' | 'MEMBER' | 'STAFF';

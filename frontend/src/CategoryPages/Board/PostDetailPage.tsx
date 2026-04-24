@@ -15,8 +15,7 @@ const PostDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const isAuthor = user && post && user.id === post.authorId;
-  const canModify = isAuthor || isAdmin;
+  const canModify = isAdmin;
 
   useEffect(() => {
     const fetchPost = async () => {

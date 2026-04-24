@@ -3,9 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+import { TextStyle } from '@tiptap/extension-text-style';
+import FontSize from './extensions/FontSize';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
+import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
 import './PostEditorPage.css';
 
 const PostEditorPage: React.FC = () => {
@@ -19,22 +22,24 @@ const PostEditorPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(isEditMode);
+  const [annotatedImages, setAnnotatedImages] = useState<AnnotatedImage[]>([]);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image.configure({ inline: false, allowBase64: false }),
+      TextStyle,
+      FontSize,
     ],
     content: '',
   });
 
-  // 로그인 체크
   useEffect(() => {
-    if (isAuthReady && !isLoggedIn) {
-      alert('로그인이 필요합니다.');
+    if (isAuthReady && !isAdmin) {
+      alert('스태프 권한이 필요합니다.');
       navigate('/board');
     }
-  }, [isAuthReady, isLoggedIn, navigate]);
+  }, [isAuthReady, isAdmin, navigate]);
 
   // 수정 모드: 기존 글 로드
   useEffect(() => {
@@ -65,14 +70,12 @@ const PostEditorPage: React.FC = () => {
     fetchPost();
   }, [id, isEditMode, editor]);
 
-  // 이미지 업로드
-  const handleImageUpload = useCallback(async () => {
-    if (!editor) return;
-
+  // 이미지 추가 → 주석 컴포넌트 생성
+  const handleImageUpload = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/jpeg,image/png,image/gif,image/webp';
-    input.onchange = async (e) => {
+    input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
@@ -81,30 +84,11 @@ const PostEditorPage: React.FC = () => {
         return;
       }
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const response = await fetch(`${API_URL}/api/v1/posts/images`, {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            editor.chain().focus().setImage({ src: result.data.imageUrl }).run();
-          }
-        } else {
-          alert('이미지 업로드에 실패했습니다.');
-        }
-      } catch {
-        alert('이미지 업로드 중 오류가 발생했습니다.');
-      }
+      const imageUrl = URL.createObjectURL(file);
+      setAnnotatedImages(prev => [...prev, { imageUrl, file, markers: [] }]);
     };
     input.click();
-  }, [editor]);
+  }, []);
 
   // 글 저장
   const handleSubmit = async () => {
@@ -132,6 +116,12 @@ const PostEditorPage: React.FC = () => {
           title: title.trim(),
           contentHtml: editor.getHTML(),
           visibility,
+          annotatedImagesJson: annotatedImages.length > 0
+            ? JSON.stringify(annotatedImages.map(img => ({
+                imageUrl: img.imageUrl,
+                markers: img.markers,
+              })))
+            : null,
         }),
       });
 
@@ -166,8 +156,6 @@ const PostEditorPage: React.FC = () => {
     <div className="post-editor-page">
       <Header />
       <div className="post-editor-container">
-        <h1 className="post-editor-title">{isEditMode ? '글 수정' : '글 작성'}</h1>
-
         <div className="post-editor-form">
           <input
             type="text"
@@ -178,23 +166,62 @@ const PostEditorPage: React.FC = () => {
             maxLength={200}
           />
 
-          <div className="post-visibility-select">
-            <label>공개 범위:</label>
-            <select value={visibility} onChange={(e) => setVisibility(e.target.value)}>
-              <option value="PUBLIC">전체 공개</option>
-              <option value="MEMBER">회원 전용</option>
-              {isAdmin && <option value="STAFF">스태프 전용</option>}
-            </select>
-          </div>
-
           {/* 에디터 툴바 */}
           {editor && (
             <div className="editor-toolbar">
+              {/* 폰트 크기 드롭박스 */}
+              <select
+                className="toolbar-select"
+                value={editor.getAttributes('textStyle').fontSize || '14px'}
+                onChange={(e) => {
+                  const size = e.target.value;
+                  if (size === '14px') {
+                    editor.chain().focus().unsetFontSize().run();
+                  } else {
+                    editor.chain().focus().setFontSize(size).run();
+                  }
+                }}
+              >
+                <option value="12px">12px</option>
+                <option value="14px">14px</option>
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+                <option value="28px">28px</option>
+                <option value="32px">32px</option>
+              </select>
+
+              <select
+                className="toolbar-select"
+                value={
+                  editor.isActive('heading', { level: 1 }) ? '1' :
+                  editor.isActive('heading', { level: 2 }) ? '2' :
+                  editor.isActive('heading', { level: 3 }) ? '3' : '0'
+                }
+                onChange={(e) => {
+                  const level = parseInt(e.target.value);
+                  if (level === 0) {
+                    editor.chain().focus().setParagraph().run();
+                  } else {
+                    editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run();
+                  }
+                }}
+              >
+                <option value="0">본문</option>
+                <option value="1">제목 1</option>
+                <option value="2">제목 2</option>
+                <option value="3">제목 3</option>
+              </select>
+
+              <span className="toolbar-divider" />
+
+              {/* 텍스트 스타일 */}
               <button
                 type="button"
                 className={editor.isActive('bold') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleBold().run()}
-                title="볼드"
+                title="굵게"
               >
                 <strong>B</strong>
               </button>
@@ -202,7 +229,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('italic') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
-                title="이탤릭"
+                title="기울임"
               >
                 <em>I</em>
               </button>
@@ -214,15 +241,10 @@ const PostEditorPage: React.FC = () => {
               >
                 <s>S</s>
               </button>
+
               <span className="toolbar-divider" />
-              <button
-                type="button"
-                className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
-                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                title="제목"
-              >
-                H
-              </button>
+
+              {/* 목록 */}
               <button
                 type="button"
                 className={editor.isActive('bulletList') ? 'active' : ''}
@@ -239,6 +261,10 @@ const PostEditorPage: React.FC = () => {
               >
                 1.
               </button>
+
+              <span className="toolbar-divider" />
+
+              {/* 블록 */}
               <button
                 type="button"
                 className={editor.isActive('blockquote') ? 'active' : ''}
@@ -255,19 +281,61 @@ const PostEditorPage: React.FC = () => {
               >
                 {'</>'}
               </button>
-              <span className="toolbar-divider" />
-              <button type="button" onClick={handleImageUpload} title="이미지 삽입">
-                IMG
+
+              {/* 공개 범위 토글 — 오른쪽 끝 */}
+              <div className="toolbar-spacer" />
+              <button
+                type="button"
+                className={`toolbar-lock-btn ${visibility !== 'PUBLIC' ? 'locked' : ''}`}
+                onClick={() => setVisibility(visibility === 'PUBLIC' ? 'MEMBER' : 'PUBLIC')}
+                title={visibility === 'PUBLIC' ? '전체 공개 (클릭하면 회원 전용)' : '회원 전용 (클릭하면 전체 공개)'}
+              >
+                {visibility === 'PUBLIC' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                )}
               </button>
             </div>
           )}
 
           <EditorContent editor={editor} className="post-editor-content" />
 
+          {/* 주석 이미지 목록 */}
+          {annotatedImages.length > 0 && (
+            <div className="annotated-images-list">
+              {annotatedImages.map((img, i) => (
+                <ImageAnnotator
+                  key={i}
+                  image={img}
+                  index={i}
+                  onChange={(updated) => {
+                    setAnnotatedImages(prev => prev.map((item, idx) => idx === i ? updated : item));
+                  }}
+                  onDelete={() => {
+                    setAnnotatedImages(prev => prev.filter((_, idx) => idx !== i));
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* 이미지 추가 버튼 */}
+          <button type="button" className="post-image-add-btn" onClick={handleImageUpload}>
+            + 이미지 추가
+          </button>
+
+
           {error && <p className="post-editor-error">{error}</p>}
 
           <div className="post-editor-actions">
-            <button className="post-cancel-btn" onClick={() => navigate(-1)}>취소</button>
+            <button className="post-cancel-btn" onClick={() => navigate(-1)} disabled={isSubmitting}>취소</button>
             <button
               className="post-submit-btn"
               onClick={handleSubmit}
@@ -276,6 +344,14 @@ const PostEditorPage: React.FC = () => {
               {isSubmitting ? '저장 중...' : isEditMode ? '수정' : '게시'}
             </button>
           </div>
+
+          {/* 저장 중 화면 잠금 오버레이 */}
+          {isSubmitting && (
+            <div className="post-saving-overlay">
+              <div className="post-saving-spinner" />
+              <p>저장 중...</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

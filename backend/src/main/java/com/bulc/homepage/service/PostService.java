@@ -36,7 +36,7 @@ public class PostService {
         if (search != null && !search.isBlank()) {
             posts = postRepository.searchByTitle(search.trim(), pageable);
         } else {
-            posts = postRepository.findByIsDeletedFalseOrderByCreatedAtDesc(pageable);
+            posts = postRepository.findByIsDeletedFalseOrderBySortOrderAscCreatedAtDesc(pageable);
         }
 
         return posts.map(post -> {
@@ -84,7 +84,9 @@ public class PostService {
                 .authorId(authorId)
                 .title(request.getTitle())
                 .contentHtml(request.getContentHtml())
+                .annotatedImagesJson(request.getAnnotatedImagesJson())
                 .visibility(request.getVisibility())
+                .parentId(request.getParentId())
                 .build();
 
         post = postRepository.save(post);
@@ -114,6 +116,7 @@ public class PostService {
 
         post.setTitle(request.getTitle());
         post.setContentHtml(request.getContentHtml());
+        post.setAnnotatedImagesJson(request.getAnnotatedImagesJson());
         post.setVisibility(request.getVisibility());
         post = postRepository.save(post);
 
@@ -139,13 +142,26 @@ public class PostService {
         log.info("게시글 삭제 - id: {}, by: {}", id, requesterId);
     }
 
+    /**
+     * 게시글 이동 (부모 변경 + 순서 변경)
+     */
+    @Transactional
+    public void movePost(Long id, Long parentId, int sortOrder) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+
+        post.setParentId(parentId);
+        post.setSortOrder(sortOrder);
+        postRepository.save(post);
+
+        log.info("게시글 이동 - id: {}, parentId: {}, sortOrder: {}", id, parentId, sortOrder);
+    }
+
     // ========== 헬퍼 메서드 ==========
 
     private boolean canModify(Post post, UUID requesterId, String rolesCode) {
-        // 스태프(admin/manager)는 모든 글 관리 가능
-        if (isStaff(rolesCode)) return true;
-        // 본인 글만 수정/삭제 가능
-        return post.getAuthorId().equals(requesterId);
+        // 스태프(admin/manager)만 수정/삭제 가능
+        return isStaff(rolesCode);
     }
 
     private boolean isStaff(String rolesCode) {

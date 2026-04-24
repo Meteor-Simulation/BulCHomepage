@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    Page<Post> findByIsDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
+    Page<Post> findByIsDeletedFalseOrderBySortOrderAscCreatedAtDesc(Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.isDeleted = false " +
            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')))" +

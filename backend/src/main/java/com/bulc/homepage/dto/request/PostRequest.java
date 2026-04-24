@@ -21,4 +21,8 @@ public class PostRequest {
 
     @Builder.Default
     private String visibility = "PUBLIC"; // PUBLIC, MEMBER, STAFF
+
+    private Long parentId;
+
+    private String annotatedImagesJson;
 }
