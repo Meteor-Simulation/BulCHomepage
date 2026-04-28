@@ -1,0 +1,19 @@
+# Backend 배포용 Dockerfile (사전 빌드된 JAR 사용)
+# 서버에서 빌드하지 않고, 로컬에서 빌드한 JAR를 복사하여 실행
+# 사용법: docker build -f Dockerfile.prebuilt -t bulc-backend .
+
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+# 사전 빌드된 JAR 파일 복사
+COPY build/libs/*.jar app.jar
+
+# 보안: non-root 사용자 생성
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+USER appuser
+
+EXPOSE 8080
+
+# JVM 최적화 옵션 (1GB RAM 서버 기준)
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=50.0", "-Xms128m", "-Xmx384m", "-jar", "app.jar"]

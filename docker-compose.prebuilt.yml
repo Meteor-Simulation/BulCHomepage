@@ -1,0 +1,11 @@
+# 사전 빌드 JAR 배포용 Docker Compose (override)
+# 사용법: docker compose -f docker-compose.prod.yml -f docker-compose.prebuilt.yml up -d backend
+#
+# docker-compose.prod.yml의 backend.build 설정을 덮어씌워
+# Dockerfile.prebuilt를 사용하도록 변경합니다.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prebuilt
