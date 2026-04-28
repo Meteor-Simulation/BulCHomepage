@@ -1,0 +1,22 @@
+# Prebuilt JAR 배포용 dockerignore
+# build/libs/*.jar만 허용, 나머지 제외
+
+# Source (JAR에 이미 포함)
+src/
+gradle/
+gradlew
+gradlew.bat
+*.gradle
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
