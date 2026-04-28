@@ -76,6 +76,13 @@ public class PaymentService {
                     return new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId());
                 });
 
+        // 결제 금액과 요금제 가격 대조
+        if (pricePlan.getPrice().intValue() != request.getAmount()) {
+            log.error("[결제] 금액 불일치 - 요청금액={}, 요금제가격={}, orderId={}, userEmail={}",
+                    request.getAmount(), pricePlan.getPrice(), request.getOrderId(), userEmail);
+            throw new RuntimeException("결제 금액이 상품 가격과 일치하지 않습니다.");
+        }
+
         log.info("[결제] STEP 2/5 토스 API 호출 - orderId={}, paymentKey={}", request.getOrderId(), request.getPaymentKey());
 
         // 토스페이먼츠 API 호출
