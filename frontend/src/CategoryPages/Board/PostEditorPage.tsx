@@ -6,6 +6,7 @@ import Image from '@tiptap/extension-image';
 import { TextStyle } from '@tiptap/extension-text-style';
 import FontSize from './extensions/FontSize';
 import MathNode from './extensions/MathNode';
+import InfoPanel from './extensions/InfoPanel';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
@@ -37,6 +38,7 @@ const PostEditorPage: React.FC = () => {
       TextStyle,
       FontSize,
       MathNode,
+      InfoPanel,
     ],
     content: '',
   });
@@ -305,6 +307,15 @@ const PostEditorPage: React.FC = () => {
                 title="코드 블록"
               >
                 {'</>'}
+              </button>
+
+              <button
+                type="button"
+                className={editor.isActive('infoPanel') ? 'active' : ''}
+                onClick={() => editor.chain().focus().toggleInfoPanel().run()}
+                title="정보 패널"
+              >
+                !
               </button>
 
               <span className="toolbar-divider" />
