@@ -3,8 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
+import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
 import { PostDetail } from './types';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import './PostDetailPage.css';
+
+const renderMathInHtml = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<math-node[^>]*data-latex="([^"]*)"[^>]*><\/math-node>/g, (_, latex) => {
+    try {
+      return katex.renderToString(latex, { throwOnError: false, displayMode: false });
+    } catch {
+      return latex;
+    }
+  });
+};
 
 const PostDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -118,15 +132,29 @@ const PostDetailPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div
-              className="post-content"
-              dangerouslySetInnerHTML={{ __html: post.contentHtml || '' }}
-            />
+            <>
+              <div
+                className="post-content"
+                dangerouslySetInnerHTML={{ __html: renderMathInHtml(post.contentHtml || '') }}
+              />
+              {post.annotatedImagesJson && (() => {
+                try {
+                  const images: AnnotatedImage[] = JSON.parse(post.annotatedImagesJson);
+                  return images.length > 0 && (
+                    <div className="post-annotated-images">
+                      {images.map((img, i) => (
+                        <ImageAnnotator key={i} image={img} index={i} readOnly />
+                      ))}
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
+            </>
           )}
         </article>
 
         <div className="post-actions">
-          <button className="post-back-btn" onClick={() => navigate('/board')}>목록</button>
+          <button className="post-back-btn" onClick={() => navigate('/board')}>확인</button>
           {canModify && !post.restricted && (
             <div className="post-modify-actions">
               <button className="post-edit-btn" onClick={() => navigate(`/board/edit/${post.id}`)}>수정</button>
