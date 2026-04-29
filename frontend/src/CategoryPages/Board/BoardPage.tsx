@@ -6,7 +6,21 @@ import Header from '../../components/Header';
 import AlertModal from '../../components/AlertModal';
 import { PostListItem, PostDetail, PostPage, TreeNode } from './types';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import './BoardPage.css';
+
+// 본문 HTML 내 math-node 태그를 KaTeX로 렌더링
+const renderMathInHtml = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<math-node[^>]*data-latex="([^"]*)"[^>]*><\/math-node>/g, (_, latex) => {
+    try {
+      return katex.renderToString(latex, { throwOnError: false, displayMode: false });
+    } catch {
+      return latex;
+    }
+  });
+};
 
 // 플랫 목록 → 트리 변환
 const buildTree = (posts: PostListItem[], expandedIds: Set<number>): TreeNode[] => {
@@ -351,7 +365,7 @@ const BoardPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedPost.contentHtml || '' }} />
+                  <div className="content-body" dangerouslySetInnerHTML={{ __html: renderMathInHtml(selectedPost.contentHtml || '') }} />
                   {selectedPost.annotatedImagesJson && (() => {
                     try {
                       const images: AnnotatedImage[] = JSON.parse(selectedPost.annotatedImagesJson);

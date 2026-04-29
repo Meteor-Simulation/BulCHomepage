@@ -421,9 +421,18 @@
   color: #6b7280;
 }
 
+.content-body .info-panel {
+  background: #e8f4fd;
+  border-left: 4px solid #3b9edd;
+  border-radius: 0 6px 6px 0;
+  padding: 14px 18px;
+  margin: 12px 0;
+}
+
 .content-body pre {
-  background: #1f2937;
-  color: #e5e7eb;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
   padding: 16px;
   border-radius: 6px;
   overflow-x: auto;
