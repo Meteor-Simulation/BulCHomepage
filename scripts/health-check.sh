@@ -18,7 +18,8 @@
 LOG_FILE="/var/log/bulc-health-check.log"
 BACKEND_URL="http://localhost:8080"
 FRONTEND_URL="https://bulc.msimul.com"
-ALERT_EMAIL="juwon@msimul.com"
+ALERT_EMAIL="${HEALTH_ALERT_EMAIL:-juwon@msimul.com}"
+SLACK_WEBHOOK="${HEALTH_SLACK_WEBHOOK}"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 ISSUES=""
@@ -72,10 +73,37 @@ if [ -n "$ISSUES" ]; then
     -d "{\"to\":\"$ALERT_EMAIL\",\"subject\":\"$SUBJECT\",\"body\":\"$BODY\"}" \
     >> "$LOG_FILE" 2>&1 || true
 
-  # 백엔드가 죽어서 API 호출 실패하는 경우 로그에 기록
+  # 슬랙 알림 (백엔드 상태와 무관하게 항상 발송 가능)
+  SLACK_MSG=":rotating_light: *[BulC] 서버 이상 감지*\n\n$(echo -e "$ISSUES")\n체크 시각: $TIMESTAMP"
+  curl -sf -X POST "$SLACK_WEBHOOK" \
+    -H "Content-Type: application/json" \
+    -d "{\"text\":\"$SLACK_MSG\"}" >> "$LOG_FILE" 2>&1 || true
+
+  # 백엔드가 죽어서 이메일 API 호출 실패하는 경우
   if [ "$BACKEND_STATUS" != "200" ]; then
-    echo "[$TIMESTAMP] 백엔드 다운으로 이메일 API 호출 불가 — 로그에만 기록" >> "$LOG_FILE"
+    echo "[$TIMESTAMP] 백엔드 다운 — 슬랙으로만 알림 발송" >> "$LOG_FILE"
   fi
 else
   echo "[$TIMESTAMP] OK" >> "$LOG_FILE"
+
+  # 오전 10시 30분에 정상 안내 발송
+  CURRENT_HOUR=$(date '+%H')
+  CURRENT_MIN=$(date '+%M')
+  if [ "$CURRENT_HOUR" = "10" ] && [ "$CURRENT_MIN" -ge "25" ]; then
+    SUBJECT="[BulC] 서버 정상 가동 중 - $TIMESTAMP"
+    BODY="BulC Homepage 헬스 체크 결과 모든 항목이 정상입니다.\n\n- 백엔드: OK\n- DB: OK\n- 프론트엔드: OK\n- 디스크: ${DISK_USAGE}%\n- Swap: ${SWAP_PCT:-0}%\n\n체크 시각: $TIMESTAMP"
+
+    curl -sf -X POST "$BACKEND_URL/api/health/alert" \
+      -H "Content-Type: application/json" \
+      -d "{\"to\":\"$ALERT_EMAIL\",\"subject\":\"$SUBJECT\",\"body\":\"$BODY\"}" \
+      >> "$LOG_FILE" 2>&1 || true
+
+    # 슬랙에도 정상 안내
+    SLACK_OK=":white_check_mark: *[BulC] 서버 정상 가동 중*\n\n백엔드: OK / DB: OK / 프론트: OK\n디스크: ${DISK_USAGE}% / Swap: ${SWAP_PCT:-0}%\n체크 시각: $TIMESTAMP"
+    curl -sf -X POST "$SLACK_WEBHOOK" \
+      -H "Content-Type: application/json" \
+      -d "{\"text\":\"$SLACK_OK\"}" >> "$LOG_FILE" 2>&1 || true
+
+    echo "[$TIMESTAMP] 정상 안내 메일+슬랙 발송" >> "$LOG_FILE"
+  fi
 fi
