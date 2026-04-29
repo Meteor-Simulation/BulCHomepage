@@ -18,6 +18,8 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "ajv": "^6.12.6",
+    "ajv-keywords": "^3.5.2",
     "chart.js": "^4.5.1",
     "i18next": "^23.16.8",
     "katex": "^0.16.45",
