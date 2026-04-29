@@ -5,10 +5,13 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { TextStyle } from '@tiptap/extension-text-style';
 import FontSize from './extensions/FontSize';
+import MathNode from './extensions/MathNode';
+import InfoPanel from './extensions/InfoPanel';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
+import MathEditorPopup from './components/MathEditorPopup';
 import './PostEditorPage.css';
 
 const PostEditorPage: React.FC = () => {
@@ -24,15 +27,39 @@ const PostEditorPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [annotatedImages, setAnnotatedImages] = useState<AnnotatedImage[]>([]);
 
+  const [mathPopup, setMathPopup] = useState<{ isOpen: boolean; editLatex: string; editCallback: ((latex: string) => void) | null }>({
+    isOpen: false, editLatex: '', editCallback: null,
+  });
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image.configure({ inline: false, allowBase64: false }),
       TextStyle,
       FontSize,
+      MathNode,
+      InfoPanel,
     ],
     content: '',
   });
+
+  // 수식 노드 클릭 → 편집 팝업
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setMathPopup({
+          isOpen: true,
+          editLatex: detail.latex,
+          editCallback: (newLatex: string) => {
+            detail.updateAttributes({ latex: newLatex });
+          },
+        });
+      }
+    };
+    document.addEventListener('edit-math', handler);
+    return () => document.removeEventListener('edit-math', handler);
+  }, []);
 
   useEffect(() => {
     if (isAuthReady && !isAdmin) {
@@ -282,6 +309,26 @@ const PostEditorPage: React.FC = () => {
                 {'</>'}
               </button>
 
+              <button
+                type="button"
+                className={editor.isActive('infoPanel') ? 'active' : ''}
+                onClick={() => editor.chain().focus().toggleInfoPanel().run()}
+                title="정보 패널"
+              >
+                !
+              </button>
+
+              <span className="toolbar-divider" />
+
+              {/* 수식 */}
+              <button
+                type="button"
+                onClick={() => setMathPopup({ isOpen: true, editLatex: '', editCallback: null })}
+                title="수식 삽입"
+              >
+                Σ
+              </button>
+
               {/* 공개 범위 토글 — 오른쪽 끝 */}
               <div className="toolbar-spacer" />
               <button
@@ -354,6 +401,22 @@ const PostEditorPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 수식 편집 팝업 */}
+      <MathEditorPopup
+        isOpen={mathPopup.isOpen}
+        initialLatex={mathPopup.editLatex}
+        onInsert={(latex) => {
+          if (mathPopup.editCallback) {
+            // 기존 수식 편집
+            mathPopup.editCallback(latex);
+          } else if (editor) {
+            // 새 수식 삽입
+            editor.chain().focus().insertMath(latex).run();
+          }
+        }}
+        onClose={() => setMathPopup({ isOpen: false, editLatex: '', editCallback: null })}
+      />
     </div>
   );
 };
