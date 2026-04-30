@@ -108,7 +108,8 @@
       "workflow": "워크플로우",
       "report": "리포트",
       "price": "가격",
-      "getStarted": "시작하기"
+      "getStarted": "시작하기",
+      "tutorial": "사용법"
     },
     "loginNotice": "로그인 후 프로그램 다운로드가 가능합니다",
     "loginPromo": "회원가입 시 14일 라이선스 증정 (카드 등록 필요 없음)",
