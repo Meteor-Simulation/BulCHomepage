@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../../context/LanguageContext';
 import { BillingKey } from '../types';
 import { COUNTRIES } from '../constants';
 
@@ -31,6 +32,9 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   onDeleteCard,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  // 결제 통화는 언어 설정 기준으로 결정 (Payment 페이지/PriceSection과 동일 규칙)
+  const displayCurrency = language === 'ko' ? 'KRW' : 'USD';
 
   return (
     <div className="info-card payment-methods-card">
@@ -73,7 +77,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             <span className="info-label">{t('myPage.paymentCurrency')}</span>
             <span className="info-value">
               {COUNTRIES.find(c => c.code === selectedCountry)?.name || selectedCountry}
-              ({COUNTRIES.find(c => c.code === selectedCountry)?.currency || 'KRW'})
+              ({displayCurrency})
             </span>
           </div>
         </div>

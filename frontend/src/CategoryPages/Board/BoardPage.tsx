@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
@@ -50,7 +50,7 @@ const buildTree = (posts: PostListItem[], expandedIds: Set<number>): TreeNode[] 
 
 const BoardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, user, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin } = useAuth();
 
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostDetail | null>(null);

@@ -1,30 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const X: React.FC<{className?: string}> = ({className}) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-);
-const CheckCircle: React.FC<{className?: string}> = ({className}) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-);
-const Code2: React.FC<{className?: string}> = ({className}) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
-);
-const Zap: React.FC<{className?: string}> = ({className}) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-);
-const FileBarChart2: React.FC<{className?: string}> = ({className}) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="M8 18v-1"/><path d="M16 18v-3"/></svg>
-);
+const slides = [
+  { src: '/pics/BULC_main.png', alt: 'BUL:C Main' },
+  { src: '/pics/cad.png', alt: 'CAD' },
+  { src: '/pics/result.png', alt: 'Result' },
+];
+
+const logosRow1 = [
+  { src: '/logos/samsung.png', alt: 'Samsung' },
+  { src: '/logos/LH.jpg', alt: 'LH' },
+  { src: '/logos/GS_logo_(South_Korean_company).svg.png', alt: 'GS' },
+  { src: '/logos/seoul.jpg', alt: 'Seoul' },
+  { src: '/logos/inchen.jpg', alt: 'Incheon' },
+  { src: '/logos/hB_FNC.png', alt: 'hB FNC' },
+  { src: '/logos/fire_buster.png', alt: 'Fire Buster', dark: true },
+  { src: '/logos/filk.png', alt: 'FILK' },
+] as const;
+
+const logosRow2 = [
+  { src: '/logos/deffence.jpg', alt: 'Defence' },
+  { src: '/logos/sobang.png', alt: 'Sobang' },
+  { src: '/logos/shinhwa.jpg', alt: 'Shinhwa' },
+  { src: '/logos/sea.png', alt: 'Sea' },
+  { src: '/logos/japan.jpg', alt: 'Japan' },
+  { src: '/logos/woosuk.jpg', alt: 'Woosuk' },
+  { src: '/logos/mv_step1_txt1.png', alt: 'MV' },
+];
 
 const ComparisonSection: React.FC = () => {
   const { t } = useTranslation();
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const goTo = useCallback((index: number) => {
+    setCurrent((index + slides.length) % slides.length);
+  }, []);
+
+  useEffect(() => {
+    if (paused) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setCurrent(prev => (prev + 1) % slides.length);
+    }, 3000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [paused]);
 
   return (
     <section id="comparison" className="bulc-comparison">
       <div className="bulc-comparison__container">
         <div className="bulc-comparison__header">
-          <h2 className="bulc-comparison__label">{t('bulc.comparison.label')}</h2>
           <h3 className="bulc-comparison__title">
             {t('bulc.comparison.title')}
           </h3>
@@ -33,92 +61,66 @@ const ComparisonSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="bulc-comparison__grid">
-          {/* Card 1: Manual */}
-          <div className="bulc-comparison__card">
-            <div className="bulc-comparison__card-accent" />
-            <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
-              <Code2 className="bulc-comparison__card-icon" />
-            </div>
-            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card1.title')}</h4>
-            <ul className="bulc-comparison__card-list">
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card1.problem1')}
-              </li>
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card1.problem2')}
-              </li>
-            </ul>
-            <div className="bulc-comparison__card-divider" />
-            <div className="bulc-comparison__card-solution">
-              <p className="bulc-comparison__card-solution-title">
-                <CheckCircle className="bulc-comparison__card-check" />
-                {t('bulc.comparison.card1.solutionTitle')}
-              </p>
-              <p className="bulc-comparison__card-solution-desc">
-                {t('bulc.comparison.card1.solutionDesc')}
-              </p>
+        <div className="bulc-comparison__marquee-wrap">
+          <div className="bulc-comparison__marquee-fade" />
+          <div className="bulc-comparison__marquee bulc-comparison__marquee--left">
+            <div className="bulc-comparison__marquee-track">
+              {[...logosRow1, ...logosRow1].map((logo, i) => (
+                <div className={`bulc-comparison__marquee-item${'dark' in logo && logo.dark ? ' bulc-comparison__marquee-item--dark' : ''}`} key={i}>
+                  <img src={logo.src} alt={logo.alt} />
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Card 2: Speed */}
-          <div className="bulc-comparison__card">
-            <div className="bulc-comparison__card-accent" />
-            <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
-              <Zap className="bulc-comparison__card-icon" />
-            </div>
-            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card2.title')}</h4>
-            <ul className="bulc-comparison__card-list">
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card2.problem1')}
-              </li>
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card2.problem2')}
-              </li>
-            </ul>
-            <div className="bulc-comparison__card-divider" />
-            <div className="bulc-comparison__card-solution">
-              <p className="bulc-comparison__card-solution-title">
-                <CheckCircle className="bulc-comparison__card-check" />
-                {t('bulc.comparison.card2.solutionTitle')}
-              </p>
-              <p className="bulc-comparison__card-solution-desc">
-                {t('bulc.comparison.card2.solutionDesc')}
-              </p>
+          <div className="bulc-comparison__marquee bulc-comparison__marquee--right">
+            <div className="bulc-comparison__marquee-track">
+              {[...logosRow2, ...logosRow2].map((logo, i) => (
+                <div className="bulc-comparison__marquee-item" key={i}>
+                  <img src={logo.src} alt={logo.alt} />
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Card 3: Static Reporting */}
-          <div className="bulc-comparison__card">
-            <div className="bulc-comparison__card-accent" />
-            <div className="bulc-comparison__card-icon-wrap bulc-comparison__card-icon-wrap--muted">
-              <FileBarChart2 className="bulc-comparison__card-icon" />
-            </div>
-            <h4 className="bulc-comparison__card-title">{t('bulc.comparison.card3.title')}</h4>
-            <ul className="bulc-comparison__card-list">
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card3.problem1')}
-              </li>
-              <li className="bulc-comparison__card-item">
-                <X className="bulc-comparison__card-x" />
-                {t('bulc.comparison.card3.problem2')}
-              </li>
-            </ul>
-            <div className="bulc-comparison__card-divider" />
-            <div className="bulc-comparison__card-solution">
-              <p className="bulc-comparison__card-solution-title">
-                <CheckCircle className="bulc-comparison__card-check" />
-                {t('bulc.comparison.card3.solutionTitle')}
-              </p>
-              <p className="bulc-comparison__card-solution-desc">
-                {t('bulc.comparison.card3.solutionDesc')}
-              </p>
-            </div>
+        <div
+          className="bulc-comparison__carousel"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          <div className="bulc-comparison__carousel-viewport">
+            {slides.map((slide, i) => (
+              <img
+                key={i}
+                src={slide.src}
+                alt={slide.alt}
+                className={`bulc-comparison__carousel-img ${i === current ? 'bulc-comparison__carousel-img--active' : ''}`}
+              />
+            ))}
+          </div>
+          <button
+            className="bulc-comparison__carousel-btn bulc-comparison__carousel-btn--prev"
+            onClick={() => goTo(current - 1)}
+            aria-label="Previous"
+          >
+            &#8249;
+          </button>
+          <button
+            className="bulc-comparison__carousel-btn bulc-comparison__carousel-btn--next"
+            onClick={() => goTo(current + 1)}
+            aria-label="Next"
+          >
+            &#8250;
+          </button>
+          <div className="bulc-comparison__carousel-dots">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                className={`bulc-comparison__carousel-dot ${i === current ? 'bulc-comparison__carousel-dot--active' : ''}`}
+                onClick={() => goTo(i)}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>
