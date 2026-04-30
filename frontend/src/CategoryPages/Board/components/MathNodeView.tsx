@@ -5,7 +5,7 @@ import 'katex/dist/katex.min.css';
 
 const MathNodeView: React.FC<any> = ({ node, updateAttributes, selected }) => {
   const renderRef = useRef<HTMLSpanElement>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing] = useState(false);
   const latex = node.attrs.latex || '';
 
   useEffect(() => {

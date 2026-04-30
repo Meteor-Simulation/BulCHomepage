@@ -23,7 +23,7 @@ const renderMathInHtml = (html: string): string => {
 const PostDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { isLoggedIn, user, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin } = useAuth();
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
