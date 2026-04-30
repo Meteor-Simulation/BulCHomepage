@@ -108,7 +108,8 @@
       "workflow": "Workflow",
       "report": "Report",
       "price": "Price",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "tutorial": "Tutorial"
     },
     "loginNotice": "Please log in to download the program",
     "loginPromo": "Free 14-day license on sign-up (no card required)",
