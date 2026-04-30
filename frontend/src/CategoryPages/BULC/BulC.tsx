@@ -14,6 +14,7 @@ import {
   HeroSection,
   ComparisonSection,
   CoreValuesSection,
+  LogoMarqueeSection,
   WorkflowSection,
   CTASection,
   PriceSection,
@@ -92,6 +93,7 @@ const BulCPage: React.FC = () => {
             <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
             <CoreValuesSection />
+            <LogoMarqueeSection />
           </>
         );
       case 'workflow':
@@ -106,6 +108,7 @@ const BulCPage: React.FC = () => {
             <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
             <CoreValuesSection />
+            <LogoMarqueeSection />
           </>
         );
     }
