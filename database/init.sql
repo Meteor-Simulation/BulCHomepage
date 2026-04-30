@@ -991,15 +991,18 @@ CREATE TRIGGER update_redeem_codes_updated_at BEFORE UPDATE ON redeem_codes
 -- 게시판 테이블
 -- =========================================================
 CREATE TABLE posts (
-    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    author_id       UUID NOT NULL,
-    title           VARCHAR(200) NOT NULL,
-    content_html    TEXT,
-    visibility      VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
-    view_count      INT NOT NULL DEFAULT 0,
-    is_deleted      BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                    BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    author_id             UUID NOT NULL,
+    parent_id             BIGINT REFERENCES posts(id) ON DELETE SET NULL,
+    title                 VARCHAR(200) NOT NULL,
+    content_html          TEXT,
+    annotated_images_json TEXT,
+    visibility            VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
+    sort_order            INT NOT NULL DEFAULT 0,
+    view_count            INT NOT NULL DEFAULT 0,
+    is_deleted            BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users(id)
 );
@@ -1008,9 +1011,13 @@ CREATE INDEX idx_posts_author ON posts(author_id);
 CREATE INDEX idx_posts_visibility ON posts(visibility);
 CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX idx_posts_is_deleted ON posts(is_deleted);
+CREATE INDEX idx_posts_parent ON posts(parent_id);
 
 COMMENT ON TABLE posts IS '게시판 게시글';
 COMMENT ON COLUMN posts.visibility IS '공개 범위: PUBLIC(전체), MEMBER(회원), STAFF(매니저/관리자)';
+COMMENT ON COLUMN posts.parent_id IS '상위 게시글 ID (NULL이면 최상위)';
+COMMENT ON COLUMN posts.sort_order IS '같은 부모 내 정렬 순서';
+COMMENT ON COLUMN posts.annotated_images_json IS '주석 이미지 데이터 (JSON)';
 
 CREATE TABLE post_images (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
