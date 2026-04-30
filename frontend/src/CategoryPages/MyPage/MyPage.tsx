@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
-import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
+import { formatPhoneNumber, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import {
   MenuSection,
@@ -24,7 +24,7 @@ import './MyPage.css';
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isLoggedIn, isAuthReady, logout, user, isAdmin } = useAuth();
+  const { isLoggedIn, isAuthReady, logout, isAdmin } = useAuth();
   const { changeLanguage: changeGlobalLanguage } = useLanguage();
 
   // 사용자 정보
@@ -75,7 +75,7 @@ const MyPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   // 구독 테스트 (개발 환경용)
-  const [isTestMode, setIsTestMode] = useState(false);
+  const [isTestMode] = useState(false);
   const [testLoading, setTestLoading] = useState<string | null>(null);
 
   // 계정 삭제
@@ -195,6 +195,9 @@ const MyPage: React.FC = () => {
       }
     };
     if (isLoggedIn) fetchUserInfo();
+    // changeGlobalLanguage는 LanguageContext에서 제공되며 deps에 추가 시 effect 재실행 빈도 변경으로
+    // 사용자 정보 API 재호출 패턴이 바뀔 수 있어 의도적으로 제외함
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
   // 라이선스 정보 로드
@@ -317,7 +320,7 @@ const MyPage: React.FC = () => {
     if (password.length < 8) return '비밀번호는 8자 이상이어야 합니다.';
     if (!/[a-zA-Z]/.test(password)) return '비밀번호는 영문을 포함해야 합니다.';
     if (!/[0-9]/.test(password)) return '비밀번호는 숫자를 포함해야 합니다.';
-    if (!/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) return '비밀번호는 특수문자를 포함해야 합니다.';
+    if (!/[!@#$%^&*()_+\-=[\]{}|;':",./<>?]/.test(password)) return '비밀번호는 특수문자를 포함해야 합니다.';
     return null;
   };
 

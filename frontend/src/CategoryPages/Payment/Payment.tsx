@@ -35,14 +35,6 @@ interface PaymentInfo {
   phone: string;
 }
 
-// 회사 정보 타입
-interface CompanyInfo {
-  contact: {
-    tel: string;
-    email: string;
-  };
-}
-
 // 결제 수단 타입 (토스페이먼츠 결제창에서 세부 선택)
 type PaymentType = 'card' | 'bank' | 'vbank' | null;
 
@@ -51,7 +43,6 @@ const PaymentPage: React.FC = () => {
   const { isLoggedIn, isAuthReady } = useAuth();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const hasAlerted = useRef(false);
 
   // 상품 및 요금제 데이터
@@ -116,14 +107,6 @@ const PaymentPage: React.FC = () => {
       navigate('/bulc', { state: { activeTab: 'download' } });
     }
   }, [isLoggedIn, isAuthReady, navigate]);
-
-  // 회사 정보 로드
-  useEffect(() => {
-    fetch('/config/company.json')
-      .then(res => res.json())
-      .then(data => setCompanyInfo(data))
-      .catch(() => { /* 회사 정보 로드 실패 */ });
-  }, []);
 
   // 상품 목록 로드
   useEffect(() => {

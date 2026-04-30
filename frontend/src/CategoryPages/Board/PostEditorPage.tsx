@@ -17,7 +17,7 @@ import './PostEditorPage.css';
 const PostEditorPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { isLoggedIn, isAuthReady, isAdmin } = useAuth();
+  const { isAuthReady, isAdmin } = useAuth();
   const isEditMode = !!id;
 
   const [title, setTitle] = useState('');

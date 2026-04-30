@@ -38,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isLoggedIn, isAdmin, logout } = useAuth();
+  const { isLoggedIn } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -106,19 +106,6 @@ const Header: React.FC<HeaderProps> = ({
   const handleSwitchToLogin = () => {
     setSignupModalOpen(false);
     setLoginModalOpen(true);
-  };
-
-  const handleLogout = () => {
-    logout();
-    // 로그아웃 후 히스토리 정리 - 뒤로가기 시 로그인 상태 페이지로 가지 않도록
-    window.history.replaceState({ loggedOut: true }, '', window.location.href);
-    // 로그아웃 알림
-    setAlertModal({
-      isOpen: true,
-      title: t('auth.logoutTitle'),
-      message: t('auth.logoutMessage'),
-      type: 'success',
-    });
   };
 
   // 로그인 성공 콜백 - 홈으로 이동
