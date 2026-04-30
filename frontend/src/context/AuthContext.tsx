@@ -69,6 +69,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // logout API error
     }
 
+    // 사용자별 언어 설정 제거 → 다음 페이지 로드 시 IP 기반 감지로 복귀
+    localStorage.removeItem('language');
+
     setUser(null);
     setSessionTimeLeft(null);
     tokenExpiresAtRef.current = null;
