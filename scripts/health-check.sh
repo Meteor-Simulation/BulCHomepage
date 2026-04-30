@@ -2,6 +2,9 @@
 # ============================================
 # BulC Homepage 헬스 체크 스크립트
 #
+# 한국 시간 기준으로 시각 비교 (서버 TZ가 UTC라도 KST로 강제)
+export TZ=Asia/Seoul
+#
 # cron 설정: 매 시간 00분 실행
 #   0 * * * * /home/ubuntu/BulCHomepage/scripts/health-check.sh
 #
