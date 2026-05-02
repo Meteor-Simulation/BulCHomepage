@@ -10,9 +10,9 @@ BulCHomepage is a full-stack web application for the METEOR fire safety simulati
 
 ### Frontend (from /frontend)
 ```bash
-npm start       # Dev server at localhost:3000 (hot reload)
-npm run build   # Production build
-npm test        # Run tests in watch mode
+npm run dev      # Vite dev server at localhost:3000 (HMR)
+npm run build    # Production build (output: dist/)
+npm run preview  # Preview production build at localhost:3000
 ```
 
 ### Backend (from /backend)
@@ -41,7 +41,7 @@ cp .env.example .env  # Copy environment template before running docker-compose
 ## Architecture
 
 ### Tech Stack
-- **Frontend**: React 19 + TypeScript, React Router 6, CSS with custom properties
+- **Frontend**: React 19 + TypeScript, React Router 6, Vite (build tool), CSS with custom properties
 - **Backend**: Spring Boot 3.2, Spring Security + JWT, Spring Data JPA
 - **Database**: PostgreSQL 16
 - **Infrastructure**: Docker Compose, Nginx (production proxy)
@@ -82,7 +82,7 @@ Document/
 - **Database**: snake_case naming, BIGINT identity PKs, created_at/updated_at timestamps
 
 ### API Communication
-- Frontend API calls use `REACT_APP_API_URL` environment variable
+- Frontend API calls use `VITE_API_URL` environment variable (`import.meta.env.VITE_API_URL`)
 - Nginx proxies `/api/*` to backend at `http://backend:8080`
 - Health check endpoint: `GET /api/health`
 

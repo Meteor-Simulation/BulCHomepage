@@ -10,7 +10,7 @@ import Header from '../../components/Header';
 import './Payment.css';
 
 // 토스페이먼츠 클라이언트 키
-const TOSS_CLIENT_KEY = process.env.REACT_APP_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
+const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
 
 // 상품 타입
 interface Product {

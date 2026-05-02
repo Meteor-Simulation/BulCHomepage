@@ -1,4 +1,4 @@
-# Frontend 배포용 Dockerfile
+# Frontend 배포용 Dockerfile (Vite)
 # 멀티 스테이지 빌드: Node.js 빌드 → Nginx 서빙
 
 # Stage 1: Build
@@ -8,7 +8,7 @@ WORKDIR /app
 
 # 패키지 파일 복사 및 의존성 설치
 COPY package*.json ./
-RUN npm ci --only=production=false
+RUN npm ci
 
 # 소스코드 복사 및 빌드
 COPY . .
@@ -18,7 +18,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Nginx 설정 복사
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 보안: non-root 실행을 위한 권한 설정
