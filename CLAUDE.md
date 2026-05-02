@@ -71,9 +71,13 @@ database/
 └── init.sql               # PostgreSQL schema (users, auth, roles, licenses tables)
 
 Document/
-├── licensing_domain_v1.md # Licensing system domain design
-├── licensing_api.md       # Licensing API documentation (v0.2.x)
-└── 테이블정의서.md         # Database table definitions
+├── 01_제품_설계/         # 설계·아키텍처·요건·DB·라이선스 도메인
+│   ├── licensing_api.md          # Licensing API 문서
+│   ├── licensing_domain_v1.md    # Licensing 도메인 설계
+│   └── 테이블정의서.md           # DB 테이블 정의
+├── 02_배포_가이드/       # 배포 절차·환경 설정
+├── 03_배포_이슈_및_사고_이력/  # 사고 컨텍스트·대응 기록
+└── 04_기타/              # 보안 감사·결제 계약 등
 ```
 
 ### Key Patterns
@@ -105,7 +109,7 @@ Document/
 
 ## Licensing System
 
-소프트웨어 라이선스 관리 시스템입니다. 자세한 내용은 `Document/licensing_api.md` 참조.
+소프트웨어 라이선스 관리 시스템입니다. 자세한 내용은 `Document/01_제품_설계/licensing_api.md` 참조.
 
 ### Architecture
 ```
