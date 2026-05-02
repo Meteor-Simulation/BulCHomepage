@@ -4,6 +4,8 @@
 > 관련 PR: #125, #126, #127, #128, #129, #135
 > 관련 문서: [배포_가이드.md](../02_배포_가이드/배포_가이드.md), [Cloudflare_Pages_빌드_안정화.md](./Cloudflare_Pages_빌드_안정화.md)
 
+> ✅ **상태: RESOLVED (2026-05-03)** — 본 문서가 다루는 npm ci 실패, ajv 충돌, legacy-peer-deps 우회 등 react-scripts@5 환경 이슈는 **Vite로의 마이그레이션 (`chore/vite-migration`)으로 근본 해소**되었습니다. 현재 Cloudflare Pages 빌드 설정은 `02_배포_가이드/Cloudflare_Pages_배포_가이드.md` 참조. 본 문서는 사고 이력으로 보존됩니다.
+
 ---
 
 ## 1. 요약 (한 페이지)
