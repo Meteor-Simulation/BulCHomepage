@@ -1,4 +1,5 @@
 import React from 'react';
+import { BaseModal } from './ui';
 import './PolicyModal.css';
 
 export type PolicyType = 'terms' | 'privacy' | 'refund';
@@ -10,8 +11,6 @@ interface PolicyModalProps {
 }
 
 const PolicyModal: React.FC<PolicyModalProps> = ({ isOpen, onClose, type }) => {
-  if (!isOpen) return null;
-
   const title = {
     terms: '이용약관',
     privacy: '개인정보처리방침',
@@ -19,26 +18,23 @@ const PolicyModal: React.FC<PolicyModalProps> = ({ isOpen, onClose, type }) => {
   }[type];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="policy-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="policy-modal-header">
-          <h2>{title}</h2>
-          <button className="modal-close-btn" onClick={onClose}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="policy-modal-content">
-          {type === 'terms' && <TermsContent />}
-          {type === 'privacy' && <PrivacyContent />}
-          {type === 'refund' && <RefundContent />}
-        </div>
-        <div className="policy-modal-footer">
-          <button className="policy-close-btn" onClick={onClose}>닫기</button>
-        </div>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="lg"
+      footer={
+        <button type="button" className="policy-close-btn" onClick={onClose}>
+          닫기
+        </button>
+      }
+    >
+      <div className="policy-modal-content">
+        {type === 'terms' && <TermsContent />}
+        {type === 'privacy' && <PrivacyContent />}
+        {type === 'refund' && <RefundContent />}
       </div>
-    </div>
+    </BaseModal>
   );
 };
 
@@ -206,9 +202,7 @@ const PrivacyContent: React.FC = () => (
     </p>
 
     <h3>6. 정보주체의 권리·의무 및 행사방법</h3>
-    <p>
-      이용자는 개인정보주체로서 다음과 같은 권리를 행사할 수 있습니다.
-    </p>
+    <p>이용자는 개인정보주체로서 다음과 같은 권리를 행사할 수 있습니다.</p>
     <p>
       가. 개인정보 열람 요구<br/>
       나. 오류 등이 있을 경우 정정 요구<br/>
@@ -229,9 +223,7 @@ const PrivacyContent: React.FC = () => (
     </p>
 
     <h3>8. 개인정보의 안전성 확보 조치</h3>
-    <p>
-      회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.
-    </p>
+    <p>회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.</p>
     <p>
       가. 관리적 조치: 내부관리계획 수립·시행, 정기적 직원 교육<br/>
       나. 기술적 조치: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치,
@@ -312,9 +304,7 @@ const RefundContent: React.FC = () => (
     </p>
 
     <h3>제6조 (구독 취소)</h3>
-    <p>
-      구독형 서비스를 이용 중인 경우, 구독 취소 시 다음과 같이 처리됩니다.
-    </p>
+    <p>구독형 서비스를 이용 중인 경우, 구독 취소 시 다음과 같이 처리됩니다.</p>
     <p>
       1. 구독 취소를 요청하면 다음 결제 예정일부터 자동갱신이 중지됩니다.<br/>
       2. 이미 결제된 현재 구독 기간의 남은 기간 동안은 서비스를 계속 이용할 수 있습니다.<br/>

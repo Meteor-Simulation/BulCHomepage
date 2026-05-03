@@ -5,6 +5,7 @@ import './index.css';
 import './i18n';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ToastProvider } from './components/ui';
 import { getSubdomain, SubdomainType } from './utils/subdomain';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <AuthProvider>
         <LanguageProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             {/* 루트 경로: 서브도메인에 따른 카테고리 페이지 */}
@@ -75,6 +77,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
         </LanguageProvider>
       </AuthProvider>
     </ErrorBoundary>
