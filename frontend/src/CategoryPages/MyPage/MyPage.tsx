@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
+import { useConfirm } from '../../components/ui';
 import { formatPhoneNumber, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import {
@@ -822,7 +823,19 @@ const MyPage: React.FC = () => {
   };
 
   // ========== 로그아웃 ==========
-  const handleLogout = () => { logout(); navigate('/'); };
+  const confirm = useConfirm();
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: '로그아웃',
+      message: '정말 로그아웃하시겠습니까?',
+      confirmText: '로그아웃',
+      cancelText: '취소',
+    });
+    if (ok) {
+      logout();
+      navigate('/');
+    }
+  };
 
   // ========== 관리자 검색 공통 props ==========
   const adminSearchProps = {

@@ -1,0 +1,71 @@
+/* ========================================
+   ConfirmModal — 확인/취소 다이얼로그
+======================================== */
+
+.confirm-message {
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+  white-space: pre-line;
+  padding: 8px 0;
+}
+
+/* ========================================
+   FOOTER BUTTONS
+======================================== */
+.confirm-cancel-btn {
+  padding: 10px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.confirm-cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.confirm-confirm-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.confirm-confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* VARIANTS */
+.confirm-default {
+  background: linear-gradient(135deg, #c4320a 0%, #e85d04 100%);
+}
+.confirm-default:hover {
+  box-shadow: 0 4px 12px rgba(196, 50, 10, 0.35);
+}
+
+.confirm-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+}
+.confirm-danger:hover {
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+.confirm-warning {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+}
+.confirm-warning:hover {
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+}

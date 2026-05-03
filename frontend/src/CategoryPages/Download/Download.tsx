@@ -5,8 +5,18 @@ import '../Common/CategoryPages.css';
 import './Download.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import { useConfirm } from '../../components/ui';
 
 const DOWNLOAD_URL = 'https://github.com/Meteor-Simulation/bulc-releases/releases/latest/download/BULC-latest-win-x64.exe';
+
+const triggerFileDownload = (url: string) => {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
 
 const DownloadIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -49,6 +59,19 @@ const StorageIcon: React.FC<{ className?: string }> = ({ className }) => (
 const DownloadPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
+
+  const handleDownload = async () => {
+    const ok = await confirm({
+      title: 'BUL:C 다운로드',
+      message: 'BUL:C 설치 파일을 다운로드하시겠습니까?\nWindows 64-bit 환경에서 실행됩니다.',
+      confirmText: '다운로드',
+      cancelText: '취소',
+    });
+    if (ok) {
+      triggerFileDownload(DOWNLOAD_URL);
+    }
+  };
 
   const requirements = [
     { icon: MonitorIcon, label: 'OS', value: t('download.systemRequirements.os') },
@@ -67,10 +90,10 @@ const DownloadPage: React.FC = () => {
           <section className="download-hero">
             <h1 className="download-hero__title">{t('download.title')}</h1>
             <p className="download-hero__subtitle">{t('download.subtitle')}</p>
-            <a href={DOWNLOAD_URL} className="download-hero__btn" download>
+            <button type="button" className="download-hero__btn" onClick={handleDownload}>
               <DownloadIcon className="download-hero__btn-icon" />
               {t('download.downloadBtn')}
-            </a>
+            </button>
             <div className="download-hero__meta">
               <span>{t('download.version')}</span>
               <span>{t('download.platform')}</span>
