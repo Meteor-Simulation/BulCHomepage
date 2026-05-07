@@ -22,7 +22,6 @@ DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
-DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS signup_tickets CASCADE;
 DROP TABLE IF EXISTS email_verification_attempts CASCADE;
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
