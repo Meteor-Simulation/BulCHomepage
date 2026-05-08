@@ -22,7 +22,6 @@ DROP TABLE IF EXISTS user_change_logs CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS token_blacklist CASCADE;
-DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS signup_tickets CASCADE;
 DROP TABLE IF EXISTS email_verification_attempts CASCADE;
 DROP TABLE IF EXISTS password_reset_tokens CASCADE;
@@ -1037,6 +1036,13 @@ COMMENT ON TABLE post_images IS '게시글 이미지';
 -- =========================================================
 -- 마지막 단계: price_plans ↔ license_plans 연결
 -- (테이블 생성 순서 때문에 맨 마지막에 실행)
+--
+-- ⚠️ 동기화 주의: 아래 UPDATE는 V20260212__add_license_plan_to_price_plans.sql
+--   마이그레이션과 동일한 내용이다 (Flyway 미도입 상태에서 의도된 중복).
+--   - 신규 환경: init.sql만 실행 → 이 UPDATE로 연결 완료
+--   - 기존 운영 환경: V20260212가 한 번 적용된 상태 (재실행해도 멱등)
+--   값(license_plan_id 또는 name)을 변경할 때는 반드시 두 곳 모두 동기화
+--   하거나 새 마이그레이션 파일(V<날짜>__...)을 추가해야 한다.
 -- =========================================================
 UPDATE price_plans SET license_plan_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' WHERE name = 'BUL:C PRO';
 UPDATE price_plans SET license_plan_id = 'b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e' WHERE name = 'BUL:C 3D Premium';
