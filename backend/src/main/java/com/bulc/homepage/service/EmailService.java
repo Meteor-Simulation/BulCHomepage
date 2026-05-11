@@ -124,13 +124,24 @@ public class EmailService {
     }
 
     /**
-     * 일반 이메일 발송
+     * 일반 이메일 발송 (단일 수신자)
      */
     public void sendEmail(String fromEmail, String toEmail, String subject, String htmlContent) {
+        sendEmail(fromEmail, List.of(toEmail), subject, htmlContent);
+    }
+
+    /**
+     * 일반 이메일 발송 (다중 수신자)
+     */
+    public void sendEmail(String fromEmail, List<String> toEmails, String subject, String htmlContent) {
         if (!isConfigured) {
-            log.info("[이메일 미설정] To: {}, Subject: {}", toEmail, subject);
+            log.info("[이메일 미설정] To: {}, Subject: {}", toEmails, subject);
             log.debug("[이메일 내용]\n{}", htmlContent);
             throw new RuntimeException("이메일 서비스가 설정되지 않았습니다. (" + (initError != null ? initError : "환경변수 확인 필요") + ")");
+        }
+
+        if (toEmails == null || toEmails.isEmpty()) {
+            throw new RuntimeException("수신자 이메일이 비어 있습니다.");
         }
 
         try {
@@ -142,11 +153,16 @@ public class EmailService {
             body.setContent(htmlContent);
             message.setBody(body);
 
-            Recipient toRecipient = new Recipient();
-            EmailAddress toAddress = new EmailAddress();
-            toAddress.setAddress(toEmail);
-            toRecipient.setEmailAddress(toAddress);
-            message.setToRecipients(List.of(toRecipient));
+            List<Recipient> recipients = toEmails.stream()
+                    .map(email -> {
+                        Recipient r = new Recipient();
+                        EmailAddress addr = new EmailAddress();
+                        addr.setAddress(email);
+                        r.setEmailAddress(addr);
+                        return r;
+                    })
+                    .toList();
+            message.setToRecipients(recipients);
 
             // Reply-To 설정
             Recipient replyToRecipient = new Recipient();
@@ -160,9 +176,9 @@ public class EmailService {
             sendMailRequest.setSaveToSentItems(true);
 
             graphClient.users().byUserId(fromEmail).sendMail().post(sendMailRequest);
-            log.info("이메일 발송 성공: {} -> {}", fromEmail, toEmail);
+            log.info("이메일 발송 성공: {} -> {}", fromEmail, toEmails);
         } catch (Exception e) {
-            log.error("이메일 발송 실패: {} -> {}, 오류: {}", fromEmail, toEmail, e.getMessage(), e);
+            log.error("이메일 발송 실패: {} -> {}, 오류: {}", fromEmail, toEmails, e.getMessage(), e);
 
             // Graph API 에러 메시지 분류
             String errorMsg = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
@@ -185,10 +201,17 @@ public class EmailService {
     }
 
     /**
-     * 기본 발신자로 이메일 발송
+     * 기본 발신자로 이메일 발송 (단일 수신자)
      */
     public void sendHtmlEmail(String toEmail, String subject, String htmlContent) {
         sendEmail(mailFrom, toEmail, subject, htmlContent);
+    }
+
+    /**
+     * 기본 발신자로 이메일 발송 (다중 수신자)
+     */
+    public void sendHtmlEmail(List<String> toEmails, String subject, String htmlContent) {
+        sendEmail(mailFrom, toEmails, subject, htmlContent);
     }
 
     /**
