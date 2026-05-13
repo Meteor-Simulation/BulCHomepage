@@ -379,5 +379,67 @@
     "imageSizeLimit": "이미지 크기는 5MB 이하여야 합니다.",
     "refundRequestReceived": "환불 요청이 접수되었습니다. 담당자 검토 후 이메일로 결과를 안내드립니다.",
     "signupCompleted": "회원가입이 완료되었습니다. 로그인해주세요."
+  },
+  "payment": {
+    "step1Title": "상품 선택",
+    "step2Title": "요금제 선택",
+    "step3Title": "결제 수단",
+    "step4Title": "쿠폰 적용",
+    "loadingProducts": "상품 목록을 불러오는 중...",
+    "loadingPlans": "요금제를 불러오는 중...",
+    "selectProductFirst": "상품을 먼저 선택해주세요.",
+    "noPlans": "등록된 요금제가 없습니다.",
+    "comingSoon": "준비 중인 상품입니다",
+    "methods": {
+      "creditCard": "신용/체크카드",
+      "creditCardDesc": "카드사 선택은 결제창에서",
+      "bank": "계좌이체",
+      "bankDesc": "실시간 계좌이체",
+      "vbank": "무통장입금",
+      "vbankDesc": "가상계좌 발급"
+    },
+    "coupon": {
+      "placeholder": "쿠폰 코드를 입력하세요",
+      "checking": "확인중...",
+      "apply": "적용",
+      "discount": "{{percent}}% 할인 (-{{amount}})",
+      "couponLabel": "쿠폰",
+      "errors": {
+        "empty": "쿠폰 코드를 입력해주세요.",
+        "noPlan": "요금제를 먼저 선택해주세요.",
+        "invalid": "유효하지 않은 쿠폰입니다.",
+        "checkError": "쿠폰 확인 중 오류가 발생했습니다."
+      }
+    },
+    "buyer": {
+      "title": "구매자 정보",
+      "name": "이름",
+      "namePlaceholder": "홍길동",
+      "email": "이메일",
+      "phone": "연락처",
+      "phonePlaceholder": "010-1234-5678"
+    },
+    "summary": {
+      "title": "주문 요약",
+      "period": "이용기간",
+      "periodValue": "1년(구매일 기준 365일)",
+      "couponDiscount": "쿠폰 할인",
+      "total": "총 결제금액",
+      "vatIncluded": "VAT 포함",
+      "selectProduct": "상품을 선택해주세요",
+      "selectPlan": "요금제를 선택해주세요"
+    },
+    "agreement": {
+      "agreeAll": "전체 동의하기",
+      "termsOfService": "이용약관",
+      "privacyPolicy": "개인정보처리방침"
+    },
+    "paymentButton": "{{price}} 결제하기",
+    "paymentButtonDisabled": "상품과 요금제를 선택해주세요",
+    "secureSystem": "안전한 결제 시스템",
+    "modal": {
+      "cancel": "취소",
+      "agree": "동의합니다"
+    }
   }
 }

@@ -379,5 +379,67 @@
     "imageSizeLimit": "Image size must be 5MB or less.",
     "refundRequestReceived": "Refund request received. We will notify you of the result by email after review.",
     "signupCompleted": "Sign-up completed. Please log in."
+  },
+  "payment": {
+    "step1Title": "Select Product",
+    "step2Title": "Select Plan",
+    "step3Title": "Payment Method",
+    "step4Title": "Apply Coupon",
+    "loadingProducts": "Loading products...",
+    "loadingPlans": "Loading plans...",
+    "selectProductFirst": "Please select a product first.",
+    "noPlans": "No plans available.",
+    "comingSoon": "Coming soon",
+    "methods": {
+      "creditCard": "Credit Card",
+      "creditCardDesc": "VISA, MASTER, JCB",
+      "bank": "Bank Transfer",
+      "bankDesc": "Real-time bank transfer",
+      "vbank": "Virtual Account",
+      "vbankDesc": "Virtual account issuance"
+    },
+    "coupon": {
+      "placeholder": "Enter coupon code",
+      "checking": "Checking...",
+      "apply": "Apply",
+      "discount": "{{percent}}% off (-{{amount}})",
+      "couponLabel": "Coupon",
+      "errors": {
+        "empty": "Please enter a coupon code.",
+        "noPlan": "Please select a plan first.",
+        "invalid": "Invalid coupon code.",
+        "checkError": "An error occurred while validating the coupon."
+      }
+    },
+    "buyer": {
+      "title": "Buyer Information",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "010-1234-5678"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "period": "Service Period",
+      "periodValue": "1 year (365 days from purchase)",
+      "couponDiscount": "Coupon Discount",
+      "total": "Total",
+      "vatIncluded": "VAT included",
+      "selectProduct": "Please select a product",
+      "selectPlan": "Please select a plan"
+    },
+    "agreement": {
+      "agreeAll": "Agree to all",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "paymentButton": "Pay {{price}}",
+    "paymentButtonDisabled": "Select a product and plan",
+    "secureSystem": "Secure payment system",
+    "modal": {
+      "cancel": "Cancel",
+      "agree": "I Agree"
+    }
   }
 }

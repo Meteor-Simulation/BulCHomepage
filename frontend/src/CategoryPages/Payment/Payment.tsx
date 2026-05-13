@@ -298,7 +298,7 @@ const PaymentPage: React.FC = () => {
       await tossPayments.requestPayment(paymentMethodType, {
         amount: finalAmount,
         orderId: orderId,
-        orderName: `${selectedProduct.name} - ${selectedPlan.name}${appliedCoupon ? ` (쿠폰: ${appliedCoupon.code})` : ''}`,
+        orderName: `${selectedProduct.name} - ${selectedPlan.name}${appliedCoupon ? ` (${t('payment.coupon.couponLabel')}: ${appliedCoupon.code})` : ''}`,
         customerName: paymentInfo.name,
         customerEmail: paymentInfo.email,
         successUrl: `${window.location.origin}/payment/success`,
@@ -331,12 +331,12 @@ const PaymentPage: React.FC = () => {
   // 쿠폰 적용 핸들러
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      setCouponError('쿠폰 코드를 입력해주세요.');
+      setCouponError(t('payment.coupon.errors.empty'));
       return;
     }
 
     if (!selectedPlan) {
-      setCouponError('요금제를 먼저 선택해주세요.');
+      setCouponError(t('payment.coupon.errors.noPlan'));
       return;
     }
 
@@ -368,11 +368,11 @@ const PaymentPage: React.FC = () => {
         setCouponError('');
       } else {
         const error = await response.json();
-        setCouponError(error.message || '유효하지 않은 쿠폰입니다.');
+        setCouponError(error.message || t('payment.coupon.errors.invalid'));
       }
     } catch (error) {
       // 쿠폰 확인 오류
-      setCouponError('쿠폰 확인 중 오류가 발생했습니다.');
+      setCouponError(t('payment.coupon.errors.checkError'));
     } finally {
       setIsCheckingCoupon(false);
     }
@@ -409,10 +409,10 @@ const PaymentPage: React.FC = () => {
             <section className="payment-section">
               <h2 className="section-title">
                 <span className="step-number">1</span>
-                상품 선택
+                {t('payment.step1Title')}
               </h2>
               {isLoadingProducts ? (
-                <div className="loading-placeholder">상품 목록을 불러오는 중...</div>
+                <div className="loading-placeholder">{t('payment.loadingProducts')}</div>
               ) : (
                 <div className="products-grid">
                   {products.map((product) => (
@@ -435,14 +435,14 @@ const PaymentPage: React.FC = () => {
             <section className="payment-section">
               <h2 className="section-title">
                 <span className="step-number">2</span>
-                요금제 선택
+                {t('payment.step2Title')}
               </h2>
               {!selectedProduct ? (
-                <div className="no-selection-message">상품을 먼저 선택해주세요.</div>
+                <div className="no-selection-message">{t('payment.selectProductFirst')}</div>
               ) : isLoadingPlans ? (
-                <div className="loading-placeholder">요금제를 불러오는 중...</div>
+                <div className="loading-placeholder">{t('payment.loadingPlans')}</div>
               ) : pricePlans.length === 0 ? (
-                <div className="no-selection-message">등록된 요금제가 없습니다.</div>
+                <div className="no-selection-message">{t('payment.noPlans')}</div>
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
@@ -455,7 +455,7 @@ const PaymentPage: React.FC = () => {
                       >
                         {isComingSoon && (
                           <div className="plan-card__overlay">
-                            <span>준비 중인 상품입니다</span>
+                            <span>{t('payment.comingSoon')}</span>
                           </div>
                         )}
                         <div className="plan-header">
@@ -478,7 +478,7 @@ const PaymentPage: React.FC = () => {
             <section className="payment-section">
               <h2 className="section-title">
                 <span className="step-number">3</span>
-                결제 수단
+                {t('payment.step3Title')}
               </h2>
               <div className={`payment-methods ${currency === 'USD' ? 'one-option' : 'three-options'}`}>
                 <button
@@ -492,8 +492,8 @@ const PaymentPage: React.FC = () => {
                     </svg>
                   </div>
                   <div className="method-text">
-                    <span className="method-name">{currency === 'USD' ? 'Credit Card' : '신용/체크카드'}</span>
-                    <span className="method-description">{currency === 'USD' ? 'VISA, MASTER, JCB' : '카드사 선택은 결제창에서'}</span>
+                    <span className="method-name">{t('payment.methods.creditCard')}</span>
+                    <span className="method-description">{t('payment.methods.creditCardDesc')}</span>
                   </div>
                 </button>
 
@@ -509,8 +509,8 @@ const PaymentPage: React.FC = () => {
                       </svg>
                     </div>
                     <div className="method-text">
-                      <span className="method-name">계좌이체</span>
-                      <span className="method-description">실시간 계좌이체</span>
+                      <span className="method-name">{t('payment.methods.bank')}</span>
+                      <span className="method-description">{t('payment.methods.bankDesc')}</span>
                     </div>
                   </button>
                 )}
@@ -527,8 +527,8 @@ const PaymentPage: React.FC = () => {
                       </svg>
                     </div>
                     <div className="method-text">
-                      <span className="method-name">무통장입금</span>
-                      <span className="method-description">가상계좌 발급</span>
+                      <span className="method-name">{t('payment.methods.vbank')}</span>
+                      <span className="method-description">{t('payment.methods.vbankDesc')}</span>
                     </div>
                   </button>
                 )}
@@ -539,7 +539,7 @@ const PaymentPage: React.FC = () => {
             <section className="payment-section coupon-section">
               <h2 className="section-title">
                 <span className="step-number">4</span>
-                쿠폰 적용
+                {t('payment.step4Title')}
               </h2>
               {appliedCoupon ? (
                 <div className="applied-coupon">
@@ -548,7 +548,7 @@ const PaymentPage: React.FC = () => {
                     <div className="coupon-details">
                       <span className="coupon-name">{appliedCoupon.name}</span>
                       <span className="coupon-discount">
-                        {appliedCoupon.discountType}% 할인 (-{formatPrice(appliedCoupon.discountAmount)})
+                        {t('payment.coupon.discount', { percent: appliedCoupon.discountType, amount: formatPrice(appliedCoupon.discountAmount) })}
                       </span>
                     </div>
                   </div>
@@ -566,7 +566,7 @@ const PaymentPage: React.FC = () => {
                     <input
                       type="text"
                       className={`coupon-input ${couponError ? 'error' : ''}`}
-                      placeholder="쿠폰 코드를 입력하세요"
+                      placeholder={t('payment.coupon.placeholder')}
                       value={couponCode}
                       onChange={(e) => {
                         setCouponCode(e.target.value.toUpperCase());
@@ -586,7 +586,7 @@ const PaymentPage: React.FC = () => {
                       disabled={isCheckingCoupon || !couponCode.trim()}
                       type="button"
                     >
-                      {isCheckingCoupon ? '확인중...' : '적용'}
+                      {isCheckingCoupon ? t('payment.coupon.checking') : t('payment.coupon.apply')}
                     </button>
                   </div>
                   {couponError && (
@@ -602,22 +602,22 @@ const PaymentPage: React.FC = () => {
           <div className="payment-right">
             {/* 구매자 정보 */}
             <div className="buyer-info-card">
-              <h3 className="buyer-info-title">구매자 정보</h3>
+              <h3 className="buyer-info-title">{t('payment.buyer.title')}</h3>
               <div className="buyer-form-compact">
                 <div className="form-group">
-                  <label>이름 <span className="required">*</span></label>
+                  <label>{t('payment.buyer.name')} <span className="required">*</span></label>
                   <input
                     type="text"
                     name="name"
                     value={paymentInfo.name}
                     onChange={handleInputChange}
-                    placeholder="홍길동"
+                    placeholder={t('payment.buyer.namePlaceholder')}
                     readOnly={!!initialUserInfo.name && userInfoLoaded}
                     className={initialUserInfo.name && userInfoLoaded ? 'readonly' : ''}
                   />
                 </div>
                 <div className="form-group">
-                  <label>이메일 <span className="required">*</span></label>
+                  <label>{t('payment.buyer.email')} <span className="required">*</span></label>
                   <input
                     type="email"
                     name="email"
@@ -629,13 +629,13 @@ const PaymentPage: React.FC = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>연락처 <span className="required">*</span></label>
+                  <label>{t('payment.buyer.phone')} <span className="required">*</span></label>
                   <input
                     type="tel"
                     name="phone"
                     value={paymentInfo.phone}
                     onChange={handleInputChange}
-                    placeholder="010-1234-5678"
+                    placeholder={t('payment.buyer.phonePlaceholder')}
                     maxLength={13}
                     readOnly={!!initialUserInfo.phone && userInfoLoaded}
                     className={initialUserInfo.phone && userInfoLoaded ? 'readonly' : ''}
@@ -645,7 +645,7 @@ const PaymentPage: React.FC = () => {
             </div>
 
             <div className="order-summary">
-              <h3 className="summary-title">주문 요약</h3>
+              <h3 className="summary-title">{t('payment.summary.title')}</h3>
 
               {selectedProduct && selectedPlan ? (
                 <>
@@ -658,13 +658,13 @@ const PaymentPage: React.FC = () => {
                   </div>
 
                   <div className="summary-row service-period">
-                    <span>이용기간</span>
-                    <span>1년(구매일 기준 365일)</span>
+                    <span>{t('payment.summary.period')}</span>
+                    <span>{t('payment.summary.periodValue')}</span>
                   </div>
 
                   {appliedCoupon && (
                     <div className="summary-row discount">
-                      <span>쿠폰 할인 ({appliedCoupon.code})</span>
+                      <span>{t('payment.summary.couponDiscount')} ({appliedCoupon.code})</span>
                       <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
                     </div>
                   )}
@@ -672,12 +672,12 @@ const PaymentPage: React.FC = () => {
                   <div className="summary-divider"></div>
 
                   <div className="summary-row total">
-                    <span>총 결제금액</span>
+                    <span>{t('payment.summary.total')}</span>
                     <span className="total-price">{formatPrice(getFinalPrice())}</span>
                   </div>
 
                   <div className="summary-vat">
-                    VAT 포함
+                    {t('payment.summary.vatIncluded')}
                   </div>
                 </>
               ) : (
@@ -686,7 +686,7 @@ const PaymentPage: React.FC = () => {
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M12 8v4M12 16h.01"/>
                   </svg>
-                  <p>{!selectedProduct ? '상품을 선택해주세요' : '요금제를 선택해주세요'}</p>
+                  <p>{!selectedProduct ? t('payment.summary.selectProduct') : t('payment.summary.selectPlan')}</p>
                 </div>
               )}
 
@@ -707,7 +707,7 @@ const PaymentPage: React.FC = () => {
                     }}
                   />
                   <span className="checkmark"></span>
-                  <span className="terms-label">전체 동의하기</span>
+                  <span className="terms-label">{t('payment.agreement.agreeAll')}</span>
                 </label>
 
                 <div className="terms-divider"></div>
@@ -735,7 +735,7 @@ const PaymentPage: React.FC = () => {
                       setIsTermsModalOpen(true);
                     }}
                   >
-                    이용약관
+                    {t('payment.agreement.termsOfService')}
                   </button>
                 </label>
 
@@ -762,7 +762,7 @@ const PaymentPage: React.FC = () => {
                       setIsPrivacyModalOpen(true);
                     }}
                   >
-                    개인정보처리방침
+                    {t('payment.agreement.privacyPolicy')}
                   </button>
                 </label>
               </div>
@@ -773,8 +773,8 @@ const PaymentPage: React.FC = () => {
                 disabled={!selectedProduct || !selectedPlan || !agreeTermsOfService || !agreePrivacy}
               >
                 {selectedPlan
-                  ? formatPrice(getFinalPrice()) + (currency === 'USD' ? ' Pay' : ' 결제하기')
-                  : (currency === 'USD' ? 'Select a product and plan' : '상품과 요금제를 선택해주세요')}
+                  ? t('payment.paymentButton', { price: formatPrice(getFinalPrice()) })
+                  : t('payment.paymentButtonDisabled')}
               </button>
 
               <div className="payment-security">
@@ -782,7 +782,7 @@ const PaymentPage: React.FC = () => {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
-                <span>안전한 결제 시스템</span>
+                <span>{t('payment.secureSystem')}</span>
               </div>
             </div>
           </div>
@@ -829,13 +829,14 @@ const TermsModal: React.FC<{
   onClose: () => void;
   onAgree: () => void;
 }> = ({ isOpen, onClose, onAgree }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="terms-modal" onClick={(e) => e.stopPropagation()}>
         <div className="terms-modal-header">
-          <h2>이용약관</h2>
+          <h2>{t('payment.agreement.termsOfService')}</h2>
           <button className="modal-close-btn" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -930,8 +931,8 @@ const TermsModal: React.FC<{
           <p>본 약관은 2024년 1월 1일부터 시행합니다.</p>
         </div>
         <div className="terms-modal-footer">
-          <button className="terms-cancel-btn" onClick={onClose}>취소</button>
-          <button className="terms-agree-btn" onClick={onAgree}>동의합니다</button>
+          <button className="terms-cancel-btn" onClick={onClose}>{t('payment.modal.cancel')}</button>
+          <button className="terms-agree-btn" onClick={onAgree}>{t('payment.modal.agree')}</button>
         </div>
       </div>
     </div>
@@ -944,13 +945,14 @@ const PrivacyModal: React.FC<{
   onClose: () => void;
   onAgree: () => void;
 }> = ({ isOpen, onClose, onAgree }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="terms-modal" onClick={(e) => e.stopPropagation()}>
         <div className="terms-modal-header">
-          <h2>개인정보처리방침</h2>
+          <h2>{t('payment.agreement.privacyPolicy')}</h2>
           <button className="modal-close-btn" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -1081,8 +1083,8 @@ const PrivacyModal: React.FC<{
           </p>
         </div>
         <div className="terms-modal-footer">
-          <button className="terms-cancel-btn" onClick={onClose}>취소</button>
-          <button className="terms-agree-btn" onClick={onAgree}>동의합니다</button>
+          <button className="terms-cancel-btn" onClick={onClose}>{t('payment.modal.cancel')}</button>
+          <button className="terms-agree-btn" onClick={onAgree}>{t('payment.modal.agree')}</button>
         </div>
       </div>
     </div>
