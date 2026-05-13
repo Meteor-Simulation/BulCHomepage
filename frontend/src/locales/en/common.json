@@ -71,7 +71,15 @@
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "Deleting your account will permanently remove all data.",
     "logout": "Logout",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "licenseStatus": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "EXPIRED_GRACE": "Grace Period",
+      "EXPIRED_HARD": "Expired",
+      "SUSPENDED": "Suspended",
+      "REVOKED": "Revoked"
+    }
   },
   "common": {
     "confirm": "Confirm",
@@ -441,5 +449,116 @@
       "cancel": "Cancel",
       "agree": "I Agree"
     }
+  },
+  "login": {
+    "title": "Login",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "submit": "Login",
+    "submitting": "Logging in...",
+    "forgotPassword": "Forgot your password?",
+    "or": "OR",
+    "socialLogin": "Social Login",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign Up",
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "passwordRequired": "Please enter your password.",
+      "invalidCredentials": "Incorrect email or password.",
+      "general": "An error occurred during login."
+    }
+  },
+  "passwordReset": {
+    "title": "Reset Password",
+    "emailStepDesc1": "Please enter the email you signed up with.",
+    "emailStepDesc2": "We will send you a password reset code.",
+    "emailPlaceholder": "Email",
+    "sendCode": "Send Verification Code",
+    "sending": "Sending...",
+    "codeStepDesc": "Verification code sent to <strong>{{email}}</strong>.",
+    "codePlaceholder": "6-digit code",
+    "verifyCode": "Verify Code",
+    "verifying": "Verifying...",
+    "reenterEmail": "Re-enter Email",
+    "newPasswordDesc": "Please enter your new password.",
+    "newPasswordPlaceholder": "New password (8+ characters)",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "changePassword": "Change Password",
+    "changing": "Changing...",
+    "successDesc1": "Password changed successfully.",
+    "successDesc2": "Please log in with your new password.",
+    "goToLogin": "Go to Login",
+    "backToLogin": "Back to Login",
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "sendFailed": "Failed to send verification code.",
+      "sendError": "An error occurred while sending the verification code.",
+      "codeRequired": "Please enter the verification code.",
+      "codeLength": "Verification code must be 6 digits.",
+      "codeInvalid": "Invalid verification code.",
+      "verifyError": "An error occurred while verifying the code.",
+      "newPasswordRequired": "Please enter a new password.",
+      "passwordLength": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "resetFailed": "Failed to reset password.",
+      "resetError": "An error occurred while resetting password."
+    }
+  },
+  "signup": {
+    "title": "Sign Up",
+    "emailPlaceholder": "Email (ID)",
+    "passwordPlaceholder": "Password",
+    "passwordConfirmPlaceholder": "Confirm Password",
+    "emailVerify": "Verify Email",
+    "resend": "Resend",
+    "sending": "Sending...",
+    "codePlaceholder": "6-digit code",
+    "verify": "Verify",
+    "expired": "Expired",
+    "codeMismatch": "Code mismatch",
+    "emailVerified": "Email verified ✓",
+    "submit": "Sign Up",
+    "submitting": "Signing up...",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Login",
+    "validation": {
+      "needsAllChars": "Include letters, numbers, and special characters.",
+      "minLength": "Password must be 8 characters or longer.",
+      "passwordMismatch": "Please enter the same password as above."
+    },
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "emailTooLong": "Email must be 255 characters or less.",
+      "emailExists": "This email is already registered",
+      "emailExistsLong": "This email is already registered. Please use a different email.",
+      "emailCheckFailed": "Failed to check email.",
+      "emailCheckError": "An error occurred while checking email.",
+      "sendCodeFailed": "Failed to send verification code.",
+      "emailVerifyRequired": "Please complete email verification.",
+      "passwordRequired": "Please enter your password.",
+      "passwordTooShort": "Password must be 8 characters or longer.",
+      "passwordMissingLetter": "Password must include letters.",
+      "passwordMissingDigit": "Password must include numbers.",
+      "passwordMissingSpecial": "Password must include special characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "signupFailed": "Sign-up failed.",
+      "signupError": "An error occurred during sign-up."
+    }
+  },
+  "footer": {
+    "companyInfo": "Company Information",
+    "representative": "Representative",
+    "contact": "Contact",
+    "businessNumber": "Business Number",
+    "onlineSalesNumber": "Online Sales Number",
+    "address": "Address",
+    "sns": "SNS",
+    "legalPolicy": "Terms & Policies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
   }
 }
