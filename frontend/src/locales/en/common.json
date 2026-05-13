@@ -71,7 +71,15 @@
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "Deleting your account will permanently remove all data.",
     "logout": "Logout",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "licenseStatus": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "EXPIRED_GRACE": "Grace Period",
+      "EXPIRED_HARD": "Expired",
+      "SUSPENDED": "Suspended",
+      "REVOKED": "Revoked"
+    }
   },
   "common": {
     "confirm": "Confirm",
@@ -477,5 +485,18 @@
       "signupFailed": "Sign-up failed.",
       "signupError": "An error occurred during sign-up."
     }
+  },
+  "footer": {
+    "companyInfo": "Company Information",
+    "representative": "Representative",
+    "contact": "Contact",
+    "businessNumber": "Business Number",
+    "onlineSalesNumber": "Online Sales Number",
+    "address": "Address",
+    "sns": "SNS",
+    "legalPolicy": "Terms & Policies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
   }
 }
