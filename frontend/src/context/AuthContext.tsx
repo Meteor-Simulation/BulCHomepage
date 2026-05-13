@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAlert } from '../components/AlertProvider';
 import { getApiBaseUrl } from '../utils/api';
 
 interface User {
@@ -44,7 +45,8 @@ interface AuthProviderProps {
 const ACCESS_TOKEN_LIFETIME_SEC = 600; // 10분
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { showAlert } = useAlert();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number | null>(null);
@@ -142,7 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 토큰 만료됨 — 갱신 시도
         const refreshed = await refreshAccessToken();
         if (!refreshed) {
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+          showAlert({ message: t('alerts.sessionExpired'), type: 'warning' });
           logout();
         }
       } else if (timeLeft <= 60) {

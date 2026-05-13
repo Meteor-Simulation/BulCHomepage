@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
+import { useAlert } from '../../components/AlertProvider';
 import { formatPhoneNumber, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import {
@@ -24,6 +25,7 @@ import './MyPage.css';
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const { isLoggedIn, isAuthReady, logout, isAdmin } = useAuth();
   const { changeLanguage: changeGlobalLanguage } = useLanguage();
 
@@ -445,7 +447,7 @@ const MyPage: React.FC = () => {
       if (response.ok && data.success) {
         setIsEditingPassword(false); setCurrentPassword(''); setNewPassword('');
         setConfirmPassword(''); setPasswordError('');
-        alert('비밀번호가 변경되었습니다. 보안을 위해 다시 로그인해주세요.');
+        showAlert({ message: t('alerts.passwordChanged'), type: 'success' });
         logout(); navigate('/');
       } else { setPasswordError(data.message || '비밀번호 변경에 실패했습니다.'); }
     } catch { setPasswordError('비밀번호 변경 중 오류가 발생했습니다.'); }
@@ -658,12 +660,12 @@ const MyPage: React.FC = () => {
     const url = editingCampaign ? `${API_URL}/api/v1/admin/redeem-campaigns/${editingCampaign.id}` : `${API_URL}/api/v1/admin/redeem-campaigns`;
     const response = await fetch(url, { method: editingCampaign ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials, body: JSON.stringify(body) });
     if (response.ok) { closeRedeemCampaignModal(); fetchRedeemCampaigns(); }
-    else { const error = await response.json(); alert(error.message || '캠페인 저장에 실패했습니다.'); }
+    else { const error = await response.json(); showAlert({ message: error.message || t('alerts.campaignSaveFailed'), type: 'error' }); }
   };
 
   const handleCampaignStatusChange = async (campaignId: string, action: 'pause' | 'end' | 'resume') => {
     const response = await fetch(`${API_URL}/api/v1/admin/redeem-campaigns/${campaignId}/${action}`, { method: 'PATCH', credentials: 'include' as RequestCredentials });
-    if (response.ok) { fetchRedeemCampaigns(); } else { alert('상태 변경에 실패했습니다.'); }
+    if (response.ok) { fetchRedeemCampaigns(); } else { showAlert({ message: t('alerts.statusChangeFailed'), type: 'error' }); }
   };
 
   const openCodeGenerateModal = (campaign: RedeemCampaign) => {
@@ -689,7 +691,7 @@ const MyPage: React.FC = () => {
       const data = await response.json();
       setGeneratedCodes(data.codes || []); setIsCodeGenerateModalOpen(false); setIsGeneratedCodesModalOpen(true);
       fetchRedeemCampaigns();
-    } else { const error = await response.json(); alert(error.message || '코드 생성에 실패했습니다.'); }
+    } else { const error = await response.json(); showAlert({ message: error.message || t('alerts.codeGenerationFailed'), type: 'error' }); }
   };
 
   const handleDeactivateCode = async (codeId: string) => {
@@ -698,7 +700,7 @@ const MyPage: React.FC = () => {
     if (response.ok && selectedCampaignForCodes) { fetchRedeemCodes(selectedCampaignForCodes.id); }
   };
 
-  const copyGeneratedCodes = () => { navigator.clipboard.writeText(generatedCodes.join('\n')); alert('클립보드에 복사되었습니다.'); };
+  const copyGeneratedCodes = () => { navigator.clipboard.writeText(generatedCodes.join('\n')); showAlert({ message: t('alerts.copiedToClipboard'), type: 'success' }); };
 
   const downloadCodesAsCsv = () => {
     const csv = 'code\n' + generatedCodes.join('\n');

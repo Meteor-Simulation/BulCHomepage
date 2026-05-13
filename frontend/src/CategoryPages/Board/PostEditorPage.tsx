@@ -7,7 +7,9 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import FontSize from './extensions/FontSize';
 import MathNode from './extensions/MathNode';
 import InfoPanel from './extensions/InfoPanel';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../components/AlertProvider';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
@@ -15,6 +17,8 @@ import MathEditorPopup from './components/MathEditorPopup';
 import './PostEditorPage.css';
 
 const PostEditorPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isAuthReady, isAdmin } = useAuth();
@@ -63,7 +67,7 @@ const PostEditorPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthReady && !isAdmin) {
-      alert('스태프 권한이 필요합니다.');
+      showAlert({ message: t('alerts.staffPermissionRequired'), type: 'warning' });
       navigate('/board');
     }
   }, [isAuthReady, isAdmin, navigate]);
@@ -107,7 +111,7 @@ const PostEditorPage: React.FC = () => {
       if (!file) return;
 
       if (file.size > 5 * 1024 * 1024) {
-        alert('이미지 크기는 5MB 이하여야 합니다.');
+        showAlert({ message: t('alerts.imageSizeLimit'), type: 'warning' });
         return;
       }
 
