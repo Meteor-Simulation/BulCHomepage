@@ -96,12 +96,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
                     {license.productName || license.planName || 'BULC'}
                   </span>
                   <span className={`license-status status-${license.status.toLowerCase()}`}>
-                    {license.status === 'ACTIVE' ? '활성' :
-                     license.status === 'PENDING' ? '대기' :
-                     license.status === 'EXPIRED_GRACE' ? '만료 유예' :
-                     license.status === 'EXPIRED_HARD' ? '만료됨' :
-                     license.status === 'SUSPENDED' ? '정지됨' :
-                     license.status === 'REVOKED' ? '취소됨' : license.status}
+                    {t(`myPage.licenseStatus.${license.status}`, license.status)}
                   </span>
                 </div>
                 <div className="license-details">
