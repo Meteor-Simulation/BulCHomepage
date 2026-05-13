@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
+import { useAlert } from './AlertProvider';
 import { getApiBaseUrl } from '../utils/api';
 import './SignupModal.css';
 
@@ -10,6 +12,8 @@ interface SignupModalProps {
 }
 
 const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLogin }) => {
+  const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -318,7 +322,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       const result = await response.json();
 
       if (result.success) {
-        alert('회원가입이 완료되었습니다. 로그인해주세요.');
+        showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
         // 입력 필드 초기화
         setEmail('');
         setPassword('');

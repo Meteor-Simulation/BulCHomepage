@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { loadTossPayments, TossPaymentsInstance } from '@tosspayments/payment-sdk';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAlert } from '../../components/AlertProvider';
 import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
@@ -40,6 +42,8 @@ type PaymentType = 'card' | 'bank' | 'vbank' | null;
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const { isLoggedIn, isAuthReady } = useAuth();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
@@ -103,7 +107,7 @@ const PaymentPage: React.FC = () => {
 
     if (!isLoggedIn && !hasAlerted.current) {
       hasAlerted.current = true;
-      alert('로그인이 필요한 페이지입니다.');
+      showAlert({ message: t('alerts.loginRequired'), type: 'warning' });
       navigate('/bulc', { state: { activeTab: 'download' } });
     }
   }, [isLoggedIn, isAuthReady, navigate]);
@@ -261,23 +265,23 @@ const PaymentPage: React.FC = () => {
   // 결제 처리
   const handlePayment = async () => {
     if (!selectedProduct) {
-      alert('상품을 선택해주세요.');
+      showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
       return;
     }
     if (!selectedPlan) {
-      alert('요금제를 선택해주세요.');
+      showAlert({ message: t('alerts.selectPlan'), type: 'warning' });
       return;
     }
     if (!selectedPaymentType) {
-      alert('결제 수단을 선택해주세요.');
+      showAlert({ message: t('alerts.selectPaymentMethod'), type: 'warning' });
       return;
     }
     if (!paymentInfo.name || !paymentInfo.email || !paymentInfo.phone) {
-      alert('필수 정보를 입력해주세요.');
+      showAlert({ message: t('alerts.missingRequiredInfo'), type: 'warning' });
       return;
     }
     if (!agreeTermsOfService || !agreePrivacy) {
-      alert('이용약관 및 개인정보처리방침에 동의해주세요.');
+      showAlert({ message: t('alerts.agreeTermsRequired'), type: 'warning' });
       return;
     }
 
@@ -312,7 +316,7 @@ const PaymentPage: React.FC = () => {
         return;
       }
       // 결제 요청 오류
-      alert('결제 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+      showAlert({ message: t('alerts.paymentRequestFailed'), type: 'error' });
     }
   };
 

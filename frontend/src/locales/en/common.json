@@ -359,5 +359,25 @@
       "desc": "After your free trial, upgrade to the Pro plan for GPU-accelerated analysis and advanced features.",
       "button": "Purchase License"
     }
+  },
+  "alerts": {
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "loginRequired": "Login required to access this page.",
+    "selectProduct": "Please select a product.",
+    "selectPlan": "Please select a plan.",
+    "selectPaymentMethod": "Please select a payment method.",
+    "missingRequiredInfo": "Please fill in all required fields.",
+    "agreeTermsRequired": "Please agree to the Terms of Service and Privacy Policy.",
+    "paymentRequestFailed": "Payment request failed. Please try again.",
+    "passwordChanged": "Your password has been changed. Please log in again for security.",
+    "campaignSaveFailed": "Failed to save campaign.",
+    "statusChangeFailed": "Failed to change status.",
+    "codeGenerationFailed": "Failed to generate codes.",
+    "copiedToClipboard": "Copied to clipboard.",
+    "deleteFailed": "An error occurred while deleting.",
+    "staffPermissionRequired": "Staff permission required.",
+    "imageSizeLimit": "Image size must be 5MB or less.",
+    "refundRequestReceived": "Refund request received. We will notify you of the result by email after review.",
+    "signupCompleted": "Sign-up completed. Please log in."
   }
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../components/AlertProvider';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
@@ -21,6 +23,8 @@ const renderMathInHtml = (html: string): string => {
 };
 
 const PostDetailPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isLoggedIn, isAdmin } = useAuth();
@@ -70,7 +74,7 @@ const PostDetailPage: React.FC = () => {
         navigate('/board');
       }
     } catch {
-      alert('삭제 중 오류가 발생했습니다.');
+      showAlert({ message: t('alerts.deleteFailed'), type: 'error' });
     }
   };
 
