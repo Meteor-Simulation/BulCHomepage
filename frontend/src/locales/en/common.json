@@ -379,5 +379,18 @@
     "imageSizeLimit": "Image size must be 5MB or less.",
     "refundRequestReceived": "Refund request received. We will notify you of the result by email after review.",
     "signupCompleted": "Sign-up completed. Please log in."
+  },
+  "footer": {
+    "companyInfo": "Company Information",
+    "representative": "Representative",
+    "contact": "Contact",
+    "businessNumber": "Business Number",
+    "onlineSalesNumber": "Online Sales Number",
+    "address": "Address",
+    "sns": "SNS",
+    "legalPolicy": "Terms & Policies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
   }
 }
