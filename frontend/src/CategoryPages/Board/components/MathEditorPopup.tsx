@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import 'mathlive';
 import './MathEditorPopup.css';
 
@@ -9,27 +10,27 @@ interface MathEditorPopupProps {
   onClose: () => void;
 }
 
-const EXAMPLE_FORMULAS = [
-  { label: 'Σ', latex: '\\sum_{i=1}^{n} x_i', title: '시그마' },
-  { label: '∫', latex: '\\int_{0}^{\\infty} f(x)\\,dx', title: '적분' },
-  { label: '√', latex: '\\sqrt{x}', title: '제곱근' },
-  { label: 'a/b', latex: '\\frac{a}{b}', title: '분수' },
-  { label: 'x²', latex: 'x^{2}', title: '거듭제곱' },
-  { label: 'lim', latex: '\\lim_{x \\to 0}', title: '극한' },
-  { label: '≠', latex: '\\neq', title: '같지 않음' },
-  { label: '≤', latex: '\\leq', title: '이하' },
-  { label: '≥', latex: '\\geq', title: '이상' },
-  { label: '∞', latex: '\\infty', title: '무한대' },
-  { label: 'α', latex: '\\alpha', title: '알파' },
-  { label: 'β', latex: '\\beta', title: '베타' },
-  { label: 'π', latex: '\\pi', title: '파이' },
-  { label: 'θ', latex: '\\theta', title: '세타' },
-  { label: '행렬', latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}', title: '행렬' },
-];
-
 const MathEditorPopup: React.FC<MathEditorPopupProps> = ({
   isOpen, initialLatex, onInsert, onClose,
 }) => {
+  const { t } = useTranslation();
+  const exampleFormulas = [
+    { label: 'Σ', latex: '\\sum_{i=1}^{n} x_i', title: t('board.editor.mathPopup.examples.sigma') },
+    { label: '∫', latex: '\\int_{0}^{\\infty} f(x)\\,dx', title: t('board.editor.mathPopup.examples.integral') },
+    { label: '√', latex: '\\sqrt{x}', title: t('board.editor.mathPopup.examples.sqrt') },
+    { label: 'a/b', latex: '\\frac{a}{b}', title: t('board.editor.mathPopup.examples.fraction') },
+    { label: 'x²', latex: 'x^{2}', title: t('board.editor.mathPopup.examples.power') },
+    { label: 'lim', latex: '\\lim_{x \\to 0}', title: t('board.editor.mathPopup.examples.limit') },
+    { label: '≠', latex: '\\neq', title: t('board.editor.mathPopup.examples.neq') },
+    { label: '≤', latex: '\\leq', title: t('board.editor.mathPopup.examples.leq') },
+    { label: '≥', latex: '\\geq', title: t('board.editor.mathPopup.examples.geq') },
+    { label: '∞', latex: '\\infty', title: t('board.editor.mathPopup.examples.infinity') },
+    { label: 'α', latex: '\\alpha', title: t('board.editor.mathPopup.examples.alpha') },
+    { label: 'β', latex: '\\beta', title: t('board.editor.mathPopup.examples.beta') },
+    { label: 'π', latex: '\\pi', title: t('board.editor.mathPopup.examples.pi') },
+    { label: 'θ', latex: '\\theta', title: t('board.editor.mathPopup.examples.theta') },
+    { label: t('board.editor.mathPopup.matrixLabel'), latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}', title: t('board.editor.mathPopup.examples.matrix') },
+  ];
   const mathFieldRef = useRef<any>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 100, y: 100 });
@@ -110,13 +111,13 @@ const MathEditorPopup: React.FC<MathEditorPopupProps> = ({
       onMouseDown={handleDragStart}
     >
       <div className="math-popup-header">
-        <span className="math-popup-title">수식 편집기</span>
+        <span className="math-popup-title">{t('board.editor.mathPopup.title')}</span>
         <button className="math-popup-close" onClick={onClose}>&times;</button>
       </div>
 
       <div className="math-popup-body">
         <div className="math-examples">
-          {EXAMPLE_FORMULAS.map((f, i) => (
+          {exampleFormulas.map((f, i) => (
             <button
               key={i}
               className="math-example-btn"
@@ -136,8 +137,8 @@ const MathEditorPopup: React.FC<MathEditorPopupProps> = ({
       </div>
 
       <div className="math-popup-footer">
-        <button className="math-cancel-btn" onClick={onClose}>취소</button>
-        <button className="math-insert-btn" onClick={handleInsert}>삽입</button>
+        <button className="math-cancel-btn" onClick={onClose}>{t('board.actions.cancel')}</button>
+        <button className="math-insert-btn" onClick={handleInsert}>{t('board.editor.mathPopup.insert')}</button>
       </div>
     </div>
   );

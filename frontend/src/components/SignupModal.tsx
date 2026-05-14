@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
+import { useAlert } from './AlertProvider';
 import { getApiBaseUrl } from '../utils/api';
 import './SignupModal.css';
 
@@ -10,6 +12,8 @@ interface SignupModalProps {
 }
 
 const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLogin }) => {
+  const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -136,7 +140,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const sendVerificationCode = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
+      setError(t('signup.errors.emailInvalid'));
       return;
     }
 
@@ -153,19 +157,19 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         if (checkResult.success) {
           if (checkResult.data.exists) {
             setEmailCheckStatus('exists');
-            setEmailCheckMessage('이미 가입된 이메일입니다');
+            setEmailCheckMessage(t('signup.errors.emailExists'));
             setIsSendingCode(false);
             return;
           } else {
             setEmailCheckStatus('available');
           }
         } else {
-          setError('이메일 확인에 실패했습니다.');
+          setError(t('signup.errors.emailCheckFailed'));
           setIsSendingCode(false);
           return;
         }
       } catch (err) {
-        setError('이메일 확인 중 오류가 발생했습니다.');
+        setError(t('signup.errors.emailCheckError'));
         setIsSendingCode(false);
         return;
       }
@@ -191,11 +195,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       const result = await response.json();
 
       if (!result.success) {
-        setVerificationMessage(result.message || '인증 코드 발송에 실패했습니다.');
+        setVerificationMessage(result.message || t('signup.errors.sendCodeFailed'));
       }
     } catch (err) {
       // verification error
-      setVerificationMessage('인증 코드 발송에 실패했습니다.');
+      setVerificationMessage(t('signup.errors.sendCodeFailed'));
     } finally {
       setIsSendingCode(false);
     }
@@ -249,33 +253,33 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
 
     // 유효성 검사
     if (!email.trim()) {
-      setError('이메일을 입력해주세요.');
+      setError(t('signup.errors.emailRequired'));
       return;
     }
     // 이메일 형식 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
+      setError(t('signup.errors.emailInvalid'));
       return;
     }
     if (email.length > 255) {
-      setError('이메일은 255자 이하여야 합니다.');
+      setError(t('signup.errors.emailTooLong'));
       return;
     }
     if (emailCheckStatus === 'exists') {
-      setError('이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.');
+      setError(t('signup.errors.emailExistsLong'));
       return;
     }
     if (!isEmailVerified) {
-      setError('이메일 인증을 완료해주세요.');
+      setError(t('signup.errors.emailVerifyRequired'));
       return;
     }
     if (!password) {
-      setError('비밀번호를 입력해주세요.');
+      setError(t('signup.errors.passwordRequired'));
       return;
     }
     if (password.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다.');
+      setError(t('signup.errors.passwordTooShort'));
       return;
     }
     // 비밀번호 복잡성 검사
@@ -284,19 +288,19 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
     // eslint-disable-next-line no-useless-escape
     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password);
     if (!hasLetter) {
-      setError('비밀번호에 영문자를 포함해야 합니다.');
+      setError(t('signup.errors.passwordMissingLetter'));
       return;
     }
     if (!hasDigit) {
-      setError('비밀번호에 숫자를 포함해야 합니다.');
+      setError(t('signup.errors.passwordMissingDigit'));
       return;
     }
     if (!hasSpecialChar) {
-      setError('비밀번호에 특수문자를 포함해야 합니다.');
+      setError(t('signup.errors.passwordMissingSpecial'));
       return;
     }
     if (password !== passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t('signup.errors.passwordMismatch'));
       return;
     }
 
@@ -318,7 +322,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       const result = await response.json();
 
       if (result.success) {
-        alert('회원가입이 완료되었습니다. 로그인해주세요.');
+        showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
         // 입력 필드 초기화
         setEmail('');
         setPassword('');
@@ -333,11 +337,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         onClose();
         onSwitchToLogin();
       } else {
-        setError(result.message || '회원가입에 실패했습니다.');
+        setError(result.message || t('signup.errors.signupFailed'));
       }
     } catch (err) {
       // signup error
-      setError('회원가입 중 오류가 발생했습니다.');
+      setError(t('signup.errors.signupError'));
     } finally {
       setIsLoading(false);
     }
@@ -354,7 +358,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           </svg>
         </button>
 
-        <h2 className="modal-title">회원가입</h2>
+        <h2 className="modal-title">{t('signup.title')}</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="input-group">
@@ -363,7 +367,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
                 <input
                   type="email"
                   className={`modal-input ${emailCheckStatus === 'exists' ? 'input-error' : isEmailVerified ? 'input-success' : ''}`}
-                  placeholder="아이디(이메일)"
+                  placeholder={t('signup.emailPlaceholder')}
                   value={email}
                   onChange={handleEmailChange}
                   onKeyDown={(e) => {
@@ -389,7 +393,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
                   onClick={sendVerificationCode}
                   disabled={isSendingCode || isLoading || !email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
                 >
-                  {isSendingCode ? '발송 중...' : '이메일 인증'}
+                  {isSendingCode ? t('signup.sending') : t('signup.emailVerify')}
                 </button>
               )}
               {!isEmailVerified && codeSent && (
@@ -399,7 +403,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
                   onClick={sendVerificationCode}
                   disabled={isSendingCode || isLoading}
                 >
-                  {isSendingCode ? '...' : '재발송'}
+                  {isSendingCode ? '...' : t('signup.resend')}
                 </button>
               )}
             </div>
@@ -414,7 +418,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
               <div className="verification-code-row">
                 <input
                   type="text"
-                  placeholder="인증코드 6자리"
+                  placeholder={t('signup.codePlaceholder')}
                   className={`verification-code-input ${codeError ? 'input-error' : ''}`}
                   value={verificationCode}
                   onChange={(e) => {
@@ -425,22 +429,22 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
                   maxLength={6}
                 />
                 <span className={`verification-timer ${isTimerExpired ? 'expired' : ''}`}>
-                  {isTimerExpired ? '만료' : formatTimer(timerSeconds)}
+                  {isTimerExpired ? t('signup.expired') : formatTimer(timerSeconds)}
                 </span>
-                {codeError && <span className="code-error-msg">코드 불일치</span>}
+                {codeError && <span className="code-error-msg">{t('signup.codeMismatch')}</span>}
                 <button
                   type="button"
                   className="verification-btn small"
                   onClick={verifyCode}
                   disabled={isVerifyingCode || isLoading || verificationCode.length !== 6 || isTimerExpired}
                 >
-                  {isVerifyingCode ? '...' : '확인'}
+                  {isVerifyingCode ? '...' : t('signup.verify')}
                 </button>
               </div>
             )}
 
             {isEmailVerified && (
-              <p className="input-message success verified">이메일 인증이 완료되었습니다 ✓</p>
+              <p className="input-message success verified">{t('signup.emailVerified')}</p>
             )}
             {verificationMessage && !isEmailVerified && (
               <p className="input-message error">{verificationMessage}</p>
@@ -453,7 +457,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
                 ref={passwordInputRef}
                 type={showPassword ? 'text' : 'password'}
                 className="modal-input"
-                placeholder="비밀번호"
+                placeholder={t('signup.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onCopy={preventCopyPaste}
@@ -484,9 +488,9 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
             {password.length > 0 && (
               <>
                 {!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=[\]{}|;':",./<>?]/.test(password) ? (
-                  <p className="input-validation-error">영문, 숫자, 특수문자를 포함해주세요.</p>
+                  <p className="input-validation-error">{t('signup.validation.needsAllChars')}</p>
                 ) : password.length < 8 ? (
-                  <p className="input-validation-error">비밀번호를 8자 이상으로 만들어주세요.</p>
+                  <p className="input-validation-error">{t('signup.validation.minLength')}</p>
                 ) : null}
               </>
             )}
@@ -497,7 +501,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
               <input
                 type={showPasswordConfirm ? 'text' : 'password'}
                 className="modal-input"
-                placeholder="비밀번호 확인"
+                placeholder={t('signup.passwordConfirmPlaceholder')}
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 onCopy={preventCopyPaste}
@@ -526,21 +530,21 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
             </div>
             {/* 비밀번호 확인 불일치 메시지 */}
             {passwordConfirm.length > 0 && password !== passwordConfirm && (
-              <p className="input-validation-error">위 비밀번호와 동일하게 입력해주세요.</p>
+              <p className="input-validation-error">{t('signup.validation.passwordMismatch')}</p>
             )}
           </div>
 
           {error && <p className="modal-error">{error}</p>}
 
           <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-            {isLoading ? '가입 중...' : '회원가입'}
+            {isLoading ? t('signup.submitting') : t('signup.submit')}
           </button>
         </form>
 
         <div className="modal-login">
-          <span>이미 계정이 있으신가요?</span>
+          <span>{t('signup.haveAccount')}</span>
           <button type="button" className="modal-login-link" onClick={onSwitchToLogin}>
-            로그인
+            {t('signup.loginLink')}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { License, Activation, Subscription, BillingKey } from '../types';
 import RefundRequestModal from '../../../components/RefundRequestModal';
+import { useAlert } from '../../../components/AlertProvider';
 
 interface SubscriptionPanelProps {
   // 라이선스
@@ -47,6 +48,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
   onMakeDueNow,
 }) => {
   const { t } = useTranslation();
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundTarget, setRefundTarget] = useState<{ productName: string; subscriptionId: number } | null>(null);
@@ -61,7 +63,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
 
   const handleRefundSubmit = (reason: string, details: string) => {
     // TODO: 실제 환불 요청 API 연동
-    alert('환불 요청이 접수되었습니다. 담당자 검토 후 이메일로 결과를 안내드립니다.');
+    showAlert({ message: t('alerts.refundRequestReceived'), type: 'success' });
     setRefundModalOpen(false);
     setRefundTarget(null);
   };
@@ -94,12 +96,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
                     {license.productName || license.planName || 'BULC'}
                   </span>
                   <span className={`license-status status-${license.status.toLowerCase()}`}>
-                    {license.status === 'ACTIVE' ? '활성' :
-                     license.status === 'PENDING' ? '대기' :
-                     license.status === 'EXPIRED_GRACE' ? '만료 유예' :
-                     license.status === 'EXPIRED_HARD' ? '만료됨' :
-                     license.status === 'SUSPENDED' ? '정지됨' :
-                     license.status === 'REVOKED' ? '취소됨' : license.status}
+                    {t(`myPage.licenseStatus.${license.status}`, license.status)}
                   </span>
                 </div>
                 <div className="license-details">

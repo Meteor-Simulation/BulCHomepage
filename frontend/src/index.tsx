@@ -5,6 +5,7 @@ import './index.css';
 import './i18n';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { AlertProvider } from './components/AlertProvider';
 import { getSubdomain, SubdomainType } from './utils/subdomain';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
@@ -50,6 +51,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
+      <AlertProvider>
       <AuthProvider>
         <LanguageProvider>
         <BrowserRouter>
@@ -77,6 +79,7 @@ const App: React.FC = () => {
         </BrowserRouter>
         </LanguageProvider>
       </AuthProvider>
+      </AlertProvider>
     </ErrorBoundary>
   );
 };

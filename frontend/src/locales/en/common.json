@@ -71,7 +71,15 @@
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "Deleting your account will permanently remove all data.",
     "logout": "Logout",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "licenseStatus": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "EXPIRED_GRACE": "Grace Period",
+      "EXPIRED_HARD": "Expired",
+      "SUSPENDED": "Suspended",
+      "REVOKED": "Revoked"
+    }
   },
   "common": {
     "confirm": "Confirm",
@@ -359,5 +367,321 @@
       "desc": "After your free trial, upgrade to the Pro plan for GPU-accelerated analysis and advanced features.",
       "button": "Purchase License"
     }
+  },
+  "alerts": {
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "loginRequired": "Login required to access this page.",
+    "selectProduct": "Please select a product.",
+    "selectPlan": "Please select a plan.",
+    "selectPaymentMethod": "Please select a payment method.",
+    "missingRequiredInfo": "Please fill in all required fields.",
+    "agreeTermsRequired": "Please agree to the Terms of Service and Privacy Policy.",
+    "paymentRequestFailed": "Payment request failed. Please try again.",
+    "passwordChanged": "Your password has been changed. Please log in again for security.",
+    "campaignSaveFailed": "Failed to save campaign.",
+    "statusChangeFailed": "Failed to change status.",
+    "codeGenerationFailed": "Failed to generate codes.",
+    "copiedToClipboard": "Copied to clipboard.",
+    "deleteFailed": "An error occurred while deleting.",
+    "staffPermissionRequired": "Staff permission required.",
+    "imageSizeLimit": "Image size must be 5MB or less.",
+    "refundRequestReceived": "Refund request received. We will notify you of the result by email after review.",
+    "signupCompleted": "Sign-up completed. Please log in."
+  },
+  "payment": {
+    "step1Title": "Select Product",
+    "step2Title": "Select Plan",
+    "step3Title": "Payment Method",
+    "step4Title": "Apply Coupon",
+    "loadingProducts": "Loading products...",
+    "loadingPlans": "Loading plans...",
+    "selectProductFirst": "Please select a product first.",
+    "noPlans": "No plans available.",
+    "comingSoon": "Coming soon",
+    "methods": {
+      "creditCard": "Credit Card",
+      "creditCardDesc": "VISA, MASTER, JCB",
+      "bank": "Bank Transfer",
+      "bankDesc": "Real-time bank transfer",
+      "vbank": "Virtual Account",
+      "vbankDesc": "Virtual account issuance"
+    },
+    "coupon": {
+      "placeholder": "Enter coupon code",
+      "checking": "Checking...",
+      "apply": "Apply",
+      "discount": "{{percent}}% off (-{{amount}})",
+      "couponLabel": "Coupon",
+      "errors": {
+        "empty": "Please enter a coupon code.",
+        "noPlan": "Please select a plan first.",
+        "invalid": "Invalid coupon code.",
+        "checkError": "An error occurred while validating the coupon."
+      }
+    },
+    "buyer": {
+      "title": "Buyer Information",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "010-1234-5678"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "period": "Service Period",
+      "periodValue": "1 year (365 days from purchase)",
+      "couponDiscount": "Coupon Discount",
+      "total": "Total",
+      "vatIncluded": "VAT included",
+      "selectProduct": "Please select a product",
+      "selectPlan": "Please select a plan"
+    },
+    "agreement": {
+      "agreeAll": "Agree to all",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "paymentButton": "Pay {{price}}",
+    "paymentButtonDisabled": "Select a product and plan",
+    "secureSystem": "Secure payment system",
+    "modal": {
+      "cancel": "Cancel",
+      "agree": "I Agree"
+    }
+  },
+  "login": {
+    "title": "Login",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "submit": "Login",
+    "submitting": "Logging in...",
+    "forgotPassword": "Forgot your password?",
+    "or": "OR",
+    "socialLogin": "Social Login",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign Up",
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "passwordRequired": "Please enter your password.",
+      "invalidCredentials": "Incorrect email or password.",
+      "general": "An error occurred during login."
+    }
+  },
+  "passwordReset": {
+    "title": "Reset Password",
+    "emailStepDesc1": "Please enter the email you signed up with.",
+    "emailStepDesc2": "We will send you a password reset code.",
+    "emailPlaceholder": "Email",
+    "sendCode": "Send Verification Code",
+    "sending": "Sending...",
+    "codeStepDesc": "Verification code sent to <strong>{{email}}</strong>.",
+    "codePlaceholder": "6-digit code",
+    "verifyCode": "Verify Code",
+    "verifying": "Verifying...",
+    "reenterEmail": "Re-enter Email",
+    "newPasswordDesc": "Please enter your new password.",
+    "newPasswordPlaceholder": "New password (8+ characters)",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "changePassword": "Change Password",
+    "changing": "Changing...",
+    "successDesc1": "Password changed successfully.",
+    "successDesc2": "Please log in with your new password.",
+    "goToLogin": "Go to Login",
+    "backToLogin": "Back to Login",
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "sendFailed": "Failed to send verification code.",
+      "sendError": "An error occurred while sending the verification code.",
+      "codeRequired": "Please enter the verification code.",
+      "codeLength": "Verification code must be 6 digits.",
+      "codeInvalid": "Invalid verification code.",
+      "verifyError": "An error occurred while verifying the code.",
+      "newPasswordRequired": "Please enter a new password.",
+      "passwordLength": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "resetFailed": "Failed to reset password.",
+      "resetError": "An error occurred while resetting password."
+    }
+  },
+  "signup": {
+    "title": "Sign Up",
+    "emailPlaceholder": "Email (ID)",
+    "passwordPlaceholder": "Password",
+    "passwordConfirmPlaceholder": "Confirm Password",
+    "emailVerify": "Verify Email",
+    "resend": "Resend",
+    "sending": "Sending...",
+    "codePlaceholder": "6-digit code",
+    "verify": "Verify",
+    "expired": "Expired",
+    "codeMismatch": "Code mismatch",
+    "emailVerified": "Email verified ✓",
+    "submit": "Sign Up",
+    "submitting": "Signing up...",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Login",
+    "validation": {
+      "needsAllChars": "Include letters, numbers, and special characters.",
+      "minLength": "Password must be 8 characters or longer.",
+      "passwordMismatch": "Please enter the same password as above."
+    },
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "emailTooLong": "Email must be 255 characters or less.",
+      "emailExists": "This email is already registered",
+      "emailExistsLong": "This email is already registered. Please use a different email.",
+      "emailCheckFailed": "Failed to check email.",
+      "emailCheckError": "An error occurred while checking email.",
+      "sendCodeFailed": "Failed to send verification code.",
+      "emailVerifyRequired": "Please complete email verification.",
+      "passwordRequired": "Please enter your password.",
+      "passwordTooShort": "Password must be 8 characters or longer.",
+      "passwordMissingLetter": "Password must include letters.",
+      "passwordMissingDigit": "Password must include numbers.",
+      "passwordMissingSpecial": "Password must include special characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "signupFailed": "Sign-up failed.",
+      "signupError": "An error occurred during sign-up."
+    }
+  },
+  "board": {
+    "loading": "Loading...",
+    "viewCount": "Views",
+    "sidebar": {
+      "title": "Pages",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "createPage": "Create page",
+      "empty": "No pages."
+    },
+    "visibility": {
+      "member": "Member",
+      "staff": "Staff"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "confirm": "OK"
+    },
+    "alerts": {
+      "deleteSuccess": "Page deleted.",
+      "deleteFailed": "Failed to delete.",
+      "deleteError": "An error occurred while deleting."
+    },
+    "confirmDelete": {
+      "title": "Delete page",
+      "message": "Delete this page?"
+    },
+    "empty": {
+      "selectPage": "Select a page from the left.",
+      "createPage": "Create new page"
+    },
+    "restricted": {
+      "loginHint": "Log in to view more pages."
+    },
+    "detail": {
+      "backToList": "Back to list",
+      "confirmDelete": "Are you sure you want to delete?",
+      "restrictedLoginHint": "Log in to view more posts.",
+      "errors": {
+        "loadFailed": "Failed to load the post.",
+        "loadError": "An error occurred while loading the post.",
+        "notFound": "Post not found."
+      }
+    },
+    "editor": {
+      "titlePlaceholder": "Enter a title",
+      "addImage": "+ Add image",
+      "saving": "Saving...",
+      "publish": "Publish",
+      "heading": {
+        "paragraph": "Body",
+        "h1": "Heading 1",
+        "h2": "Heading 2",
+        "h3": "Heading 3"
+      },
+      "toolbar": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "strike": "Strikethrough",
+        "bulletList": "Bullet list",
+        "orderedList": "Numbered list",
+        "blockquote": "Quote",
+        "codeBlock": "Code block",
+        "infoPanel": "Info panel",
+        "math": "Insert math"
+      },
+      "visibility": {
+        "publicToggle": "Public (click to make members-only)",
+        "memberToggle": "Members only (click to make public)"
+      },
+      "errors": {
+        "noPermission": "You do not have edit permission.",
+        "loadFailed": "Failed to load the post.",
+        "emptyTitle": "Please enter a title.",
+        "emptyContent": "Please enter content.",
+        "saveFailed": "Failed to save.",
+        "saveError": "An error occurred while saving."
+      },
+      "mathPopup": {
+        "title": "Math editor",
+        "insert": "Insert",
+        "matrixLabel": "Matrix",
+        "examples": {
+          "sigma": "Sigma",
+          "integral": "Integral",
+          "sqrt": "Square root",
+          "fraction": "Fraction",
+          "power": "Power",
+          "limit": "Limit",
+          "neq": "Not equal",
+          "leq": "Less than or equal",
+          "geq": "Greater than or equal",
+          "infinity": "Infinity",
+          "alpha": "Alpha",
+          "beta": "Beta",
+          "pi": "Pi",
+          "theta": "Theta",
+          "matrix": "Matrix"
+        }
+      },
+      "imageAnnotator": {
+        "label": "Image {{n}}",
+        "remove": "Remove image",
+        "tools": {
+          "pin": "Pin marker",
+          "rect": "Rectangle region",
+          "ellipse": "Ellipse region"
+        },
+        "hints": {
+          "pin": "Click on the image to add a marker",
+          "region": "Drag on the image to define a region"
+        },
+        "markerLabelPlaceholder": "Label",
+        "markerDescriptionPlaceholder": "Enter a description",
+        "deleteMarker": "Delete marker"
+      },
+      "mathNode": {
+        "editTooltip": "Click to edit formula"
+      }
+    }
+  },
+  "footer": {
+    "companyInfo": "Company Information",
+    "representative": "Representative",
+    "contact": "Contact",
+    "businessNumber": "Business Number",
+    "onlineSalesNumber": "Online Sales Number",
+    "address": "Address",
+    "sns": "SNS",
+    "legalPolicy": "Terms & Policies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
   }
 }
