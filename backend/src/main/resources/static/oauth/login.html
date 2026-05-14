@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 - BulC</title>
+    <title data-i18n="pageTitle">로그인 - BulC</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         /* ========================================
@@ -561,16 +561,16 @@
 
     <!-- Login Card -->
     <div class="login-card" id="loginCard">
-        <h1 class="login-title">로그인</h1>
-        <p class="login-subtitle">
+        <h1 class="login-title" data-i18n="loginTitle">로그인</h1>
+        <p class="login-subtitle" data-i18n="loginSubtitle" data-i18n-html="true">
             <span class="client-info" id="clientName">BUL-C Fire Simulator</span>에 로그인합니다
         </p>
 
         <form class="login-form" id="loginForm">
-            <input type="email" name="email" class="form-input" placeholder="이메일" required autocomplete="email">
+            <input type="email" name="email" class="form-input" placeholder="이메일" data-i18n-ph="emailPlaceholder" required autocomplete="email">
 
             <div class="password-wrapper">
-                <input type="password" name="password" class="form-input" placeholder="비밀번호" required autocomplete="current-password" id="passwordInput">
+                <input type="password" name="password" class="form-input" placeholder="비밀번호" data-i18n-ph="passwordPlaceholder" required autocomplete="current-password" id="passwordInput">
                 <button type="button" class="password-toggle" id="passwordToggle">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="eyeIcon">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -581,7 +581,7 @@
 
             <p class="form-error" id="errorMessage"></p>
 
-            <button type="submit" class="submit-btn" id="submitBtn">로그인</button>
+            <button type="submit" class="submit-btn" id="submitBtn" data-i18n="loginBtn">로그인</button>
 
             <!-- Hidden OAuth params -->
             <input type="hidden" name="client_id" id="clientId">
@@ -593,24 +593,24 @@
 
         <!-- Divider -->
         <div class="divider">
-            <span>또는</span>
+            <span data-i18n="or">또는</span>
         </div>
 
         <!-- Social Login -->
         <div class="social-login">
-            <p class="social-title">간편 로그인</p>
+            <p class="social-title" data-i18n="socialLogin">간편 로그인</p>
             <div class="social-btns">
-                <button type="button" class="social-btn naver" title="네이버 로그인">
+                <button type="button" class="social-btn naver" data-i18n-title="naverLogin" title="네이버 로그인">
                     <svg viewBox="0 0 24 24" class="social-icon">
                         <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" fill="currentColor"/>
                     </svg>
                 </button>
-                <button type="button" class="social-btn kakao" title="카카오 로그인">
+                <button type="button" class="social-btn kakao" data-i18n-title="kakaoLogin" title="카카오 로그인">
                     <svg viewBox="0 0 24 24" class="social-icon">
                         <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.722 1.8 5.108 4.5 6.454-.18.67-.65 2.428-.745 2.805-.118.47.172.463.362.337.15-.1 2.378-1.612 3.34-2.265.51.071 1.03.108 1.543.108 5.523 0 10-3.463 10-7.691S17.523 3 12 3z" fill="currentColor"/>
                     </svg>
                 </button>
-                <button type="button" class="social-btn google" title="구글 로그인">
+                <button type="button" class="social-btn google" data-i18n-title="googleLogin" title="구글 로그인">
                     <svg viewBox="0 0 24 24" class="social-icon">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -623,15 +623,15 @@
 
         <!-- Signup Link -->
         <div class="signup-section">
-            <span>계정이 없으신가요?</span>
-            <a href="#" class="signup-link" onclick="switchToSignup(); return false;">회원가입</a>
+            <span data-i18n="noAccount">계정이 없으신가요?</span>
+            <a href="#" class="signup-link" onclick="switchToSignup(); return false;" data-i18n="signupLink">회원가입</a>
         </div>
     </div>
 
     <!-- Signup Card -->
     <div class="signup-card" id="signupCard">
-        <h1 class="login-title">회원가입</h1>
-        <p class="login-subtitle">BUL:C 계정을 생성합니다</p>
+        <h1 class="login-title" data-i18n="signupTitle">회원가입</h1>
+        <p class="login-subtitle" data-i18n="signupSubtitle">BUL:C 계정을 생성합니다</p>
 
         <!-- Signup Form -->
         <div id="signupFormView">
@@ -639,8 +639,8 @@
                 <!-- Email + Verify Button -->
                 <div>
                     <div class="email-row">
-                        <input type="email" class="form-input" id="signupEmail" placeholder="이메일" required maxlength="255">
-                        <button type="button" class="verify-btn" id="sendCodeBtn">이메일 인증</button>
+                        <input type="email" class="form-input" id="signupEmail" placeholder="이메일" data-i18n-ph="emailPlaceholder" required maxlength="255">
+                        <button type="button" class="verify-btn" id="sendCodeBtn" data-i18n="emailVerify">이메일 인증</button>
                     </div>
                     <p class="form-message" id="emailMessage"></p>
                 </div>
@@ -648,9 +648,9 @@
                 <!-- Verification Code (hidden until code sent) -->
                 <div id="codeStep" style="display: none;">
                     <div class="code-row">
-                        <input type="text" class="form-input" id="verificationCode" placeholder="인증코드 6자리" maxlength="6">
+                        <input type="text" class="form-input" id="verificationCode" placeholder="인증코드 6자리" data-i18n-ph="codePlaceholder" maxlength="6">
                         <span class="code-timer" id="codeTimer">5:00</span>
-                        <button type="button" class="verify-btn" id="verifyCodeBtn" style="padding: 14px 12px;">확인</button>
+                        <button type="button" class="verify-btn" id="verifyCodeBtn" style="padding: 14px 12px;" data-i18n="verifyCode">확인</button>
                     </div>
                     <p class="form-message" id="codeMessage"></p>
                 </div>
@@ -658,7 +658,7 @@
                 <!-- Password (hidden until email verified) -->
                 <div id="passwordStep" style="display: none;">
                     <div class="password-wrapper">
-                        <input type="password" class="form-input" id="signupPassword" placeholder="비밀번호">
+                        <input type="password" class="form-input" id="signupPassword" placeholder="비밀번호" data-i18n-ph="passwordPlaceholder">
                         <button type="button" class="password-toggle" id="signupPwToggle">
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="signupEyeIcon">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -666,11 +666,11 @@
                             </svg>
                         </button>
                     </div>
-                    <p class="password-hint">영문, 숫자, 특수문자 포함 8자 이상</p>
+                    <p class="password-hint" data-i18n="passwordHint">영문, 숫자, 특수문자 포함 8자 이상</p>
                     <p class="form-message" id="passwordMessage"></p>
 
                     <div class="password-wrapper" style="margin-top: 14px;">
-                        <input type="password" class="form-input" id="signupPasswordConfirm" placeholder="비밀번호 확인">
+                        <input type="password" class="form-input" id="signupPasswordConfirm" placeholder="비밀번호 확인" data-i18n-ph="passwordConfirmPlaceholder">
                         <button type="button" class="password-toggle" id="signupPwConfirmToggle">
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="signupEyeConfirmIcon">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -683,7 +683,7 @@
 
                 <p class="form-error" id="signupError"></p>
 
-                <button type="submit" class="submit-btn" id="signupSubmitBtn">회원가입</button>
+                <button type="submit" class="submit-btn" id="signupSubmitBtn" data-i18n="signupBtn">회원가입</button>
             </form>
         </div>
 
@@ -695,16 +695,16 @@
                         <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <h2 class="login-title">회원가입 완료</h2>
-                <p>계정이 생성되었습니다. 로그인해주세요.</p>
+                <h2 class="login-title" data-i18n="signupCompleted">회원가입 완료</h2>
+                <p data-i18n="signupCompletedDesc">계정이 생성되었습니다. 로그인해주세요.</p>
             </div>
-            <button type="button" class="submit-btn" onclick="switchToLogin()" style="margin-top: 24px; width: 100%;">로그인하기</button>
+            <button type="button" class="submit-btn" onclick="switchToLogin()" style="margin-top: 24px; width: 100%;" data-i18n="goToLogin">로그인하기</button>
         </div>
 
         <!-- Switch to Login -->
         <div class="signup-section" id="signupToLoginSection">
-            <span>이미 계정이 있으신가요?</span>
-            <a href="#" class="signup-link" onclick="switchToLogin(); return false;">로그인</a>
+            <span data-i18n="haveAccount">이미 계정이 있으신가요?</span>
+            <a href="#" class="signup-link" onclick="switchToLogin(); return false;" data-i18n="loginLink">로그인</a>
         </div>
     </div>
 
@@ -716,6 +716,152 @@
     <script>
         // Parse URL parameters
         var urlParams = new URLSearchParams(window.location.search);
+
+        // ========================================
+        // i18n (lang query param > navigator.language > ko)
+        // ========================================
+        var LANG = ((urlParams.get('lang') || navigator.language || 'ko').toLowerCase().indexOf('en') === 0) ? 'en' : 'ko';
+        document.documentElement.lang = LANG;
+
+        var I18N = {
+            ko: {
+                pageTitle: '로그인 - BulC',
+                loginTitle: '로그인',
+                loginSubtitle: '<span class="client-info" id="clientName">BUL-C Fire Simulator</span>에 로그인합니다',
+                emailPlaceholder: '이메일',
+                passwordPlaceholder: '비밀번호',
+                loginBtn: '로그인',
+                or: '또는',
+                socialLogin: '간편 로그인',
+                naverLogin: '네이버 로그인',
+                kakaoLogin: '카카오 로그인',
+                googleLogin: '구글 로그인',
+                noAccount: '계정이 없으신가요?',
+                signupLink: '회원가입',
+                signupTitle: '회원가입',
+                signupSubtitle: 'BUL:C 계정을 생성합니다',
+                emailVerify: '이메일 인증',
+                codePlaceholder: '인증코드 6자리',
+                verifyCode: '확인',
+                passwordHint: '영문, 숫자, 특수문자 포함 8자 이상',
+                passwordConfirmPlaceholder: '비밀번호 확인',
+                signupBtn: '회원가입',
+                signupCompleted: '회원가입 완료',
+                signupCompletedDesc: '계정이 생성되었습니다. 로그인해주세요.',
+                goToLogin: '로그인하기',
+                haveAccount: '이미 계정이 있으신가요?',
+                loginLink: '로그인',
+                errOauthParamsMissing: 'OAuth 파라미터가 누락되었습니다. 앱에서 다시 로그인을 시도해주세요.',
+                errEmailRequired: '이메일을 입력해주세요.',
+                errEmailInvalid: '올바른 이메일 형식을 입력해주세요.',
+                errPasswordRequired: '비밀번호를 입력해주세요.',
+                loggingIn: '로그인 중...',
+                errInvalidCredentials: '이메일 또는 비밀번호가 올바르지 않습니다.',
+                errLoginGeneral: '로그인 중 오류가 발생했습니다.',
+                errBadAccess: '잘못된 접근입니다. 앱에서 로그인을 다시 시도해주세요.',
+                resendCode: '재발송',
+                sending: '발송 중...',
+                checking: '확인 중...',
+                errEmailExists: '이미 가입된 이메일입니다.',
+                errEmailCheckFailed: '이메일 확인에 실패했습니다.',
+                errSendCodeFailed: '인증 코드 발송에 실패했습니다.',
+                errSendCodeError: '인증 코드 발송 중 오류가 발생했습니다.',
+                errCodeLength: '6자리 인증 코드를 입력해주세요.',
+                emailVerified: '이메일 인증이 완료되었습니다 ✓',
+                errCodeMismatch: '인증 코드가 일치하지 않습니다.',
+                errVerifyError: '인증 확인 중 오류가 발생했습니다.',
+                expired: '만료',
+                errPasswordChars: '영문, 숫자, 특수문자를 포함해주세요.',
+                errPasswordLength: '8자 이상으로 입력해주세요.',
+                errPasswordMismatch: '비밀번호가 일치하지 않습니다.',
+                errEmailVerifyRequired: '이메일 인증을 완료해주세요.',
+                errPasswordTooShort: '비밀번호는 8자 이상이어야 합니다.',
+                errPasswordMissingLetter: '비밀번호에 영문자를 포함해야 합니다.',
+                errPasswordMissingDigit: '비밀번호에 숫자를 포함해야 합니다.',
+                errPasswordMissingSpecial: '비밀번호에 특수문자를 포함해야 합니다.',
+                signingUp: '가입 중...',
+                errSignupFailed: '회원가입에 실패했습니다.',
+                errSignupError: '회원가입 중 오류가 발생했습니다.'
+            },
+            en: {
+                pageTitle: 'Login - BulC',
+                loginTitle: 'Login',
+                loginSubtitle: 'Login to <span class="client-info" id="clientName">BUL-C Fire Simulator</span>',
+                emailPlaceholder: 'Email',
+                passwordPlaceholder: 'Password',
+                loginBtn: 'Login',
+                or: 'OR',
+                socialLogin: 'Social Login',
+                naverLogin: 'Sign in with Naver',
+                kakaoLogin: 'Sign in with Kakao',
+                googleLogin: 'Sign in with Google',
+                noAccount: "Don't have an account?",
+                signupLink: 'Sign Up',
+                signupTitle: 'Sign Up',
+                signupSubtitle: 'Create your BUL:C account',
+                emailVerify: 'Verify Email',
+                codePlaceholder: '6-digit code',
+                verifyCode: 'Verify',
+                passwordHint: '8+ chars with letters, numbers, and special characters',
+                passwordConfirmPlaceholder: 'Confirm Password',
+                signupBtn: 'Sign Up',
+                signupCompleted: 'Sign-up Complete',
+                signupCompletedDesc: 'Your account has been created. Please log in.',
+                goToLogin: 'Go to Login',
+                haveAccount: 'Already have an account?',
+                loginLink: 'Login',
+                errOauthParamsMissing: 'OAuth parameters are missing. Please try logging in again from the app.',
+                errEmailRequired: 'Please enter your email.',
+                errEmailInvalid: 'Please enter a valid email address.',
+                errPasswordRequired: 'Please enter your password.',
+                loggingIn: 'Logging in...',
+                errInvalidCredentials: 'Incorrect email or password.',
+                errLoginGeneral: 'An error occurred during login.',
+                errBadAccess: 'Invalid access. Please try logging in again from the app.',
+                resendCode: 'Resend',
+                sending: 'Sending...',
+                checking: 'Checking...',
+                errEmailExists: 'This email is already registered.',
+                errEmailCheckFailed: 'Failed to check email.',
+                errSendCodeFailed: 'Failed to send verification code.',
+                errSendCodeError: 'An error occurred while sending the verification code.',
+                errCodeLength: 'Please enter the 6-digit verification code.',
+                emailVerified: 'Email verified ✓',
+                errCodeMismatch: 'Invalid verification code.',
+                errVerifyError: 'An error occurred while verifying.',
+                expired: 'Expired',
+                errPasswordChars: 'Include letters, numbers, and special characters.',
+                errPasswordLength: 'Password must be 8 characters or longer.',
+                errPasswordMismatch: 'Passwords do not match.',
+                errEmailVerifyRequired: 'Please complete email verification.',
+                errPasswordTooShort: 'Password must be 8 characters or longer.',
+                errPasswordMissingLetter: 'Password must include letters.',
+                errPasswordMissingDigit: 'Password must include numbers.',
+                errPasswordMissingSpecial: 'Password must include special characters.',
+                signingUp: 'Signing up...',
+                errSignupFailed: 'Sign-up failed.',
+                errSignupError: 'An error occurred during sign-up.'
+            }
+        };
+
+        function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.ko[key] || key; }
+
+        // Apply translations to DOM
+        document.title = t('pageTitle');
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            var key = el.getAttribute('data-i18n');
+            if (el.getAttribute('data-i18n-html') === 'true') {
+                el.innerHTML = t(key);
+            } else {
+                el.textContent = t(key);
+            }
+        });
+        document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+            el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+        });
+        document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+            el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
+        });
 
         // Set OAuth parameters to hidden fields
         var clientId = urlParams.get('client_id') || '';
@@ -763,7 +909,7 @@
             e.preventDefault();
 
             if (!clientId || !redirectUri || !codeChallenge) {
-                showError('OAuth 파라미터가 누락되었습니다. 앱에서 다시 로그인을 시도해주세요.');
+                showError(t('errOauthParamsMissing'));
                 return;
             }
 
@@ -771,13 +917,13 @@
             var email = formData.get('email');
             var password = formData.get('password');
 
-            if (!email) { showError('이메일을 입력해주세요.'); return; }
+            if (!email) { showError(t('errEmailRequired')); return; }
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) { showError('올바른 이메일 형식을 입력해주세요.'); return; }
-            if (!password) { showError('비밀번호를 입력해주세요.'); return; }
+            if (!emailRegex.test(email)) { showError(t('errEmailInvalid')); return; }
+            if (!password) { showError(t('errPasswordRequired')); return; }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = '로그인 중...';
+            submitBtn.textContent = t('loggingIn');
             loadingOverlay.classList.add('visible');
             hideError();
 
@@ -803,10 +949,10 @@
 
                 if (response.status === 401) {
                     var data = await response.json();
-                    showError(data.error_description || '이메일 또는 비밀번호가 올바르지 않습니다.');
+                    showError(data.error_description || t('errInvalidCredentials'));
                 } else if (!response.ok) {
                     var data2 = await response.json();
-                    showError(data2.error_description || '로그인 중 오류가 발생했습니다.');
+                    showError(data2.error_description || t('errLoginGeneral'));
                 }
             } catch (err) {
                 loginForm.action = '/oauth/login-process';
@@ -815,7 +961,7 @@
                 return;
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = '로그인';
+                submitBtn.textContent = t('loginBtn');
                 loadingOverlay.classList.remove('visible');
             }
         });
@@ -830,7 +976,7 @@
         }
 
         if (!clientId || !redirectUri || !codeChallenge) {
-            showError('잘못된 접근입니다. 앱에서 로그인을 다시 시도해주세요.');
+            showError(t('errBadAccess'));
             submitBtn.disabled = true;
         }
 
@@ -846,7 +992,7 @@
         document.querySelectorAll('.social-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 if (!clientId || !redirectUri || !codeChallenge) {
-                    showError('OAuth 파라미터가 누락되었습니다. 앱에서 다시 로그인을 시도해주세요.');
+                    showError(t('errOauthParamsMissing'));
                     return;
                 }
 
@@ -905,7 +1051,7 @@
             document.getElementById('signupSuccessView').style.display = 'none';
             document.getElementById('signupToLoginSection').style.display = 'block';
             var sendBtn = document.getElementById('sendCodeBtn');
-            sendBtn.textContent = '이메일 인증';
+            sendBtn.textContent = t('emailVerify');
             sendBtn.disabled = false;
             sendBtn.className = 'verify-btn';
             sendBtn.style.display = '';
@@ -951,7 +1097,7 @@
                     clearTimer();
                     var timerEl = document.getElementById('codeTimer');
                     timerEl.classList.add('expired');
-                    timerEl.textContent = '만료';
+                    timerEl.textContent = t('expired');
                     document.getElementById('verifyCodeBtn').disabled = true;
                 }
             }, 1000);
@@ -977,14 +1123,14 @@
             var email = document.getElementById('signupEmail').value.trim();
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailRegex.test(email)) {
-                showMsg('emailMessage', '올바른 이메일 형식을 입력해주세요.', 'error');
+                showMsg('emailMessage', t('errEmailInvalid'), 'error');
                 return;
             }
 
             var sendBtn = document.getElementById('sendCodeBtn');
             var isResend = sendBtn.className.indexOf('secondary') !== -1;
             sendBtn.disabled = true;
-            sendBtn.textContent = '확인 중...';
+            sendBtn.textContent = t('checking');
             hideMsg('emailMessage');
 
             try {
@@ -993,19 +1139,19 @@
 
                 if (checkData.success) {
                     if (checkData.data.exists && !checkData.data.deactivated) {
-                        showMsg('emailMessage', '이미 가입된 이메일입니다.', 'error');
+                        showMsg('emailMessage', t('errEmailExists'), 'error');
                         sendBtn.disabled = false;
-                        sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                        sendBtn.textContent = isResend ? t('resendCode') : t('emailVerify');
                         return;
                     }
                 } else {
-                    showMsg('emailMessage', '이메일 확인에 실패했습니다.', 'error');
+                    showMsg('emailMessage', t('errEmailCheckFailed'), 'error');
                     sendBtn.disabled = false;
-                    sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                    sendBtn.textContent = isResend ? t('resendCode') : t('emailVerify');
                     return;
                 }
 
-                sendBtn.textContent = '발송 중...';
+                sendBtn.textContent = t('sending');
                 var sendRes = await fetch('/api/auth/send-verification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1018,19 +1164,19 @@
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationCode').focus();
                     document.getElementById('verifyCodeBtn').disabled = false;
-                    sendBtn.textContent = '재발송';
+                    sendBtn.textContent = t('resendCode');
                     sendBtn.className = 'verify-btn secondary';
                     sendBtn.disabled = false;
                     startTimer(300);
                     hideMsg('codeMessage');
                 } else {
-                    showMsg('emailMessage', sendData.message || '인증 코드 발송에 실패했습니다.', 'error');
-                    sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                    showMsg('emailMessage', sendData.message || t('errSendCodeFailed'), 'error');
+                    sendBtn.textContent = isResend ? t('resendCode') : t('emailVerify');
                     sendBtn.disabled = false;
                 }
             } catch (err) {
-                showMsg('emailMessage', '인증 코드 발송 중 오류가 발생했습니다.', 'error');
-                sendBtn.textContent = isResend ? '재발송' : '이메일 인증';
+                showMsg('emailMessage', t('errSendCodeError'), 'error');
+                sendBtn.textContent = isResend ? t('resendCode') : t('emailVerify');
                 sendBtn.disabled = false;
             }
         });
@@ -1041,7 +1187,7 @@
             var code = document.getElementById('verificationCode').value.trim();
 
             if (!code || code.length !== 6) {
-                showMsg('codeMessage', '6자리 인증 코드를 입력해주세요.', 'error');
+                showMsg('codeMessage', t('errCodeLength'), 'error');
                 document.getElementById('verificationCode').classList.add('input-error-border');
                 return;
             }
@@ -1065,18 +1211,18 @@
                     document.getElementById('signupEmail').classList.add('input-success');
                     document.getElementById('codeStep').style.display = 'none';
                     document.getElementById('sendCodeBtn').style.display = 'none';
-                    showMsg('emailMessage', '이메일 인증이 완료되었습니다 \u2713', 'success');
+                    showMsg('emailMessage', t('emailVerified'), 'success');
                     document.getElementById('passwordStep').style.display = 'block';
                     document.getElementById('signupPassword').focus();
                 } else {
-                    showMsg('codeMessage', '인증 코드가 일치하지 않습니다.', 'error');
+                    showMsg('codeMessage', t('errCodeMismatch'), 'error');
                     document.getElementById('verificationCode').classList.add('input-error-border');
                 }
             } catch (err) {
-                showMsg('codeMessage', '인증 확인 중 오류가 발생했습니다.', 'error');
+                showMsg('codeMessage', t('errVerifyError'), 'error');
             } finally {
                 verifyBtn.disabled = false;
-                verifyBtn.textContent = '확인';
+                verifyBtn.textContent = t('verifyCode');
             }
         });
 
@@ -1112,9 +1258,9 @@
             var hasDigit = /[0-9]/.test(pw);
             var hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(pw);
             if (!hasLetter || !hasDigit || !hasSpecial) {
-                showMsg('passwordMessage', '영문, 숫자, 특수문자를 포함해주세요.', 'error');
+                showMsg('passwordMessage', t('errPasswordChars'), 'error');
             } else if (pw.length < 8) {
-                showMsg('passwordMessage', '8자 이상으로 입력해주세요.', 'error');
+                showMsg('passwordMessage', t('errPasswordLength'), 'error');
             } else {
                 hideMsg('passwordMessage');
             }
@@ -1127,7 +1273,7 @@
             var pw = document.getElementById('signupPassword').value;
             var pwConfirm = document.getElementById('signupPasswordConfirm').value;
             if (pwConfirm && pw !== pwConfirm) {
-                showMsg('passwordConfirmMessage', '비밀번호가 일치하지 않습니다.', 'error');
+                showMsg('passwordConfirmMessage', t('errPasswordMismatch'), 'error');
             } else {
                 hideMsg('passwordConfirmMessage');
             }
@@ -1149,17 +1295,17 @@
             var password = document.getElementById('signupPassword').value;
             var passwordConfirm = document.getElementById('signupPasswordConfirm').value;
 
-            if (!signupTicket) { showSignupError('이메일 인증을 완료해주세요.'); return; }
-            if (!password) { showSignupError('비밀번호를 입력해주세요.'); return; }
-            if (password.length < 8) { showSignupError('비밀번호는 8자 이상이어야 합니다.'); return; }
-            if (!/[a-zA-Z]/.test(password)) { showSignupError('비밀번호에 영문자를 포함해야 합니다.'); return; }
-            if (!/[0-9]/.test(password)) { showSignupError('비밀번호에 숫자를 포함해야 합니다.'); return; }
-            if (!/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) { showSignupError('비밀번호에 특수문자를 포함해야 합니다.'); return; }
-            if (password !== passwordConfirm) { showSignupError('비밀번호가 일치하지 않습니다.'); return; }
+            if (!signupTicket) { showSignupError(t('errEmailVerifyRequired')); return; }
+            if (!password) { showSignupError(t('errPasswordRequired')); return; }
+            if (password.length < 8) { showSignupError(t('errPasswordTooShort')); return; }
+            if (!/[a-zA-Z]/.test(password)) { showSignupError(t('errPasswordMissingLetter')); return; }
+            if (!/[0-9]/.test(password)) { showSignupError(t('errPasswordMissingDigit')); return; }
+            if (!/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) { showSignupError(t('errPasswordMissingSpecial')); return; }
+            if (password !== passwordConfirm) { showSignupError(t('errPasswordMismatch')); return; }
 
             var signupSubmitBtn = document.getElementById('signupSubmitBtn');
             signupSubmitBtn.disabled = true;
-            signupSubmitBtn.textContent = '가입 중...';
+            signupSubmitBtn.textContent = t('signingUp');
             loadingOverlay.classList.add('visible');
 
             try {
@@ -1176,13 +1322,13 @@
                     document.getElementById('signupSuccessView').style.display = 'block';
                     document.getElementById('signupToLoginSection').style.display = 'none';
                 } else {
-                    showSignupError(data.message || '회원가입에 실패했습니다.');
+                    showSignupError(data.message || t('errSignupFailed'));
                 }
             } catch (err) {
-                showSignupError('회원가입 중 오류가 발생했습니다.');
+                showSignupError(t('errSignupError'));
             } finally {
                 signupSubmitBtn.disabled = false;
-                signupSubmitBtn.textContent = '회원가입';
+                signupSubmitBtn.textContent = t('signupBtn');
                 loadingOverlay.classList.remove('visible');
             }
         });
