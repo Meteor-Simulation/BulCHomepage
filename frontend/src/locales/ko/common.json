@@ -627,6 +627,47 @@
         "emptyContent": "내용을 입력해주세요.",
         "saveFailed": "저장에 실패했습니다.",
         "saveError": "저장 중 오류가 발생했습니다."
+      },
+      "mathPopup": {
+        "title": "수식 편집기",
+        "insert": "삽입",
+        "matrixLabel": "행렬",
+        "examples": {
+          "sigma": "시그마",
+          "integral": "적분",
+          "sqrt": "제곱근",
+          "fraction": "분수",
+          "power": "거듭제곱",
+          "limit": "극한",
+          "neq": "같지 않음",
+          "leq": "이하",
+          "geq": "이상",
+          "infinity": "무한대",
+          "alpha": "알파",
+          "beta": "베타",
+          "pi": "파이",
+          "theta": "세타",
+          "matrix": "행렬"
+        }
+      },
+      "imageAnnotator": {
+        "label": "이미지 {{n}}",
+        "remove": "이미지 제거",
+        "tools": {
+          "pin": "포인트 마커",
+          "rect": "사각형 영역",
+          "ellipse": "타원 영역"
+        },
+        "hints": {
+          "pin": "이미지를 클릭하여 마커를 추가하세요",
+          "region": "이미지 위에서 드래그하여 영역을 지정하세요"
+        },
+        "markerLabelPlaceholder": "항목명",
+        "markerDescriptionPlaceholder": "설명을 입력하세요",
+        "deleteMarker": "마커 삭제"
+      },
+      "mathNode": {
+        "editTooltip": "클릭하여 수식 편집"
       }
     }
   },
