@@ -627,6 +627,47 @@
         "emptyContent": "Please enter content.",
         "saveFailed": "Failed to save.",
         "saveError": "An error occurred while saving."
+      },
+      "mathPopup": {
+        "title": "Math editor",
+        "insert": "Insert",
+        "matrixLabel": "Matrix",
+        "examples": {
+          "sigma": "Sigma",
+          "integral": "Integral",
+          "sqrt": "Square root",
+          "fraction": "Fraction",
+          "power": "Power",
+          "limit": "Limit",
+          "neq": "Not equal",
+          "leq": "Less than or equal",
+          "geq": "Greater than or equal",
+          "infinity": "Infinity",
+          "alpha": "Alpha",
+          "beta": "Beta",
+          "pi": "Pi",
+          "theta": "Theta",
+          "matrix": "Matrix"
+        }
+      },
+      "imageAnnotator": {
+        "label": "Image {{n}}",
+        "remove": "Remove image",
+        "tools": {
+          "pin": "Pin marker",
+          "rect": "Rectangle region",
+          "ellipse": "Ellipse region"
+        },
+        "hints": {
+          "pin": "Click on the image to add a marker",
+          "region": "Drag on the image to define a region"
+        },
+        "markerLabelPlaceholder": "Label",
+        "markerDescriptionPlaceholder": "Enter a description",
+        "deleteMarker": "Delete marker"
+      },
+      "mathNode": {
+        "editTooltip": "Click to edit formula"
       }
     }
   },
