@@ -23,11 +23,12 @@ const renderMathInHtml = (html: string): string => {
 };
 
 const PostDetailPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showAlert } = useAlert();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isLoggedIn, isAdmin } = useAuth();
+  const dateLocale = i18n.language && i18n.language.startsWith('en') ? 'en-US' : 'ko-KR';
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,13 +48,13 @@ const PostDetailPage: React.FC = () => {
           if (result.success) {
             setPost(result.data);
           } else {
-            setError(result.message || '게시글을 불러올 수 없습니다.');
+            setError(result.message || t('board.detail.errors.loadFailed'));
           }
         } else {
-          setError('게시글을 불러올 수 없습니다.');
+          setError(t('board.detail.errors.loadFailed'));
         }
       } catch {
-        setError('게시글을 불러오는 중 오류가 발생했습니다.');
+        setError(t('board.detail.errors.loadError'));
       } finally {
         setIsLoading(false);
       }
@@ -63,7 +64,7 @@ const PostDetailPage: React.FC = () => {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('board.detail.confirmDelete'))) return;
 
     try {
       const response = await fetch(`${API_URL}/api/v1/posts/${id}`, {
@@ -79,7 +80,7 @@ const PostDetailPage: React.FC = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('ko-KR', {
+    return new Date(dateStr).toLocaleString(dateLocale, {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit',
     });
@@ -90,7 +91,7 @@ const PostDetailPage: React.FC = () => {
       <div className="post-detail-page">
         <Header />
         <div className="post-detail-container">
-          <div className="post-loading">로딩 중...</div>
+          <div className="post-loading">{t('board.loading')}</div>
         </div>
       </div>
     );
@@ -101,8 +102,8 @@ const PostDetailPage: React.FC = () => {
       <div className="post-detail-page">
         <Header />
         <div className="post-detail-container">
-          <div className="post-error">{error || '게시글을 찾을 수 없습니다.'}</div>
-          <button className="post-back-btn" onClick={() => navigate('/board')}>목록으로</button>
+          <div className="post-error">{error || t('board.detail.errors.notFound')}</div>
+          <button className="post-back-btn" onClick={() => navigate('/board')}>{t('board.detail.backToList')}</button>
         </div>
       </div>
     );
@@ -118,10 +119,10 @@ const PostDetailPage: React.FC = () => {
             <div className="post-meta">
               <span className="post-author">{post.authorName}</span>
               <span className="post-date">{formatDate(post.createdAt)}</span>
-              <span className="post-views">조회 {post.viewCount}</span>
+              <span className="post-views">{t('board.viewCount')} {post.viewCount}</span>
               {post.visibility !== 'PUBLIC' && (
                 <span className={`post-visibility ${post.visibility.toLowerCase()}`}>
-                  {post.visibility === 'MEMBER' ? '회원' : '스태프'}
+                  {post.visibility === 'MEMBER' ? t('board.visibility.member') : t('board.visibility.staff')}
                 </span>
               )}
             </div>
@@ -132,7 +133,7 @@ const PostDetailPage: React.FC = () => {
               <div className="restricted-icon">🔒</div>
               <p className="restricted-message">{post.restrictedMessage}</p>
               {!isLoggedIn && (
-                <p className="restricted-hint">로그인하시면 더 많은 게시글을 열람할 수 있습니다.</p>
+                <p className="restricted-hint">{t('board.detail.restrictedLoginHint')}</p>
               )}
             </div>
           ) : (
@@ -158,11 +159,11 @@ const PostDetailPage: React.FC = () => {
         </article>
 
         <div className="post-actions">
-          <button className="post-back-btn" onClick={() => navigate('/board')}>확인</button>
+          <button className="post-back-btn" onClick={() => navigate('/board')}>{t('board.actions.confirm')}</button>
           {canModify && !post.restricted && (
             <div className="post-modify-actions">
-              <button className="post-edit-btn" onClick={() => navigate(`/board/edit/${post.id}`)}>수정</button>
-              <button className="post-delete-btn" onClick={handleDelete}>삭제</button>
+              <button className="post-edit-btn" onClick={() => navigate(`/board/edit/${post.id}`)}>{t('board.actions.edit')}</button>
+              <button className="post-delete-btn" onClick={handleDelete}>{t('board.actions.delete')}</button>
             </div>
           )}
         </div>

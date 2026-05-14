@@ -88,11 +88,11 @@ const PostEditorPage: React.FC = () => {
             setVisibility(result.data.visibility);
             editor.commands.setContent(result.data.contentHtml || '');
           } else {
-            setError('수정 권한이 없습니다.');
+            setError(t('board.editor.errors.noPermission'));
           }
         }
       } catch {
-        setError('게시글을 불러올 수 없습니다.');
+        setError(t('board.editor.errors.loadFailed'));
       } finally {
         setIsLoading(false);
       }
@@ -124,11 +124,11 @@ const PostEditorPage: React.FC = () => {
   // 글 저장
   const handleSubmit = async () => {
     if (!title.trim()) {
-      setError('제목을 입력해주세요.');
+      setError(t('board.editor.errors.emptyTitle'));
       return;
     }
     if (!editor || editor.isEmpty) {
-      setError('내용을 입력해주세요.');
+      setError(t('board.editor.errors.emptyContent'));
       return;
     }
 
@@ -163,10 +163,10 @@ const PostEditorPage: React.FC = () => {
         }
       } else {
         const result = await response.json().catch(() => null);
-        setError(result?.message || '저장에 실패했습니다.');
+        setError(result?.message || t('board.editor.errors.saveFailed'));
       }
     } catch {
-      setError('저장 중 오류가 발생했습니다.');
+      setError(t('board.editor.errors.saveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -177,7 +177,7 @@ const PostEditorPage: React.FC = () => {
       <div className="post-editor-page">
         <Header />
         <div className="post-editor-container">
-          <div className="post-editor-loading">로딩 중...</div>
+          <div className="post-editor-loading">{t('board.loading')}</div>
         </div>
       </div>
     );
@@ -191,7 +191,7 @@ const PostEditorPage: React.FC = () => {
           <input
             type="text"
             className="post-title-input"
-            placeholder="제목을 입력하세요"
+            placeholder={t('board.editor.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={200}
@@ -239,10 +239,10 @@ const PostEditorPage: React.FC = () => {
                   }
                 }}
               >
-                <option value="0">본문</option>
-                <option value="1">제목 1</option>
-                <option value="2">제목 2</option>
-                <option value="3">제목 3</option>
+                <option value="0">{t('board.editor.heading.paragraph')}</option>
+                <option value="1">{t('board.editor.heading.h1')}</option>
+                <option value="2">{t('board.editor.heading.h2')}</option>
+                <option value="3">{t('board.editor.heading.h3')}</option>
               </select>
 
               <span className="toolbar-divider" />
@@ -252,7 +252,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('bold') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleBold().run()}
-                title="굵게"
+                title={t('board.editor.toolbar.bold')}
               >
                 <strong>B</strong>
               </button>
@@ -260,7 +260,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('italic') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
-                title="기울임"
+                title={t('board.editor.toolbar.italic')}
               >
                 <em>I</em>
               </button>
@@ -268,7 +268,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('strike') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleStrike().run()}
-                title="취소선"
+                title={t('board.editor.toolbar.strike')}
               >
                 <s>S</s>
               </button>
@@ -280,7 +280,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('bulletList') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
-                title="불릿 목록"
+                title={t('board.editor.toolbar.bulletList')}
               >
                 &#8226;
               </button>
@@ -288,7 +288,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('orderedList') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                title="번호 목록"
+                title={t('board.editor.toolbar.orderedList')}
               >
                 1.
               </button>
@@ -300,7 +300,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('blockquote') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                title="인용"
+                title={t('board.editor.toolbar.blockquote')}
               >
                 &ldquo;
               </button>
@@ -308,7 +308,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('codeBlock') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                title="코드 블록"
+                title={t('board.editor.toolbar.codeBlock')}
               >
                 {'</>'}
               </button>
@@ -317,7 +317,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={editor.isActive('infoPanel') ? 'active' : ''}
                 onClick={() => editor.chain().focus().toggleInfoPanel().run()}
-                title="정보 패널"
+                title={t('board.editor.toolbar.infoPanel')}
               >
                 !
               </button>
@@ -328,7 +328,7 @@ const PostEditorPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setMathPopup({ isOpen: true, editLatex: '', editCallback: null })}
-                title="수식 삽입"
+                title={t('board.editor.toolbar.math')}
               >
                 Σ
               </button>
@@ -339,7 +339,7 @@ const PostEditorPage: React.FC = () => {
                 type="button"
                 className={`toolbar-lock-btn ${visibility !== 'PUBLIC' ? 'locked' : ''}`}
                 onClick={() => setVisibility(visibility === 'PUBLIC' ? 'MEMBER' : 'PUBLIC')}
-                title={visibility === 'PUBLIC' ? '전체 공개 (클릭하면 회원 전용)' : '회원 전용 (클릭하면 전체 공개)'}
+                title={visibility === 'PUBLIC' ? t('board.editor.visibility.publicToggle') : t('board.editor.visibility.memberToggle')}
               >
                 {visibility === 'PUBLIC' ? (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -379,20 +379,20 @@ const PostEditorPage: React.FC = () => {
 
           {/* 이미지 추가 버튼 */}
           <button type="button" className="post-image-add-btn" onClick={handleImageUpload}>
-            + 이미지 추가
+            {t('board.editor.addImage')}
           </button>
 
 
           {error && <p className="post-editor-error">{error}</p>}
 
           <div className="post-editor-actions">
-            <button className="post-cancel-btn" onClick={() => navigate(-1)} disabled={isSubmitting}>취소</button>
+            <button className="post-cancel-btn" onClick={() => navigate(-1)} disabled={isSubmitting}>{t('board.actions.cancel')}</button>
             <button
               className="post-submit-btn"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? '저장 중...' : isEditMode ? '수정' : '게시'}
+              {isSubmitting ? t('board.editor.saving') : isEditMode ? t('board.actions.edit') : t('board.editor.publish')}
             </button>
           </div>
 
@@ -400,7 +400,7 @@ const PostEditorPage: React.FC = () => {
           {isSubmitting && (
             <div className="post-saving-overlay">
               <div className="post-saving-spinner" />
-              <p>저장 중...</p>
+              <p>{t('board.editor.saving')}</p>
             </div>
           )}
         </div>

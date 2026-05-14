@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
@@ -50,7 +51,9 @@ const buildTree = (posts: PostListItem[], expandedIds: Set<number>): TreeNode[] 
 
 const BoardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { isLoggedIn, isAdmin } = useAuth();
+  const dateLocale = i18n.language && i18n.language.startsWith('en') ? 'en-US' : 'ko-KR';
 
   const [posts, setPosts] = useState<PostListItem[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostDetail | null>(null);
@@ -125,12 +128,12 @@ const BoardPage: React.FC = () => {
       if (response.ok) {
         if (selectedPost?.id === postId) setSelectedPost(null);
         fetchPosts();
-        setAlertModal({ isOpen: true, message: '페이지가 삭제되었습니다.', type: 'success' });
+        setAlertModal({ isOpen: true, message: t('board.alerts.deleteSuccess'), type: 'success' });
       } else {
-        setAlertModal({ isOpen: true, message: '삭제에 실패했습니다.', type: 'error' });
+        setAlertModal({ isOpen: true, message: t('board.alerts.deleteFailed'), type: 'error' });
       }
     } catch {
-      setAlertModal({ isOpen: true, message: '삭제 중 오류가 발생했습니다.', type: 'error' });
+      setAlertModal({ isOpen: true, message: t('board.alerts.deleteError'), type: 'error' });
     }
   };
 
@@ -241,7 +244,7 @@ const BoardPage: React.FC = () => {
 
   const getVisibilityLevel = (v: string) => v === 'STAFF' ? 2 : v === 'MEMBER' ? 1 : 0;
   const isLocked = (v: string) => userRoleLevel < getVisibilityLevel(v);
-  const getVisibilityLabel = (v: string) => v === 'STAFF' ? '스태프' : v === 'MEMBER' ? '회원' : '';
+  const getVisibilityLabel = (v: string) => v === 'STAFF' ? t('board.visibility.staff') : v === 'MEMBER' ? t('board.visibility.member') : '';
   const canModify = () => isAdmin;
 
   // 트리 노드 렌더링 (재귀)
@@ -281,7 +284,7 @@ const BoardPage: React.FC = () => {
               <button
                 className="sidebar-delete-btn"
                 onClick={(e) => { e.stopPropagation(); requestDelete(node.id); }}
-                title="삭제"
+                title={t('board.actions.delete')}
               >
                 &times;
               </button>
@@ -303,9 +306,9 @@ const BoardPage: React.FC = () => {
       <div className="board-layout">
         <aside className={`board-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="sidebar-header">
-            <span className="sidebar-title">페이지</span>
+            <span className="sidebar-title">{t('board.sidebar.title')}</span>
             <div className="sidebar-actions">
-              <button className="sidebar-collapse-btn" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? '펼치기' : '접기'}>
+              <button className="sidebar-collapse-btn" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? t('board.sidebar.expand') : t('board.sidebar.collapse')}>
                 {sidebarCollapsed ? '▶' : '◀'}
               </button>
             </div>
@@ -317,14 +320,14 @@ const BoardPage: React.FC = () => {
                 <div className="sidebar-item sidebar-create-item" onClick={() => navigate('/board/write')}>
                   <div className="sidebar-item-title">
                     <span className="sidebar-create-icon">+</span>
-                    <span className="sidebar-item-text">페이지 생성</span>
+                    <span className="sidebar-item-text">{t('board.sidebar.createPage')}</span>
                   </div>
                 </div>
               )}
               {isLoadingSidebar ? (
-                <div className="sidebar-loading">로딩 중...</div>
+                <div className="sidebar-loading">{t('board.loading')}</div>
               ) : posts.length === 0 ? (
-                <div className="sidebar-empty">페이지가 없습니다.</div>
+                <div className="sidebar-empty">{t('board.sidebar.empty')}</div>
               ) : (
                 tree.map(node => renderTreeNode(node))
               )}
@@ -334,15 +337,15 @@ const BoardPage: React.FC = () => {
 
         <main className="board-content">
           {isLoadingContent ? (
-            <div className="content-loading">로딩 중...</div>
+            <div className="content-loading">{t('board.loading')}</div>
           ) : selectedPost ? (
             <article className="content-article">
               <div className="content-header">
                 <h1 className="content-title">{selectedPost.title}</h1>
                 <div className="content-meta">
                   <span className="content-author">{selectedPost.authorName}</span>
-                  <span className="content-date">{new Date(selectedPost.createdAt).toLocaleString('ko-KR')}</span>
-                  <span className="content-views">조회 {selectedPost.viewCount}</span>
+                  <span className="content-date">{new Date(selectedPost.createdAt).toLocaleString(dateLocale)}</span>
+                  <span className="content-views">{t('board.viewCount')} {selectedPost.viewCount}</span>
                   {selectedPost.visibility !== 'PUBLIC' && (
                     <span className={`content-visibility ${selectedPost.visibility.toLowerCase()}`}>
                       {getVisibilityLabel(selectedPost.visibility)}
@@ -351,8 +354,8 @@ const BoardPage: React.FC = () => {
                 </div>
                 {canModify() && !selectedPost.restricted && (
                   <div className="content-actions">
-                    <button className="content-edit-btn" onClick={() => navigate(`/board/edit/${selectedPost.id}`)}>수정</button>
-                    <button className="content-delete-btn" onClick={() => requestDelete(selectedPost.id)}>삭제</button>
+                    <button className="content-edit-btn" onClick={() => navigate(`/board/edit/${selectedPost.id}`)}>{t('board.actions.edit')}</button>
+                    <button className="content-delete-btn" onClick={() => requestDelete(selectedPost.id)}>{t('board.actions.delete')}</button>
                   </div>
                 )}
               </div>
@@ -361,7 +364,7 @@ const BoardPage: React.FC = () => {
                 <div className="content-restricted">
                   <div className="restricted-icon">🔒</div>
                   <p className="restricted-message">{selectedPost.restrictedMessage}</p>
-                  {!isLoggedIn && <p className="restricted-hint">로그인하시면 더 많은 페이지를 열람할 수 있습니다.</p>}
+                  {!isLoggedIn && <p className="restricted-hint">{t('board.restricted.loginHint')}</p>}
                 </div>
               ) : (
                 <>
@@ -381,9 +384,9 @@ const BoardPage: React.FC = () => {
             </article>
           ) : (
             <div className="content-empty">
-              <p>왼쪽에서 페이지를 선택하세요.</p>
+              <p>{t('board.empty.selectPage')}</p>
               {isAdmin && (
-                <button className="content-create-btn" onClick={() => navigate('/board/write')}>새 페이지 만들기</button>
+                <button className="content-create-btn" onClick={() => navigate('/board/write')}>{t('board.empty.createPage')}</button>
               )}
             </div>
           )}
@@ -409,12 +412,12 @@ const BoardPage: React.FC = () => {
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <h3 className="alert-title">페이지 삭제</h3>
+              <h3 className="alert-title">{t('board.confirmDelete.title')}</h3>
             </div>
-            <p className="alert-message">이 페이지를 삭제하시겠습니까?</p>
+            <p className="alert-message">{t('board.confirmDelete.message')}</p>
             <div className="confirm-buttons">
-              <button className="confirm-cancel-btn" onClick={() => setDeleteConfirm({ isOpen: false, postId: null })}>취소</button>
-              <button className="confirm-delete-btn" onClick={confirmDelete}>삭제</button>
+              <button className="confirm-cancel-btn" onClick={() => setDeleteConfirm({ isOpen: false, postId: null })}>{t('board.actions.cancel')}</button>
+              <button className="confirm-delete-btn" onClick={confirmDelete}>{t('board.actions.delete')}</button>
             </div>
           </div>
         </div>
