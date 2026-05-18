@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
 import { useAlert } from './AlertProvider';
 import { getApiBaseUrl } from '../utils/api';
+import {
+  fetchBoothGiftConfig,
+  isBoothGiftActive,
+  markPendingEventRedirect,
+} from '../utils/eventConfig';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -322,7 +327,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       const result = await response.json();
 
       if (result.success) {
-        showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
+        // 이벤트 진행 중이면 로그인 후 사은품 페이지로 자동 이동하도록 플래그 설정
+        const eventConfig = await fetchBoothGiftConfig({ force: true });
+        if (isBoothGiftActive(eventConfig)) {
+          markPendingEventRedirect();
+          showAlert({ message: t('alerts.signupCompleted') + ' 로그인하시면 박람회 사은품 페이지로 안내됩니다.', type: 'success' });
+        } else {
+          showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
+        }
         // 입력 필드 초기화
         setEmail('');
         setPassword('');
