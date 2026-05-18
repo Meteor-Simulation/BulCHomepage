@@ -47,6 +47,57 @@
   margin-bottom: 16px;
 }
 
+.booth-gift-badge--claimed {
+  background: #4a7c59;
+}
+
+.booth-gift-card--claimed {
+  border-color: rgba(74, 124, 89, 0.25);
+  box-shadow: 0 12px 36px rgba(74, 124, 89, 0.12);
+}
+
+.booth-gift-claimed-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #e8f3ec 0%, #d4e8db 100%);
+  border: 1px solid rgba(74, 124, 89, 0.3);
+  border-radius: 12px;
+}
+
+.booth-gift-claimed-check {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #4a7c59;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.booth-gift-claimed-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.booth-gift-claimed-body strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a3d23;
+}
+
+.booth-gift-claimed-body span {
+  font-size: 0.88rem;
+  color: #3a5a44;
+}
+
 .booth-gift-title {
   font-size: 1.85rem;
   font-weight: 700;
@@ -171,6 +222,52 @@
 
 .booth-gift-btn:hover {
   background: #a8290a;
+}
+
+.booth-gift-btn--claim {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 28px;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.booth-gift-btn--ghost {
+  background: transparent;
+  color: var(--accent, #C4320A);
+  border: 1.5px solid var(--accent, #C4320A);
+}
+
+.booth-gift-btn--ghost:hover {
+  background: rgba(196, 50, 10, 0.06);
+}
+
+.booth-gift-action-row {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.booth-gift-action-row .booth-gift-btn--ghost {
+  margin-top: 0;
+}
+
+.booth-gift-undo-link {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px;
+  align-self: center;
+}
+
+.booth-gift-undo-link:hover {
+  color: #555;
 }
 
 @media (max-width: 600px) {

@@ -16,8 +16,15 @@ interface EventConfigPayload {
 }
 
 const PENDING_REDIRECT_KEY = 'pendingEventRedirect';
+const CLAIM_KEY_PREFIX = 'boothGiftClaimed:';
 const CONFIG_PATH = '/event-config.json';
 const CACHE_TTL_MS = 60_000;
+
+export interface BoothGiftClaimRecord {
+  claimedAt: string;
+  eventStartAt: string;
+  eventEndAt: string;
+}
 
 let cache: { value: BoothGiftEventConfig | null; fetchedAt: number } | null = null;
 let inflight: Promise<BoothGiftEventConfig | null> | null = null;
@@ -84,6 +91,55 @@ export const consumePendingEventRedirect = (): boolean => {
     /* ignore */
   }
   return false;
+};
+
+const buildClaimKey = (userId: string, config: BoothGiftEventConfig): string =>
+  `${CLAIM_KEY_PREFIX}${userId}:${config.startAt}`;
+
+export const getBoothGiftClaim = (
+  userId: string | undefined | null,
+  config: BoothGiftEventConfig | null
+): BoothGiftClaimRecord | null => {
+  if (!userId || !config) return null;
+  try {
+    const raw = localStorage.getItem(buildClaimKey(userId, config));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as BoothGiftClaimRecord;
+    if (parsed?.eventStartAt !== config.startAt) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+export const markBoothGiftClaimed = (
+  userId: string | undefined | null,
+  config: BoothGiftEventConfig | null
+): BoothGiftClaimRecord | null => {
+  if (!userId || !config) return null;
+  const record: BoothGiftClaimRecord = {
+    claimedAt: new Date().toISOString(),
+    eventStartAt: config.startAt,
+    eventEndAt: config.endAt,
+  };
+  try {
+    localStorage.setItem(buildClaimKey(userId, config), JSON.stringify(record));
+    return record;
+  } catch {
+    return null;
+  }
+};
+
+export const clearBoothGiftClaim = (
+  userId: string | undefined | null,
+  config: BoothGiftEventConfig | null
+): void => {
+  if (!userId || !config) return;
+  try {
+    localStorage.removeItem(buildClaimKey(userId, config));
+  } catch {
+    /* ignore */
+  }
 };
 
 export const BOOTH_GIFT_PATH = '/event/booth-gift';
