@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { usePreventRefresh } from '../hooks/useNavigationGuard';
 import { useAlert } from './AlertProvider';
 import { getApiBaseUrl } from '../utils/api';
+import {
+  fetchBoothGiftConfig,
+  isBoothGiftActive,
+  markPendingEventRedirect,
+} from '../utils/eventConfig';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -322,6 +327,12 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       const result = await response.json();
 
       if (result.success) {
+        // 이벤트 진행 중이면 로그인 후 사은품 페이지로 자동 이동하도록 플래그만 설정
+        // (실제 리다이렉트는 로그인 시점에 사용자 국가가 한국인지 추가로 검증한 뒤 수행)
+        const eventConfig = await fetchBoothGiftConfig({ force: true });
+        if (isBoothGiftActive(eventConfig)) {
+          markPendingEventRedirect();
+        }
         showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
         // 입력 필드 초기화
         setEmail('');

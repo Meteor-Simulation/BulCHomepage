@@ -6,7 +6,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import LoginModal from '../../components/LoginModal';
 import { useAlert } from '../../components/AlertProvider';
-import { formatPhoneNumber, cleanPhoneNumber } from '../../utils/phoneUtils';
+import BoothGiftBanner from '../../components/BoothGiftBanner';
+import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import {
   MenuSection,
@@ -940,6 +941,8 @@ const MyPage: React.FC = () => {
           <main className="mypage-content">
             {successMessage && <div className="message success">{successMessage}</div>}
             {errorMessage && <div className="message error">{errorMessage}</div>}
+
+            <BoothGiftBanner />
 
             <div className="mypage-grid">
               {activeMenu === 'profile' && (

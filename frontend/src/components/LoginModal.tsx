@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  BOOTH_GIFT_PATH,
+  consumePendingEventRedirect,
+  fetchBoothGiftConfig,
+  isBoothGiftEligible,
+} from '../utils/eventConfig';
 import './LoginModal.css';
 
 // 로그인 성공 시 히스토리 정리 (뒤로가기 방지)
@@ -22,6 +30,8 @@ type PasswordResetStep = 'email' | 'code' | 'newPassword' | 'success';
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess }) => {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { language } = useLanguage();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -115,6 +125,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setEmail('');
         setPassword('');
         clearAuthHistory(); // 로그인 성공 시 히스토리 정리
+
+        // 회원가입 직후 이벤트 페이지 자동 이동 처리 (이벤트 활성 + 한국어 사용자에 한함)
+        if (consumePendingEventRedirect()) {
+          const eventConfig = await fetchBoothGiftConfig({ force: true });
+          if (isBoothGiftEligible(eventConfig, language)) {
+            onClose();
+            navigate(BOOTH_GIFT_PATH);
+            return;
+          }
+        }
+
         onSuccess?.(); // 성공 콜백 호출
       } else {
         setError(result.message || t('login.errors.invalidCredentials'));
