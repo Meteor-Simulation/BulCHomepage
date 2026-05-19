@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import {
   BoothGiftClaimRecord,
   BoothGiftEventConfig,
-  clearBoothGiftClaim,
   fetchBoothGiftConfig,
+  fetchCurrentUserCountry,
   getBoothGiftClaim,
   isBoothGiftActive,
+  isCountryEligibleForBoothGift,
   markBoothGiftClaimed,
 } from '../../utils/eventConfig';
 import './BoothGiftPage.css';
@@ -44,18 +45,23 @@ const BoothGiftPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isAuthReady } = useAuth();
   const [config, setConfig] = useState<BoothGiftEventConfig | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [claim, setClaim] = useState<BoothGiftClaimRecord | null>(null);
   const [pageEnteredAt] = useState<string>(() => new Date().toISOString());
 
   useEffect(() => {
     let cancelled = false;
-    fetchBoothGiftConfig({ force: true }).then((value) => {
-      if (!cancelled) {
-        setConfig(value);
-        setIsLoading(false);
-      }
-    });
+    (async () => {
+      const [configValue, countryValue] = await Promise.all([
+        fetchBoothGiftConfig({ force: true }),
+        fetchCurrentUserCountry(),
+      ]);
+      if (cancelled) return;
+      setConfig(configValue);
+      setCountry(countryValue);
+      setIsLoading(false);
+    })();
     return () => {
       cancelled = true;
     };
@@ -74,6 +80,10 @@ const BoothGiftPage: React.FC = () => {
   }, [user?.id, config]);
 
   const active = useMemo(() => isBoothGiftActive(config), [config]);
+  const countryEligible = useMemo(
+    () => isCountryEligibleForBoothGift(country),
+    [country]
+  );
   const dateRange = useMemo(
     () => (config ? formatDateRange(config.startAt, config.endAt) : ''),
     [config]
@@ -83,23 +93,13 @@ const BoothGiftPage: React.FC = () => {
   const handleMarkClaimed = () => {
     if (!user?.id || !config) return;
     const confirmed = window.confirm(
-      '사은품을 받으셨나요? "확인"을 누르면 수령 완료로 표시되며, 이후 동일 기기에서는 "수령 완료" 화면으로 표시됩니다.'
+      '[부스 직원 확인]\n사은품을 전달하셨습니까?\n\n확인 시 본 화면이 "수령 완료" 상태로 변경되며, 동일 사용자가 같은 기기에서 재방문 시 사은품 페이지가 노출되지 않습니다.\n\n이 작업은 운영자가 직접 수행해야 합니다.'
     );
     if (!confirmed) return;
     const record = markBoothGiftClaimed(user.id, config);
     if (record) {
       setClaim(record);
     }
-  };
-
-  const handleUndoClaim = () => {
-    if (!user?.id || !config) return;
-    const confirmed = window.confirm(
-      '수령 표시를 취소합니다. (실수로 눌렀거나 부스 직원이 사은품을 전달하지 않은 경우에만 사용하세요)'
-    );
-    if (!confirmed) return;
-    clearBoothGiftClaim(user.id, config);
-    setClaim(null);
   };
 
   if (!isAuthReady || isLoading) {
@@ -117,7 +117,7 @@ const BoothGiftPage: React.FC = () => {
     return null;
   }
 
-  if (!config || !active) {
+  if (!config || !active || !countryEligible) {
     return (
       <div className="booth-gift-page">
         <Header />
@@ -125,7 +125,7 @@ const BoothGiftPage: React.FC = () => {
           <div className="booth-gift-card booth-gift-card--inactive">
             <h1 className="booth-gift-title">이벤트가 진행되고 있지 않습니다</h1>
             <p className="booth-gift-description">
-              현재 진행 중인 사은품 이벤트가 없습니다. 추후 이벤트 일정은 홈페이지를 통해 안내드립니다.
+              현재 진행 중인 사은품 이벤트가 없거나, 본 이벤트의 대상이 아닙니다.
             </p>
             <button
               type="button"
@@ -199,38 +199,32 @@ const BoothGiftPage: React.FC = () => {
             </div>
           </div>
 
-          {!isClaimed && (
-            <div className="booth-gift-staff-callout">
-              <strong>부스 직원 안내</strong>
-              <p>본 화면 확인 후 사은품을 전달하시고, 아래 <em>"사은품 수령 완료"</em> 버튼을 눌러주세요.</p>
-            </div>
-          )}
-
           {isClaimed ? (
-            <div className="booth-gift-action-row">
-              <button
-                type="button"
-                className="booth-gift-btn booth-gift-btn--ghost"
-                onClick={() => navigate('/')}
-              >
-                메인으로 돌아가기
-              </button>
-              <button
-                type="button"
-                className="booth-gift-undo-link"
-                onClick={handleUndoClaim}
-              >
-                실수로 누르셨나요? 수령 표시 취소
-              </button>
-            </div>
-          ) : (
             <button
               type="button"
-              className="booth-gift-btn booth-gift-btn--claim"
-              onClick={handleMarkClaimed}
+              className="booth-gift-btn booth-gift-btn--ghost booth-gift-btn--full"
+              onClick={() => navigate('/')}
             >
-              사은품 수령 완료
+              메인으로 돌아가기
             </button>
+          ) : (
+            <div className="booth-gift-operator-section">
+              <div className="booth-gift-operator-warning">
+                <span className="booth-gift-operator-warning__icon" aria-hidden="true">⚠️</span>
+                <div className="booth-gift-operator-warning__text">
+                  <strong>아래 버튼은 부스 직원(운영자)이 직접 누릅니다.</strong>
+                  <span>사용자께서는 본 화면을 그대로 부스 직원에게 보여주세요.</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="booth-gift-btn booth-gift-btn--operator"
+                onClick={handleMarkClaimed}
+              >
+                <span className="booth-gift-btn__tag">부스 직원 전용</span>
+                <span className="booth-gift-btn__main">사은품 수령 완료 처리</span>
+              </button>
+            </div>
           )}
         </div>
       </main>

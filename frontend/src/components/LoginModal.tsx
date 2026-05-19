@@ -7,7 +7,8 @@ import {
   BOOTH_GIFT_PATH,
   consumePendingEventRedirect,
   fetchBoothGiftConfig,
-  isBoothGiftActive,
+  fetchCurrentUserCountry,
+  isBoothGiftEligible,
 } from '../utils/eventConfig';
 import './LoginModal.css';
 
@@ -124,10 +125,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setPassword('');
         clearAuthHistory(); // 로그인 성공 시 히스토리 정리
 
-        // 회원가입 직후 이벤트 페이지 자동 이동 처리
+        // 회원가입 직후 이벤트 페이지 자동 이동 처리 (이벤트 활성 + 한국 사용자에 한함)
         if (consumePendingEventRedirect()) {
-          const eventConfig = await fetchBoothGiftConfig({ force: true });
-          if (isBoothGiftActive(eventConfig)) {
+          const [eventConfig, userCountry] = await Promise.all([
+            fetchBoothGiftConfig({ force: true }),
+            fetchCurrentUserCountry(),
+          ]);
+          if (isBoothGiftEligible(eventConfig, userCountry)) {
             onClose();
             navigate(BOOTH_GIFT_PATH);
             return;

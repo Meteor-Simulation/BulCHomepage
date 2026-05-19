@@ -5,7 +5,8 @@ import { getApiBaseUrl } from '../utils/api';
 import {
   BOOTH_GIFT_PATH,
   fetchBoothGiftConfig,
-  isBoothGiftActive,
+  fetchCurrentUserCountry,
+  isBoothGiftEligible,
 } from '../utils/eventConfig';
 import './OAuthSetupPassword.css';
 
@@ -86,9 +87,12 @@ const OAuthSetupPassword: React.FC = () => {
         const loginResult = await loginWithToken();
 
         if (loginResult.success) {
-          // 박람회 사은품 이벤트 진행 중이면 이벤트 페이지로 이동
-          const eventConfig = await fetchBoothGiftConfig({ force: true });
-          if (isBoothGiftActive(eventConfig)) {
+          // 박람회 사은품 이벤트 진행 중 + 한국 사용자에 한해 이벤트 페이지로 이동
+          const [eventConfig, userCountry] = await Promise.all([
+            fetchBoothGiftConfig({ force: true }),
+            fetchCurrentUserCountry(),
+          ]);
+          if (isBoothGiftEligible(eventConfig, userCountry)) {
             navigate(BOOTH_GIFT_PATH);
           } else {
             navigate('/');

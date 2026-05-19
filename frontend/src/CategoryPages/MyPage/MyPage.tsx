@@ -942,7 +942,7 @@ const MyPage: React.FC = () => {
             {successMessage && <div className="message success">{successMessage}</div>}
             {errorMessage && <div className="message error">{errorMessage}</div>}
 
-            <BoothGiftBanner />
+            <BoothGiftBanner userCountry={userInfo.country} />
 
             <div className="mypage-grid">
               {activeMenu === 'profile' && (
