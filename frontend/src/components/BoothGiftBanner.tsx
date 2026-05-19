@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import {
   BOOTH_GIFT_PATH,
   BoothGiftEventConfig,
@@ -9,13 +10,12 @@ import {
 import './BoothGiftBanner.css';
 
 interface BoothGiftBannerProps {
-  /** 사용자의 국가 코드. 'KR'인 경우에만 배너 노출 */
-  userCountry?: string | null;
   className?: string;
 }
 
-const BoothGiftBanner: React.FC<BoothGiftBannerProps> = ({ userCountry, className }) => {
+const BoothGiftBanner: React.FC<BoothGiftBannerProps> = ({ className }) => {
   const navigate = useNavigate();
+  const { language, isLanguageReady } = useLanguage();
   const [config, setConfig] = useState<BoothGiftEventConfig | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -32,7 +32,7 @@ const BoothGiftBanner: React.FC<BoothGiftBannerProps> = ({ userCountry, classNam
     };
   }, []);
 
-  if (!ready || !isBoothGiftEligible(config, userCountry) || !config) {
+  if (!ready || !isLanguageReady || !isBoothGiftEligible(config, language) || !config) {
     return null;
   }
 

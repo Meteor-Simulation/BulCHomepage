@@ -1,5 +1,3 @@
-import { getApiBaseUrl } from './api';
-
 export interface BoothGiftEventConfig {
   enabled: boolean;
   startAt: string;
@@ -22,8 +20,8 @@ const CLAIM_KEY_PREFIX = 'boothGiftClaimed:';
 const CONFIG_PATH = '/event-config.json';
 const CACHE_TTL_MS = 60_000;
 
-/** 사은품 이벤트 대상 국가 (현재 한국 전용) */
-export const BOOTH_GIFT_TARGET_COUNTRY = 'KR';
+/** 사은품 이벤트 대상 언어 (한국어 사용자 전용). IP 기반 자동 감지 + 사용자 명시 설정 모두 반영 */
+export const BOOTH_GIFT_TARGET_LANGUAGE = 'ko';
 
 export interface BoothGiftClaimRecord {
   claimedAt: string;
@@ -77,33 +75,16 @@ export const isBoothGiftActive = (config: BoothGiftEventConfig | null): boolean 
   return now >= start && now <= end;
 };
 
-/** 국가 코드가 사은품 이벤트 대상인지 판정 (한국만 허용, null/undefined는 제외) */
-export const isCountryEligibleForBoothGift = (
-  country: string | null | undefined
-): boolean => country === BOOTH_GIFT_TARGET_COUNTRY;
+/** 언어 코드가 사은품 이벤트 대상인지 판정 (한국어만 허용) */
+export const isLanguageEligibleForBoothGift = (
+  language: string | null | undefined
+): boolean => language === BOOTH_GIFT_TARGET_LANGUAGE;
 
-/** 활성 상태 + 사용자 국가 적격성 종합 판정 */
+/** 활성 상태 + 사용자 언어 적격성 종합 판정 */
 export const isBoothGiftEligible = (
   config: BoothGiftEventConfig | null,
-  country: string | null | undefined
-): boolean => isBoothGiftActive(config) && isCountryEligibleForBoothGift(country);
-
-/** 현재 로그인한 사용자의 국가 코드 조회 (이벤트 게이팅 전용) */
-export const fetchCurrentUserCountry = async (): Promise<string | null> => {
-  const token = localStorage.getItem('accessToken');
-  if (!token) return null;
-  try {
-    const response = await fetch(`${getApiBaseUrl()}/api/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    return (data?.country as string | undefined) ?? null;
-  } catch (error) {
-    console.warn('[eventConfig] failed to fetch user country', error);
-    return null;
-  }
-};
+  language: string | null | undefined
+): boolean => isBoothGiftActive(config) && isLanguageEligibleForBoothGift(language);
 
 export const markPendingEventRedirect = (): void => {
   try {

@@ -2,14 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   BoothGiftClaimRecord,
   BoothGiftEventConfig,
   fetchBoothGiftConfig,
-  fetchCurrentUserCountry,
   getBoothGiftClaim,
   isBoothGiftActive,
-  isCountryEligibleForBoothGift,
+  isLanguageEligibleForBoothGift,
   markBoothGiftClaimed,
 } from '../../utils/eventConfig';
 import './BoothGiftPage.css';
@@ -44,24 +44,19 @@ const formatDateTime = (iso: string): string => {
 const BoothGiftPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isAuthReady } = useAuth();
+  const { language, isLanguageReady } = useLanguage();
   const [config, setConfig] = useState<BoothGiftEventConfig | null>(null);
-  const [country, setCountry] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [claim, setClaim] = useState<BoothGiftClaimRecord | null>(null);
   const [pageEnteredAt] = useState<string>(() => new Date().toISOString());
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const [configValue, countryValue] = await Promise.all([
-        fetchBoothGiftConfig({ force: true }),
-        fetchCurrentUserCountry(),
-      ]);
+    fetchBoothGiftConfig({ force: true }).then((value) => {
       if (cancelled) return;
-      setConfig(configValue);
-      setCountry(countryValue);
+      setConfig(value);
       setIsLoading(false);
-    })();
+    });
     return () => {
       cancelled = true;
     };
@@ -80,9 +75,9 @@ const BoothGiftPage: React.FC = () => {
   }, [user?.id, config]);
 
   const active = useMemo(() => isBoothGiftActive(config), [config]);
-  const countryEligible = useMemo(
-    () => isCountryEligibleForBoothGift(country),
-    [country]
+  const languageEligible = useMemo(
+    () => isLanguageEligibleForBoothGift(language),
+    [language]
   );
   const dateRange = useMemo(
     () => (config ? formatDateRange(config.startAt, config.endAt) : ''),
@@ -102,7 +97,7 @@ const BoothGiftPage: React.FC = () => {
     }
   };
 
-  if (!isAuthReady || isLoading) {
+  if (!isAuthReady || isLoading || !isLanguageReady) {
     return (
       <div className="booth-gift-page">
         <Header />
@@ -117,7 +112,7 @@ const BoothGiftPage: React.FC = () => {
     return null;
   }
 
-  if (!config || !active || !countryEligible) {
+  if (!config || !active || !languageEligible) {
     return (
       <div className="booth-gift-page">
         <Header />
@@ -140,7 +135,6 @@ const BoothGiftPage: React.FC = () => {
     );
   }
 
-  const displayName = user?.name || user?.email?.split('@')[0] || '회원';
   const isClaimed = claim !== null;
 
   return (
@@ -167,10 +161,6 @@ const BoothGiftPage: React.FC = () => {
           )}
 
           <div className="booth-gift-user-block">
-            <div className="booth-gift-user-row">
-              <span className="booth-gift-user-label">이름</span>
-              <span className="booth-gift-user-value">{displayName}</span>
-            </div>
             <div className="booth-gift-user-row">
               <span className="booth-gift-user-label">이메일</span>
               <span className="booth-gift-user-value">{user?.email ?? '-'}</span>
