@@ -417,3 +417,77 @@
 .cancel-reactivation-btn:hover {
   color: #333;
 }
+
+/* 약관 동의 영역 */
+.signup-agreements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #f8f9fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.signup-agreements .agreement-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.signup-agreements .agreement-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #C4320A;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.signup-agreements .agreement-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.signup-agreements .agreement-text.all {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.signup-agreements .required-badge {
+  color: #C4320A;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.signup-agreements .optional-badge {
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.signup-agreements .agreement-view-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+.signup-agreements .agreement-view-btn:hover {
+  color: #C4320A;
+}
+
+.signup-agreements .agreement-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
