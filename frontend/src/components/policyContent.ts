@@ -30,7 +30,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제4조 (서비스의 제공)',
         bodies: [
-          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BULC 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.',
+          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BULC 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.<br/>3. 회사는 서비스 운영상 필요한 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내)를 이메일 또는 서비스 내 알림 등의 방법으로 발송할 수 있으며, 이러한 안내는 수신 거부와 무관하게 발송됩니다.',
         ],
       },
       {
@@ -90,7 +90,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 4 (Service Provision)',
         bodies: [
-          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BULC fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.',
+          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BULC fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.<br/>3. The Company may send service-related notices (informational notices such as changes to these Terms, service maintenance, security announcements, software updates, and license expiration) by email or in-service notifications. Such notices are sent regardless of the user\'s opt-out from marketing communications.',
         ],
       },
       {
@@ -135,7 +135,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. 개인정보의 수집 및 이용 목적',
         bodies: [
           '주식회사 메테오시뮬레이션(이하 "회사")은 다음의 목적을 위하여 개인정보를 수집 및 이용합니다. 수집한 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경될 시에는 사전동의를 구할 예정입니다.',
-          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공',
+          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/>&nbsp;&nbsp;- 운영상 필수 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내) 이메일 발송 — 수신 거부와 무관하게 발송<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공 (이메일, SMS 등 전자적 방법으로 발송하며 언제든지 수신 거부 가능)',
         ],
       },
       {
@@ -163,7 +163,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '5. 개인정보처리의 위탁',
         bodies: [
           '회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.',
-          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Google (Gmail SMTP)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증 및 알림 발송',
+          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증, 운영 안내 및 광고성 정보 발송',
         ],
       },
       {
@@ -206,7 +206,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. Purpose of Collection and Use of Personal Information',
         bodies: [
           'Meteor Simulation Co., Ltd. (the "Company") collects and uses personal information for the following purposes. Collected personal information will not be used for any purpose other than those listed below, and prior consent will be obtained if the purpose of use changes.',
-          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services, personalized service offerings, and provision of event and promotional information',
+          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/>&nbsp;&nbsp;- Sending operational notices (informational notices such as changes to Terms, service maintenance, security announcements, software updates, and license expiration) by email — sent regardless of opt-out from marketing communications<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services, personalized service offerings, and provision of event and promotional information (sent by electronic methods such as email and SMS; users may opt out at any time)',
         ],
       },
       {
@@ -234,7 +234,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '5. Outsourcing of Personal Information Processing',
         bodies: [
           'The Company outsources personal information processing tasks as follows for the smooth handling of personal information.',
-          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments<br/>&nbsp;&nbsp;- Scope of outsourced work: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Google (Gmail SMTP)<br/>&nbsp;&nbsp;- Scope of outsourced work: Email verification and notification delivery',
+          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments<br/>&nbsp;&nbsp;- Scope of outsourced work: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- Scope of outsourced work: Email verification, operational notices, and promotional information delivery',
         ],
       },
       {
