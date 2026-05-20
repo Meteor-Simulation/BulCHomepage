@@ -100,6 +100,7 @@ const Footer: React.FC = () => {
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('terms')}>{t('footer.terms')}</button>
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('privacy')}>{t('footer.privacy')}</button>
           <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('refund')}>{t('footer.refund')}</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('electronic')}>{t('footer.electronic')}</button>
         </div>
 
       </div>

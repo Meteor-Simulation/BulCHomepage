@@ -1,4 +1,4 @@
-export type PolicyType = 'terms' | 'privacy' | 'refund';
+export type PolicyType = 'terms' | 'privacy' | 'refund' | 'electronic';
 export type PolicyLang = 'ko' | 'en';
 
 export interface PolicySection {
@@ -390,6 +390,152 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Supplementary Provisions',
         bodies: ['This Refund Policy takes effect on January 1, 2025.'],
+      },
+    ],
+  },
+  electronic: {
+    ko: [
+      {
+        title: '제1조 (목적)',
+        bodies: [
+          '본 약관은 주식회사 메테오시뮬레이션(이하 "회사")이 제공하는 전자금융거래 서비스를 이용자가 이용함에 있어 회사와 이용자 간의 전자금융거래에 관한 기본적인 사항을 정함을 목적으로 합니다.',
+        ],
+      },
+      {
+        title: '제2조 (정의)',
+        bodies: [
+          '1. "전자금융거래"란 회사가 전자적 장치를 통하여 전자금융업무를 제공하고, 이용자가 회사의 종사자와 직접 대면하거나 의사소통을 하지 아니하고 자동화된 방식으로 이를 이용하는 거래를 말합니다.<br/>2. "전자지급수단"이란 전자자금이체, 직불전자지급수단, 선불전자지급수단, 전자화폐, 신용카드, 전자채권 등 전자금융거래법 제2조 제11호에서 정하는 전자적 방법에 따른 지급수단을 말합니다.<br/>3. "자동결제"란 이용자가 사전에 등록한 결제수단을 통해 일정 주기로 서비스 이용요금이 자동으로 결제되는 것을 말합니다.<br/>4. "빌링키"란 자동결제를 위해 이용자의 결제수단 정보를 암호화하여 저장한 고유 식별값을 말합니다.',
+        ],
+      },
+      {
+        title: '제3조 (약관의 명시 및 변경)',
+        bodies: [
+          '1. 회사는 이 약관의 내용을 이용자가 쉽게 알 수 있도록 서비스 초기 화면 또는 연결화면에 게시합니다.<br/>2. 회사는 약관을 변경하고자 하는 경우 변경 예정일 1개월 전에 약관 변경 사유와 적용일자를 명시하여 현행 약관과 함께 게시합니다.<br/>3. 이용자가 변경된 약관 시행일까지 거부 의사를 표시하지 않으면 약관 변경에 동의한 것으로 봅니다.',
+        ],
+      },
+      {
+        title: '제4조 (전자지급결제대행 서비스)',
+        bodies: [
+          '1. 회사는 전자지급결제대행업자(PG사: 토스페이먼츠)를 통해 신용카드, 계좌이체 등의 결제수단으로 서비스 이용요금 결제를 제공합니다.<br/>2. 이용자가 결제수단을 선택하고 결제에 필요한 정보를 입력하면, 회사는 해당 정보를 전자지급결제대행업자에게 전송하여 결제를 처리합니다.<br/>3. 결제 처리 결과는 이용자에게 전자적 방법으로 통지합니다.',
+        ],
+      },
+      {
+        title: '제5조 (자동결제 및 정기결제)',
+        bodies: [
+          '1. 이용자가 구독형 서비스를 이용하는 경우, 사전에 등록한 결제수단으로 정해진 결제 주기(월간/분기/연간)에 따라 자동결제가 진행됩니다.<br/>2. 회사는 자동결제 시행 전 결제 예정일, 결제 금액, 결제수단을 이용자에게 이메일 또는 서비스 내 알림으로 사전 고지합니다.<br/>3. 이용자는 자동결제 예정일 전까지 마이페이지에서 자동결제를 해지할 수 있으며, 해지 시 다음 결제 주기부터 자동결제가 중단됩니다.<br/>4. 이미 결제된 현재 구독 기간의 서비스는 해당 기간 만료 시까지 정상 이용 가능합니다.',
+        ],
+      },
+      {
+        title: '제6조 (결제수단의 등록 및 관리)',
+        bodies: [
+          '1. 이용자가 자동결제를 위해 결제수단을 등록하면, 회사는 해당 정보를 암호화하여 빌링키 형태로 안전하게 저장합니다.<br/>2. 이용자는 언제든지 마이페이지에서 등록된 결제수단을 변경하거나 삭제할 수 있습니다.<br/>3. 결제수단 삭제 시 해당 결제수단으로 예정된 자동결제는 중단됩니다.',
+        ],
+      },
+      {
+        title: '제7조 (이용자의 확인, 정정 및 철회)',
+        bodies: [
+          '1. 이용자는 전자금융거래의 내용을 서비스 내 결제 내역 페이지에서 확인할 수 있습니다.<br/>2. 이용자는 전자금융거래에 오류가 있음을 안 때에는 회사에 그 정정을 요구할 수 있으며, 회사는 이를 조사하여 처리한 후 결과를 이용자에게 알려드립니다.<br/>3. 이용자는 결제일로부터 7일 이내 및 서비스 미이용 상태인 경우 결제 취소를 요청할 수 있습니다.',
+        ],
+      },
+      {
+        title: '제8조 (회사의 책임)',
+        bodies: [
+          '1. 회사는 접근매체의 위조나 변조로 발생한 사고, 계약 체결 또는 거래 지시의 전자적 전송이나 처리 과정에서 발생한 사고로 인하여 이용자에게 손해가 발생한 경우에는 그 손해를 배상할 책임을 집니다.<br/>2. 다만, 이용자의 고의 또는 중대한 과실로 인한 경우에는 회사의 책임이 감면될 수 있습니다.',
+        ],
+      },
+      {
+        title: '제9조 (이용자의 의무)',
+        bodies: [
+          '1. 이용자는 전자금융거래 시 사용되는 접근매체를 선량한 관리자로서의 주의를 다하여 관리하여야 합니다.<br/>2. 이용자는 접근매체를 제3자에게 대여하거나 양도 또는 담보의 목적으로 제공하여서는 안 됩니다.<br/>3. 이용자는 접근매체의 분실, 도난, 위조 또는 변조 사실을 알게 된 때에는 즉시 회사에 통지하여야 합니다.',
+        ],
+      },
+      {
+        title: '제10조 (거래기록의 보존)',
+        bodies: [
+          '1. 회사는 전자금융거래에 관한 기록을 거래일로부터 5년간 보존합니다.<br/>2. 이용자는 회사에 대하여 전자금융거래에 관한 기록의 열람을 요구할 수 있으며, 회사는 이에 응하여야 합니다.',
+        ],
+      },
+      {
+        title: '제11조 (분쟁 처리 및 관할)',
+        bodies: [
+          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(support@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
+        ],
+      },
+      {
+        title: '부칙',
+        bodies: ['본 약관은 2026년 1월 1일부터 시행합니다.'],
+      },
+    ],
+    en: [
+      {
+        title: 'Article 1 (Purpose)',
+        bodies: [
+          'These Terms set forth the basic matters relating to electronic financial transactions between Meteor Simulation Co., Ltd. (the "Company") and users in connection with the use of the Company\'s electronic financial transaction services.',
+        ],
+      },
+      {
+        title: 'Article 2 (Definitions)',
+        bodies: [
+          '1. "Electronic financial transaction" means a transaction in which the Company provides electronic financial services through electronic devices and the user uses such services in an automated manner without direct face-to-face contact or communication with the Company\'s personnel.<br/>2. "Electronic payment means" refers to payment means by electronic methods as defined in Article 2, Item 11 of the Electronic Financial Transactions Act, including electronic funds transfer, debit electronic payment means, prepaid electronic payment means, electronic money, credit cards, and electronic bonds.<br/>3. "Auto-payment" means the automatic recurring charge of service fees through a payment method registered in advance by the user.<br/>4. "Billing key" means a unique identifier that securely stores the user\'s payment method information in encrypted form for auto-payment.',
+        ],
+      },
+      {
+        title: 'Article 3 (Notification and Modification of Terms)',
+        bodies: [
+          '1. The Company shall post these Terms on the initial service screen or linked screen so that users can easily view them.<br/>2. When the Company intends to modify these Terms, it shall post the reason for the modification and the effective date along with the current Terms at least one month before the planned effective date.<br/>3. If a user does not express objection by the effective date of the modified Terms, the user shall be deemed to have agreed to the modification.',
+        ],
+      },
+      {
+        title: 'Article 4 (Electronic Payment Settlement Agency Service)',
+        bodies: [
+          '1. The Company provides payment of service fees through electronic payment settlement agencies (PG provider: Toss Payments) using credit cards, bank transfers, and other payment methods.<br/>2. When the user selects a payment method and enters the required payment information, the Company forwards such information to the electronic payment settlement agency to process the payment.<br/>3. The Company notifies the user of the payment processing result by electronic means.',
+        ],
+      },
+      {
+        title: 'Article 5 (Auto-Payment and Recurring Payment)',
+        bodies: [
+          '1. When a user subscribes to a recurring service, auto-payment is processed through the pre-registered payment method according to the agreed billing cycle (monthly / quarterly / annual).<br/>2. The Company notifies the user of the upcoming payment date, amount, and payment method by email or in-service notification before each auto-payment.<br/>3. The user may cancel auto-payment via My Page before the scheduled payment date; once cancelled, auto-payment will stop from the next billing cycle.<br/>4. The user may continue to use the service through the end of the current paid subscription period.',
+        ],
+      },
+      {
+        title: 'Article 6 (Registration and Management of Payment Methods)',
+        bodies: [
+          '1. When a user registers a payment method for auto-payment, the Company securely stores the information in encrypted form as a billing key.<br/>2. The user may change or delete registered payment methods on My Page at any time.<br/>3. When a payment method is deleted, any auto-payments scheduled with that method will be cancelled.',
+        ],
+      },
+      {
+        title: 'Article 7 (User\'s Right to Verify, Correct, and Withdraw)',
+        bodies: [
+          '1. The user may verify the details of electronic financial transactions on the service\'s payment history page.<br/>2. If the user becomes aware of any error in an electronic financial transaction, the user may request the Company to correct it; the Company will investigate, process the correction, and notify the user of the result.<br/>3. The user may request cancellation of a payment within 7 days from the date of payment and while the service remains unused.',
+        ],
+      },
+      {
+        title: 'Article 8 (Company\'s Liability)',
+        bodies: [
+          '1. The Company shall be liable to compensate the user for damages arising from forgery or alteration of access means, or from accidents occurring during the electronic transmission or processing of contract formation or transaction instructions.<br/>2. However, the Company\'s liability may be reduced or exempted if the damage is caused by the user\'s intent or gross negligence.',
+        ],
+      },
+      {
+        title: 'Article 9 (User\'s Obligations)',
+        bodies: [
+          '1. The user must manage access means used in electronic financial transactions with the care of a prudent manager.<br/>2. The user must not lend, transfer, or pledge access means to a third party.<br/>3. Upon becoming aware of loss, theft, forgery, or alteration of access means, the user must immediately notify the Company.',
+        ],
+      },
+      {
+        title: 'Article 10 (Retention of Transaction Records)',
+        bodies: [
+          '1. The Company shall retain records of electronic financial transactions for five years from the date of the transaction.<br/>2. The user may request the Company to disclose records of electronic financial transactions, and the Company shall comply with such requests.',
+        ],
+      },
+      {
+        title: 'Article 11 (Dispute Resolution and Jurisdiction)',
+        bodies: [
+          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (support@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea and shall be filed in the court having jurisdiction over the Company\'s head office.',
+        ],
+      },
+      {
+        title: 'Supplementary Provisions',
+        bodies: ['These Terms take effect on January 1, 2026.'],
       },
     ],
   },

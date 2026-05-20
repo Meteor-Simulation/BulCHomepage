@@ -545,7 +545,18 @@
       "passwordMissingSpecial": "비밀번호에 특수문자를 포함해야 합니다.",
       "passwordMismatch": "비밀번호가 일치하지 않습니다.",
       "signupFailed": "회원가입에 실패했습니다.",
-      "signupError": "회원가입 중 오류가 발생했습니다."
+      "signupError": "회원가입 중 오류가 발생했습니다.",
+      "agreeTermsRequired": "이용약관에 동의해주세요.",
+      "agreePrivacyRequired": "개인정보처리방침에 동의해주세요."
+    },
+    "agreements": {
+      "all": "전체 동의",
+      "required": "[필수]",
+      "optional": "[선택]",
+      "terms": "이용약관 동의",
+      "privacy": "개인정보처리방침 동의",
+      "marketing": "광고성 정보 수신 동의",
+      "view": "보기"
     }
   },
   "board": {
@@ -682,6 +693,7 @@
     "legalPolicy": "약관 및 정책",
     "terms": "이용약관",
     "privacy": "개인정보처리방침",
-    "refund": "환불정책"
+    "refund": "환불정책",
+    "electronic": "전자금융거래 이용약관"
   }
 }

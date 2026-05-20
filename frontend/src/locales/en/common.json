@@ -545,7 +545,18 @@
       "passwordMissingSpecial": "Password must include special characters.",
       "passwordMismatch": "Passwords do not match.",
       "signupFailed": "Sign-up failed.",
-      "signupError": "An error occurred during sign-up."
+      "signupError": "An error occurred during sign-up.",
+      "agreeTermsRequired": "Please agree to the Terms of Service.",
+      "agreePrivacyRequired": "Please agree to the Privacy Policy."
+    },
+    "agreements": {
+      "all": "Agree to all",
+      "required": "[Required]",
+      "optional": "[Optional]",
+      "terms": "Agree to Terms of Service",
+      "privacy": "Agree to Privacy Policy",
+      "marketing": "Agree to receive promotional information",
+      "view": "View"
     }
   },
   "board": {
@@ -682,6 +693,7 @@
     "legalPolicy": "Terms & Policies",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
-    "refund": "Refund Policy"
+    "refund": "Refund Policy",
+    "electronic": "Electronic Financial Transactions Terms"
   }
 }
