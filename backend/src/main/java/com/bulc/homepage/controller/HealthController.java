@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class HealthController {
      */
     /**
      * 헬스 체크 알림 이메일 발송 (서버 내부 cron에서 호출)
+     * to는 콤마 구분으로 다중 수신자 지정 가능 (예: "a@x.com,b@y.com")
      */
     @PostMapping("/health/alert")
     public ResponseEntity<Map<String, Object>> healthAlert(@RequestBody Map<String, String> request) {
@@ -42,9 +45,18 @@ public class HealthController {
             return ResponseEntity.badRequest().body(Map.of("error", "to, subject, body 필수"));
         }
 
+        List<String> toEmails = Arrays.stream(to.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        if (toEmails.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "to 에 유효한 수신자가 없습니다"));
+        }
+
         try {
-            emailService.sendHtmlEmail(to, subject, body.replace("\n", "<br>"));
-            log.info("헬스 체크 알림 발송 완료 — to: {}", to);
+            emailService.sendHtmlEmail(toEmails, subject, body.replace("\n", "<br>"));
+            log.info("헬스 체크 알림 발송 완료 — to: {}", toEmails);
             return ResponseEntity.ok(Map.of("status", "sent"));
         } catch (Exception e) {
             log.error("헬스 체크 알림 발송 실패: {}", e.getMessage());

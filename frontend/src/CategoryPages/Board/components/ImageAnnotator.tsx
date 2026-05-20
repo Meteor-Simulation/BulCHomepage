@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import './ImageAnnotator.css';
 
 export type MarkerType = 'pin' | 'rect' | 'ellipse';
@@ -31,6 +32,7 @@ interface ImageAnnotatorProps {
 const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
   image, index, readOnly = false, onChange, onDelete,
 }) => {
+  const { t } = useTranslation();
   const imageRef = useRef<HTMLDivElement>(null);
   const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
   const [activeMarkerType, setActiveMarkerType] = useState<MarkerType>('pin');
@@ -143,9 +145,9 @@ const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
   return (
     <div className="annotator-container">
       <div className="annotator-header">
-        <span className="annotator-label">이미지 {index + 1}</span>
+        <span className="annotator-label">{t('board.editor.imageAnnotator.label', { n: index + 1 })}</span>
         {!readOnly && onDelete && (
-          <button className="annotator-delete-btn" onClick={onDelete} title="이미지 제거">
+          <button className="annotator-delete-btn" onClick={onDelete} title={t('board.editor.imageAnnotator.remove')}>
             &times;
           </button>
         )}
@@ -157,21 +159,21 @@ const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
           <button
             className={`tool-btn ${activeMarkerType === 'pin' ? 'active' : ''}`}
             onClick={() => setActiveMarkerType('pin')}
-            title="포인트 마커"
+            title={t('board.editor.imageAnnotator.tools.pin')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
           </button>
           <button
             className={`tool-btn ${activeMarkerType === 'rect' ? 'active' : ''}`}
             onClick={() => setActiveMarkerType('rect')}
-            title="사각형 영역"
+            title={t('board.editor.imageAnnotator.tools.rect')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
           </button>
           <button
             className={`tool-btn ${activeMarkerType === 'ellipse' ? 'active' : ''}`}
             onClick={() => setActiveMarkerType('ellipse')}
-            title="타원 영역"
+            title={t('board.editor.imageAnnotator.tools.ellipse')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
           </button>
@@ -186,10 +188,10 @@ const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
         onMouseMove={handleImageMouseMove}
         onMouseUp={handleImageMouseUp}
       >
-        <img src={image.imageUrl} alt={`이미지 ${index + 1}`} draggable={false} />
+        <img src={image.imageUrl} alt={t('board.editor.imageAnnotator.label', { n: index + 1 })} draggable={false} />
         {!readOnly && image.markers.length === 0 && (
           <div className="annotator-hint">
-            {activeMarkerType === 'pin' ? '이미지를 클릭하여 마커를 추가하세요' : '이미지 위에서 드래그하여 영역을 지정하세요'}
+            {activeMarkerType === 'pin' ? t('board.editor.imageAnnotator.hints.pin') : t('board.editor.imageAnnotator.hints.region')}
           </div>
         )}
         {image.markers.map((marker) => (
@@ -236,20 +238,20 @@ const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
                 <>
                   <input
                     className="desc-label-input"
-                    placeholder="항목명"
+                    placeholder={t('board.editor.imageAnnotator.markerLabelPlaceholder')}
                     value={marker.label}
                     onChange={(e) => handleMarkerChange(marker.number, 'label', e.target.value)}
                   />
                   <input
                     className="desc-description-input"
-                    placeholder="설명을 입력하세요"
+                    placeholder={t('board.editor.imageAnnotator.markerDescriptionPlaceholder')}
                     value={marker.description}
                     onChange={(e) => handleMarkerChange(marker.number, 'description', e.target.value)}
                   />
                   <button
                     className="desc-delete-btn"
                     onClick={() => handleDeleteMarker(marker.number)}
-                    title="마커 삭제"
+                    title={t('board.editor.imageAnnotator.deleteMarker')}
                   >
                     &times;
                   </button>

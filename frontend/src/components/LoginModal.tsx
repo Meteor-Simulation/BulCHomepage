@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  BOOTH_GIFT_PATH,
+  consumePendingEventRedirect,
+  fetchBoothGiftConfig,
+  isBoothGiftEligible,
+} from '../utils/eventConfig';
 import './LoginModal.css';
 
 // 로그인 성공 시 히스토리 정리 (뒤로가기 방지)
@@ -19,7 +28,10 @@ interface LoginModalProps {
 type PasswordResetStep = 'email' | 'code' | 'newPassword' | 'success';
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignup, onSuccess }) => {
+  const { t } = useTranslation();
   const { login } = useAuth();
+  const { language } = useLanguage();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -91,17 +103,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
 
     // 프론트엔드 유효성 검사
     if (!email.trim()) {
-      setError('이메일을 입력해주세요.');
+      setError(t('login.errors.emailRequired'));
       return;
     }
     // 이메일 형식 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
+      setError(t('login.errors.emailInvalid'));
       return;
     }
     if (!password) {
-      setError('비밀번호를 입력해주세요.');
+      setError(t('login.errors.passwordRequired'));
       return;
     }
 
@@ -113,12 +125,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setEmail('');
         setPassword('');
         clearAuthHistory(); // 로그인 성공 시 히스토리 정리
+
+        // 회원가입 직후 이벤트 페이지 자동 이동 처리 (이벤트 활성 + 한국어 사용자에 한함)
+        if (consumePendingEventRedirect()) {
+          const eventConfig = await fetchBoothGiftConfig({ force: true });
+          if (isBoothGiftEligible(eventConfig, language)) {
+            onClose();
+            navigate(BOOTH_GIFT_PATH);
+            return;
+          }
+        }
+
         onSuccess?.(); // 성공 콜백 호출
       } else {
-        setError(result.message || '이메일 또는 비밀번호가 올바르지 않습니다.');
+        setError(result.message || t('login.errors.invalidCredentials'));
       }
     } catch {
-      setError('로그인 중 오류가 발생했습니다.');
+      setError(t('login.errors.general'));
     } finally {
       setIsLoading(false);
     }
@@ -131,11 +154,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!resetEmail.trim()) {
-      setError('이메일을 입력해주세요.');
+      setError(t('passwordReset.errors.emailRequired'));
       return;
     }
     if (!emailRegex.test(resetEmail)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
+      setError(t('passwordReset.errors.emailInvalid'));
       return;
     }
 
@@ -154,10 +177,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setResetStep('code');
         setError('');
       } else {
-        setError(data.message || '인증 코드 발송에 실패했습니다.');
+        setError(data.message || t('passwordReset.errors.sendFailed'));
       }
     } catch {
-      setError('인증 코드 발송 중 오류가 발생했습니다.');
+      setError(t('passwordReset.errors.sendError'));
     } finally {
       setIsLoading(false);
     }
@@ -169,11 +192,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
     setError('');
 
     if (!resetCode.trim()) {
-      setError('인증 코드를 입력해주세요.');
+      setError(t('passwordReset.errors.codeRequired'));
       return;
     }
     if (resetCode.length !== 6) {
-      setError('인증 코드는 6자리입니다.');
+      setError(t('passwordReset.errors.codeLength'));
       return;
     }
 
@@ -192,10 +215,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setResetStep('newPassword');
         setError('');
       } else {
-        setError(data.message || '인증 코드가 올바르지 않습니다.');
+        setError(data.message || t('passwordReset.errors.codeInvalid'));
       }
     } catch {
-      setError('인증 코드 확인 중 오류가 발생했습니다.');
+      setError(t('passwordReset.errors.verifyError'));
     } finally {
       setIsLoading(false);
     }
@@ -207,15 +230,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
     setError('');
 
     if (!newPassword) {
-      setError('새 비밀번호를 입력해주세요.');
+      setError(t('passwordReset.errors.newPasswordRequired'));
       return;
     }
     if (newPassword.length < 8) {
-      setError('비밀번호는 최소 8자 이상이어야 합니다.');
+      setError(t('passwordReset.errors.passwordLength'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t('passwordReset.errors.passwordMismatch'));
       return;
     }
 
@@ -238,10 +261,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         setResetStep('success');
         setError('');
       } else {
-        setError(data.message || '비밀번호 재설정에 실패했습니다.');
+        setError(data.message || t('passwordReset.errors.resetFailed'));
       }
     } catch {
-      setError('비밀번호 재설정 중 오류가 발생했습니다.');
+      setError(t('passwordReset.errors.resetError'));
     } finally {
       setIsLoading(false);
     }
@@ -271,17 +294,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
             </svg>
           </button>
 
-          <h2 className="modal-title">비밀번호 찾기</h2>
+          <h2 className="modal-title">{t('passwordReset.title')}</h2>
 
           {resetStep === 'email' && (
             <form className="modal-form" onSubmit={handleRequestResetCode}>
               <p className="modal-description">
-                가입하신 이메일을 입력해주세요.<br />
-                비밀번호 재설정 코드를 보내드립니다.
+                {t('passwordReset.emailStepDesc1')}<br />
+                {t('passwordReset.emailStepDesc2')}
               </p>
               <input
                 type="email"
-                placeholder="이메일"
+                placeholder={t('passwordReset.emailPlaceholder')}
                 className="modal-input"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
@@ -290,20 +313,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
               />
               {error && <p className="modal-error">{error}</p>}
               <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-                {isLoading ? '발송 중...' : '인증 코드 발송'}
+                {isLoading ? t('passwordReset.sending') : t('passwordReset.sendCode')}
               </button>
             </form>
           )}
 
           {resetStep === 'code' && (
             <form className="modal-form" onSubmit={handleVerifyResetCode}>
-              <p className="modal-description">
-                <strong>{resetEmail}</strong>으로<br />
-                인증 코드를 발송했습니다.
-              </p>
+              <p className="modal-description"
+                dangerouslySetInnerHTML={{ __html: t('passwordReset.codeStepDesc', { email: resetEmail }) }}
+              />
               <input
                 type="text"
-                placeholder="인증 코드 6자리"
+                placeholder={t('passwordReset.codePlaceholder')}
                 className="modal-input"
                 value={resetCode}
                 onChange={(e) => setResetCode(e.target.value)}
@@ -313,7 +335,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
               />
               {error && <p className="modal-error">{error}</p>}
               <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-                {isLoading ? '확인 중...' : '코드 확인'}
+                {isLoading ? t('passwordReset.verifying') : t('passwordReset.verifyCode')}
               </button>
               <button
                 type="button"
@@ -321,7 +343,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
                 onClick={() => setResetStep('email')}
                 disabled={isLoading}
               >
-                이메일 다시 입력
+                {t('passwordReset.reenterEmail')}
               </button>
             </form>
           )}
@@ -329,12 +351,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           {resetStep === 'newPassword' && (
             <form className="modal-form" onSubmit={handleResetPassword}>
               <p className="modal-description">
-                새로운 비밀번호를 입력해주세요.
+                {t('passwordReset.newPasswordDesc')}
               </p>
               <div className="password-input-wrapper">
                 <input
                   type={showNewPassword ? 'text' : 'password'}
-                  placeholder="새 비밀번호 (8자 이상)"
+                  placeholder={t('passwordReset.newPasswordPlaceholder')}
                   className="modal-input"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -363,7 +385,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
               <div className="password-input-wrapper">
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="새 비밀번호 확인"
+                  placeholder={t('passwordReset.confirmPasswordPlaceholder')}
                   className="modal-input"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -390,7 +412,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
               </div>
               {error && <p className="modal-error">{error}</p>}
               <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-                {isLoading ? '변경 중...' : '비밀번호 변경'}
+                {isLoading ? t('passwordReset.changing') : t('passwordReset.changePassword')}
               </button>
             </form>
           )}
@@ -403,8 +425,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
                   <path d="M22 4L12 14.01l-3-3" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <p className="modal-description">
-                  비밀번호가 성공적으로 변경되었습니다.<br />
-                  새 비밀번호로 로그인해주세요.
+                  {t('passwordReset.successDesc1')}<br />
+                  {t('passwordReset.successDesc2')}
                 </p>
               </div>
               <button
@@ -412,7 +434,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
                 className="modal-submit-btn"
                 onClick={handleBackToLogin}
               >
-                로그인하기
+                {t('passwordReset.goToLogin')}
               </button>
             </div>
           )}
@@ -420,7 +442,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           {resetStep !== 'success' && (
             <div className="modal-back-to-login">
               <button type="button" className="modal-back-link" onClick={handleBackToLogin}>
-                로그인으로 돌아가기
+                {t('passwordReset.backToLogin')}
               </button>
             </div>
           )}
@@ -439,12 +461,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           </svg>
         </button>
 
-        <h2 className="modal-title">로그인</h2>
+        <h2 className="modal-title">{t('login.title')}</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="이메일"
+            placeholder={t('login.emailPlaceholder')}
             className="modal-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -453,7 +475,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           <div className="password-input-wrapper">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="비밀번호"
+              placeholder={t('login.passwordPlaceholder')}
               className="modal-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -480,7 +502,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
           </div>
           {error && <p className="modal-error">{error}</p>}
           <button type="submit" className="modal-submit-btn" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
+            {isLoading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
 
@@ -490,16 +512,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
             className="modal-forgot-link"
             onClick={() => setIsPasswordReset(true)}
           >
-            비밀번호를 잊으셨나요?
+            {t('login.forgotPassword')}
           </button>
         </div>
 
         <div className="modal-divider">
-          <span>또는</span>
+          <span>{t('login.or')}</span>
         </div>
 
         <div className="modal-social">
-          <p className="modal-social-title">간편 로그인</p>
+          <p className="modal-social-title">{t('login.socialLogin')}</p>
           <div className="modal-social-btns">
             <button type="button" className="social-btn naver" onClick={() => handleSocialLogin('naver')}>
               <svg viewBox="0 0 24 24" className="social-icon">
@@ -523,8 +545,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSign
         </div>
 
         <div className="modal-signup">
-          <span>계정이 없으신가요?</span>
-          <button type="button" className="modal-signup-link" onClick={onSwitchToSignup}>회원가입</button>
+          <span>{t('login.noAccount')}</span>
+          <button type="button" className="modal-signup-link" onClick={onSwitchToSignup}>{t('login.signupLink')}</button>
         </div>
       </div>
     </div>

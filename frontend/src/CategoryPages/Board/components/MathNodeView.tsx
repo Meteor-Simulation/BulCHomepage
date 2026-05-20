@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { NodeViewWrapper } from '@tiptap/react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 const MathNodeView: React.FC<any> = ({ node, updateAttributes, selected }) => {
+  const { t } = useTranslation();
   const renderRef = useRef<HTMLSpanElement>(null);
   const [isEditing] = useState(false);
   const latex = node.attrs.latex || '';
@@ -37,7 +39,7 @@ const MathNodeView: React.FC<any> = ({ node, updateAttributes, selected }) => {
         ref={renderRef}
         className={`math-node-render ${selected ? 'selected' : ''}`}
         onClick={handleClick}
-        title="클릭하여 수식 편집"
+        title={t('board.editor.mathNode.editTooltip')}
       />
     </NodeViewWrapper>
   );

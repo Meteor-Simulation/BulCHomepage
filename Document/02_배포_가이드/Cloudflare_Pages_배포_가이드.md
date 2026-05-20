@@ -77,7 +77,7 @@ npm install
 npm run build
 ```
 
-빌드 성공 시 `build/` 폴더가 생성됩니다.
+빌드 성공 시 `dist/` 폴더가 생성됩니다 (Vite 기본 출력 경로).
 
 ---
 
@@ -121,10 +121,10 @@ npm run build
 |-----------|-----|
 | **Project name** | `bulc-homepage` (원하는 이름) |
 | **Production branch** | `main` 또는 `master` |
-| **Framework preset** | `Create React App` 선택 |
+| **Framework preset** | `None` 선택 (Cloudflare에 Vite 프리셋이 없으므로 수동 설정) |
 | **Root directory** | `frontend` |
 | **Build command** | `npm run build` |
-| **Build output directory** | `build` |
+| **Build output directory** | `dist` |
 
 ### 4.4 빌드 설정 스크린샷 예시
 
@@ -132,10 +132,10 @@ npm run build
 ┌─────────────────────────────────────────────────────────┐
 │ Build settings                                          │
 ├─────────────────────────────────────────────────────────┤
-│ Framework preset:    [Create React App     ▼]           │
+│ Framework preset:    [None                 ▼]           │
 │ Root directory:      [frontend            ]             │
 │ Build command:       [npm run build       ]             │
-│ Build output:        [build               ]             │
+│ Build output:        [dist                ]             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -159,8 +159,8 @@ npm run build
 
 | 변수명 | 값 예시 | 설명 |
 |--------|---------|------|
-| `REACT_APP_API_URL` | `https://api.bulc.co.kr` | 백엔드 API 서버 주소 |
-| `REACT_APP_TOSS_CLIENT_KEY` | `test_ck_xxx` | Toss 결제 클라이언트 키 |
+| `VITE_API_URL` | `https://api.bulc.co.kr` | 백엔드 API 서버 주소 (Vite는 VITE_ prefix 필수) |
+| `VITE_TOSS_CLIENT_KEY` | `test_ck_xxx` | Toss 결제 클라이언트 키 |
 | `NODE_VERSION` | `20` | Node.js 버전 지정 |
 
 ### 5.3 환경별 변수 설정
@@ -172,10 +172,10 @@ Cloudflare Pages는 환경별로 다른 변수를 설정할 수 있습니다:
 
 ```
 Production 환경:
-  REACT_APP_API_URL = https://api.bulc.co.kr
+  VITE_API_URL = https://api.bulc.co.kr
 
 Preview 환경:
-  REACT_APP_API_URL = https://api-dev.bulc.co.kr
+  VITE_API_URL = https://api-dev.bulc.co.kr
 ```
 
 ### 5.4 환경변수 적용
@@ -307,9 +307,9 @@ $ git push
 #### 오류 2: `Build output directory not found`
 ```
 해결: 빌드 출력 경로 확인
-- Create React App: build
+- Vite (현재 사용): dist
+- Create React App (legacy): build
 - Next.js: .next 또는 out
-- Vue: dist
 ```
 
 #### 오류 3: `Node.js version mismatch`
@@ -410,14 +410,14 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy frontend/build --project-name=bulc-homepage
+          command: pages deploy frontend/dist --project-name=bulc-homepage
 ```
 
 ### A.3 GitHub Secrets 설정
@@ -426,7 +426,7 @@ jobs:
 |-------------|-----|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API 토큰 |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 계정 ID (대시보드 URL에서 확인) |
-| `REACT_APP_API_URL` | 백엔드 API URL |
+| `VITE_API_URL` | 백엔드 API URL |
 
 ---
 
@@ -453,7 +453,8 @@ jobs:
 
 - [Cloudflare Pages 공식 문서](https://developers.cloudflare.com/pages/)
 - [Cloudflare Pages 빌드 설정](https://developers.cloudflare.com/pages/platform/build-configuration/)
-- [Create React App 배포 가이드](https://create-react-app.dev/docs/deployment/)
+- [Vite 프로덕션 빌드 가이드](https://vitejs.dev/guide/build.html)
+- [Vite 환경 변수 (`import.meta.env`)](https://vitejs.dev/guide/env-and-mode.html)
 
 ---
 

@@ -5,6 +5,7 @@ import './index.css';
 import './i18n';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { AlertProvider } from './components/AlertProvider';
 import { getSubdomain, SubdomainType } from './utils/subdomain';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
@@ -22,6 +23,7 @@ import RefundPolicyPage from './CategoryPages/Policy/RefundPolicy';
 import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
 import PostEditorPage from './CategoryPages/Board/PostEditorPage';
+import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
 
 // 404 페이지 래퍼 컴포넌트
 const NotFoundPage: React.FC = () => {
@@ -50,6 +52,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
+      <AlertProvider>
       <AuthProvider>
         <LanguageProvider>
         <BrowserRouter>
@@ -70,6 +73,7 @@ const App: React.FC = () => {
             <Route path="/board/write" element={<PostEditorPage />} />
             <Route path="/board/edit/:id" element={<PostEditorPage />} />
             <Route path="/board/:id" element={<PostDetailPage />} />
+            <Route path="/event/booth-gift" element={<BoothGiftPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
             <Route path="*" element={<NotFoundPage />} />
@@ -77,6 +81,7 @@ const App: React.FC = () => {
         </BrowserRouter>
         </LanguageProvider>
       </AuthProvider>
+      </AlertProvider>
     </ErrorBoundary>
   );
 };

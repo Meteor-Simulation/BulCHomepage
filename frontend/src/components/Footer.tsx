@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Footer.css';
 import PolicyModal, { PolicyType } from './PolicyModal';
 
@@ -29,6 +30,7 @@ interface CompanyInfo {
 }
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
   const [info, setInfo] = useState<CompanyInfo | null>(null);
   const [activePolicyModal, setActivePolicyModal] = useState<PolicyType | null>(null);
 
@@ -46,14 +48,14 @@ const Footer: React.FC = () => {
       <div className="footer-content">
         {/* 왼쪽: 회사 안내 */}
         <div className="footer-section footer-contact">
-          <h4>회사 안내</h4>
-          <p>대표자 : {info.company.representative}  |  연락처 : {info.contact.tel}  /  {info.contact.email}</p>
-          <p>{info.company.name}  |  사업자등록번호 : {info.company.businessNumber}
-            {info.company.onlineSalesNumber && <>  |  통신판매업 신고번호 : {info.company.onlineSalesNumber}</>}
+          <h4>{t('footer.companyInfo')}</h4>
+          <p>{t('footer.representative')} : {info.company.representative}  |  {t('footer.contact')} : {info.contact.tel}  /  {info.contact.email}</p>
+          <p>{info.company.name}  |  {t('footer.businessNumber')} : {info.company.businessNumber}
+            {info.company.onlineSalesNumber && <>  |  {t('footer.onlineSalesNumber')} : {info.company.onlineSalesNumber}</>}
           </p>
-          <p>주소 : {info.address.full}</p>
+          <p>{t('footer.address')} : {info.address.full}</p>
           <div className="footer-sns-row">
-            <span className="footer-sns-label">SNS :</span>
+            <span className="footer-sns-label">{t('footer.sns')} :</span>
             {info.sns.youtube && (
               <a href={info.sns.youtube} target="_blank" rel="noopener noreferrer" className="sns-icon sns-icon--youtube">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -94,10 +96,10 @@ const Footer: React.FC = () => {
 
         {/* 오른쪽: 법적 링크 */}
         <div className="footer-section footer-legal">
-          <h4>약관 및 정책</h4>
-          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('terms')}>이용약관</button>
-          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('privacy')}>개인정보처리방침</button>
-          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('refund')}>환불정책</button>
+          <h4>{t('footer.legalPolicy')}</h4>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('terms')}>{t('footer.terms')}</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('privacy')}>{t('footer.privacy')}</button>
+          <button type="button" className="footer-legal-link" onClick={() => setActivePolicyModal('refund')}>{t('footer.refund')}</button>
         </div>
 
       </div>

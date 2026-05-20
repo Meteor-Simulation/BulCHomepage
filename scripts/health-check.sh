@@ -89,10 +89,9 @@ if [ -n "$ISSUES" ]; then
 else
   echo "[$TIMESTAMP] OK" >> "$LOG_FILE"
 
-  # 오전 10시 30분에 정상 안내 발송
+  # KST 10시 / 22시 정각에 정상 안내 발송 (1일 2회)
   CURRENT_HOUR=$(date '+%H')
-  CURRENT_MIN=$(date '+%M')
-  if [ "$CURRENT_HOUR" = "10" ] && [ "$CURRENT_MIN" -ge "25" ]; then
+  if [ "$CURRENT_HOUR" = "10" ] || [ "$CURRENT_HOUR" = "22" ]; then
     SUBJECT="[BulC] 서버 정상 가동 중 - $TIMESTAMP"
     BODY="BulC Homepage 헬스 체크 결과 모든 항목이 정상입니다.\n\n- 백엔드: OK\n- DB: OK\n- 프론트엔드: OK\n- 디스크: ${DISK_USAGE}%\n- Swap: ${SWAP_PCT:-0}%\n\n체크 시각: $TIMESTAMP"
 
@@ -107,6 +106,6 @@ else
       -H "Content-Type: application/json" \
       -d "{\"text\":\"$SLACK_OK\"}" >> "$LOG_FILE" 2>&1 || true
 
-    echo "[$TIMESTAMP] 정상 안내 메일+슬랙 발송" >> "$LOG_FILE"
+    echo "[$TIMESTAMP] 정상 안내 메일+슬랙 발송 (KST ${CURRENT_HOUR}시)" >> "$LOG_FILE"
   fi
 fi

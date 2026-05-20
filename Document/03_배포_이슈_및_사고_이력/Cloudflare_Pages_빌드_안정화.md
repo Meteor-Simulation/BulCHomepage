@@ -1,8 +1,10 @@
-# 16. Cloudflare Pages 빌드 안정화 (TypeScript 5 업그레이드 + ESLint 정리)
+# Cloudflare Pages 빌드 안정화 (TypeScript 5 업그레이드 + ESLint 정리)
 
 > 작성일: 2026-04-30
 > 관련 PR: [#129](https://github.com/Meteor-Simulation/BulCHomepage/pull/129)
 > 관련 브랜치: `fix/ajv-dependency`
+
+> ✅ **상태: RESOLVED (2026-05-03)** — 본 문서가 다루는 react-scripts@5.0.1의 호환성 문제는 **Vite로의 마이그레이션 (`chore/vite-migration`)으로 근본 해소**되었습니다. 본 문서는 사고 이력으로 보존됩니다.
 
 ---
 

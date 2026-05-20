@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './AlertModal.css';
 
 interface AlertModalProps {
@@ -18,6 +19,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   type = 'info',
   autoClose,
 }) => {
+  const { t } = useTranslation();
   // 자동 닫힘
   useEffect(() => {
     if (isOpen && autoClose) {
@@ -82,7 +84,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
         </div>
         <p className="alert-message">{message}</p>
         <button className="alert-close-btn" onClick={onClose}>
-          확인
+          {t('common.confirm')}
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
-# Frontend 개발용 Dockerfile
-# Hot reload 지원 (React Fast Refresh)
+# Frontend 개발용 Dockerfile (Vite)
+# Hot reload 지원 (Vite HMR)
 
 FROM node:20-alpine
 
@@ -9,12 +9,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# 소스코드 복사
+# 빌드 설정 + 진입점 파일 복사
+COPY vite.config.ts tsconfig.json index.html ./
 COPY public ./public
 COPY src ./src
-COPY tsconfig.json ./
 
 EXPOSE 3000
 
-# 개발 서버 실행
-CMD ["npm", "start"]
+# Vite dev server (host 0.0.0.0, port 3000)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

@@ -2,12 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseUrl } from '../utils/api';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  BOOTH_GIFT_PATH,
+  fetchBoothGiftConfig,
+  isBoothGiftEligible,
+} from '../utils/eventConfig';
 import './OAuthSetupPassword.css';
 
 const OAuthSetupPassword: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { loginWithToken } = useAuth();
+  const { language } = useLanguage();
 
   const [token] = useState(searchParams.get('token') || '');
   const [email] = useState(decodeURIComponent(searchParams.get('email') || ''));
@@ -81,7 +88,13 @@ const OAuthSetupPassword: React.FC = () => {
         const loginResult = await loginWithToken();
 
         if (loginResult.success) {
-          navigate('/');
+          // 박람회 사은품 이벤트 진행 중 + 한국어 사용자에 한해 이벤트 페이지로 이동
+          const eventConfig = await fetchBoothGiftConfig({ force: true });
+          if (isBoothGiftEligible(eventConfig, language)) {
+            navigate(BOOTH_GIFT_PATH);
+          } else {
+            navigate('/');
+          }
         } else {
           setError(loginResult.message || '로그인 처리 중 오류가 발생했습니다.');
         }

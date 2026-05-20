@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 확인 - BulC</title>
+    <title data-i18n="pageTitle">로그인 확인 - BulC</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         * {
@@ -232,7 +232,7 @@
             <span class="user-email" id="userEmail">test@bulc.co.kr</span>
         </h1>
 
-        <p class="consent-subtitle">
+        <p class="consent-subtitle" data-i18n="consentSubtitle" data-i18n-html="true">
             위 계정으로 <span class="app-name" id="appName">BUL-C Fire Simulator</span>에<br>로그인하시겠습니까?
         </p>
 
@@ -243,8 +243,8 @@
             <input type="hidden" name="code_challenge_method" id="codeChallengeMethod">
             <input type="hidden" name="state" id="state">
             <div class="btn-group">
-                <button type="submit" class="btn btn-primary" id="confirmBtn">계속</button>
-                <a href="#" class="btn btn-secondary" id="switchAccountBtn">다른 계정으로 로그인</a>
+                <button type="submit" class="btn btn-primary" id="confirmBtn" data-i18n="continueBtn">계속</button>
+                <a href="#" class="btn btn-secondary" id="switchAccountBtn" data-i18n="switchAccount">다른 계정으로 로그인</a>
             </div>
         </form>
     </div>
@@ -257,6 +257,41 @@
     <script>
         // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
+
+        // ========================================
+        // i18n (lang query param > navigator.language > ko)
+        // ========================================
+        const LANG = ((urlParams.get('lang') || navigator.language || 'ko').toLowerCase().indexOf('en') === 0) ? 'en' : 'ko';
+        document.documentElement.lang = LANG;
+
+        const I18N = {
+            ko: {
+                pageTitle: '로그인 확인 - BulC',
+                consentSubtitle: '위 계정으로 <span class="app-name" id="appName">BUL-C Fire Simulator</span>에<br>로그인하시겠습니까?',
+                continueBtn: '계속',
+                switchAccount: '다른 계정으로 로그인',
+                processing: '처리 중...'
+            },
+            en: {
+                pageTitle: 'Confirm Login - BulC',
+                consentSubtitle: 'Continue to <span class="app-name" id="appName">BUL-C Fire Simulator</span><br>with this account?',
+                continueBtn: 'Continue',
+                switchAccount: 'Sign in with another account',
+                processing: 'Processing...'
+            }
+        };
+
+        function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.ko[key] || key; }
+
+        document.title = t('pageTitle');
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            const key = el.getAttribute('data-i18n');
+            if (el.getAttribute('data-i18n-html') === 'true') {
+                el.innerHTML = t(key);
+            } else {
+                el.textContent = t(key);
+            }
+        });
 
         const clientId = urlParams.get('client_id') || '';
         const redirectUri = urlParams.get('redirect_uri') || '';
@@ -298,7 +333,7 @@
 
         consentForm.addEventListener('submit', function() {
             confirmBtn.disabled = true;
-            confirmBtn.textContent = '처리 중...';
+            confirmBtn.textContent = t('processing');
             loadingOverlay.classList.add('visible');
         });
     </script>
