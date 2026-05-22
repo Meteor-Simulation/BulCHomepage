@@ -8,6 +8,8 @@ import {
   isBoothGiftActive,
   markPendingEventRedirect,
 } from '../utils/eventConfig';
+import PolicyModal from './PolicyModal';
+import { PolicyType } from './policyContent';
 import './SignupModal.css';
 
 interface SignupModalProps {
@@ -45,6 +47,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const [timerKey, setTimerKey] = useState(0);
   const [codeError, setCodeError] = useState(false);
 
+  // 약관 동의 상태
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+  const [activePolicyModal, setActivePolicyModal] = useState<PolicyType | null>(null);
 
   // 새로고침 방지 - 모달이 열려있고 입력값이 있을 때만 활성화
   const hasUserInput = email.length > 0 || password.length > 0 || passwordConfirm.length > 0;
@@ -73,6 +80,10 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setIsTimerExpired(false);
       setTimerKey(0);
       setCodeError(false);
+      setAgreeTerms(false);
+      setAgreePrivacy(false);
+      setAgreeMarketing(false);
+      setActivePolicyModal(null);
     }
   }, [isOpen]);
 
@@ -308,6 +319,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setError(t('signup.errors.passwordMismatch'));
       return;
     }
+    if (!agreeTerms) {
+      setError(t('signup.errors.agreeTermsRequired'));
+      return;
+    }
+    if (!agreePrivacy) {
+      setError(t('signup.errors.agreePrivacyRequired'));
+      return;
+    }
 
     setIsLoading(true);
 
@@ -321,6 +340,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         body: JSON.stringify({
           signupTicket,
           password,
+          marketingAgreed: agreeMarketing,
         }),
       });
 
@@ -545,6 +565,56 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
             )}
           </div>
 
+          {/* 약관 동의 */}
+          <div className="signup-agreements">
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeTerms && agreePrivacy && agreeMarketing}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setAgreeTerms(checked);
+                  setAgreePrivacy(checked);
+                  setAgreeMarketing(checked);
+                }}
+              />
+              <span className="agreement-text all">{t('signup.agreements.all')}</span>
+            </label>
+            <div className="agreement-divider" />
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="required-badge">{t('signup.agreements.required')}</span> {t('signup.agreements.terms')}
+              </span>
+              <button type="button" className="agreement-view-btn" onClick={() => setActivePolicyModal('terms')}>{t('signup.agreements.view')}</button>
+            </label>
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreePrivacy}
+                onChange={(e) => setAgreePrivacy(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="required-badge">{t('signup.agreements.required')}</span> {t('signup.agreements.privacy')}
+              </span>
+              <button type="button" className="agreement-view-btn" onClick={() => setActivePolicyModal('privacy')}>{t('signup.agreements.view')}</button>
+            </label>
+            <label className="agreement-item">
+              <input
+                type="checkbox"
+                checked={agreeMarketing}
+                onChange={(e) => setAgreeMarketing(e.target.checked)}
+              />
+              <span className="agreement-text">
+                <span className="optional-badge">{t('signup.agreements.optional')}</span> {t('signup.agreements.marketing')}
+              </span>
+            </label>
+          </div>
+
           {error && <p className="modal-error">{error}</p>}
 
           <button type="submit" className="modal-submit-btn" disabled={isLoading}>
@@ -559,6 +629,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           </button>
         </div>
       </div>
+
+      {activePolicyModal && (
+        <PolicyModal
+          isOpen={true}
+          onClose={() => setActivePolicyModal(null)}
+          type={activePolicyModal}
+        />
+      )}
     </div>
   );
 };

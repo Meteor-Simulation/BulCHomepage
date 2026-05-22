@@ -29,4 +29,7 @@ public class SignupRequest {
     private String name;
 
     private String phoneNumber;
+
+    @Builder.Default
+    private Boolean marketingAgreed = false;
 }

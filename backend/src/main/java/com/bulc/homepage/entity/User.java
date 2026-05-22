@@ -52,6 +52,13 @@ public class User {
     @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
+    @Column(name = "marketing_agreed", nullable = false)
+    @Builder.Default
+    private Boolean marketingAgreed = false;
+
+    @Column(name = "marketing_agreed_at")
+    private LocalDateTime marketingAgreedAt;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

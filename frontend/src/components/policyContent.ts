@@ -1,4 +1,4 @@
-export type PolicyType = 'terms' | 'privacy' | 'refund';
+export type PolicyType = 'terms' | 'privacy' | 'refund' | 'electronic';
 export type PolicyLang = 'ko' | 'en';
 
 export interface PolicySection {
@@ -30,7 +30,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제4조 (서비스의 제공)',
         bodies: [
-          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BULC 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.',
+          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BULC 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.<br/>3. 회사는 서비스 운영상 필요한 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내)를 이메일 또는 서비스 내 알림 등의 방법으로 발송할 수 있으며, 이러한 안내는 수신 거부와 무관하게 발송됩니다.',
         ],
       },
       {
@@ -90,7 +90,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 4 (Service Provision)',
         bodies: [
-          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BULC fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.',
+          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BULC fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.<br/>3. The Company may send service-related notices (informational notices such as changes to these Terms, service maintenance, security announcements, software updates, and license expiration) by email or in-service notifications. Such notices are sent regardless of the user\'s opt-out from marketing communications.',
         ],
       },
       {
@@ -135,7 +135,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. 개인정보의 수집 및 이용 목적',
         bodies: [
           '주식회사 메테오시뮬레이션(이하 "회사")은 다음의 목적을 위하여 개인정보를 수집 및 이용합니다. 수집한 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경될 시에는 사전동의를 구할 예정입니다.',
-          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공',
+          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/>&nbsp;&nbsp;- 운영상 필수 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내) 이메일 발송 — 수신 거부와 무관하게 발송<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공 (이메일, SMS 등 전자적 방법으로 발송하며 언제든지 수신 거부 가능)',
         ],
       },
       {
@@ -163,7 +163,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '5. 개인정보처리의 위탁',
         bodies: [
           '회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.',
-          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Google (Gmail SMTP)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증 및 알림 발송',
+          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증, 운영 안내 및 광고성 정보 발송',
         ],
       },
       {
@@ -206,7 +206,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. Purpose of Collection and Use of Personal Information',
         bodies: [
           'Meteor Simulation Co., Ltd. (the "Company") collects and uses personal information for the following purposes. Collected personal information will not be used for any purpose other than those listed below, and prior consent will be obtained if the purpose of use changes.',
-          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services, personalized service offerings, and provision of event and promotional information',
+          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/>&nbsp;&nbsp;- Sending operational notices (informational notices such as changes to Terms, service maintenance, security announcements, software updates, and license expiration) by email — sent regardless of opt-out from marketing communications<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services, personalized service offerings, and provision of event and promotional information (sent by electronic methods such as email and SMS; users may opt out at any time)',
         ],
       },
       {
@@ -234,7 +234,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '5. Outsourcing of Personal Information Processing',
         bodies: [
           'The Company outsources personal information processing tasks as follows for the smooth handling of personal information.',
-          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments<br/>&nbsp;&nbsp;- Scope of outsourced work: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Google (Gmail SMTP)<br/>&nbsp;&nbsp;- Scope of outsourced work: Email verification and notification delivery',
+          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments<br/>&nbsp;&nbsp;- Scope of outsourced work: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- Scope of outsourced work: Email verification, operational notices, and promotional information delivery',
         ],
       },
       {
@@ -390,6 +390,152 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Supplementary Provisions',
         bodies: ['This Refund Policy takes effect on January 1, 2025.'],
+      },
+    ],
+  },
+  electronic: {
+    ko: [
+      {
+        title: '제1조 (목적)',
+        bodies: [
+          '본 약관은 주식회사 메테오시뮬레이션(이하 "회사")이 제공하는 전자금융거래 서비스를 이용자가 이용함에 있어 회사와 이용자 간의 전자금융거래에 관한 기본적인 사항을 정함을 목적으로 합니다.',
+        ],
+      },
+      {
+        title: '제2조 (정의)',
+        bodies: [
+          '1. "전자금융거래"란 회사가 전자적 장치를 통하여 전자금융업무를 제공하고, 이용자가 회사의 종사자와 직접 대면하거나 의사소통을 하지 아니하고 자동화된 방식으로 이를 이용하는 거래를 말합니다.<br/>2. "전자지급수단"이란 전자자금이체, 직불전자지급수단, 선불전자지급수단, 전자화폐, 신용카드, 전자채권 등 전자금융거래법 제2조 제11호에서 정하는 전자적 방법에 따른 지급수단을 말합니다.<br/>3. "자동결제"란 이용자가 사전에 등록한 결제수단을 통해 일정 주기로 서비스 이용요금이 자동으로 결제되는 것을 말합니다.<br/>4. "빌링키"란 자동결제를 위해 이용자의 결제수단 정보를 암호화하여 저장한 고유 식별값을 말합니다.',
+        ],
+      },
+      {
+        title: '제3조 (약관의 명시 및 변경)',
+        bodies: [
+          '1. 회사는 이 약관의 내용을 이용자가 쉽게 알 수 있도록 서비스 초기 화면 또는 연결화면에 게시합니다.<br/>2. 회사는 약관을 변경하고자 하는 경우 변경 예정일 1개월 전에 약관 변경 사유와 적용일자를 명시하여 현행 약관과 함께 게시합니다.<br/>3. 이용자가 변경된 약관 시행일까지 거부 의사를 표시하지 않으면 약관 변경에 동의한 것으로 봅니다.',
+        ],
+      },
+      {
+        title: '제4조 (전자지급결제대행 서비스)',
+        bodies: [
+          '1. 회사는 전자지급결제대행업자(PG사: 토스페이먼츠)를 통해 신용카드, 계좌이체 등의 결제수단으로 서비스 이용요금 결제를 제공합니다.<br/>2. 이용자가 결제수단을 선택하고 결제에 필요한 정보를 입력하면, 회사는 해당 정보를 전자지급결제대행업자에게 전송하여 결제를 처리합니다.<br/>3. 결제 처리 결과는 이용자에게 전자적 방법으로 통지합니다.',
+        ],
+      },
+      {
+        title: '제5조 (자동결제 및 정기결제)',
+        bodies: [
+          '1. 이용자가 구독형 서비스를 이용하는 경우, 사전에 등록한 결제수단으로 정해진 결제 주기(월간/분기/연간)에 따라 자동결제가 진행됩니다.<br/>2. 회사는 자동결제 시행 전 결제 예정일, 결제 금액, 결제수단을 이용자에게 이메일 또는 서비스 내 알림으로 사전 고지합니다.<br/>3. 이용자는 자동결제 예정일 전까지 마이페이지에서 자동결제를 해지할 수 있으며, 해지 시 다음 결제 주기부터 자동결제가 중단됩니다.<br/>4. 이미 결제된 현재 구독 기간의 서비스는 해당 기간 만료 시까지 정상 이용 가능합니다.',
+        ],
+      },
+      {
+        title: '제6조 (결제수단의 등록 및 관리)',
+        bodies: [
+          '1. 이용자가 자동결제를 위해 결제수단을 등록하면, 회사는 해당 정보를 암호화하여 빌링키 형태로 안전하게 저장합니다.<br/>2. 이용자는 언제든지 마이페이지에서 등록된 결제수단을 변경하거나 삭제할 수 있습니다.<br/>3. 결제수단 삭제 시 해당 결제수단으로 예정된 자동결제는 중단됩니다.',
+        ],
+      },
+      {
+        title: '제7조 (이용자의 확인, 정정 및 철회)',
+        bodies: [
+          '1. 이용자는 전자금융거래의 내용을 서비스 내 결제 내역 페이지에서 확인할 수 있습니다.<br/>2. 이용자는 전자금융거래에 오류가 있음을 안 때에는 회사에 그 정정을 요구할 수 있으며, 회사는 이를 조사하여 처리한 후 결과를 이용자에게 알려드립니다.<br/>3. 이용자는 결제일로부터 7일 이내 및 서비스 미이용 상태인 경우 결제 취소를 요청할 수 있습니다.',
+        ],
+      },
+      {
+        title: '제8조 (회사의 책임)',
+        bodies: [
+          '1. 회사는 접근매체의 위조나 변조로 발생한 사고, 계약 체결 또는 거래 지시의 전자적 전송이나 처리 과정에서 발생한 사고로 인하여 이용자에게 손해가 발생한 경우에는 그 손해를 배상할 책임을 집니다.<br/>2. 다만, 이용자의 고의 또는 중대한 과실로 인한 경우에는 회사의 책임이 감면될 수 있습니다.',
+        ],
+      },
+      {
+        title: '제9조 (이용자의 의무)',
+        bodies: [
+          '1. 이용자는 전자금융거래 시 사용되는 접근매체를 선량한 관리자로서의 주의를 다하여 관리하여야 합니다.<br/>2. 이용자는 접근매체를 제3자에게 대여하거나 양도 또는 담보의 목적으로 제공하여서는 안 됩니다.<br/>3. 이용자는 접근매체의 분실, 도난, 위조 또는 변조 사실을 알게 된 때에는 즉시 회사에 통지하여야 합니다.',
+        ],
+      },
+      {
+        title: '제10조 (거래기록의 보존)',
+        bodies: [
+          '1. 회사는 전자금융거래에 관한 기록을 거래일로부터 5년간 보존합니다.<br/>2. 이용자는 회사에 대하여 전자금융거래에 관한 기록의 열람을 요구할 수 있으며, 회사는 이에 응하여야 합니다.',
+        ],
+      },
+      {
+        title: '제11조 (분쟁 처리 및 관할)',
+        bodies: [
+          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(support@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
+        ],
+      },
+      {
+        title: '부칙',
+        bodies: ['본 약관은 2026년 1월 1일부터 시행합니다.'],
+      },
+    ],
+    en: [
+      {
+        title: 'Article 1 (Purpose)',
+        bodies: [
+          'These Terms set forth the basic matters relating to electronic financial transactions between Meteor Simulation Co., Ltd. (the "Company") and users in connection with the use of the Company\'s electronic financial transaction services.',
+        ],
+      },
+      {
+        title: 'Article 2 (Definitions)',
+        bodies: [
+          '1. "Electronic financial transaction" means a transaction in which the Company provides electronic financial services through electronic devices and the user uses such services in an automated manner without direct face-to-face contact or communication with the Company\'s personnel.<br/>2. "Electronic payment means" refers to payment means by electronic methods as defined in Article 2, Item 11 of the Electronic Financial Transactions Act, including electronic funds transfer, debit electronic payment means, prepaid electronic payment means, electronic money, credit cards, and electronic bonds.<br/>3. "Auto-payment" means the automatic recurring charge of service fees through a payment method registered in advance by the user.<br/>4. "Billing key" means a unique identifier that securely stores the user\'s payment method information in encrypted form for auto-payment.',
+        ],
+      },
+      {
+        title: 'Article 3 (Notification and Modification of Terms)',
+        bodies: [
+          '1. The Company shall post these Terms on the initial service screen or linked screen so that users can easily view them.<br/>2. When the Company intends to modify these Terms, it shall post the reason for the modification and the effective date along with the current Terms at least one month before the planned effective date.<br/>3. If a user does not express objection by the effective date of the modified Terms, the user shall be deemed to have agreed to the modification.',
+        ],
+      },
+      {
+        title: 'Article 4 (Electronic Payment Settlement Agency Service)',
+        bodies: [
+          '1. The Company provides payment of service fees through electronic payment settlement agencies (PG provider: Toss Payments) using credit cards, bank transfers, and other payment methods.<br/>2. When the user selects a payment method and enters the required payment information, the Company forwards such information to the electronic payment settlement agency to process the payment.<br/>3. The Company notifies the user of the payment processing result by electronic means.',
+        ],
+      },
+      {
+        title: 'Article 5 (Auto-Payment and Recurring Payment)',
+        bodies: [
+          '1. When a user subscribes to a recurring service, auto-payment is processed through the pre-registered payment method according to the agreed billing cycle (monthly / quarterly / annual).<br/>2. The Company notifies the user of the upcoming payment date, amount, and payment method by email or in-service notification before each auto-payment.<br/>3. The user may cancel auto-payment via My Page before the scheduled payment date; once cancelled, auto-payment will stop from the next billing cycle.<br/>4. The user may continue to use the service through the end of the current paid subscription period.',
+        ],
+      },
+      {
+        title: 'Article 6 (Registration and Management of Payment Methods)',
+        bodies: [
+          '1. When a user registers a payment method for auto-payment, the Company securely stores the information in encrypted form as a billing key.<br/>2. The user may change or delete registered payment methods on My Page at any time.<br/>3. When a payment method is deleted, any auto-payments scheduled with that method will be cancelled.',
+        ],
+      },
+      {
+        title: 'Article 7 (User\'s Right to Verify, Correct, and Withdraw)',
+        bodies: [
+          '1. The user may verify the details of electronic financial transactions on the service\'s payment history page.<br/>2. If the user becomes aware of any error in an electronic financial transaction, the user may request the Company to correct it; the Company will investigate, process the correction, and notify the user of the result.<br/>3. The user may request cancellation of a payment within 7 days from the date of payment and while the service remains unused.',
+        ],
+      },
+      {
+        title: 'Article 8 (Company\'s Liability)',
+        bodies: [
+          '1. The Company shall be liable to compensate the user for damages arising from forgery or alteration of access means, or from accidents occurring during the electronic transmission or processing of contract formation or transaction instructions.<br/>2. However, the Company\'s liability may be reduced or exempted if the damage is caused by the user\'s intent or gross negligence.',
+        ],
+      },
+      {
+        title: 'Article 9 (User\'s Obligations)',
+        bodies: [
+          '1. The user must manage access means used in electronic financial transactions with the care of a prudent manager.<br/>2. The user must not lend, transfer, or pledge access means to a third party.<br/>3. Upon becoming aware of loss, theft, forgery, or alteration of access means, the user must immediately notify the Company.',
+        ],
+      },
+      {
+        title: 'Article 10 (Retention of Transaction Records)',
+        bodies: [
+          '1. The Company shall retain records of electronic financial transactions for five years from the date of the transaction.<br/>2. The user may request the Company to disclose records of electronic financial transactions, and the Company shall comply with such requests.',
+        ],
+      },
+      {
+        title: 'Article 11 (Dispute Resolution and Jurisdiction)',
+        bodies: [
+          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (support@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea and shall be filed in the court having jurisdiction over the Company\'s head office.',
+        ],
+      },
+      {
+        title: 'Supplementary Provisions',
+        bodies: ['These Terms take effect on January 1, 2026.'],
       },
     ],
   },
