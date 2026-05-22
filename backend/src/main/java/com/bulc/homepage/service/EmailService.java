@@ -2,6 +2,11 @@ package com.bulc.homepage.service;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.bulc.homepage.email.EmailCategory;
+import com.bulc.homepage.entity.EmailLog;
+import com.bulc.homepage.entity.User;
+import com.bulc.homepage.repository.EmailLogRepository;
+import com.bulc.homepage.repository.UserRepository;
 import com.microsoft.graph.models.BodyType;
 import com.microsoft.graph.models.EmailAddress;
 import com.microsoft.graph.models.ItemBody;
@@ -10,6 +15,7 @@ import com.microsoft.graph.models.Recipient;
 import com.microsoft.graph.serviceclient.GraphServiceClient;
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,10 +23,15 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailService {
+
+    private final UserRepository userRepository;
+    private final EmailLogRepository emailLogRepository;
 
     @Value("${microsoft.graph.tenant-id:}")
     private String tenantId;
@@ -104,7 +115,7 @@ public class EmailService {
     public void sendVerificationEmail(String toEmail, String verificationCode) {
         String subject = "[BulC] 이메일 인증 코드";
         String content = buildVerificationEmailContent(verificationCode);
-        sendEmail(mailFromAccounts, toEmail, subject, content);
+        send(EmailCategory.ACCOUNT, toEmail, "verification_code", subject, content);
     }
 
     /**
@@ -113,14 +124,81 @@ public class EmailService {
     public void sendPasswordResetEmail(String toEmail, String resetCode) {
         String subject = "[BulC] 비밀번호 재설정 코드";
         String content = buildPasswordResetEmailContent(resetCode);
-        sendEmail(mailFromAccounts, toEmail, subject, content);
+        send(EmailCategory.ACCOUNT, toEmail, "password_reset", subject, content);
     }
 
     /**
      * 결제 관련 이메일 발송
      */
     public void sendBillingEmail(String toEmail, String subject, String content) {
-        sendEmail(mailFromBilling, toEmail, subject, content);
+        send(EmailCategory.TRANSACTION, toEmail, "billing", subject, content);
+    }
+
+    /**
+     * 카테고리 기반 통합 발송 진입점.
+     * - PROMOTIONAL 카테고리는 marketing_agreed=true 인 사용자에게만 발송.
+     * - 모든 시도(SUCCESS / SKIPPED / FAILED)를 email_log 에 기록.
+     */
+    public void send(EmailCategory category, String toEmail, String templateKey,
+                     String subject, String htmlContent) {
+        // 1. 광고성 메일은 marketing_agreed 체크
+        if (category.requiresMarketingConsent()) {
+            Optional<User> userOpt = userRepository.findByEmail(toEmail);
+            if (userOpt.isEmpty()) {
+                logEmail(toEmail, category, templateKey, EmailLog.Status.SKIPPED,
+                        "user_not_found", null);
+                log.info("광고성 메일 SKIP (사용자 없음): {} / {}", toEmail, templateKey);
+                return;
+            }
+            if (!Boolean.TRUE.equals(userOpt.get().getMarketingAgreed())) {
+                logEmail(toEmail, category, templateKey, EmailLog.Status.SKIPPED,
+                        "marketing_agreed=false", null);
+                log.info("광고성 메일 SKIP (수신 미동의): {} / {}", toEmail, templateKey);
+                return;
+            }
+        }
+
+        // 2. 카테고리별 발신 메일박스 선택
+        String fromAddr = resolveFromAddress(category);
+
+        // 3. 실제 발송 + 로그
+        try {
+            sendEmail(fromAddr, toEmail, subject, htmlContent);
+            logEmail(toEmail, category, templateKey, EmailLog.Status.SUCCESS, null, null);
+        } catch (RuntimeException e) {
+            logEmail(toEmail, category, templateKey, EmailLog.Status.FAILED,
+                    null, truncate(e.getMessage(), 1000));
+            throw e;
+        }
+    }
+
+    private String resolveFromAddress(EmailCategory category) {
+        return switch (category) {
+            case ACCOUNT -> mailFromAccounts;
+            case TRANSACTION -> mailFromBilling;
+            case OPERATIONAL, PROMOTIONAL -> mailFrom;
+        };
+    }
+
+    private void logEmail(String recipient, EmailCategory category, String templateKey,
+                          EmailLog.Status status, String skipReason, String errorMessage) {
+        try {
+            emailLogRepository.save(EmailLog.builder()
+                    .recipientEmail(recipient)
+                    .category(category)
+                    .templateKey(templateKey)
+                    .status(status)
+                    .skipReason(skipReason)
+                    .errorMessage(errorMessage)
+                    .build());
+        } catch (Exception e) {
+            log.warn("email_log 저장 실패 (발송 자체는 영향 없음): {}", e.getMessage());
+        }
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return null;
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     /**
