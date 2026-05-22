@@ -18,12 +18,18 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -53,6 +59,27 @@ public class EmailService {
 
     @Value("${mail.reply-to:support@bulc.co.kr}")
     private String mailReplyTo;
+
+    @Value("${mail.site-url:https://bulc.msimul.com}")
+    private String siteUrl;
+
+    @Value("${mail.company.name:주식회사 메테오시뮬레이션}")
+    private String companyName;
+
+    @Value("${mail.company.representative:김지태}")
+    private String companyRepresentative;
+
+    @Value("${mail.company.business-number:524-88-02647}")
+    private String companyBusinessNumber;
+
+    @Value("${mail.company.address:강원특별자치도 원주시 마재2로 10, 305호(원주미래산업진흥원)}")
+    private String companyAddress;
+
+    @Value("${mail.company.contact-email:simul@msimul.com}")
+    private String companyContactEmail;
+
+    // 템플릿 캐시 (classpath 리소스 1회 로드 후 재사용)
+    private final Map<String, String> templateCache = new ConcurrentHashMap<>();
 
     private GraphServiceClient graphClient;
     private boolean isConfigured = false;
@@ -114,7 +141,7 @@ public class EmailService {
      */
     public void sendVerificationEmail(String toEmail, String verificationCode) {
         String subject = "[BulC] 이메일 인증 코드";
-        String content = buildVerificationEmailContent(verificationCode);
+        String content = renderTemplate("verification_code", Map.of("code", verificationCode));
         send(EmailCategory.ACCOUNT, toEmail, "verification_code", subject, content);
     }
 
@@ -123,7 +150,7 @@ public class EmailService {
      */
     public void sendPasswordResetEmail(String toEmail, String resetCode) {
         String subject = "[BulC] 비밀번호 재설정 코드";
-        String content = buildPasswordResetEmailContent(resetCode);
+        String content = renderTemplate("password_reset", Map.of("code", resetCode));
         send(EmailCategory.ACCOUNT, toEmail, "password_reset", subject, content);
     }
 
@@ -142,6 +169,7 @@ public class EmailService {
     public void send(EmailCategory category, String toEmail, String templateKey,
                      String subject, String htmlContent) {
         // 1. 광고성 메일은 marketing_agreed 체크
+        User user = null;
         if (category.requiresMarketingConsent()) {
             Optional<User> userOpt = userRepository.findByEmail(toEmail);
             if (userOpt.isEmpty()) {
@@ -150,7 +178,8 @@ public class EmailService {
                 log.info("광고성 메일 SKIP (사용자 없음): {} / {}", toEmail, templateKey);
                 return;
             }
-            if (!Boolean.TRUE.equals(userOpt.get().getMarketingAgreed())) {
+            user = userOpt.get();
+            if (!Boolean.TRUE.equals(user.getMarketingAgreed())) {
                 logEmail(toEmail, category, templateKey, EmailLog.Status.SKIPPED,
                         "marketing_agreed=false", null);
                 log.info("광고성 메일 SKIP (수신 미동의): {} / {}", toEmail, templateKey);
@@ -158,18 +187,75 @@ public class EmailService {
             }
         }
 
-        // 2. 카테고리별 발신 메일박스 선택
+        // 2. 제목 prefix + footer 자동 부착
+        String finalSubject = category.requiresMarketingConsent()
+                ? "(광고) " + subject
+                : subject;
+        String finalHtml = injectFooter(htmlContent, category, user);
+
+        // 3. 카테고리별 발신 메일박스 선택
         String fromAddr = resolveFromAddress(category);
 
-        // 3. 실제 발송 + 로그
+        // 4. 실제 발송 + 로그
         try {
-            sendEmail(fromAddr, toEmail, subject, htmlContent);
+            sendEmail(fromAddr, toEmail, finalSubject, finalHtml);
             logEmail(toEmail, category, templateKey, EmailLog.Status.SUCCESS, null, null);
         } catch (RuntimeException e) {
             logEmail(toEmail, category, templateKey, EmailLog.Status.FAILED,
                     null, truncate(e.getMessage(), 1000));
             throw e;
         }
+    }
+
+    /**
+     * 템플릿 본문에 {{footer}} 플레이스홀더가 있으면 카테고리별 footer 로 치환.
+     * 없으면 원본 그대로 반환 (기존 sendBillingEmail 같이 외부에서 만든 HTML 호환).
+     */
+    private String injectFooter(String html, EmailCategory category, User user) {
+        if (html == null || !html.contains("{{footer}}")) {
+            return html;
+        }
+        String footerKey = category.requiresMarketingConsent()
+                ? "_footer_promotional"
+                : "_footer_operational";
+
+        Map<String, String> vars = new HashMap<>();
+        vars.put("company.name", companyName);
+        vars.put("company.representative", companyRepresentative);
+        vars.put("company.businessNumber", companyBusinessNumber);
+        vars.put("company.address", companyAddress);
+        vars.put("company.contactEmail", companyContactEmail);
+
+        if (category.requiresMarketingConsent()) {
+            String token = user != null && user.getUnsubscribeToken() != null
+                    ? user.getUnsubscribeToken()
+                    : "";
+            vars.put("unsubscribe_url", siteUrl + "/unsubscribe?token=" + token);
+        }
+
+        String footer = renderTemplate(footerKey, vars);
+        return html.replace("{{footer}}", footer);
+    }
+
+    /**
+     * classpath:templates/mail/<key>.html 로드 + {{var}} 치환.
+     * 첫 호출 시 캐시 적재 후 재사용.
+     */
+    private String renderTemplate(String templateKey, Map<String, String> vars) {
+        String tpl = templateCache.computeIfAbsent(templateKey, key -> {
+            String path = "templates/mail/" + key + ".html";
+            try (InputStream is = new ClassPathResource(path).getInputStream()) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new RuntimeException("메일 템플릿 로드 실패: " + path, e);
+            }
+        });
+        String result = tpl;
+        for (Map.Entry<String, String> entry : vars.entrySet()) {
+            result = result.replace("{{" + entry.getKey() + "}}",
+                    entry.getValue() != null ? entry.getValue() : "");
+        }
+        return result;
     }
 
     private String resolveFromAddress(EmailCategory category) {
@@ -290,299 +376,5 @@ public class EmailService {
      */
     public void sendHtmlEmail(List<String> toEmails, String subject, String htmlContent) {
         sendEmail(mailFrom, toEmails, subject, htmlContent);
-    }
-
-    /**
-     * 인증 코드 이메일 HTML 템플릿
-     */
-    private String buildVerificationEmailContent(String code) {
-        return """
-            <!DOCTYPE html>
-            <html lang="ko">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
-            </head>
-            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
-                    <tr><td style="padding:40px 16px;">
-
-                        <!-- Main Card -->
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-                            <!-- Header Bar -->
-                            <tr>
-                                <td style="background:linear-gradient(135deg,#C4320A 0%%,#E85D04 50%%,#F5A623 100%%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td>
-                            </tr>
-
-                            <!-- Logo Section -->
-                            <tr>
-                                <td style="padding:36px 40px 0;text-align:center;">
-                                    <!-- BulC Block Icon -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
-                                        <tr>
-                                            <td style="width:10px;height:10px;background:#F5A623;border-radius:2px;" width="10"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:6px;height:6px;" width="6"></td>
-                                        </tr>
-                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                        <tr>
-                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:14px;height:14px;background:#C4320A;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:10px;height:10px;background:#D4450E;border-radius:2px;" width="10"></td>
-                                        </tr>
-                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                        <tr>
-                                            <td style="width:6px;height:6px;" width="6"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:10px;height:10px;background:#C4320A;border-radius:2px;" width="10"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:6px;height:6px;background:#E85D04;border-radius:2px;" width="6"></td>
-                                        </tr>
-                                    </table>
-
-                                    <p style="margin:14px 0 0;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
-                                </td>
-                            </tr>
-
-                            <!-- Divider -->
-                            <tr>
-                                <td style="padding:20px 40px 0;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%">
-                                        <tr><td style="height:1px;background:#f0f0f0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Title -->
-                            <tr>
-                                <td style="padding:28px 40px 0;text-align:center;">
-                                    <p style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">이메일 인증</p>
-                                </td>
-                            </tr>
-
-                            <!-- Description -->
-                            <tr>
-                                <td style="padding:12px 40px 0;text-align:center;">
-                                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
-                                        아래 인증 코드를 입력하여<br>이메일 인증을 완료해 주세요.
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <!-- Code Blocks -->
-                            <tr>
-                                <td style="padding:28px 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
-                                        <tr>
-                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
-                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Timer Badge -->
-                            <tr>
-                                <td style="padding:0 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
-                                        <tr>
-                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
-                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Note -->
-                            <tr>
-                                <td style="padding:24px 40px 0;text-align:center;">
-                                    <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.7;">
-                                        본인이 요청하지 않은 경우 이 메일을 무시해 주세요.<br>
-                                        이 코드는 타인과 공유하지 마세요.
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <!-- Bottom Padding -->
-                            <tr>
-                                <td style="padding:32px 0 0;"></td>
-                            </tr>
-
-                            <!-- Footer Bar -->
-                            <tr>
-                                <td style="background:#f8f9fb;padding:20px 40px;border-top:1px solid #f0f0f0;text-align:center;">
-                                    <p style="margin:0;font-size:11px;color:#9ca3af;">
-                                        &copy; 2025 MSimul Inc. All rights reserved.<br>
-                                        <span style="color:#c4c4c4;">Fire Safety Simulation Platform</span>
-                                    </p>
-                                </td>
-                            </tr>
-
-                        </table>
-                        <!-- End Main Card -->
-
-                    </td></tr>
-                </table>
-            </body>
-            </html>
-            """.formatted(code);
-    }
-
-    /**
-     * 비밀번호 재설정 이메일 HTML 템플릿
-     */
-    private String buildPasswordResetEmailContent(String code) {
-        return """
-            <!DOCTYPE html>
-            <html lang="ko">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
-            </head>
-            <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#ffffff;">
-                    <tr><td style="padding:40px 16px;">
-
-                        <!-- Main Card -->
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="540" align="center" style="max-width:540px;width:100%%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-                            <!-- Header Bar -->
-                            <tr>
-                                <td style="background:linear-gradient(135deg,#C4320A 0%%,#E85D04 50%%,#F5A623 100%%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td>
-                            </tr>
-
-                            <!-- Logo Section -->
-                            <tr>
-                                <td style="padding:36px 40px 0;text-align:center;">
-                                    <!-- BulC Block Icon -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
-                                        <tr>
-                                            <td style="width:10px;height:10px;background:#F5A623;border-radius:2px;" width="10"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:6px;height:6px;" width="6"></td>
-                                        </tr>
-                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                        <tr>
-                                            <td style="width:14px;height:14px;background:#E85D04;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:14px;height:14px;background:#C4320A;border-radius:2px;" width="14"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:10px;height:10px;background:#D4450E;border-radius:2px;" width="10"></td>
-                                        </tr>
-                                        <tr><td colspan="5" style="height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                        <tr>
-                                            <td style="width:6px;height:6px;" width="6"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:10px;height:10px;background:#C4320A;border-radius:2px;" width="10"></td>
-                                            <td style="width:3px;" width="3"></td>
-                                            <td style="width:6px;height:6px;background:#E85D04;border-radius:2px;" width="6"></td>
-                                        </tr>
-                                    </table>
-
-                                    <p style="margin:14px 0 0;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
-                                </td>
-                            </tr>
-
-                            <!-- Divider -->
-                            <tr>
-                                <td style="padding:20px 40px 0;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%">
-                                        <tr><td style="height:1px;background:#f0f0f0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Shield Icon + Title -->
-                            <tr>
-                                <td style="padding:28px 40px 0;text-align:center;">
-                                    <p style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">&#128274; 비밀번호 재설정</p>
-                                </td>
-                            </tr>
-
-                            <!-- Description -->
-                            <tr>
-                                <td style="padding:12px 40px 0;text-align:center;">
-                                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
-                                        아래 인증 코드를 입력하여<br>비밀번호를 재설정해 주세요.
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <!-- Code Block -->
-                            <tr>
-                                <td style="padding:28px 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
-                                        <tr>
-                                            <td style="background:#E85D04;border-radius:12px;padding:18px 36px;text-align:center;">
-                                                <span style="font-size:30px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:10px;">%s</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Timer Badge -->
-                            <tr>
-                                <td style="padding:0 40px;text-align:center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
-                                        <tr>
-                                            <td style="background:#fef3cd;border-radius:20px;padding:8px 20px;text-align:center;">
-                                                <span style="font-size:13px;color:#92400e;font-weight:600;">&#9202; 인증 코드는 5분간 유효합니다</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Security Warning -->
-                            <tr>
-                                <td style="padding:20px 40px 0;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-                                        <tr>
-                                            <td style="padding:14px 18px;">
-                                                <p style="margin:0;font-size:12px;color:#dc2626;line-height:1.6;font-weight:500;">
-                                                    &#9888; 본인이 요청하지 않은 경우, 계정 보안을 즉시 확인해 주세요.<br>
-                                                    이 코드는 타인과 절대 공유하지 마세요.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <!-- Bottom Padding -->
-                            <tr>
-                                <td style="padding:32px 0 0;"></td>
-                            </tr>
-
-                            <!-- Footer Bar -->
-                            <tr>
-                                <td style="background:#f8f9fb;padding:20px 40px;border-top:1px solid #f0f0f0;text-align:center;">
-                                    <p style="margin:0;font-size:11px;color:#9ca3af;">
-                                        &copy; 2025 MSimul Inc. All rights reserved.<br>
-                                        <span style="color:#c4c4c4;">Fire Safety Simulation Platform</span>
-                                    </p>
-                                </td>
-                            </tr>
-
-                        </table>
-                        <!-- End Main Card -->
-
-                    </td></tr>
-                </table>
-            </body>
-            </html>
-            """.formatted(code);
     }
 }
