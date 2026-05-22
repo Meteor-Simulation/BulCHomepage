@@ -115,6 +115,7 @@ public class AuthService {
                     .rolesCode("002")  // 기본값: 일반 사용자
                     .marketingAgreed(marketing)
                     .marketingAgreedAt(marketing ? LocalDateTime.now() : null)
+                    .unsubscribeToken(UUID.randomUUID().toString())
                     .build();
 
             user = userRepository.save(user);

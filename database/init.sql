@@ -10,6 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =========================================================
 -- Drop existing tables (reverse dependency order)
 -- =========================================================
+DROP TABLE IF EXISTS email_log CASCADE;
 DROP TABLE IF EXISTS post_images CASCADE;
 DROP TABLE IF EXISTS posts CASCADE;
 DROP TABLE IF EXISTS revoked_offline_tokens CASCADE;
@@ -93,6 +94,7 @@ CREATE TABLE users (
     email_verified_at   TIMESTAMP NULL,
     marketing_agreed    BOOLEAN NOT NULL DEFAULT FALSE,
     marketing_agreed_at TIMESTAMP NULL,
+    unsubscribe_token   VARCHAR(36) NULL UNIQUE,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     deactivated_at  TIMESTAMP NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -116,6 +118,7 @@ COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
 COMMENT ON COLUMN users.language_code IS '언어 코드 (ko/en, NULL이면 IP 감지 사용)';
 COMMENT ON COLUMN users.marketing_agreed IS '광고성 정보 수신 동의 여부';
 COMMENT ON COLUMN users.marketing_agreed_at IS '광고성 정보 수신 동의 시점';
+COMMENT ON COLUMN users.unsubscribe_token IS '1-click unsubscribe 토큰 (UUID, 광고성 메일 footer 링크에 사용)';
 COMMENT ON COLUMN users.is_active IS '계정 활성화 상태 (기본: true)';
 COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';
 
@@ -1036,6 +1039,30 @@ CREATE TABLE post_images (
 CREATE INDEX idx_post_images_post ON post_images(post_id);
 
 COMMENT ON TABLE post_images IS '게시글 이미지';
+
+-- =========================================================
+-- email_log (메일 발송 이력)
+-- =========================================================
+CREATE TABLE email_log (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    recipient_email VARCHAR(255) NOT NULL,
+    category        VARCHAR(20)  NOT NULL,
+    template_key    VARCHAR(100) NOT NULL,
+    status          VARCHAR(20)  NOT NULL,
+    sent_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    skip_reason     VARCHAR(255),
+    error_message   TEXT
+);
+
+CREATE INDEX idx_email_log_recipient ON email_log(recipient_email);
+CREATE INDEX idx_email_log_sent_at   ON email_log(sent_at);
+
+COMMENT ON TABLE email_log IS '메일 발송 이력 (모든 시도: SUCCESS / SKIPPED / FAILED)';
+COMMENT ON COLUMN email_log.category IS 'ACCOUNT / TRANSACTION / OPERATIONAL / PROMOTIONAL';
+COMMENT ON COLUMN email_log.template_key IS '템플릿 식별자 (verification_code, password_reset, billing, program_update 등)';
+COMMENT ON COLUMN email_log.status IS 'SUCCESS / SKIPPED / FAILED';
+COMMENT ON COLUMN email_log.skip_reason IS 'SKIPPED 시 사유 (marketing_agreed=false, user_not_found 등)';
+COMMENT ON COLUMN email_log.error_message IS 'FAILED 시 에러 메시지 (최대 1000자 trunc)';
 
 -- =========================================================
 -- 마지막 단계: price_plans ↔ license_plans 연결
