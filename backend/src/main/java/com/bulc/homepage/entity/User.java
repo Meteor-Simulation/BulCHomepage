@@ -59,6 +59,9 @@ public class User {
     @Column(name = "marketing_agreed_at")
     private LocalDateTime marketingAgreedAt;
 
+    @Column(name = "unsubscribe_token", unique = true, length = 36)
+    private String unsubscribeToken;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
