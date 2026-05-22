@@ -92,6 +92,14 @@ mail:
   from-accounts: ${MAIL_FROM_ACCOUNTS:accounts@bulc.co.kr}
   from-billing: ${MAIL_FROM_BILLING:billing@bulc.co.kr}
   reply-to: ${MAIL_REPLY_TO:juwon@msimul.com}
+  # 메일 footer / unsubscribe URL 생성에 사용되는 정보
+  site-url: ${MAIL_SITE_URL:https://bulc.msimul.com}
+  company:
+    name: ${MAIL_COMPANY_NAME:주식회사 메테오시뮬레이션}
+    representative: ${MAIL_COMPANY_REP:김지태}
+    business-number: ${MAIL_COMPANY_BIZ_NO:524-88-02647}
+    address: ${MAIL_COMPANY_ADDRESS:강원특별자치도 원주시 마재2로 10, 305호(원주미래산업진흥원)}
+    contact-email: ${MAIL_COMPANY_EMAIL:simul@msimul.com}
 
 # JWT Configuration
 jwt:
