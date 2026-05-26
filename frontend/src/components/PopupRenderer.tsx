@@ -69,29 +69,101 @@ interface PopupCardProps {
 }
 
 const PopupCard: React.FC<PopupCardProps> = ({ popup, cascadeIndex, onClose }) => {
-  const offset = cascadeIndex * 24;
+  const initialOffset = cascadeIndex * 24;
+  const [position, setPosition] = useState({ x: initialOffset, y: initialOffset });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ pointerX: number; pointerY: number; startX: number; startY: number } | null>(null);
+
+  const handleDragStart = useCallback((clientX: number, clientY: number) => {
+    dragStartRef.current = {
+      pointerX: clientX,
+      pointerY: clientY,
+      startX: position.x,
+      startY: position.y,
+    };
+    setIsDragging(true);
+  }, [position.x, position.y]);
+
+  const onMouseDownHeader = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDragStart(e.clientX, e.clientY);
+  }, [handleDragStart]);
+
+  const onTouchStartHeader = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t) handleDragStart(t.clientX, t.clientY);
+  }, [handleDragStart]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (clientX: number, clientY: number) => {
+      const start = dragStartRef.current;
+      if (!start) return;
+      setPosition({
+        x: start.startX + (clientX - start.pointerX),
+        y: start.startY + (clientY - start.pointerY),
+      });
+    };
+    const handleMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) onMove(t.clientX, t.clientY);
+    };
+    const handleEnd = () => {
+      setIsDragging(false);
+      dragStartRef.current = null;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [isDragging]);
+
   const style: React.CSSProperties = {
-    transform: `translate(${offset}px, ${offset}px)`,
+    transform: `translate(${position.x}px, ${position.y}px)`,
     zIndex: 1000 + cascadeIndex,
+    userSelect: isDragging ? 'none' : undefined,
   };
 
   return (
     <div className="popup-card" style={style} role="dialog" aria-modal="false" aria-label={popup.title}>
-      <button
-        type="button"
-        className="popup-close-x"
-        onClick={() => onClose(popup, 'CLOSE')}
-        aria-label="닫기"
+      <div
+        className={`popup-header ${isDragging ? 'is-dragging' : ''}`}
+        onMouseDown={onMouseDownHeader}
+        onTouchStart={onTouchStartHeader}
       >
-        ×
-      </button>
+        <div className="popup-brand">
+          <img src="/logo_transparent.png" alt="" className="popup-brand-logo" draggable={false} />
+          <span className="popup-brand-text">BUL:C</span>
+        </div>
+        <button
+          type="button"
+          className="popup-close-x"
+          onClick={() => onClose(popup, 'CLOSE')}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          aria-label="닫기"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="popup-subheader">
+        <h2 className="popup-title">{popup.title}</h2>
+      </div>
 
       <div className="popup-body">
-        <h2 className="popup-title">{popup.title}</h2>
-
         {popup.type === 'IMAGE_TEXT' && popup.imageUrl && (
           <div className="popup-image-wrap">
-            <img src={resolveImageSrc(popup.imageUrl)} alt={popup.title} />
+            <img src={resolveImageSrc(popup.imageUrl)} alt={popup.title} draggable={false} />
           </div>
         )}
 

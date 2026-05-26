@@ -13,8 +13,9 @@
   left: 0;
   pointer-events: auto;
   width: 420px;
+  min-height: 630px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 64px);
+  max-height: calc(100vh - 32px);
   background: #ffffff;
   color: #1a1a1a;
   border-radius: 12px;
@@ -25,38 +26,76 @@
   font-family: inherit;
 }
 
+.popup-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 48px;
+  background: #fafafa;
+  border-bottom: 1px solid #ececec;
+  user-select: none;
+  touch-action: none;
+}
+
+.popup-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-brand-logo {
+  height: 24px;
+  width: auto;
+  pointer-events: none;
+}
+
+.popup-brand-text {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  color: #1a1a1a;
+}
+
 .popup-close-x {
   position: absolute;
-  top: 8px;
+  top: 50%;
   right: 12px;
-  width: 32px;
-  height: 32px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
-  color: #555;
+  color: #777;
   cursor: pointer;
   padding: 0;
-  z-index: 2;
+  border-radius: 4px;
 }
 
 .popup-close-x:hover {
   color: #000;
+  background: rgba(0, 0, 0, 0.05);
 }
 
-.popup-body {
-  padding: 28px 24px 16px;
-  overflow-y: auto;
-  flex: 1;
+.popup-subheader {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .popup-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  margin: 0 0 16px 0;
-  padding-right: 28px;
+  margin: 0;
+  text-align: center;
   word-break: keep-all;
+}
+
+.popup-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .popup-image-wrap {
@@ -147,6 +186,12 @@
     max-width: 100%;
     max-height: none;
     margin: 0 auto;
+  }
+
+  /* 모바일에서는 드래그 비활성 (풀스크린 스택이라 의미 없음) */
+  .popup-header {
+    cursor: default;
+    touch-action: auto;
   }
 
   .popup-image-wrap img {
