@@ -24,6 +24,8 @@ import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
 import PostEditorPage from './CategoryPages/Board/PostEditorPage';
 import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
+import PopupRenderer from './components/PopupRenderer';
+import AdminPopupsPage from './pages/AdminPopups/AdminPopupsPage';
 
 // 404 페이지 래퍼 컴포넌트
 const NotFoundPage: React.FC = () => {
@@ -74,10 +76,12 @@ const App: React.FC = () => {
             <Route path="/board/edit/:id" element={<PostEditorPage />} />
             <Route path="/board/:id" element={<PostDetailPage />} />
             <Route path="/event/booth-gift" element={<BoothGiftPage />} />
+            <Route path="/admin/popups" element={<AdminPopupsPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          <PopupRenderer />
         </BrowserRouter>
         </LanguageProvider>
       </AuthProvider>
