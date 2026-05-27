@@ -16,7 +16,7 @@ export const LANGUAGES = [
 
 export const VALID_MENU_SECTIONS: MenuSection[] = [
   'profile', 'account', 'subscription', 'payment', 'redeem',
-  'admin-users', 'admin-payments', 'admin-products', 'admin-licenses', 'admin-promotions', 'admin-redeem',
+  'admin-users', 'admin-payments', 'admin-products', 'admin-licenses', 'admin-promotions', 'admin-redeem', 'admin-popups',
 ];
 
 export const ADMIN_ITEMS_PER_PAGE = 10;

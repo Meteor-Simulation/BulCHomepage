@@ -1,0 +1,172 @@
+.admin-popups-panel .admin-popups-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-popups-panel .btn-primary {
+  background: var(--accent, #C4320A);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.admin-popups-panel .btn-primary:hover { background: #a32909; }
+.admin-popups-panel .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+
+.admin-popups-panel .btn-secondary {
+  background: #fff;
+  color: #555;
+  border: 1px solid #ddd;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.admin-popups-panel .btn-secondary:hover { background: #f3f3f3; }
+
+.admin-popups-panel .btn-link {
+  background: none;
+  border: none;
+  color: #1a73e8;
+  cursor: pointer;
+  font-size: 13px;
+  margin-right: 8px;
+  padding: 2px 4px;
+}
+.admin-popups-panel .btn-link:hover { text-decoration: underline; }
+.admin-popups-panel .btn-link-danger { color: #d93025; }
+
+.admin-popups-form-card {
+  background: #fafafa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #ececec;
+  margin: 16px 0;
+}
+
+.admin-popups-form-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.admin-popups-form-card .form-row {
+  margin-bottom: 14px;
+}
+
+.admin-popups-form-card .form-row > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.admin-popups-form-card .form-row input[type="text"],
+.admin-popups-form-card .form-row input[type="number"],
+.admin-popups-form-card .form-row input[type="datetime-local"],
+.admin-popups-form-card .form-row textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.admin-popups-form-card .form-row textarea {
+  resize: vertical;
+}
+
+.admin-popups-form-card .char-count {
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.admin-popups-form-card .radio-group,
+.admin-popups-form-card .checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-popups-form-card .radio-group label,
+.admin-popups-form-card .checkbox-group label {
+  font-size: 13px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: normal;
+  margin: 0;
+}
+
+.admin-popups-form-card .form-row-inline {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-popups-form-card .form-row-inline > div { flex: 1; min-width: 180px; }
+
+.admin-popups-form-card .form-row-inline label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.admin-popups-form-card .form-row-inline input[type="number"],
+.admin-popups-form-card .form-row-inline input[type="datetime-local"] {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.admin-popups-form-card .upload-status {
+  font-size: 12px;
+  color: #777;
+  margin-top: 6px;
+}
+
+.admin-popups-form-card .image-preview {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.admin-popups-form-card .image-preview img {
+  max-width: 200px;
+  max-height: 140px;
+  border-radius: 4px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-popups-form-card .image-url {
+  font-size: 11px;
+  color: #888;
+  word-break: break-all;
+}
+
+.admin-popups-form-card .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}

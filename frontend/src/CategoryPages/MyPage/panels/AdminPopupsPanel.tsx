@@ -1,16 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from '../../components/Header';
-import { useAuth } from '../../context/AuthContext';
-import { useAlert } from '../../components/AlertProvider';
-import { getApiBaseUrl } from '../../utils/api';
+import { useTranslation } from 'react-i18next';
+import { useAlert } from '../../../components/AlertProvider';
+import { getApiBaseUrl } from '../../../utils/api';
 import {
   PopupItem,
   PopupType,
   PopupTrigger,
   PopupCloseOption,
-} from '../../components/PopupRenderer';
-import './AdminPopupsPage.css';
+} from '../../../components/PopupRenderer';
+import './AdminPopupsPanel.css';
 
 const API = getApiBaseUrl();
 const ALL_TRIGGERS: PopupTrigger[] = ['HOME_ENTRY', 'POST_LOGIN'];
@@ -77,9 +75,8 @@ const fromDatetimeLocal = (s: string): string | null => {
   return d.toISOString();
 };
 
-const AdminPopupsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { isLoggedIn, isAuthReady, isAdmin } = useAuth();
+const AdminPopupsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { showAlert } = useAlert();
 
   const [popups, setPopups] = useState<PopupItem[]>([]);
@@ -89,13 +86,6 @@ const AdminPopupsPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthReady) return;
-    if (!isLoggedIn || !isAdmin) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthReady, isLoggedIn, isAdmin, navigate]);
 
   const loadPopups = useCallback(async () => {
     setIsLoading(true);
@@ -115,10 +105,8 @@ const AdminPopupsPage: React.FC = () => {
   }, [showAlert]);
 
   useEffect(() => {
-    if (isAuthReady && isLoggedIn && isAdmin) {
-      loadPopups();
-    }
-  }, [isAuthReady, isLoggedIn, isAdmin, loadPopups]);
+    loadPopups();
+  }, [loadPopups]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -149,12 +137,12 @@ const AdminPopupsPage: React.FC = () => {
     setForm(emptyForm());
   };
 
-  const toggleTrigger = (t: PopupTrigger) => {
+  const toggleTrigger = (tr: PopupTrigger) => {
     setForm((prev) => ({
       ...prev,
-      triggers: prev.triggers.includes(t)
-        ? prev.triggers.filter((x) => x !== t)
-        : [...prev.triggers, t],
+      triggers: prev.triggers.includes(tr)
+        ? prev.triggers.filter((x) => x !== tr)
+        : [...prev.triggers, tr],
     }));
   };
 
@@ -269,219 +257,216 @@ const AdminPopupsPage: React.FC = () => {
     [popups]
   );
 
-  if (!isAuthReady) return null;
-  if (!isLoggedIn || !isAdmin) return null;
-
   return (
-    <div className="admin-popups-page">
-      <Header />
-      <div className="admin-popups-container">
-        <div className="admin-popups-header">
-          <h1>팝업 관리</h1>
+    <div className="info-card admin-section-card wide admin-popups-panel">
+      <div className="card-header">
+        <h2 className="card-title">{t('myPage.menu.adminPopups')}</h2>
+        <div className="admin-popups-header-actions">
+          <span className="admin-count">{popups.length}개</span>
           {!isFormOpen && (
             <button type="button" className="btn-primary" onClick={openCreate}>
               + 새 팝업
             </button>
           )}
         </div>
+      </div>
 
-        {isFormOpen && (
-          <div className="admin-popups-form-card">
-            <h2>{editingId ? '팝업 수정' : '새 팝업'}</h2>
+      {isFormOpen && (
+        <div className="admin-popups-form-card">
+          <h3>{editingId ? '팝업 수정' : '새 팝업'}</h3>
 
-            <div className="form-row">
-              <label>타입</label>
-              <div className="radio-group">
-                <label>
-                  <input
-                    type="radio"
-                    name="type"
-                    checked={form.type === 'TEXT_ONLY'}
-                    onChange={() => setForm({ ...form, type: 'TEXT_ONLY' })}
-                  />
-                  텍스트만 (제목 + 본문)
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="type"
-                    checked={form.type === 'IMAGE_TEXT'}
-                    onChange={() => setForm({ ...form, type: 'IMAGE_TEXT' })}
-                  />
-                  이미지 + 텍스트 (제목 + 이미지 + 본문)
-                </label>
-              </div>
-            </div>
-
-            <div className="form-row">
-              <label>제목 (최대 100자)</label>
-              <input
-                type="text"
-                maxLength={100}
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="팝업 제목"
-              />
-              <div className="char-count">{form.title.length} / 100</div>
-            </div>
-
-            <div className="form-row">
-              <label>본문 (최대 1000자, 개행은 줄바꿈으로 표시됨)</label>
-              <textarea
-                maxLength={1000}
-                rows={6}
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                placeholder="팝업 본문"
-              />
-              <div className="char-count">{form.content.length} / 1000</div>
-            </div>
-
-            {form.type === 'IMAGE_TEXT' && (
-              <div className="form-row">
-                <label>이미지 (최대 5MB · jpg/png/gif/webp)</label>
+          <div className="form-row">
+            <label>타입</label>
+            <div className="radio-group">
+              <label>
                 <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleImageUpload(f);
-                  }}
-                  disabled={isUploading}
+                  type="radio"
+                  name="type"
+                  checked={form.type === 'TEXT_ONLY'}
+                  onChange={() => setForm({ ...form, type: 'TEXT_ONLY' })}
                 />
-                {isUploading && <div className="upload-status">업로드 중...</div>}
-                {form.imageUrl && (
-                  <div className="image-preview">
-                    <img src={`${API}${form.imageUrl}`} alt="미리보기" />
-                    <div className="image-url">{form.imageUrl}</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="form-row">
-              <label>표시 트리거 (1개 이상)</label>
-              <div className="checkbox-group">
-                {ALL_TRIGGERS.map((t) => (
-                  <label key={t}>
-                    <input
-                      type="checkbox"
-                      checked={form.triggers.includes(t)}
-                      onChange={() => toggleTrigger(t)}
-                    />
-                    {TRIGGER_LABEL[t]}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-row">
-              <label>닫기 옵션 (1개 이상)</label>
-              <div className="checkbox-group">
-                {ALL_CLOSE_OPTIONS.map((c) => (
-                  <label key={c}>
-                    <input
-                      type="checkbox"
-                      checked={form.closeOptions.includes(c)}
-                      onChange={() => toggleClose(c)}
-                    />
-                    {CLOSE_LABEL[c]}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-row-inline">
-              <div>
-                <label>우선순위 (낮을수록 먼저 표시)</label>
+                텍스트만 (제목 + 본문)
+              </label>
+              <label>
                 <input
-                  type="number"
-                  value={form.priority}
-                  onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value || '0', 10) })}
+                  type="radio"
+                  name="type"
+                  checked={form.type === 'IMAGE_TEXT'}
+                  onChange={() => setForm({ ...form, type: 'IMAGE_TEXT' })}
                 />
-              </div>
-              <div>
-                <label>활성</label>
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                />
-              </div>
-            </div>
-
-            <div className="form-row-inline">
-              <div>
-                <label>시작 일시 (옵션)</label>
-                <input
-                  type="datetime-local"
-                  value={form.startAt}
-                  onChange={(e) => setForm({ ...form, startAt: e.target.value })}
-                />
-              </div>
-              <div>
-                <label>종료 일시 (옵션)</label>
-                <input
-                  type="datetime-local"
-                  value={form.endAt}
-                  onChange={(e) => setForm({ ...form, endAt: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="btn-secondary" onClick={cancelForm} disabled={isSaving}>
-                취소
-              </button>
-              <button type="button" className="btn-primary" onClick={handleSubmit} disabled={isSaving}>
-                {isSaving ? '저장 중...' : editingId ? '수정' : '생성'}
-              </button>
+                이미지 + 텍스트 (제목 + 이미지 + 본문)
+              </label>
             </div>
           </div>
-        )}
 
-        <div className="admin-popups-table-wrap">
-          {isLoading ? (
-            <div className="admin-loading">데이터 로딩 중...</div>
-          ) : (
-            <table className="admin-popups-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>제목</th>
-                  <th>타입</th>
-                  <th>트리거</th>
-                  <th>일정</th>
-                  <th>우선순위</th>
-                  <th>활성</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedPopups.length > 0 ? sortedPopups.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.id}</td>
-                    <td>{p.title}</td>
-                    <td>{p.type === 'IMAGE_TEXT' ? '이미지+텍스트' : '텍스트'}</td>
-                    <td>{p.triggers.map((t) => TRIGGER_LABEL[t]).join(', ')}</td>
-                    <td>{formatDateTime(p.startAt)} ~ {formatDateTime(p.endAt)}</td>
-                    <td>{p.priority}</td>
-                    <td>{p.isActive ? '활성' : '비활성'}</td>
-                    <td>
-                      <button type="button" className="btn-link" onClick={() => openEdit(p)}>수정</button>
-                      <button type="button" className="btn-link btn-link-danger" onClick={() => handleDelete(p)}>삭제</button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr><td colSpan={8} className="empty-row">등록된 팝업이 없습니다.</td></tr>
-                )}
-              </tbody>
-            </table>
+          <div className="form-row">
+            <label>제목 (최대 100자)</label>
+            <input
+              type="text"
+              maxLength={100}
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="팝업 제목"
+            />
+            <div className="char-count">{form.title.length} / 100</div>
+          </div>
+
+          <div className="form-row">
+            <label>본문 (최대 1000자, 개행은 줄바꿈으로 표시됨)</label>
+            <textarea
+              maxLength={1000}
+              rows={6}
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              placeholder="팝업 본문"
+            />
+            <div className="char-count">{form.content.length} / 1000</div>
+          </div>
+
+          {form.type === 'IMAGE_TEXT' && (
+            <div className="form-row">
+              <label>이미지 (최대 5MB · jpg/png/gif/webp)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleImageUpload(f);
+                }}
+                disabled={isUploading}
+              />
+              {isUploading && <div className="upload-status">업로드 중...</div>}
+              {form.imageUrl && (
+                <div className="image-preview">
+                  <img src={`${API}${form.imageUrl}`} alt="미리보기" />
+                  <div className="image-url">{form.imageUrl}</div>
+                </div>
+              )}
+            </div>
           )}
+
+          <div className="form-row">
+            <label>표시 트리거 (1개 이상)</label>
+            <div className="checkbox-group">
+              {ALL_TRIGGERS.map((tr) => (
+                <label key={tr}>
+                  <input
+                    type="checkbox"
+                    checked={form.triggers.includes(tr)}
+                    onChange={() => toggleTrigger(tr)}
+                  />
+                  {TRIGGER_LABEL[tr]}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-row">
+            <label>닫기 옵션 (1개 이상)</label>
+            <div className="checkbox-group">
+              {ALL_CLOSE_OPTIONS.map((c) => (
+                <label key={c}>
+                  <input
+                    type="checkbox"
+                    checked={form.closeOptions.includes(c)}
+                    onChange={() => toggleClose(c)}
+                  />
+                  {CLOSE_LABEL[c]}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-row-inline">
+            <div>
+              <label>우선순위 (낮을수록 먼저 표시)</label>
+              <input
+                type="number"
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value || '0', 10) })}
+              />
+            </div>
+            <div>
+              <label>활성</label>
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              />
+            </div>
+          </div>
+
+          <div className="form-row-inline">
+            <div>
+              <label>시작 일시 (옵션)</label>
+              <input
+                type="datetime-local"
+                value={form.startAt}
+                onChange={(e) => setForm({ ...form, startAt: e.target.value })}
+              />
+            </div>
+            <div>
+              <label>종료 일시 (옵션)</label>
+              <input
+                type="datetime-local"
+                value={form.endAt}
+                onChange={(e) => setForm({ ...form, endAt: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={cancelForm} disabled={isSaving}>
+              취소
+            </button>
+            <button type="button" className="btn-primary" onClick={handleSubmit} disabled={isSaving}>
+              {isSaving ? '저장 중...' : editingId ? '수정' : '생성'}
+            </button>
+          </div>
         </div>
+      )}
+
+      <div className="admin-table-wrapper">
+        {isLoading ? (
+          <div className="admin-loading">데이터 로딩 중...</div>
+        ) : (
+          <table className="admin-table admin-popups-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>제목</th>
+                <th>타입</th>
+                <th>트리거</th>
+                <th>일정</th>
+                <th>우선순위</th>
+                <th>활성</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedPopups.length > 0 ? sortedPopups.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>{p.title}</td>
+                  <td>{p.type === 'IMAGE_TEXT' ? '이미지+텍스트' : '텍스트'}</td>
+                  <td>{p.triggers.map((tr) => TRIGGER_LABEL[tr]).join(', ')}</td>
+                  <td>{formatDateTime(p.startAt)} ~ {formatDateTime(p.endAt)}</td>
+                  <td>{p.priority}</td>
+                  <td>{p.isActive ? '활성' : '비활성'}</td>
+                  <td>
+                    <button type="button" className="btn-link" onClick={() => openEdit(p)}>수정</button>
+                    <button type="button" className="btn-link btn-link-danger" onClick={() => handleDelete(p)}>삭제</button>
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan={8} className="empty-row">등록된 팝업이 없습니다.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
 };
 
-export default AdminPopupsPage;
+export default AdminPopupsPanel;
