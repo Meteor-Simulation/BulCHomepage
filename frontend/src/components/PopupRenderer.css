@@ -1,7 +1,7 @@
 .popup-renderer-root {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 10%;
+  left: 5%;
   transform: translate(-50%, -50%);
   z-index: 1000;
   pointer-events: none;

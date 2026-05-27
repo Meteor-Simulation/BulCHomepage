@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -102,11 +103,11 @@ public class AdminPopupController {
                     "error", "허용되지 않는 파일 형식입니다 (jpg, jpeg, png, gif, webp 만 가능)"));
         }
         try {
-            Path uploadDir = Paths.get(POPUP_UPLOAD_DIR);
+            Path uploadDir = Paths.get(POPUP_UPLOAD_DIR).toAbsolutePath();
             if (!Files.exists(uploadDir)) Files.createDirectories(uploadDir);
             String savedFileName = UUID.randomUUID() + "." + extension;
             Path filePath = uploadDir.resolve(savedFileName);
-            file.transferTo(filePath.toFile());
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             String url = "/" + POPUP_UPLOAD_DIR + "/" + savedFileName;
             log.info("팝업 이미지 업로드 - name: {}, savedAs: {}, size: {}KB",
                     originalName, savedFileName, file.getSize() / 1024);
