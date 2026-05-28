@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,16 +57,16 @@ public class PostImageController {
         }
 
         try {
-            // 저장 디렉토리 생성
-            Path uploadDir = Paths.get(uploadPath);
+            // 저장 디렉토리 생성 (toAbsolutePath: Tomcat 임시 디렉토리 기준 해석 방지)
+            Path uploadDir = Paths.get(uploadPath).toAbsolutePath();
             if (!Files.exists(uploadDir)) {
                 Files.createDirectories(uploadDir);
             }
 
-            // UUID 파일명으로 저장
+            // UUID 파일명으로 저장 (Files.copy: transferTo 의 상대경로 함정 회피)
             String savedFileName = UUID.randomUUID() + "." + extension;
             Path filePath = uploadDir.resolve(savedFileName);
-            file.transferTo(filePath.toFile());
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // DB 저장 (post_id는 null — 글 저장 시 연결)
             PostImage postImage = PostImage.builder()
