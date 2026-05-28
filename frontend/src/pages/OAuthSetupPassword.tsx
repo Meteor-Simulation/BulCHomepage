@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseUrl } from '../utils/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +16,7 @@ const OAuthSetupPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { loginWithToken } = useAuth();
   const { language } = useLanguage();
+  const { i18n } = useTranslation();
 
   const [token] = useState(searchParams.get('token') || '');
   const [email] = useState(decodeURIComponent(searchParams.get('email') || ''));
@@ -78,6 +80,7 @@ const OAuthSetupPassword: React.FC = () => {
           password,
           name: name.trim(),
           phone: phone.trim() || null,
+          language: i18n.language,
         }),
       });
 

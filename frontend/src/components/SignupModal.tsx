@@ -19,7 +19,7 @@ interface SignupModalProps {
 }
 
 const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLogin }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showAlert } = useAlert();
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
@@ -341,6 +341,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
           signupTicket,
           password,
           marketingAgreed: agreeMarketing,
+          language: i18n.language,
         }),
       });
 
