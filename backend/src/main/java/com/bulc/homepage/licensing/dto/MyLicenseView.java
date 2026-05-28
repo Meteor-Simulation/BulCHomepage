@@ -22,6 +22,7 @@ public record MyLicenseView(
         LicenseStatus status,
         Instant validFrom,
         Instant validUntil,
+        Instant startsAt,
         List<String> entitlements,
         int usedActivations,
         int maxActivations
@@ -40,9 +41,9 @@ public record MyLicenseView(
                 .filter(a -> a.getStatus() == ActivationStatus.ACTIVE || a.getStatus() == ActivationStatus.STALE)
                 .count();
 
-        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
-                ? license.getStatus()
-                : license.calculateEffectiveStatus(Instant.now());
+        Instant now = Instant.now();
+        LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
+        Instant startsAt = effectiveStatus == LicenseStatus.PENDING ? license.getValidFrom() : null;
 
         return new MyLicenseView(
                 license.getId(),
@@ -53,6 +54,7 @@ public record MyLicenseView(
                 effectiveStatus,
                 license.getValidFrom(),
                 license.getValidUntil(),
+                startsAt,
                 entitlements,
                 usedActivations,
                 license.getMaxActivations()

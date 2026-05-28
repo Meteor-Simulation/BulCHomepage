@@ -694,6 +694,7 @@ String invalidRequest = """
                 Instant.now(),
                 Instant.now(),
                 Instant.now().plus(30, ChronoUnit.DAYS),
+                null,  // startsAt: 즉시 시작이면 null
                 java.util.Map.of(
                         "maxActivations", 3,
                         "maxConcurrentSessions", 2,

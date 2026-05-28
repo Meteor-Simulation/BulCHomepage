@@ -846,8 +846,664 @@ class LicenseServiceTest {
     }
 
     // ==========================================
+    // TRIAL Chaining (B안 지연 시작) 테스트
+    // ==========================================
+
+    @Nested
+    @DisplayName("TRIAL 체이닝 (issueLicenseForRedeem)")
+    class TrialChaining {
+
+        @Test
+        @DisplayName("기존 ACTIVE TRIAL 없으면 즉시 시작 (chaining 없음)")
+        void shouldStartImmediatelyWhenNoExistingTrial() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of());
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            Instant before = Instant.now();
+            License result = licenseService.issueLicenseForRedeem(
+                    userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(saved.getValidFrom()).isAfterOrEqualTo(before);
+            // 약 14일 뒤 만료
+            assertThat(saved.getValidUntil())
+                    .isAfter(before.plus(13, ChronoUnit.DAYS))
+                    .isBefore(before.plus(15, ChronoUnit.DAYS));
+        }
+
+        @Test
+        @DisplayName("동일 productId의 ACTIVE TRIAL 존재 시 PENDING + chained validFrom")
+        void shouldChainAfterExistingTrialValidUntil() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            Instant existingValidUntil = Instant.now().plus(9, ChronoUnit.DAYS);
+            License existingTrial = createExistingTrial(userId, productId, existingValidUntil);
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseForRedeem(userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(existingValidUntil);
+            assertThat(saved.getValidUntil())
+                    .isEqualTo(existingValidUntil.plus(14, ChronoUnit.DAYS));
+        }
+
+        @Test
+        @DisplayName("여러 TRIAL 존재 시 가장 늦은 validUntil 뒤로 chaining")
+        void shouldChainToLatestValidUntilAmongMultipleTrials() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            // Repository는 validUntil 내림차순으로 정렬하여 반환 (가장 늦은 것이 첫 번째)
+            Instant latestValidUntil = Instant.now().plus(28, ChronoUnit.DAYS);
+            License laterTrial = createExistingTrial(userId, productId, latestValidUntil);
+            License earlierTrial = createExistingTrial(userId, productId, Instant.now().plus(14, ChronoUnit.DAYS));
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(laterTrial, earlierTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseForRedeem(userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(latestValidUntil);
+        }
+
+        @Test
+        @DisplayName("ORGANIZATION 소유자는 chaining 적용 안 함 (issueLicenseWithPlan)")
+        void shouldNotChainForOrganizationOwner() {
+            UUID orgId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseWithPlan(
+                    OwnerType.ORG, orgId, planId, null, UsageCategory.COMMERCIAL);
+
+            // ORG의 경우 findChainableTrialsWithLock이 호출되지 않아야 함
+            verify(licenseRepository, never()).findChainableTrialsWithLock(
+                    any(), any(), any(), any(), any());
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("SUBSCRIPTION은 TRIAL chaining 적용 안 함")
+        void shouldNotChainForSubscription() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = LicensePlan.builder()
+                    .productId(productId)
+                    .code("SUB_30D")
+                    .name("Monthly Subscription")
+                    .licenseType(LicenseType.SUBSCRIPTION)
+                    .durationDays(30)
+                    .graceDays(7)
+                    .maxActivations(3)
+                    .maxConcurrentSessions(2)
+                    .allowOfflineDays(30)
+                    .build();
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseWithPlan(
+                    OwnerType.USER, userId, planId, null, UsageCategory.COMMERCIAL);
+
+            verify(licenseRepository, never()).findChainableTrialsWithLock(
+                    any(), any(), any(), any(), any());
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("issueLicenseByAdmin - USER + TRIAL chaining 적용 (PENDING + 지연 validFrom)")
+        void shouldChainForAdminTrialIssue() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            Instant existingValidUntil = Instant.now().plus(10, ChronoUnit.DAYS);
+            License existingTrial = createExistingTrial(userId, productId, existingValidUntil);
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseByAdmin(
+                    userId, planId, UsageCategory.COMMERCIAL, "관리자 발급 메모");
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(existingValidUntil);
+            assertThat(saved.getValidUntil())
+                    .isEqualTo(existingValidUntil.plus(14, ChronoUnit.DAYS));
+            // 관리자 메모/플래그가 정책 스냅샷에 들어가야 함
+            assertThat(saved.getPolicySnapshot()).containsEntry("adminMemo", "관리자 발급 메모");
+            assertThat(saved.getPolicySnapshot()).containsEntry("issuedByAdmin", true);
+        }
+
+        @Test
+        @DisplayName("issueLicenseWithPlanForBilling - USER + TRIAL chaining 적용 (반환은 LicenseIssueResult)")
+        void shouldChainForBillingTrialIssue() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            Instant existingValidUntil = Instant.now().plus(7, ChronoUnit.DAYS);
+            License existingTrial = createExistingTrial(userId, productId, existingValidUntil);
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            LicenseIssueResult result = licenseService.issueLicenseWithPlanForBilling(
+                    OwnerType.USER, userId, planId, ORDER_ID, UsageCategory.COMMERCIAL);
+
+            assertThat(result).isNotNull();
+            assertThat(result.licenseKey()).isNotNull();
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(existingValidUntil);
+            assertThat(saved.getValidUntil())
+                    .isEqualTo(existingValidUntil.plus(14, ChronoUnit.DAYS));
+        }
+
+        @Test
+        @DisplayName("3중 chaining - 가장 늦은 validUntil(+28d) 뒤에 14d 이어붙임 → 새 라이선스는 PENDING + validUntil = +42d")
+        void shouldChainThreeTrialsSequentially() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            // 가장 늦은 trial: +28d, 그 다음: +14d (Repository는 validUntil DESC 정렬)
+            Instant latestValidUntil = Instant.now().plus(28, ChronoUnit.DAYS);
+            License laterTrial = createExistingTrial(userId, productId, latestValidUntil);
+            License earlierTrial = createExistingTrial(userId, productId,
+                    Instant.now().plus(14, ChronoUnit.DAYS));
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(laterTrial, earlierTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseForRedeem(userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(latestValidUntil);
+            // 새 라이선스 validUntil은 +28d + 14d = +42d
+            assertThat(saved.getValidUntil())
+                    .isEqualTo(latestValidUntil.plus(14, ChronoUnit.DAYS));
+        }
+
+        @Test
+        @DisplayName("동일 productId지만 plan이 다른 trial 사이에도 chaining 적용 (planId 무관)")
+        void shouldChainAcrossDifferentPlansOfSameProduct() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID newPlanId = UUID.randomUUID();
+            // 새로 발급할 plan은 TRIAL 14D
+            LicensePlan newPlan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(newPlanId)).willReturn(Optional.of(newPlan));
+
+            // 기존 trial은 TRIAL 7D로 발급된 상태 (planId 다름, 같은 productId)
+            Instant existingValidUntil = Instant.now().plus(5, ChronoUnit.DAYS);
+            License existingTrial = createExistingTrial(userId, productId, existingValidUntil);
+            // 해당 라이선스의 planId를 다른 값으로 설정 (planId가 chaining 판단에 영향 없음을 명시)
+            ReflectionTestUtils.setField(existingTrial, "planId", UUID.randomUUID());
+
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseForRedeem(userId, newPlanId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(existingValidUntil);
+            assertThat(saved.getValidUntil())
+                    .isEqualTo(existingValidUntil.plus(14, ChronoUnit.DAYS));
+        }
+
+        @Test
+        @DisplayName("usageCategory가 다른 trial이어도 chaining 적용 (usageCategory 무시 정책)")
+        void shouldChainRegardlessOfUsageCategory() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            // 기존 trial은 INTERNAL_EVAL 카테고리로 발급됨
+            Instant existingValidUntil = Instant.now().plus(6, ChronoUnit.DAYS);
+            License existingTrial = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(userId)
+                    .productId(productId)
+                    .licenseType(LicenseType.TRIAL)
+                    .usageCategory(UsageCategory.INTERNAL_EVAL)
+                    .validFrom(Instant.now())
+                    .validUntil(existingValidUntil)
+                    .build();
+            existingTrial.activate();
+            ReflectionTestUtils.setField(existingTrial, "id", UUID.randomUUID());
+
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            // 새 trial은 COMMERCIAL로 발급
+            licenseService.issueLicenseForRedeem(userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getValidFrom()).isEqualTo(existingValidUntil);
+            assertThat(saved.getUsageCategory()).isEqualTo(UsageCategory.COMMERCIAL);
+        }
+
+        @Test
+        @DisplayName("SOURCE_REDEEM 라이선스는 chaining 적용된 경우에도 policySnapshot.source=REDEEM 유지")
+        void shouldKeepRedeemSourceInPolicySnapshotEvenWithChaining() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = createTrialPlan(productId, 14);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            Instant existingValidUntil = Instant.now().plus(5, ChronoUnit.DAYS);
+            License existingTrial = createExistingTrial(userId, productId, existingValidUntil);
+            given(licenseRepository.findChainableTrialsWithLock(
+                    eq(OwnerType.USER), eq(userId), eq(productId),
+                    eq(LicenseType.TRIAL), any()))
+                    .willReturn(List.of(existingTrial));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseForRedeem(userId, planId, UsageCategory.COMMERCIAL);
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(saved.getSourceType()).isEqualTo(LicenseSourceType.REDEEM);
+            assertThat(saved.getPolicySnapshot()).containsEntry("source", "REDEEM");
+        }
+
+        @Test
+        @DisplayName("PERPETUAL 플랜은 chaining 미적용 + 즉시 ACTIVE + validUntil=null")
+        void shouldNotChainForPerpetualPlan() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = LicensePlan.builder()
+                    .productId(productId)
+                    .code("PERPETUAL")
+                    .name("Perpetual License")
+                    .licenseType(LicenseType.PERPETUAL)
+                    .durationDays(0)
+                    .graceDays(0)
+                    .maxActivations(3)
+                    .maxConcurrentSessions(2)
+                    .allowOfflineDays(0)
+                    .build();
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+
+            ArgumentCaptor<License> captor = ArgumentCaptor.forClass(License.class);
+            given(licenseRepository.save(captor.capture()))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            licenseService.issueLicenseWithPlan(
+                    OwnerType.USER, userId, planId, null, UsageCategory.COMMERCIAL);
+
+            // PERPETUAL은 chaining 분기 미적용 → findChainableTrialsWithLock 호출되지 않음
+            verify(licenseRepository, never()).findChainableTrialsWithLock(
+                    any(), any(), any(), any(), any());
+
+            License saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(saved.getValidUntil()).isNull();
+        }
+    }
+
+    // ==========================================
+    // PENDING 라이선스 일괄 활성화 테스트 (스케줄러용)
+    // ==========================================
+
+    @Nested
+    @DisplayName("PENDING 라이선스 일괄 활성화 (activatePendingLicenses)")
+    class ActivatePendingLicenses {
+
+        @Test
+        @DisplayName("validFrom 도래한 PENDING 라이선스를 ACTIVE로 전이")
+        void shouldActivateDueLicenses() {
+            Instant now = Instant.now();
+            License dueLicense = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.minus(1, ChronoUnit.MINUTES))
+                    .validUntil(now.plus(14, ChronoUnit.DAYS))
+                    .build();
+
+            given(licenseRepository.findPendingDueForActivation(any()))
+                    .willReturn(List.of(dueLicense));
+
+            int activated = licenseService.activatePendingLicenses();
+
+            assertThat(activated).isEqualTo(1);
+            assertThat(dueLicense.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("대상 없으면 0 반환")
+        void shouldReturnZeroWhenNoDuePending() {
+            given(licenseRepository.findPendingDueForActivation(any()))
+                    .willReturn(List.of());
+
+            int activated = licenseService.activatePendingLicenses();
+
+            assertThat(activated).isZero();
+        }
+
+        @Test
+        @DisplayName("여러 PENDING 중 일부만 due - due한 것만 카운트, 나머지는 PENDING 유지")
+        void shouldOnlyCountDueLicenses() {
+            Instant now = Instant.now();
+            // due 케이스 (validFrom 과거)
+            License dueLicense1 = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.minus(10, ChronoUnit.MINUTES))
+                    .validUntil(now.plus(14, ChronoUnit.DAYS))
+                    .build();
+            License dueLicense2 = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.minus(1, ChronoUnit.MINUTES))
+                    .validUntil(now.plus(28, ChronoUnit.DAYS))
+                    .build();
+            // not-yet due 케이스 (validFrom 미래) - 같은 트랜잭션에서 동시에 처리되더라도
+            // tryActivateIfDue가 false 반환해야 함
+            License notDueLicense = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.plus(1, ChronoUnit.HOURS))
+                    .validUntil(now.plus(14, ChronoUnit.DAYS))
+                    .build();
+
+            // Repository는 보통 due한 것만 반환하지만, race condition 등의 사유로
+            // not-yet-due 라이선스가 섞여 들어오는 케이스를 검증.
+            given(licenseRepository.findPendingDueForActivation(any()))
+                    .willReturn(List.of(dueLicense1, dueLicense2, notDueLicense));
+
+            int activated = licenseService.activatePendingLicenses();
+
+            assertThat(activated).isEqualTo(2);
+            assertThat(dueLicense1.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(dueLicense2.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(notDueLicense.getStatus()).isEqualTo(LicenseStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("tryActivateIfDue가 false 반환하는 라이선스(이미 ACTIVE)는 카운트 제외")
+        void shouldExcludeAlreadyActiveFromCount() {
+            Instant now = Instant.now();
+            License dueLicense = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.minus(1, ChronoUnit.MINUTES))
+                    .validUntil(now.plus(14, ChronoUnit.DAYS))
+                    .build();
+            // race condition 시뮬레이션: Repository가 가져왔으나 그 사이에 다른 트랜잭션이
+            // 이 라이선스를 ACTIVE로 변경한 상황
+            License alreadyActiveLicense = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(OWNER_ID)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.TRIAL)
+                    .validFrom(now.minus(5, ChronoUnit.MINUTES))
+                    .validUntil(now.plus(7, ChronoUnit.DAYS))
+                    .build();
+            alreadyActiveLicense.activate();
+
+            given(licenseRepository.findPendingDueForActivation(any()))
+                    .willReturn(List.of(dueLicense, alreadyActiveLicense));
+
+            int activated = licenseService.activatePendingLicenses();
+
+            // 진짜 PENDING이었던 1개만 카운트
+            assertThat(activated).isEqualTo(1);
+            assertThat(dueLicense.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(alreadyActiveLicense.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+        }
+    }
+
+    // ==========================================
+    // 중복 구매 차단 (MDP: USER가 동일 product의 유상 라이선스 중복 구매 방지)
+    // ==========================================
+
+    @Nested
+    @DisplayName("USER 중복 구매 차단")
+    class DuplicatePurchaseBlock {
+
+        private LicensePlan buildPaidPlan(UUID planId, UUID productId) {
+            LicensePlan plan = LicensePlan.builder()
+                    .productId(productId)
+                    .code("PRO_1Y")
+                    .name("Pro 1Y")
+                    .licenseType(LicenseType.SUBSCRIPTION)
+                    .durationDays(365)
+                    .graceDays(7)
+                    .maxActivations(3)
+                    .maxConcurrentSessions(1)
+                    .allowOfflineDays(7)
+                    .build();
+            ReflectionTestUtils.setField(plan, "id", planId);
+            return plan;
+        }
+
+        @Test
+        @DisplayName("requireUserCanPurchasePlan - 중복 없으면 통과")
+        void shouldPassWhenNoActivePaidLicense() {
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = buildPaidPlan(planId, PRODUCT_ID);
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.existsActiveOrPendingPaidLicense(
+                    OwnerType.USER, OWNER_ID, PRODUCT_ID)).willReturn(false);
+
+            assertThatCode(() -> licenseService.requireUserCanPurchasePlan(OWNER_ID, planId))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("requireUserCanPurchasePlan - ACTIVE/PENDING 유상 라이선스 보유 시 LICENSE_ALREADY_EXISTS")
+        void shouldThrowWhenActivePaidLicenseExists() {
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = buildPaidPlan(planId, PRODUCT_ID);
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.existsActiveOrPendingPaidLicense(
+                    OwnerType.USER, OWNER_ID, PRODUCT_ID)).willReturn(true);
+
+            assertThatThrownBy(() -> licenseService.requireUserCanPurchasePlan(OWNER_ID, planId))
+                    .isInstanceOf(LicenseException.class)
+                    .extracting(ex -> ((LicenseException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.LICENSE_ALREADY_EXISTS);
+        }
+
+        @Test
+        @DisplayName("issueLicenseWithPlanForBilling - USER + 중복 보유 시 LICENSE_ALREADY_EXISTS")
+        void shouldBlockUserDuplicatePaidIssuance() {
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = buildPaidPlan(planId, PRODUCT_ID);
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.existsActiveOrPendingPaidLicense(
+                    OwnerType.USER, OWNER_ID, PRODUCT_ID)).willReturn(true);
+
+            assertThatThrownBy(() -> licenseService.issueLicenseWithPlanForBilling(
+                    OwnerType.USER, OWNER_ID, planId, ORDER_ID, UsageCategory.COMMERCIAL))
+                    .isInstanceOf(LicenseException.class)
+                    .extracting(ex -> ((LicenseException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.LICENSE_ALREADY_EXISTS);
+
+            // 발급 자체가 차단되어야 하므로 save는 호출되지 않아야 함
+            verify(licenseRepository, never()).save(any(License.class));
+        }
+
+        @Test
+        @DisplayName("issueLicenseWithPlanForBilling - ORG는 중복 보유해도 발급 가능 (다중 라이선스 정책)")
+        void shouldAllowOrgDuplicateIssuance() {
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = buildPaidPlan(planId, PRODUCT_ID);
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.save(any(License.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            // when - ORG 발급 (existsActiveOrPendingPaidLicense은 호출되지 않아야 함)
+            LicenseIssueResult result = licenseService.issueLicenseWithPlanForBilling(
+                    OwnerType.ORG, OWNER_ID, planId, ORDER_ID, UsageCategory.COMMERCIAL);
+
+            // then
+            assertThat(result).isNotNull();
+            verify(licenseRepository, never()).existsActiveOrPendingPaidLicense(any(), any(), any());
+            verify(licenseRepository).save(any(License.class));
+        }
+
+        @Test
+        @DisplayName("issueLicenseWithPlanForBilling - 중복 없으면 USER 발급 성공")
+        void shouldAllowUserIssuanceWhenNoDuplicate() {
+            UUID planId = UUID.randomUUID();
+            LicensePlan plan = buildPaidPlan(planId, PRODUCT_ID);
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(plan));
+            given(licenseRepository.existsActiveOrPendingPaidLicense(
+                    OwnerType.USER, OWNER_ID, PRODUCT_ID)).willReturn(false);
+            given(licenseRepository.save(any(License.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            LicenseIssueResult result = licenseService.issueLicenseWithPlanForBilling(
+                    OwnerType.USER, OWNER_ID, planId, ORDER_ID, UsageCategory.COMMERCIAL);
+
+            assertThat(result).isNotNull();
+            assertThat(result.licenseKey()).isNotNull();
+            verify(licenseRepository).save(any(License.class));
+        }
+    }
+
+    // ==========================================
     // 헬퍼 메서드
     // ==========================================
+
+    private LicensePlan createTrialPlan(UUID productId, int durationDays) {
+        return LicensePlan.builder()
+                .productId(productId)
+                .code("TRIAL_" + durationDays + "D")
+                .name(durationDays + "-day Trial")
+                .licenseType(LicenseType.TRIAL)
+                .durationDays(durationDays)
+                .graceDays(0)
+                .maxActivations(1)
+                .maxConcurrentSessions(1)
+                .allowOfflineDays(0)
+                .build();
+    }
+
+    private License createExistingTrial(UUID userId, UUID productId, Instant validUntil) {
+        License license = License.builder()
+                .ownerType(OwnerType.USER)
+                .ownerId(userId)
+                .productId(productId)
+                .licenseType(LicenseType.TRIAL)
+                .validFrom(Instant.now())
+                .validUntil(validUntil)
+                .build();
+        license.activate();
+        ReflectionTestUtils.setField(license, "id", UUID.randomUUID());
+        return license;
+    }
 
     private License createMockLicense(LicenseStatus status) {
         License license = License.builder()
