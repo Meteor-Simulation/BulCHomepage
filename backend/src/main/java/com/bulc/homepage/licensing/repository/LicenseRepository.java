@@ -71,6 +71,18 @@ public interface LicenseRepository extends JpaRepository<License, UUID> {
     @Query("SELECT l FROM License l WHERE l.status = 'ACTIVE' AND l.validUntil IS NOT NULL AND l.validUntil < :threshold")
     List<License> findExpiredLicenses(@Param("threshold") java.time.Instant threshold);
 
+    /**
+     * 만료 임박 USER 소유 ACTIVE 라이선스 조회 (지정 시각 구간 내 만료).
+     * 메일링 D-30/D-7 알림 스케줄러용. start/end 는 UTC Instant.
+     */
+    @Query("SELECT l FROM License l " +
+           "WHERE l.status = 'ACTIVE' " +
+           "AND l.ownerType = com.bulc.homepage.licensing.domain.OwnerType.USER " +
+           "AND l.validUntil IS NOT NULL " +
+           "AND l.validUntil >= :start AND l.validUntil < :end")
+    List<License> findActiveUserLicensesExpiringBetween(@Param("start") java.time.Instant start,
+                                                       @Param("end") java.time.Instant end);
+
     // ==========================================
     // v1.1 추가 메서드
     // ==========================================
