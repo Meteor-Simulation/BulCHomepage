@@ -462,12 +462,10 @@ public class AuthService {
                 existingUser.setCreatedAt(LocalDateTime.now());
                 user = userRepository.save(existingUser);
             } else {
-                // 기존 활성 사용자 - 소셜 계정 연동 및 정보 갱신
-                log.info("기존 활성 사용자에 소셜 계정 연동: {}", email);
-                existingUser.setName(request.getName() != null ? request.getName() : existingUser.getName());
-                existingUser.setPhone(request.getPhone() != null ? request.getPhone() : existingUser.getPhone());
-                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-                user = userRepository.save(existingUser);
+                // 활성 계정이 같은 이메일로 이미 존재 — OAuth 가입 차단 (안전망, MDP-523)
+                // CustomOAuth2UserService 가 1차로 차단하지만 임시 토큰 탈취 등 우회 시도 대비
+                log.warn("OAuth signup 거부 - 활성 계정 이미 존재: {}", email);
+                throw new RuntimeException("이미 가입된 이메일입니다. 이메일/비밀번호로 로그인해주세요.");
             }
         } else {
             // 신규 사용자 생성
