@@ -194,9 +194,14 @@ public class License {
             return this.status;
         }
 
+        // PENDING + 아직 validFrom 미도래: TRIAL chaining으로 지연 시작된 라이선스
+        if (this.status == LicenseStatus.PENDING && this.validFrom != null && now.isBefore(this.validFrom)) {
+            return LicenseStatus.PENDING;
+        }
+
         if (this.validUntil == null) {
-            // Perpetual 라이선스
-            return this.status;
+            // Perpetual: PENDING이라도 validFrom 도달 시 ACTIVE로 간주 (lazy 활성화)
+            return LicenseStatus.ACTIVE;
         }
 
         int gracePeriodDays = getGracePeriodDays();
@@ -209,6 +214,24 @@ public class License {
         } else {
             return LicenseStatus.EXPIRED_HARD;
         }
+    }
+
+    /**
+     * PENDING + validFrom 도달 시 ACTIVE로 실제 전이 (DB raw status 갱신).
+     * Scheduler가 주기적으로 호출하여 lazy 활성화 결과를 DB에 반영.
+     *
+     * @return 전이 발생 여부
+     */
+    public boolean tryActivateIfDue(Instant now) {
+        if (this.status != LicenseStatus.PENDING) {
+            return false;
+        }
+        if (this.validFrom != null && now.isBefore(this.validFrom)) {
+            return false;
+        }
+        this.status = LicenseStatus.ACTIVE;
+        this.updatedAt = Instant.now();
+        return true;
     }
 
     /**

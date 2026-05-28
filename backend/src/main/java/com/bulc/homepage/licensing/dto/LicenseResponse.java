@@ -26,15 +26,16 @@ public record LicenseResponse(
         Instant issuedAt,
         Instant validFrom,
         Instant validUntil,
+        Instant startsAt,
         Map<String, Object> policySnapshot,
         List<ActivationResponse> activations,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static LicenseResponse from(License license) {
-        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
-                ? license.getStatus()
-                : license.calculateEffectiveStatus(Instant.now());
+        Instant now = Instant.now();
+        LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
+        Instant startsAt = effectiveStatus == LicenseStatus.PENDING ? license.getValidFrom() : null;
         return new LicenseResponse(
                 license.getId(),
                 license.getOwnerType(),
@@ -47,6 +48,7 @@ public record LicenseResponse(
                 license.getIssuedAt(),
                 license.getValidFrom(),
                 license.getValidUntil(),
+                startsAt,
                 license.getPolicySnapshot(),
                 license.getActivations().stream().map(ActivationResponse::from).toList(),
                 license.getCreatedAt(),

@@ -78,6 +78,25 @@ public class LicenseService {
     // ==========================================
 
     /**
+     * USER가 해당 라이선스 플랜을 신규 구매할 수 있는지 사전 검증.
+     *
+     * 결제 진입 시점(토스 API 호출 전)에서 호출하여 환불 사이클을 막는 용도.
+     * 발급 시점의 race-condition 방어는 별도로 issueLicenseWithPlanForBilling 안에서 수행.
+     *
+     * @throws LicenseException PLAN_NOT_AVAILABLE - 플랜이 비활성/삭제된 경우
+     * @throws LicenseException LICENSE_ALREADY_EXISTS - 동일 product에 ACTIVE/PENDING 유상 라이선스 보유 중
+     */
+    public void requireUserCanPurchasePlan(UUID userId, UUID licensePlanId) {
+        LicensePlan plan = planRepository.findAvailableById(licensePlanId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        if (licenseRepository.existsActiveOrPendingPaidLicense(
+                OwnerType.USER, userId, plan.getProductId())) {
+            throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
+        }
+    }
+
+    /**
      * 라이선스 발급.
      *
      * Billing 모듈에서 결제 완료(OrderPaid) 시 호출합니다.
@@ -150,7 +169,13 @@ public class LicenseService {
         LicensePlan plan = planRepository.findAvailableById(planId)
                 .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
 
-        // 1인 다중 라이선스 허용 - 중복 체크 제거
+        // USER 중복 구매 차단 (race condition 방어). ORG는 다중 라이선스 허용 정책 유지.
+        // TRIAL은 제외되어 무료 체험 중에도 유상 구매 가능.
+        if (ownerType == OwnerType.USER
+                && licenseRepository.existsActiveOrPendingPaidLicense(
+                        ownerType, ownerId, plan.getProductId())) {
+            throw new LicenseException(ErrorCode.LICENSE_ALREADY_EXISTS);
+        }
 
         // 라이선스 키 생성
         String licenseKey = generateLicenseKey();
@@ -158,11 +183,9 @@ public class LicenseService {
         // Plan에서 PolicySnapshot 생성
         Map<String, Object> policySnapshot = plan.toPolicySnapshot();
 
-        // 유효기간 계산
-        Instant now = Instant.now();
-        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
-                ? null
-                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+        // 유효기간 계산 (TRIAL chaining 적용)
+        TrialChainResult validity = resolveValidityForPlan(ownerType, ownerId,
+                plan.getProductId(), plan.getLicenseType(), plan.getDurationDays());
 
         License license = License.builder()
                 .ownerType(ownerType)
@@ -171,15 +194,17 @@ public class LicenseService {
                 .planId(planId)
                 .licenseType(plan.getLicenseType())
                 .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
-                .validFrom(now)
-                .validUntil(validUntil)
+                .validFrom(validity.validFrom())
+                .validUntil(validity.validUntil())
                 .policySnapshot(policySnapshot)
                 .licenseKey(licenseKey)
                 .sourceOrderId(sourceOrderId)
                 .build();
 
-        // 발급 즉시 활성화 (결제 완료된 경우)
-        license.activate();
+        // chaining으로 지연 시작인 경우 PENDING 유지, 그 외 즉시 활성화
+        if (!validity.deferActivation()) {
+            license.activate();
+        }
 
         License saved = licenseRepository.save(license);
         return LicenseIssueResult.from(saved);
@@ -226,11 +251,9 @@ public class LicenseService {
         // Plan에서 PolicySnapshot 생성
         Map<String, Object> policySnapshot = plan.toPolicySnapshot();
 
-        // 유효기간 계산
-        Instant now = Instant.now();
-        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
-                ? null
-                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+        // 유효기간 계산 (TRIAL chaining 적용)
+        TrialChainResult validity = resolveValidityForPlan(ownerType, ownerId,
+                plan.getProductId(), plan.getLicenseType(), plan.getDurationDays());
 
         License license = License.builder()
                 .ownerType(ownerType)
@@ -239,15 +262,17 @@ public class LicenseService {
                 .planId(planId)
                 .licenseType(plan.getLicenseType())
                 .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
-                .validFrom(now)
-                .validUntil(validUntil)
+                .validFrom(validity.validFrom())
+                .validUntil(validity.validUntil())
                 .policySnapshot(policySnapshot)
                 .licenseKey(licenseKey)
                 .sourceOrderId(sourceOrderId)
                 .build();
 
-        // 발급 즉시 활성화 (결제 완료된 경우)
-        license.activate();
+        // chaining으로 지연 시작인 경우 PENDING 유지, 그 외 즉시 활성화
+        if (!validity.deferActivation()) {
+            license.activate();
+        }
 
         License saved = licenseRepository.save(license);
         return LicenseResponse.from(saved);
@@ -299,11 +324,9 @@ public class LicenseService {
             policySnapshot.put("issuedByAdmin", true);
         }
 
-        // 유효기간 계산
-        Instant now = Instant.now();
-        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
-                ? null
-                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+        // 유효기간 계산 (TRIAL chaining 적용)
+        TrialChainResult validity = resolveValidityForPlan(OwnerType.USER, userId,
+                plan.getProductId(), plan.getLicenseType(), plan.getDurationDays());
 
         License license = License.builder()
                 .ownerType(OwnerType.USER)
@@ -312,15 +335,17 @@ public class LicenseService {
                 .planId(planId)
                 .licenseType(plan.getLicenseType())
                 .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
-                .validFrom(now)
-                .validUntil(validUntil)
+                .validFrom(validity.validFrom())
+                .validUntil(validity.validUntil())
                 .policySnapshot(policySnapshot)
                 .licenseKey(licenseKey)
                 .sourceOrderId(null)  // 관리자 발급은 주문 없음
                 .build();
 
-        // 발급 즉시 활성화
-        license.activate();
+        // chaining으로 지연 시작인 경우 PENDING 유지, 그 외 즉시 활성화
+        if (!validity.deferActivation()) {
+            license.activate();
+        }
 
         return licenseRepository.save(license);
     }
@@ -341,10 +366,9 @@ public class LicenseService {
         Map<String, Object> policySnapshot = plan.toPolicySnapshot();
         policySnapshot.put("source", "REDEEM");
 
-        Instant now = Instant.now();
-        Instant validUntil = plan.getLicenseType() == LicenseType.PERPETUAL
-                ? null
-                : now.plusSeconds((long) plan.getDurationDays() * 24 * 60 * 60);
+        // 유효기간 계산 (TRIAL chaining 적용)
+        TrialChainResult validity = resolveValidityForPlan(OwnerType.USER, userId,
+                plan.getProductId(), plan.getLicenseType(), plan.getDurationDays());
 
         License license = License.builder()
                 .ownerType(OwnerType.USER)
@@ -353,15 +377,18 @@ public class LicenseService {
                 .planId(planId)
                 .licenseType(plan.getLicenseType())
                 .usageCategory(usageCategory != null ? usageCategory : UsageCategory.COMMERCIAL)
-                .validFrom(now)
-                .validUntil(validUntil)
+                .validFrom(validity.validFrom())
+                .validUntil(validity.validUntil())
                 .policySnapshot(policySnapshot)
                 .licenseKey(licenseKey)
                 .sourceOrderId(null)
                 .sourceType(LicenseSourceType.REDEEM)
                 .build();
 
-        license.activate();
+        // chaining으로 지연 시작인 경우 PENDING 유지, 그 외 즉시 활성화
+        if (!validity.deferActivation()) {
+            license.activate();
+        }
         return licenseRepository.save(license);
     }
 
@@ -1329,6 +1356,28 @@ public class LicenseService {
     // ==========================================
 
     /**
+     * PENDING 라이선스 일괄 활성화 (스케줄러용).
+     *
+     * TRIAL chaining으로 지연 시작된 라이선스 중 validFrom이 도래한 것들을
+     * ACTIVE로 전이시킵니다. Lazy 평가(calculateEffectiveStatus)는 이미
+     * 정확한 상태를 반환하지만, DB raw status도 갱신하여 일관성을 유지합니다.
+     *
+     * @return 활성화된 라이선스 수
+     */
+    @Transactional
+    public int activatePendingLicenses() {
+        Instant now = Instant.now();
+        List<License> pendingDue = licenseRepository.findPendingDueForActivation(now);
+        int activatedCount = 0;
+        for (License license : pendingDue) {
+            if (license.tryActivateIfDue(now)) {
+                activatedCount++;
+            }
+        }
+        return activatedCount;
+    }
+
+    /**
      * 라이선스 정지.
      *
      * Admin 모듈에서 관리자가 라이선스를 정지할 때 호출합니다.
@@ -1490,6 +1539,43 @@ public class LicenseService {
                 "allowOfflineDays", 30,
                 "entitlements", List.of("core-simulation")
         );
+    }
+
+    /**
+     * TRIAL chaining 결과: 새 라이선스의 (validFrom, validUntil)과 즉시 활성화 여부.
+     */
+    private record TrialChainResult(Instant validFrom, Instant validUntil, boolean deferActivation) {}
+
+    /**
+     * Plan 기반 발급 시 유효기간 계산 (TRIAL chaining 적용).
+     *
+     * - OwnerType.USER + LicenseType.TRIAL: 동일 productId의 PENDING/ACTIVE trial 중
+     *   가장 늦은 validUntil 뒤에 새 라이선스를 이어붙임 (PENDING으로 발급)
+     * - 그 외 (ORGANIZATION, SUBSCRIPTION, PERPETUAL): 기존대로 즉시 시작
+     */
+    private TrialChainResult resolveValidityForPlan(OwnerType ownerType, UUID ownerId,
+                                                     UUID productId, LicenseType licenseType,
+                                                     int durationDays) {
+        Instant now = Instant.now();
+        Instant validFrom = now;
+        boolean deferActivation = false;
+
+        if (ownerType == OwnerType.USER && licenseType == LicenseType.TRIAL) {
+            List<License> chainable = licenseRepository.findChainableTrialsWithLock(
+                    ownerType, ownerId, productId, licenseType, now);
+            if (!chainable.isEmpty()) {
+                validFrom = chainable.get(0).getValidUntil();
+                deferActivation = true;
+                log.info("TRIAL chaining: ownerId={}, productId={}, chainStart={}",
+                        ownerId, productId, validFrom);
+            }
+        }
+
+        Instant validUntil = licenseType == LicenseType.PERPETUAL
+                ? null
+                : validFrom.plusSeconds((long) durationDays * 24 * 60 * 60);
+
+        return new TrialChainResult(validFrom, validUntil, deferActivation);
     }
 
     private int getOfflineTokenValidDays(License license) {

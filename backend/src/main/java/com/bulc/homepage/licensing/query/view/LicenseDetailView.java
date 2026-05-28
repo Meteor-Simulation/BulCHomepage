@@ -18,6 +18,7 @@ public record LicenseDetailView(
         Instant issuedAt,
         Instant validFrom,
         Instant validUntil,
+        Instant startsAt,
         String licenseKey,
         PolicySnapshotView policySnapshot,
         List<ActivationView> activations,
@@ -29,9 +30,9 @@ public record LicenseDetailView(
                 .map(ActivationView::from)
                 .toList();
 
-        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
-                ? license.getStatus()
-                : license.calculateEffectiveStatus(Instant.now());
+        Instant now = Instant.now();
+        LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
+        Instant startsAt = effectiveStatus == LicenseStatus.PENDING ? license.getValidFrom() : null;
 
         return new LicenseDetailView(
                 license.getId(),
@@ -45,6 +46,7 @@ public record LicenseDetailView(
                 license.getIssuedAt(),
                 license.getValidFrom(),
                 license.getValidUntil(),
+                startsAt,
                 license.getLicenseKey(),
                 PolicySnapshotView.from(license.getPolicySnapshot()),
                 activationViews,

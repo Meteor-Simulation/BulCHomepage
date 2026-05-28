@@ -4,6 +4,7 @@ import com.bulc.homepage.licensing.config.TestKeyConfig;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.repository.ActivationRepository;
+import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.licensing.service.LicenseService;
 import org.junit.jupiter.api.*;
@@ -41,6 +42,9 @@ class LicenseIntegrationTest {
 
     @Autowired
     private ActivationRepository activationRepository;
+
+    @Autowired
+    private LicensePlanRepository licensePlanRepository;
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID PRODUCT_ID = UUID.randomUUID();
@@ -498,6 +502,113 @@ class LicenseIntegrationTest {
                     .filter(a -> a.getStatus() == ActivationStatus.ACTIVE)
                     .count();
             assertThat(activeCount).isLessThanOrEqualTo(2);
+        }
+    }
+
+    // ==========================================
+    // TRIAL Chaining (B안 지연 시작) 통합 테스트
+    // ==========================================
+
+    @Nested
+    @DisplayName("TRIAL chaining DB 동작")
+    class TrialChainingIntegration {
+
+        private LicensePlan saveTrialPlan(UUID productId, int durationDays, String code) {
+            LicensePlan plan = LicensePlan.builder()
+                    .productId(productId)
+                    .code(code)
+                    .name(durationDays + "-day Trial")
+                    .licenseType(LicenseType.TRIAL)
+                    .durationDays(durationDays)
+                    .graceDays(0)
+                    .maxActivations(1)
+                    .maxConcurrentSessions(1)
+                    .allowOfflineDays(0)
+                    .build();
+            return licensePlanRepository.save(plan);
+        }
+
+        private License saveActiveTrial(UUID userId, UUID productId,
+                                         Instant validFrom, Instant validUntil) {
+            License license = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(userId)
+                    .productId(productId)
+                    .licenseType(LicenseType.TRIAL)
+                    .usageCategory(UsageCategory.COMMERCIAL)
+                    .validFrom(validFrom)
+                    .validUntil(validUntil)
+                    .policySnapshot(Map.of(
+                            "maxActivations", 1,
+                            "maxConcurrentSessions", 1,
+                            "gracePeriodDays", 0,
+                            "entitlements", List.of("core-simulation")
+                    ))
+                    .licenseKey("TRIAL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                    .build();
+            license.activate();
+            return licenseRepository.save(license);
+        }
+
+        @Test
+        @DisplayName("기존 trial 2개가 DB에 있을 때 새 trial 발급 시 validFrom = 가장 늦은 validUntil")
+        void shouldChainNewTrialAfterLatestExistingTrialValidUntil() {
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            LicensePlan plan = saveTrialPlan(productId, 14, "TRIAL_14D_CHAIN_A");
+
+            Instant now = Instant.now();
+            Instant earlierEnd = now.plus(7, ChronoUnit.DAYS);
+            Instant latestEnd = now.plus(20, ChronoUnit.DAYS);
+            saveActiveTrial(userId, productId, now, earlierEnd);
+            saveActiveTrial(userId, productId, now, latestEnd);
+
+            // when - REDEEM 경로로 새 trial 발급
+            License newLicense = licenseService.issueLicenseForRedeem(
+                    userId, plan.getId(), UsageCategory.COMMERCIAL);
+
+            // then - 새 라이선스는 PENDING 상태로 latestEnd 뒤에 시작
+            assertThat(newLicense.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(newLicense.getValidFrom()).isEqualTo(latestEnd);
+            assertThat(newLicense.getValidUntil())
+                    .isEqualTo(latestEnd.plus(14, ChronoUnit.DAYS));
+
+            // DB에서도 동일하게 저장되었는지 확인
+            License reloaded = licenseRepository.findById(newLicense.getId()).orElseThrow();
+            assertThat(reloaded.getStatus()).isEqualTo(LicenseStatus.PENDING);
+            assertThat(reloaded.getValidFrom()).isEqualTo(latestEnd);
+        }
+
+        @Test
+        @DisplayName("activatePendingLicenses() - validFrom 도래한 PENDING 라이선스의 DB raw status가 ACTIVE로 갱신")
+        void shouldUpdateDbStatusFromPendingToActive() {
+            // given - validFrom 이미 과거인 PENDING 라이선스를 DB에 직접 저장
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+
+            License pending = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(userId)
+                    .productId(productId)
+                    .licenseType(LicenseType.TRIAL)
+                    .usageCategory(UsageCategory.COMMERCIAL)
+                    .validFrom(Instant.now().minus(1, ChronoUnit.MINUTES))
+                    .validUntil(Instant.now().plus(14, ChronoUnit.DAYS))
+                    .policySnapshot(Map.of("entitlements", List.of("core")))
+                    .licenseKey("PEND-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                    .build();
+            // PENDING 상태 유지 (activate() 호출 안 함)
+            License saved = licenseRepository.save(pending);
+            assertThat(saved.getStatus()).isEqualTo(LicenseStatus.PENDING);
+
+            // when - 스케줄러가 호출하는 메서드 실행
+            int activated = licenseService.activatePendingLicenses();
+
+            // then - 활성화 카운트 1 + DB raw status 갱신
+            assertThat(activated).isGreaterThanOrEqualTo(1);
+            License reloaded = licenseRepository.findById(saved.getId()).orElseThrow();
+            assertThat(reloaded.getStatus()).isEqualTo(LicenseStatus.ACTIVE);
         }
     }
 }

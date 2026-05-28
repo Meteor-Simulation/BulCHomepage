@@ -2,6 +2,7 @@ package com.bulc.homepage.licensing.repository;
 
 import com.bulc.homepage.licensing.domain.License;
 import com.bulc.homepage.licensing.domain.LicenseStatus;
+import com.bulc.homepage.licensing.domain.LicenseType;
 import com.bulc.homepage.licensing.domain.OwnerType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +46,24 @@ public interface LicenseRepository extends JpaRepository<License, UUID> {
      * 소유자의 특정 제품 라이선스 조회.
      */
     Optional<License> findByOwnerTypeAndOwnerIdAndProductId(OwnerType ownerType, UUID ownerId, UUID productId);
+
+    /**
+     * 동일 owner가 해당 product에 ACTIVE/PENDING 유상 라이선스를 보유 중인지 확인.
+     *
+     * USER 중복 구매 차단용. 호출 측에서 ownerType=USER로 한정해서 사용.
+     * - 제외 상태: EXPIRED_GRACE/EXPIRED_HARD/SUSPENDED/REVOKED — 갱신/재구매 가능해야 함
+     * - 제외 라이선스 타입: TRIAL — 무료 체험 중에도 유상 플랜 구매 가능해야 함
+     */
+    @Query("SELECT COUNT(l) > 0 FROM License l " +
+            "WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId AND l.productId = :productId " +
+            "AND l.status IN (com.bulc.homepage.licensing.domain.LicenseStatus.ACTIVE, " +
+            "                 com.bulc.homepage.licensing.domain.LicenseStatus.PENDING) " +
+            "AND l.licenseType <> com.bulc.homepage.licensing.domain.LicenseType.TRIAL")
+    boolean existsActiveOrPendingPaidLicense(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("productId") UUID productId
+    );
 
     /**
      * 동시성 제어를 위한 비관적 락 조회.
@@ -148,4 +168,40 @@ public interface LicenseRepository extends JpaRepository<License, UUID> {
             @Param("ownerId") UUID ownerId,
             @Param("statuses") List<LicenseStatus> statuses
     );
+
+    // ==========================================
+    // TRIAL Chaining (B안 지연 시작) 지원 쿼리
+    // ==========================================
+
+    /**
+     * TRIAL chaining 기준점 조회.
+     *
+     * 동일 owner + productId + licenseType의 PENDING/ACTIVE 라이선스 중
+     * validUntil이 미래(아직 만료되지 않은)인 라이선스를 validUntil 내림차순으로 반환.
+     * 비관적 락으로 동시 redeem race condition 방지.
+     *
+     * 서비스에서 first()를 호출해 가장 늦은 validUntil을 chain start로 사용.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM License l " +
+            "WHERE l.ownerType = :ownerType AND l.ownerId = :ownerId " +
+            "AND l.productId = :productId AND l.licenseType = :licenseType " +
+            "AND l.status IN (com.bulc.homepage.licensing.domain.LicenseStatus.PENDING, com.bulc.homepage.licensing.domain.LicenseStatus.ACTIVE) " +
+            "AND l.validUntil IS NOT NULL AND l.validUntil > :now " +
+            "ORDER BY l.validUntil DESC")
+    List<License> findChainableTrialsWithLock(
+            @Param("ownerType") OwnerType ownerType,
+            @Param("ownerId") UUID ownerId,
+            @Param("productId") UUID productId,
+            @Param("licenseType") LicenseType licenseType,
+            @Param("now") Instant now
+    );
+
+    /**
+     * 활성화 시점이 도래한 PENDING 라이선스 조회 (스케줄러용).
+     * PENDING + validFrom <= now인 라이선스를 일괄 ACTIVE 전이.
+     */
+    @Query("SELECT l FROM License l WHERE l.status = com.bulc.homepage.licensing.domain.LicenseStatus.PENDING " +
+            "AND l.validFrom IS NOT NULL AND l.validFrom <= :now")
+    List<License> findPendingDueForActivation(@Param("now") Instant now);
 }
