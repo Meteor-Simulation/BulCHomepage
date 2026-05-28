@@ -32,6 +32,9 @@ public record LicenseResponse(
         Instant updatedAt
 ) {
     public static LicenseResponse from(License license) {
+        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
+                ? license.getStatus()
+                : license.calculateEffectiveStatus(Instant.now());
         return new LicenseResponse(
                 license.getId(),
                 license.getOwnerType(),
@@ -40,7 +43,7 @@ public record LicenseResponse(
                 license.getPlanId(),
                 license.getLicenseType(),
                 license.getUsageCategory(),
-                license.getStatus(),
+                effectiveStatus,
                 license.getIssuedAt(),
                 license.getValidFrom(),
                 license.getValidUntil(),

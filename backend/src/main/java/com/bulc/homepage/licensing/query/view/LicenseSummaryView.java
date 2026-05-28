@@ -27,10 +27,14 @@ public record LicenseSummaryView(
                 .filter(a -> a.getStatus() == ActivationStatus.ACTIVE)
                 .count();
 
+        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
+                ? license.getStatus()
+                : license.calculateEffectiveStatus(Instant.now());
+
         return new LicenseSummaryView(
                 license.getId(),
                 license.getLicenseKey(),
-                license.getStatus(),
+                effectiveStatus,
                 license.getLicenseType(),
                 license.getUsageCategory(),
                 license.getOwnerId(),
