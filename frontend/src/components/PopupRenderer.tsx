@@ -174,19 +174,10 @@ const PopupCard: React.FC<PopupCardProps> = ({ popup, cascadeIndex, onClose }) =
         {popup.closeOptions.includes('HIDE_TODAY') && (
           <button
             type="button"
-            className="popup-action-btn"
+            className="popup-action-btn popup-action-btn-primary"
             onClick={() => onClose(popup, 'HIDE_TODAY')}
           >
             오늘 하루 보지 않기
-          </button>
-        )}
-        {popup.closeOptions.includes('HIDE_FOREVER') && (
-          <button
-            type="button"
-            className="popup-action-btn"
-            onClick={() => onClose(popup, 'HIDE_FOREVER')}
-          >
-            다시 보지 않기
           </button>
         )}
         {popup.closeOptions.includes('CLOSE') && (

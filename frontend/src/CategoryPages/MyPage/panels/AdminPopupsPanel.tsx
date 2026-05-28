@@ -12,7 +12,7 @@ import './AdminPopupsPanel.css';
 
 const API = getApiBaseUrl();
 const ALL_TRIGGERS: PopupTrigger[] = ['HOME_ENTRY', 'POST_LOGIN'];
-const ALL_CLOSE_OPTIONS: PopupCloseOption[] = ['HIDE_TODAY', 'HIDE_FOREVER'];
+const ALL_CLOSE_OPTIONS: PopupCloseOption[] = ['HIDE_TODAY'];
 
 const TRIGGER_LABEL: Record<PopupTrigger, string> = {
   HOME_ENTRY: '홈 첫 진입',
@@ -48,7 +48,7 @@ const emptyForm = (): FormState => ({
   content: '',
   imageUrl: '',
   triggers: ['HOME_ENTRY', 'POST_LOGIN'],
-  closeOptions: ['HIDE_TODAY', 'HIDE_FOREVER'],
+  closeOptions: ['HIDE_TODAY'],
   priority: 0,
   isActive: true,
   startY: '',
