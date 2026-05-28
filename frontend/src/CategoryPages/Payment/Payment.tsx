@@ -17,9 +17,17 @@ const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7
 
 // 상품 타입
 interface Product {
+  id: string;
   code: string;
   name: string;
   description: string;
+}
+
+// 내 라이선스 응답 항목 (필요한 필드만)
+interface MyLicense {
+  productId: string;
+  licenseType: 'TRIAL' | 'SUBSCRIPTION' | 'PERPETUAL';
+  status: 'PENDING' | 'ACTIVE' | 'EXPIRED_GRACE' | 'EXPIRED_HARD' | 'SUSPENDED' | 'REVOKED';
 }
 
 // 요금제 타입
@@ -57,6 +65,10 @@ const PaymentPage: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<PricePlan | null>(null);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+
+  // 현재 보유 중인(중복 구매 차단 대상) productId 집합.
+  // ACTIVE/PENDING + 비-TRIAL 라이선스만 포함.
+  const [ownedProductIds, setOwnedProductIds] = useState<Set<string>>(new Set());
 
   // 결제 정보
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
@@ -121,10 +133,6 @@ const PaymentPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setProducts(data);
-          // 상품이 1개면 자동 선택
-          if (data.length === 1) {
-            setSelectedProduct(data[0]);
-          }
         }
       } catch (error) {
         // 상품 목록 로드 실패
@@ -135,6 +143,45 @@ const PaymentPage: React.FC = () => {
 
     fetchProducts();
   }, []);
+
+  // 내 라이선스 로드 (중복 구매 차단을 위한 보유 productId 집합 구성)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const fetchMyLicenses = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/v1/me/licenses`, {
+          credentials: 'include',
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const licenses: MyLicense[] = data.licenses || [];
+        const owned = new Set<string>();
+        licenses.forEach((lic) => {
+          const isPaid = lic.licenseType !== 'TRIAL';
+          const isBlocking = lic.status === 'ACTIVE' || lic.status === 'PENDING';
+          if (isPaid && isBlocking && lic.productId) {
+            owned.add(lic.productId);
+          }
+        });
+        setOwnedProductIds(owned);
+      } catch (error) {
+        // 라이선스 조회 실패 — 차단 기능은 백엔드에서도 다시 검증되므로 무시
+      }
+    };
+
+    fetchMyLicenses();
+  }, [isLoggedIn]);
+
+  // 상품이 1개면 자동 선택 — 단, 이미 보유 중이면 자동 선택하지 않음
+  useEffect(() => {
+    if (products.length === 1 && !selectedProduct) {
+      const only = products[0];
+      if (!ownedProductIds.has(only.id)) {
+        setSelectedProduct(only);
+      }
+    }
+  }, [products, ownedProductIds, selectedProduct]);
 
   // 선택된 상품의 요금제 로드
   useEffect(() => {
@@ -202,8 +249,20 @@ const PaymentPage: React.FC = () => {
     }
   };
 
+  // 이미 보유 중인 상품인지 판단 (USER + 동일 productId의 ACTIVE/PENDING 유상 라이선스)
+  const isProductOwned = (product: Product | null) => {
+    if (!product) return false;
+    return ownedProductIds.has(product.id);
+  };
+
   // 상품 선택 핸들러
   const handleProductSelect = (product: Product) => {
+    if (isProductOwned(product)) {
+      // 보유 중인 상품은 선택해도 결제 진행 불가 — 정보만 노출
+      setSelectedProduct(product);
+      setSelectedPlan(null);
+      return;
+    }
     setSelectedProduct(product);
     setSelectedPlan(null); // 플랜 선택 초기화
   };
@@ -267,6 +326,11 @@ const PaymentPage: React.FC = () => {
   const handlePayment = async () => {
     if (!selectedProduct) {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
+      return;
+    }
+    // 이미 보유한 상품은 결제 시도 자체를 차단 (뒤로가기 등으로 도달했을 때 방어)
+    if (isProductOwned(selectedProduct)) {
+      showAlert({ message: t('payment.alreadyOwnedError'), type: 'warning' });
       return;
     }
     if (!selectedPlan) {
@@ -416,18 +480,26 @@ const PaymentPage: React.FC = () => {
                 <div className="loading-placeholder">{t('payment.loadingProducts')}</div>
               ) : (
                 <div className="products-grid">
-                  {products.map((product) => (
-                    <div
-                      key={product.code}
-                      className={`product-card ${selectedProduct?.code === product.code ? 'selected' : ''}`}
-                      onClick={() => handleProductSelect(product)}
-                    >
-                      <div className="product-header">
-                        <h3 className="product-name">{product.name}</h3>
+                  {products.map((product) => {
+                    const owned = ownedProductIds.has(product.id);
+                    return (
+                      <div
+                        key={product.code}
+                        className={`product-card ${selectedProduct?.code === product.code ? 'selected' : ''}${owned ? ' product-card--owned' : ''}`}
+                        onClick={() => handleProductSelect(product)}
+                      >
+                        {owned && (
+                          <span className="product-card__owned-badge">
+                            {t('payment.alreadyOwnedBadge')}
+                          </span>
+                        )}
+                        <div className="product-header">
+                          <h3 className="product-name">{product.name}</h3>
+                        </div>
+                        <p className="product-description">{product.description}</p>
                       </div>
-                      <p className="product-description">{product.description}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -440,6 +512,8 @@ const PaymentPage: React.FC = () => {
               </h2>
               {!selectedProduct ? (
                 <div className="no-selection-message">{t('payment.selectProductFirst')}</div>
+              ) : isProductOwned(selectedProduct) ? (
+                <div className="no-selection-message">{t('payment.alreadyOwnedNotice')}</div>
               ) : isLoadingPlans ? (
                 <div className="loading-placeholder">{t('payment.loadingPlans')}</div>
               ) : pricePlans.length === 0 ? (
@@ -768,15 +842,24 @@ const PaymentPage: React.FC = () => {
                 </label>
               </div>
 
-              <button
-                className={`payment-button ${selectedProduct && selectedPlan && agreeTermsOfService && agreePrivacy ? 'active' : ''}`}
-                onClick={handlePayment}
-                disabled={!selectedProduct || !selectedPlan || !agreeTermsOfService || !agreePrivacy}
-              >
-                {selectedPlan
-                  ? t('payment.paymentButton', { price: formatPrice(getFinalPrice()) })
-                  : t('payment.paymentButtonDisabled')}
-              </button>
+              {(() => {
+                const ownedSelected = isProductOwned(selectedProduct);
+                const canPay = !!selectedProduct && !!selectedPlan && agreeTermsOfService && agreePrivacy && !ownedSelected;
+                const label = ownedSelected
+                  ? t('payment.paymentButtonAlreadyOwned')
+                  : selectedPlan
+                    ? t('payment.paymentButton', { price: formatPrice(getFinalPrice()) })
+                    : t('payment.paymentButtonDisabled');
+                return (
+                  <button
+                    className={`payment-button ${canPay ? 'active' : ''}`}
+                    onClick={handlePayment}
+                    disabled={!canPay}
+                  >
+                    {label}
+                  </button>
+                );
+              })()}
 
               <div className="payment-security">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

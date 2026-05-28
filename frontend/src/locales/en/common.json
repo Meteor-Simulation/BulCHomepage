@@ -444,6 +444,10 @@
     },
     "paymentButton": "Pay {{price}}",
     "paymentButtonDisabled": "Select a product and plan",
+    "paymentButtonAlreadyOwned": "Currently subscribed",
+    "alreadyOwnedBadge": "Subscribed",
+    "alreadyOwnedNotice": "You already own this product. Manage your license from My Page.",
+    "alreadyOwnedError": "You already have a license for this product.",
     "secureSystem": "Secure payment system",
     "modal": {
       "cancel": "Cancel",

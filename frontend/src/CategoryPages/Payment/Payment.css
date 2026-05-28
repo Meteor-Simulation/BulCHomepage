@@ -1164,6 +1164,35 @@
   background: linear-gradient(135deg, rgba(196, 50, 10, 0.03) 0%, rgba(232, 93, 4, 0.03) 100%);
 }
 
+.product-card--owned {
+  background: #eef2f6;
+  cursor: default;
+}
+
+.product-card--owned:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.product-card--owned.selected {
+  border-color: #6b7280;
+  background: #eef2f6;
+}
+
+.product-card__owned-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  background: #6b7280;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
 .product-header {
   margin-bottom: 12px;
 }

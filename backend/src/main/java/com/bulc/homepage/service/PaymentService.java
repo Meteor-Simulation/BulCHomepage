@@ -6,9 +6,12 @@ import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
 import com.bulc.homepage.entity.PricePlan;
 import com.bulc.homepage.entity.Subscription;
+import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.OwnerType;
 import com.bulc.homepage.licensing.domain.UsageCategory;
 import com.bulc.homepage.licensing.dto.LicenseIssueResult;
+import com.bulc.homepage.licensing.exception.LicenseException;
+import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.service.LicenseService;
 import com.bulc.homepage.repository.PaymentRepository;
 import com.bulc.homepage.repository.PricePlanRepository;
@@ -69,6 +72,20 @@ public class PaymentService {
             throw new RuntimeException("이미 처리된 주문입니다: " + request.getOrderId());
         }
 
+        // 사용자 조회 (라이선스 발급의 owner_id로 사용).
+        // 주의: 파라미터명은 userEmail이지만 실제로는 UUID 문자열 (PaymentController에서 authentication.getName() 전달).
+        User user;
+        try {
+            user = userRepository.findById(UUID.fromString(userEmail))
+                    .orElseThrow(() -> {
+                        log.error("[결제] 사용자 없음 - userId={}, orderId={}", userEmail, request.getOrderId());
+                        return new RuntimeException("사용자 정보를 찾을 수 없습니다.");
+                    });
+        } catch (IllegalArgumentException e) {
+            log.error("[결제] 잘못된 사용자 식별자 형식 - userId={}, orderId={}", userEmail, request.getOrderId());
+            throw new RuntimeException("사용자 인증 정보가 올바르지 않습니다.");
+        }
+
         // 요금제 조회
         PricePlan pricePlan = pricePlanRepository.findById(request.getPricePlanId())
                 .orElseThrow(() -> {
@@ -81,6 +98,20 @@ public class PaymentService {
             log.error("[결제] 금액 불일치 - 요청금액={}, 요금제가격={}, orderId={}, userEmail={}",
                     request.getAmount(), pricePlan.getPrice(), request.getOrderId(), userEmail);
             throw new RuntimeException("결제 금액이 상품 가격과 일치하지 않습니다.");
+        }
+
+        // 동일 product에 ACTIVE/PENDING 유상 라이선스가 이미 있으면 결제 차단 (토스 API 호출 전)
+        if (pricePlan.getLicensePlanId() != null) {
+            try {
+                licenseService.requireUserCanPurchasePlan(user.getId(), pricePlan.getLicensePlanId());
+            } catch (LicenseException e) {
+                if (e.getErrorCode() == ErrorCode.LICENSE_ALREADY_EXISTS) {
+                    log.warn("[결제] 중복 구매 차단 - userId={}, pricePlanId={}, orderId={}",
+                            user.getId(), pricePlan.getId(), request.getOrderId());
+                    throw new RuntimeException("이미 해당 제품의 라이선스를 보유하고 있습니다.");
+                }
+                throw e;
+            }
         }
 
         log.info("[결제] STEP 2/5 토스 API 호출 - orderId={}, paymentKey={}", request.getOrderId(), request.getPaymentKey());
@@ -156,12 +187,11 @@ public class PaymentService {
                     // 라이선스 발급
                     if (pricePlan.getLicensePlanId() != null) {
                         try {
-                            UUID userId = UUID.nameUUIDFromBytes(userEmail.getBytes(StandardCharsets.UTF_8));
                             UUID orderId = UUID.nameUUIDFromBytes(request.getOrderId().getBytes(StandardCharsets.UTF_8));
 
                             LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
                                     OwnerType.USER,
-                                    userId,
+                                    user.getId(),
                                     pricePlan.getLicensePlanId(),
                                     orderId,
                                     UsageCategory.COMMERCIAL
@@ -341,7 +371,10 @@ public class PaymentService {
             // 라이선스 발급
             if (pricePlan.getLicensePlanId() != null) {
                 try {
-                    UUID userId = UUID.nameUUIDFromBytes(payment.getUserEmail().getBytes(StandardCharsets.UTF_8));
+                    // payment.userEmail은 실제로는 UUID 문자열 (PaymentController에서 인증 식별자 그대로 저장)
+                    UUID userId = userRepository.findById(UUID.fromString(payment.getUserEmail()))
+                            .map(User::getId)
+                            .orElseThrow(() -> new RuntimeException("[웹훅] 사용자 정보를 찾을 수 없습니다: " + payment.getUserEmail()));
                     UUID orderUuid = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
 
                     LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(

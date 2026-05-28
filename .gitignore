@@ -4,6 +4,9 @@
 .env.local
 .env.*.local
 
+# 일회성 캠페인/메일 발송 작업 디렉토리 (개인정보 포함 가능)
+.bulc-cli/
+
 # 보안 키 파일 (sessionToken 개인키)
 secrets/
 *.pem
