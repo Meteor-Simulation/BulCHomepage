@@ -34,8 +34,12 @@ interface FormState {
   closeOptions: PopupCloseOption[];
   priority: number;
   isActive: boolean;
-  startAt: string;
-  endAt: string;
+  startY: string;
+  startM: string;
+  startD: string;
+  endY: string;
+  endM: string;
+  endD: string;
 }
 
 const emptyForm = (): FormState => ({
@@ -47,8 +51,12 @@ const emptyForm = (): FormState => ({
   closeOptions: ['HIDE_TODAY', 'HIDE_FOREVER'],
   priority: 0,
   isActive: true,
-  startAt: '',
-  endAt: '',
+  startY: '',
+  startM: '',
+  startD: '',
+  endY: '',
+  endM: '',
+  endD: '',
 });
 
 const formatDateTime = (iso?: string | null) => {
@@ -60,19 +68,29 @@ const formatDateTime = (iso?: string | null) => {
   });
 };
 
-const toDatetimeLocal = (iso?: string | null): string => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const splitIsoToYMD = (iso?: string | null): { y: string; m: string; d: string } => {
+  if (!iso) return { y: '', m: '', d: '' };
+  const dt = new Date(iso);
+  if (!Number.isFinite(dt.getTime())) return { y: '', m: '', d: '' };
+  return {
+    y: String(dt.getFullYear()),
+    m: String(dt.getMonth() + 1),
+    d: String(dt.getDate()),
+  };
 };
 
-const fromDatetimeLocal = (s: string): string | null => {
-  if (!s) return null;
-  const d = new Date(s);
-  if (!Number.isFinite(d.getTime())) return null;
-  return d.toISOString();
+const ymdToIso = (y: string, m: string, d: string, endOfDay: boolean): string | null => {
+  if (!y || !m || !d) return null;
+  const dt = new Date(
+    parseInt(y, 10),
+    parseInt(m, 10) - 1,
+    parseInt(d, 10),
+    endOfDay ? 23 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 59 : 0
+  );
+  if (!Number.isFinite(dt.getTime())) return null;
+  return dt.toISOString();
 };
 
 const YEAR_OPTIONS: number[] = (() => {
@@ -89,20 +107,6 @@ const daysInMonth = (year: string, month: string): number => {
   const m = parseInt(month, 10);
   if (!Number.isFinite(y) || !Number.isFinite(m)) return 31;
   return new Date(y, m, 0).getDate();
-};
-
-const parseDateLocal = (local: string): { y: string; m: string; d: string } => {
-  if (!local) return { y: '', m: '', d: '' };
-  const match = local.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return { y: '', m: '', d: '' };
-  return { y: match[1], m: String(parseInt(match[2], 10)), d: String(parseInt(match[3], 10)) };
-};
-
-const buildDateLocal = (y: string, m: string, d: string, endOfDay: boolean): string => {
-  if (!y || !m || !d) return '';
-  const pad = (s: string) => s.padStart(2, '0');
-  const time = endOfDay ? '23:59' : '00:00';
-  return `${y}-${pad(m)}-${pad(d)}T${time}`;
 };
 
 const AdminPopupsPanel: React.FC = () => {
@@ -146,6 +150,8 @@ const AdminPopupsPanel: React.FC = () => {
 
   const openEdit = (p: PopupItem) => {
     setEditingId(p.id);
+    const s = splitIsoToYMD(p.startAt);
+    const e = splitIsoToYMD(p.endAt);
     setForm({
       type: p.type,
       title: p.title,
@@ -155,8 +161,8 @@ const AdminPopupsPanel: React.FC = () => {
       closeOptions: p.closeOptions,
       priority: p.priority,
       isActive: p.isActive,
-      startAt: toDatetimeLocal(p.startAt),
-      endAt: toDatetimeLocal(p.endAt),
+      startY: s.y, startM: s.m, startD: s.d,
+      endY: e.y, endM: e.m, endD: e.d,
     });
     setIsModalOpen(true);
   };
@@ -236,8 +242,8 @@ const AdminPopupsPanel: React.FC = () => {
         closeOptions: form.closeOptions,
         priority: form.priority,
         isActive: form.isActive,
-        startAt: fromDatetimeLocal(form.startAt),
-        endAt: fromDatetimeLocal(form.endAt),
+        startAt: ymdToIso(form.startY, form.startM, form.startD, false),
+        endAt: ymdToIso(form.endY, form.endM, form.endD, true),
       };
       const url = editingId
         ? `${API}/api/admin/popups/${editingId}`
@@ -480,87 +486,69 @@ const AdminPopupsPanel: React.FC = () => {
                 <label>공지 일정</label>
                 <div className="popup-schedule-row">
                   <div className="popup-date-group">
-                    {(() => {
-                      const cur = parseDateLocal(form.startAt);
-                      const updateStart = (y: string, m: string, d: string) =>
-                        setForm({ ...form, startAt: buildDateLocal(y, m, d, false) });
-                      return (
-                        <>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.y}
-                            onChange={(e) => updateStart(e.target.value, cur.m, cur.d)}
-                          >
-                            <option value="">년</option>
-                            {YEAR_OPTIONS.map((y) => (
-                              <option key={y} value={y}>{y}년</option>
-                            ))}
-                          </select>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.m}
-                            onChange={(e) => updateStart(cur.y, e.target.value, cur.d)}
-                          >
-                            <option value="">월</option>
-                            {MONTH_OPTIONS.map((m) => (
-                              <option key={m} value={m}>{m}월</option>
-                            ))}
-                          </select>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.d}
-                            onChange={(e) => updateStart(cur.y, cur.m, e.target.value)}
-                          >
-                            <option value="">일</option>
-                            {Array.from({ length: daysInMonth(cur.y, cur.m) }, (_, i) => i + 1).map((d) => (
-                              <option key={d} value={d}>{d}일</option>
-                            ))}
-                          </select>
-                        </>
-                      );
-                    })()}
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.startY}
+                      onChange={(e) => setForm({ ...form, startY: e.target.value })}
+                    >
+                      <option value="">년</option>
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y}년</option>
+                      ))}
+                    </select>
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.startM}
+                      onChange={(e) => setForm({ ...form, startM: e.target.value })}
+                    >
+                      <option value="">월</option>
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{m}월</option>
+                      ))}
+                    </select>
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.startD}
+                      onChange={(e) => setForm({ ...form, startD: e.target.value })}
+                    >
+                      <option value="">일</option>
+                      {Array.from({ length: daysInMonth(form.startY, form.startM) }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>{d}일</option>
+                      ))}
+                    </select>
                   </div>
                   <span className="popup-schedule-sep">~</span>
                   <div className="popup-date-group">
-                    {(() => {
-                      const cur = parseDateLocal(form.endAt);
-                      const updateEnd = (y: string, m: string, d: string) =>
-                        setForm({ ...form, endAt: buildDateLocal(y, m, d, true) });
-                      return (
-                        <>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.y}
-                            onChange={(e) => updateEnd(e.target.value, cur.m, cur.d)}
-                          >
-                            <option value="">년</option>
-                            {YEAR_OPTIONS.map((y) => (
-                              <option key={y} value={y}>{y}년</option>
-                            ))}
-                          </select>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.m}
-                            onChange={(e) => updateEnd(cur.y, e.target.value, cur.d)}
-                          >
-                            <option value="">월</option>
-                            {MONTH_OPTIONS.map((m) => (
-                              <option key={m} value={m}>{m}월</option>
-                            ))}
-                          </select>
-                          <select
-                            className="admin-modal-input popup-date-sel"
-                            value={cur.d}
-                            onChange={(e) => updateEnd(cur.y, cur.m, e.target.value)}
-                          >
-                            <option value="">일</option>
-                            {Array.from({ length: daysInMonth(cur.y, cur.m) }, (_, i) => i + 1).map((d) => (
-                              <option key={d} value={d}>{d}일</option>
-                            ))}
-                          </select>
-                        </>
-                      );
-                    })()}
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.endY}
+                      onChange={(e) => setForm({ ...form, endY: e.target.value })}
+                    >
+                      <option value="">년</option>
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y}년</option>
+                      ))}
+                    </select>
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.endM}
+                      onChange={(e) => setForm({ ...form, endM: e.target.value })}
+                    >
+                      <option value="">월</option>
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{m}월</option>
+                      ))}
+                    </select>
+                    <select
+                      className="admin-modal-input popup-date-sel"
+                      value={form.endD}
+                      onChange={(e) => setForm({ ...form, endD: e.target.value })}
+                    >
+                      <option value="">일</option>
+                      {Array.from({ length: daysInMonth(form.endY, form.endM) }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>{d}일</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
