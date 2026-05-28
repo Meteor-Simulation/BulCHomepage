@@ -162,6 +162,16 @@ public class EmailService {
     }
 
     /**
+     * 카테고리 + 템플릿 키 + 변수로 발송 (외부 호출 진입점).
+     * MDP-496 운영성 메일 발송 및 후속 광고성 발송에서 사용.
+     */
+    public void sendByTemplate(EmailCategory category, String toEmail, String templateKey,
+                               String subject, Map<String, String> vars) {
+        String html = renderTemplate(templateKey, vars);
+        send(category, toEmail, templateKey, subject, html);
+    }
+
+    /**
      * 카테고리 기반 통합 발송 진입점.
      * - PROMOTIONAL 카테고리는 marketing_agreed=true 인 사용자에게만 발송.
      * - 모든 시도(SUCCESS / SKIPPED / FAILED)를 email_log 에 기록.
@@ -241,7 +251,7 @@ public class EmailService {
      * classpath:templates/mail/<key>.html 로드 + {{var}} 치환.
      * 첫 호출 시 캐시 적재 후 재사용.
      */
-    private String renderTemplate(String templateKey, Map<String, String> vars) {
+    public String renderTemplate(String templateKey, Map<String, String> vars) {
         String tpl = templateCache.computeIfAbsent(templateKey, key -> {
             String path = "templates/mail/" + key + ".html";
             try (InputStream is = new ClassPathResource(path).getInputStream()) {

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#ffffff;">
+        <tr><td style="padding:40px 16px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                <tr><td style="background:linear-gradient(135deg,#C4320A 0%,#E85D04 50%,#F5A623 100%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+                <tr><td style="padding:32px 40px 0;text-align:center;">
+                    <p style="margin:0;font-size:22px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
+                </td></tr>
+
+                <tr><td style="padding:24px 40px 0;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">라이선스 만료 안내</h1>
+                </td></tr>
+
+                <tr><td style="padding:18px 40px 0;text-align:center;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
+                        보유하신 BUL:C 라이선스가 곧 만료됩니다.<br>
+                        만료 후에는 서비스 이용에 제한이 발생할 수 있으니, 갱신을 진행해 주세요.
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding:24px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#fef3cd;border-radius:10px;">
+                        <tr><td style="padding:16px 20px;">
+                            <p style="margin:0;font-size:13px;color:#92400e;line-height:1.7;">
+                                <strong>플랜:</strong> {{plan_name}}<br>
+                                <strong>만료일:</strong> {{valid_until}}<br>
+                                <strong>남은 기간:</strong> {{days_remaining}}일
+                            </p>
+                        </td></tr>
+                    </table>
+                </td></tr>
+
+                <tr><td style="padding:0 40px 24px;text-align:center;">
+                    <a href="{{renew_url}}" style="display:inline-block;background:#C4320A;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+                        지금 갱신하기
+                    </a>
+                </td></tr>
+
+                {{footer}}
+
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>
