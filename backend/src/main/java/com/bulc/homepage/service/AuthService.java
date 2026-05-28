@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -481,13 +482,28 @@ public class AuthService {
             user = userRepository.save(user);
         }
 
-        // 소셜 계정 연동
-        UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .userId(user.getId())
-                .provider(provider)
-                .providerId(providerId)
-                .build();
-        socialAccountRepository.save(socialAccount);
+        // 소셜 계정 연동 (멱등 처리: 중복 호출 / 탈퇴-재가입 흐름에서 unique 제약 위반 방지)
+        Optional<UserSocialAccount> existingSocial =
+                socialAccountRepository.findByProviderAndProviderId(provider, providerId);
+        if (existingSocial.isPresent()) {
+            UserSocialAccount account = existingSocial.get();
+            if (!account.getUserId().equals(user.getId())) {
+                // 같은 (provider, providerId) row가 다른 사용자에 묶여 있던 경우 (드물지만 가능)
+                // → 현재 가입 사용자로 갱신
+                log.info("OAuth 소셜 계정 user_id 재연결: provider={}, providerId={}, oldUserId={}, newUserId={}",
+                        provider, providerId, account.getUserId(), user.getId());
+                account.setUserId(user.getId());
+                socialAccountRepository.save(account);
+            }
+            // 이미 같은 사용자에 묶여 있으면 그대로 둠 (멱등)
+        } else {
+            UserSocialAccount socialAccount = UserSocialAccount.builder()
+                    .userId(user.getId())
+                    .provider(provider)
+                    .providerId(providerId)
+                    .build();
+            socialAccountRepository.save(socialAccount);
+        }
 
         // 회원가입 로그 저장
         saveActivityLog(user.getId(), "oauth_signup", "user", null,
