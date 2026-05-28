@@ -115,9 +115,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     // 신규 사용자로 처리
                     isNewUser = true;
                 } else {
-                    // 기존 이메일 사용자에 소셜 계정 연동 → 신규 가입으로 처리
-                    isNewUser = true;
-                    log.info("기존 사용자에 소셜 계정 연동 (신규 가입 처리): {}", email);
+                    // 활성 계정이 같은 이메일로 이미 존재 — OAuth 가입 차단
+                    // (비밀번호 덮어쓰기 취약점 방지: MDP-523)
+                    log.warn("OAuth 가입 거부 - 활성 계정 이미 존재: {}", email);
+                    throw new OAuth2AuthenticationException(
+                            "이미 가입된 이메일입니다. 이메일/비밀번호로 로그인해주세요.");
                 }
             } else {
                 // 신규 사용자 - 비밀번호 설정 페이지로 이동 필요
