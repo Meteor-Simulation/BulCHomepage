@@ -491,7 +491,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.startY}
                       onChange={(e) => setForm({ ...form, startY: e.target.value })}
                     >
-                      <option value="">0000</option>
+                      <option value="">년</option>
                       {YEAR_OPTIONS.map((y) => (
                         <option key={y} value={y}>{y}</option>
                       ))}
@@ -501,7 +501,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.startM}
                       onChange={(e) => setForm({ ...form, startM: e.target.value })}
                     >
-                      <option value="">00</option>
+                      <option value="">월</option>
                       {MONTH_OPTIONS.map((m) => (
                         <option key={m} value={m}>{m}</option>
                       ))}
@@ -511,7 +511,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.startD}
                       onChange={(e) => setForm({ ...form, startD: e.target.value })}
                     >
-                      <option value="">00</option>
+                      <option value="">일</option>
                       {Array.from({ length: daysInMonth(form.startY, form.startM) }, (_, i) => i + 1).map((d) => (
                         <option key={d} value={d}>{d}</option>
                       ))}
@@ -524,7 +524,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.endY}
                       onChange={(e) => setForm({ ...form, endY: e.target.value })}
                     >
-                      <option value="">0000</option>
+                      <option value="">년</option>
                       {YEAR_OPTIONS.map((y) => (
                         <option key={y} value={y}>{y}</option>
                       ))}
@@ -534,7 +534,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.endM}
                       onChange={(e) => setForm({ ...form, endM: e.target.value })}
                     >
-                      <option value="">00</option>
+                      <option value="">월</option>
                       {MONTH_OPTIONS.map((m) => (
                         <option key={m} value={m}>{m}</option>
                       ))}
@@ -544,7 +544,7 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.endD}
                       onChange={(e) => setForm({ ...form, endD: e.target.value })}
                     >
-                      <option value="">00</option>
+                      <option value="">일</option>
                       {Array.from({ length: daysInMonth(form.endY, form.endM) }, (_, i) => i + 1).map((d) => (
                         <option key={d} value={d}>{d}</option>
                       ))}
