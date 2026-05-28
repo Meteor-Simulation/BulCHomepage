@@ -84,6 +84,26 @@
   flex: 0 0 auto;
 }
 
+.popup-date-group {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mypage-container .form-group .popup-date-group .popup-date-sel,
+.popup-date-group .popup-date-sel {
+  flex: 1;
+  min-width: 60px;
+  width: auto;
+}
+
+.popup-schedule-sep {
+  color: #888;
+  font-weight: 500;
+  flex: 0 0 auto;
+}
+
 .popup-input-stack {
   display: flex;
   flex-direction: column;
