@@ -18,6 +18,7 @@ public record LicenseSummaryView(
         UUID planId,
         Instant validFrom,
         Instant validUntil,
+        Instant startsAt,
         int maxActivations,
         int usedActivations
 ) {
@@ -27,9 +28,9 @@ public record LicenseSummaryView(
                 .filter(a -> a.getStatus() == ActivationStatus.ACTIVE)
                 .count();
 
-        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
-                ? license.getStatus()
-                : license.calculateEffectiveStatus(Instant.now());
+        Instant now = Instant.now();
+        LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
+        Instant startsAt = effectiveStatus == LicenseStatus.PENDING ? license.getValidFrom() : null;
 
         return new LicenseSummaryView(
                 license.getId(),
@@ -43,6 +44,7 @@ public record LicenseSummaryView(
                 license.getPlanId(),
                 license.getValidFrom(),
                 license.getValidUntil(),
+                startsAt,
                 maxActivations,
                 usedActivations
         );
