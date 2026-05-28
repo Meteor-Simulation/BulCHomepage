@@ -94,8 +94,19 @@
 .mypage-container .form-group .popup-date-group .popup-date-sel,
 .popup-date-group .popup-date-sel {
   flex: 1;
-  min-width: 60px;
+  min-width: 0;
   width: auto;
+  padding: 8px 22px 8px 10px;
+  font-size: 13px;
+  text-align: center;
+  text-align-last: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.mypage-container .form-group .popup-date-group .popup-date-sel-y,
+.popup-date-group .popup-date-sel-y {
+  flex: 0 0 auto;
+  min-width: 78px;
 }
 
 .popup-schedule-sep {
