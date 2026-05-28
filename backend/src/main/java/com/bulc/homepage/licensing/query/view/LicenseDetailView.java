@@ -29,6 +29,10 @@ public record LicenseDetailView(
                 .map(ActivationView::from)
                 .toList();
 
+        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
+                ? license.getStatus()
+                : license.calculateEffectiveStatus(Instant.now());
+
         return new LicenseDetailView(
                 license.getId(),
                 license.getOwnerType(),
@@ -37,7 +41,7 @@ public record LicenseDetailView(
                 license.getPlanId(),
                 license.getLicenseType(),
                 license.getUsageCategory(),
-                license.getStatus(),
+                effectiveStatus,
                 license.getIssuedAt(),
                 license.getValidFrom(),
                 license.getValidUntil(),

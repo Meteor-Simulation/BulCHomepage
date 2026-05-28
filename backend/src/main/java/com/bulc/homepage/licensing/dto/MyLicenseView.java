@@ -40,13 +40,17 @@ public record MyLicenseView(
                 .filter(a -> a.getStatus() == ActivationStatus.ACTIVE || a.getStatus() == ActivationStatus.STALE)
                 .count();
 
+        LicenseStatus effectiveStatus = license.getStatus() == LicenseStatus.PENDING
+                ? license.getStatus()
+                : license.calculateEffectiveStatus(Instant.now());
+
         return new MyLicenseView(
                 license.getId(),
                 license.getProductId(),
                 null, // productName은 Product 도메인에서 조회 필요
                 null, // planName은 Plan 도메인에서 조회 필요
                 license.getLicenseType(),
-                license.getStatus(),
+                effectiveStatus,
                 license.getValidFrom(),
                 license.getValidUntil(),
                 entitlements,
