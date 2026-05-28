@@ -96,7 +96,7 @@ const ymdToIso = (y: string, m: string, d: string, endOfDay: boolean): string | 
 const YEAR_OPTIONS: number[] = (() => {
   const now = new Date().getFullYear();
   const arr: number[] = [];
-  for (let y = now - 1; y <= now + 5; y++) arr.push(y);
+  for (let y = now; y <= now + 50; y++) arr.push(y);
   return arr;
 })();
 
@@ -487,13 +487,13 @@ const AdminPopupsPanel: React.FC = () => {
                 <div className="popup-schedule-row">
                   <div className="popup-date-group">
                     <select
-                      className="admin-modal-input popup-date-sel"
+                      className="admin-modal-input popup-date-sel popup-date-sel-y"
                       value={form.startY}
                       onChange={(e) => setForm({ ...form, startY: e.target.value })}
                     >
-                      <option value="">년</option>
+                      <option value="">0000</option>
                       {YEAR_OPTIONS.map((y) => (
-                        <option key={y} value={y}>{y}년</option>
+                        <option key={y} value={y}>{y}</option>
                       ))}
                     </select>
                     <select
@@ -501,9 +501,9 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.startM}
                       onChange={(e) => setForm({ ...form, startM: e.target.value })}
                     >
-                      <option value="">월</option>
+                      <option value="">00</option>
                       {MONTH_OPTIONS.map((m) => (
-                        <option key={m} value={m}>{m}월</option>
+                        <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                     <select
@@ -511,22 +511,22 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.startD}
                       onChange={(e) => setForm({ ...form, startD: e.target.value })}
                     >
-                      <option value="">일</option>
+                      <option value="">00</option>
                       {Array.from({ length: daysInMonth(form.startY, form.startM) }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={d}>{d}일</option>
+                        <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
                   </div>
                   <span className="popup-schedule-sep">~</span>
                   <div className="popup-date-group">
                     <select
-                      className="admin-modal-input popup-date-sel"
+                      className="admin-modal-input popup-date-sel popup-date-sel-y"
                       value={form.endY}
                       onChange={(e) => setForm({ ...form, endY: e.target.value })}
                     >
-                      <option value="">년</option>
+                      <option value="">0000</option>
                       {YEAR_OPTIONS.map((y) => (
-                        <option key={y} value={y}>{y}년</option>
+                        <option key={y} value={y}>{y}</option>
                       ))}
                     </select>
                     <select
@@ -534,9 +534,9 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.endM}
                       onChange={(e) => setForm({ ...form, endM: e.target.value })}
                     >
-                      <option value="">월</option>
+                      <option value="">00</option>
                       {MONTH_OPTIONS.map((m) => (
-                        <option key={m} value={m}>{m}월</option>
+                        <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                     <select
@@ -544,9 +544,9 @@ const AdminPopupsPanel: React.FC = () => {
                       value={form.endD}
                       onChange={(e) => setForm({ ...form, endD: e.target.value })}
                     >
-                      <option value="">일</option>
+                      <option value="">00</option>
                       {Array.from({ length: daysInMonth(form.endY, form.endM) }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={d}>{d}일</option>
+                        <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
                   </div>
