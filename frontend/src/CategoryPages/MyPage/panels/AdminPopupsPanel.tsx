@@ -75,6 +75,36 @@ const fromDatetimeLocal = (s: string): string | null => {
   return d.toISOString();
 };
 
+const YEAR_OPTIONS: number[] = (() => {
+  const now = new Date().getFullYear();
+  const arr: number[] = [];
+  for (let y = now - 1; y <= now + 5; y++) arr.push(y);
+  return arr;
+})();
+
+const MONTH_OPTIONS: number[] = Array.from({ length: 12 }, (_, i) => i + 1);
+
+const daysInMonth = (year: string, month: string): number => {
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return 31;
+  return new Date(y, m, 0).getDate();
+};
+
+const parseDateLocal = (local: string): { y: string; m: string; d: string } => {
+  if (!local) return { y: '', m: '', d: '' };
+  const match = local.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return { y: '', m: '', d: '' };
+  return { y: match[1], m: String(parseInt(match[2], 10)), d: String(parseInt(match[3], 10)) };
+};
+
+const buildDateLocal = (y: string, m: string, d: string, endOfDay: boolean): string => {
+  if (!y || !m || !d) return '';
+  const pad = (s: string) => s.padStart(2, '0');
+  const time = endOfDay ? '23:59' : '00:00';
+  return `${y}-${pad(m)}-${pad(d)}T${time}`;
+};
+
 const AdminPopupsPanel: React.FC = () => {
   const { t } = useTranslation();
   const { showAlert } = useAlert();
@@ -449,19 +479,89 @@ const AdminPopupsPanel: React.FC = () => {
               <div className="form-group">
                 <label>공지 일정</label>
                 <div className="popup-schedule-row">
-                  <input
-                    type="datetime-local"
-                    className="admin-modal-input"
-                    value={form.startAt}
-                    onChange={(e) => setForm({ ...form, startAt: e.target.value })}
-                  />
+                  <div className="popup-date-group">
+                    {(() => {
+                      const cur = parseDateLocal(form.startAt);
+                      const updateStart = (y: string, m: string, d: string) =>
+                        setForm({ ...form, startAt: buildDateLocal(y, m, d, false) });
+                      return (
+                        <>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.y}
+                            onChange={(e) => updateStart(e.target.value, cur.m, cur.d)}
+                          >
+                            <option value="">년</option>
+                            {YEAR_OPTIONS.map((y) => (
+                              <option key={y} value={y}>{y}년</option>
+                            ))}
+                          </select>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.m}
+                            onChange={(e) => updateStart(cur.y, e.target.value, cur.d)}
+                          >
+                            <option value="">월</option>
+                            {MONTH_OPTIONS.map((m) => (
+                              <option key={m} value={m}>{m}월</option>
+                            ))}
+                          </select>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.d}
+                            onChange={(e) => updateStart(cur.y, cur.m, e.target.value)}
+                          >
+                            <option value="">일</option>
+                            {Array.from({ length: daysInMonth(cur.y, cur.m) }, (_, i) => i + 1).map((d) => (
+                              <option key={d} value={d}>{d}일</option>
+                            ))}
+                          </select>
+                        </>
+                      );
+                    })()}
+                  </div>
                   <span className="popup-schedule-sep">~</span>
-                  <input
-                    type="datetime-local"
-                    className="admin-modal-input"
-                    value={form.endAt}
-                    onChange={(e) => setForm({ ...form, endAt: e.target.value })}
-                  />
+                  <div className="popup-date-group">
+                    {(() => {
+                      const cur = parseDateLocal(form.endAt);
+                      const updateEnd = (y: string, m: string, d: string) =>
+                        setForm({ ...form, endAt: buildDateLocal(y, m, d, true) });
+                      return (
+                        <>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.y}
+                            onChange={(e) => updateEnd(e.target.value, cur.m, cur.d)}
+                          >
+                            <option value="">년</option>
+                            {YEAR_OPTIONS.map((y) => (
+                              <option key={y} value={y}>{y}년</option>
+                            ))}
+                          </select>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.m}
+                            onChange={(e) => updateEnd(cur.y, e.target.value, cur.d)}
+                          >
+                            <option value="">월</option>
+                            {MONTH_OPTIONS.map((m) => (
+                              <option key={m} value={m}>{m}월</option>
+                            ))}
+                          </select>
+                          <select
+                            className="admin-modal-input popup-date-sel"
+                            value={cur.d}
+                            onChange={(e) => updateEnd(cur.y, cur.m, e.target.value)}
+                          >
+                            <option value="">일</option>
+                            {Array.from({ length: daysInMonth(cur.y, cur.m) }, (_, i) => i + 1).map((d) => (
+                              <option key={d} value={d}>{d}일</option>
+                            ))}
+                          </select>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
