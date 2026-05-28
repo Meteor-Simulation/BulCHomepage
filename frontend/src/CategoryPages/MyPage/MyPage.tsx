@@ -19,7 +19,7 @@ import { VALID_MENU_SECTIONS } from './constants';
 import {
   ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, RedeemPanel,
   AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
-  AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel,
+  AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
 } from './panels';
 import './MyPage.css';
 
@@ -919,6 +919,7 @@ const MyPage: React.FC = () => {
                   <button className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-licenses')}>{t('myPage.menu.adminLicenses')}</button>
                   <button className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-promotions')}>{t('myPage.menu.adminPromotions')}</button>
                   <button className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-redeem')}>{t('myPage.menu.adminRedeem')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-popups' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-popups')}>{t('myPage.menu.adminPopups')}</button>
                 </div>
               </div>
               )}
@@ -1127,6 +1128,10 @@ const MyPage: React.FC = () => {
                   onCopyGeneratedCodes={copyGeneratedCodes}
                   onDownloadCodesAsCsv={downloadCodesAsCsv}
                 />
+              )}
+
+              {isAdmin && activeMenu === 'admin-popups' && (
+                <AdminPopupsPanel />
               )}
 
               {/* 모바일용 로그아웃 버튼 */}
