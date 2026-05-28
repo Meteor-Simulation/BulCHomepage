@@ -108,7 +108,8 @@ public class AuthService {
             // 신규 User 생성
             isNewUser = true;
             boolean marketing = Boolean.TRUE.equals(request.getMarketingAgreed());
-            user = User.builder()
+            String normalizedLang = normalizeLanguage(request.getLanguage());
+            User.UserBuilder builder = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
                     .emailVerified(true)
@@ -116,8 +117,13 @@ public class AuthService {
                     .rolesCode("002")  // 기본값: 일반 사용자
                     .marketingAgreed(marketing)
                     .marketingAgreedAt(marketing ? LocalDateTime.now() : null)
-                    .unsubscribeToken(UUID.randomUUID().toString())
-                    .build();
+                    .unsubscribeToken(UUID.randomUUID().toString());
+            if (normalizedLang != null) {
+                // 영어 페이지에서 가입 시 country=US, 한국어 페이지면 KR
+                builder.languageCode(normalizedLang)
+                       .countryCode(defaultCountryForLanguage(normalizedLang));
+            }
+            user = builder.build();
 
             user = userRepository.save(user);
 
@@ -242,6 +248,24 @@ public class AuthService {
                     e.getMessage() + " - IP: " + ipAddress);
             throw e;
         }
+    }
+
+    /**
+     * 회원가입 시점의 페이지 언어를 정규화 (ko/en만 허용, 그 외 null).
+     */
+    private String normalizeLanguage(String lang) {
+        if (lang == null) return null;
+        String trimmed = lang.trim().toLowerCase();
+        if (trimmed.startsWith("ko")) return "ko";
+        if (trimmed.startsWith("en")) return "en";
+        return null;
+    }
+
+    /**
+     * 언어로부터 기본 국가 코드를 추정. countries 테이블에 존재하는 코드만 반환.
+     */
+    private String defaultCountryForLanguage(String normalizedLang) {
+        return "en".equals(normalizedLang) ? "US" : "KR";
     }
 
     /**
@@ -470,13 +494,18 @@ public class AuthService {
         } else {
             // 신규 사용자 생성
             isNewUser = true;
+            String normalizedLang = normalizeLanguage(request.getLanguage());
+            String countryCode = normalizedLang != null
+                    ? defaultCountryForLanguage(normalizedLang)
+                    : "KR";
             user = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
                     .name(request.getName())
                     .phone(request.getPhone())
                     .rolesCode("002")  // 일반 사용자
-                    .countryCode("KR")
+                    .countryCode(countryCode)
+                    .languageCode(normalizedLang)
                     .build();
             user = userRepository.save(user);
         }

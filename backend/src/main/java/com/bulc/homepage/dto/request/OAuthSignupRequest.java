@@ -22,4 +22,7 @@ public class OAuthSignupRequest {
 
     private String name;
     private String phone;
+
+    // 회원가입 시점의 페이지 언어 (ko/en). null이면 DB 기본값(country=KR) 사용.
+    private String language;
 }
