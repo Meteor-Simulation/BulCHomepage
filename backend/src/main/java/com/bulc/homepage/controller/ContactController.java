@@ -1,5 +1,6 @@
 package com.bulc.homepage.controller;
 
+import com.bulc.homepage.email.EmailCategory;
 import com.bulc.homepage.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,10 +58,11 @@ public class ContactController {
                     ? request.category()
                     : "METEOR";
 
-            // 문의 이메일 발송
-            emailService.sendEmail(
-                    supportEmail,  // from
-                    replyToEmail,  // to (관리자 이메일)
+            // 문의 이메일 발송 (OPERATIONAL — email_log 기록)
+            emailService.send(
+                    EmailCategory.OPERATIONAL,
+                    replyToEmail,  // 관리자에게 발송
+                    "contact_form",
                     "[" + category + " 문의] " + request.subject(),
                     htmlContent
             );
