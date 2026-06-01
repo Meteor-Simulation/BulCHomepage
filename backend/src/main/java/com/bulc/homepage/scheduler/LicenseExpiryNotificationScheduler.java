@@ -2,6 +2,7 @@ package com.bulc.homepage.scheduler;
 
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.License;
+import com.bulc.homepage.licensing.domain.LicensePlan;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.repository.UserRepository;
@@ -93,16 +94,8 @@ public class LicenseExpiryNotificationScheduler {
     private String resolvePlanName(License license) {
         if (license.getPlanId() == null) return "BUL:C";
         return licensePlanRepository.findById(license.getPlanId())
-                .map(p -> {
-                    try {
-                        // LicensePlan 엔티티의 name getter 호출 (리플렉션 없이 인터페이스 노출 없을 시 안전 fallback)
-                        var nameMethod = p.getClass().getMethod("getName");
-                        Object n = nameMethod.invoke(p);
-                        return n != null ? n.toString() : "BUL:C";
-                    } catch (Exception e) {
-                        return "BUL:C";
-                    }
-                })
+                .map(LicensePlan::getName)
+                .filter(n -> n != null && !n.isBlank())
                 .orElse("BUL:C");
     }
 }

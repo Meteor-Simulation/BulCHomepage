@@ -1,5 +1,6 @@
 package com.bulc.homepage.controller;
 
+import com.bulc.homepage.email.EmailCategory;
 import com.bulc.homepage.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,14 +55,32 @@ public class HealthController {
             return ResponseEntity.badRequest().body(Map.of("error", "to 에 유효한 수신자가 없습니다"));
         }
 
-        try {
-            emailService.sendHtmlEmail(toEmails, subject, body.replace("\n", "<br>"));
-            log.info("헬스 체크 알림 발송 완료 — to: {}", toEmails);
-            return ResponseEntity.ok(Map.of("status", "sent"));
-        } catch (Exception e) {
-            log.error("헬스 체크 알림 발송 실패: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        String html = body.replace("\n", "<br>");
+        int sent = 0;
+        int failed = 0;
+        for (String toEmail : toEmails) {
+            try {
+                // OPERATIONAL — email_log 기록
+                emailService.send(EmailCategory.OPERATIONAL, toEmail, "health_alert", subject, html);
+                sent++;
+            } catch (Exception e) {
+                failed++;
+                log.warn("헬스 체크 알림 발송 실패 to={} 사유={}", toEmail, e.getMessage());
+            }
         }
+        log.info("헬스 체크 알림 발송 — 성공 {}건 / 실패 {}건 / 대상 {}", sent, failed, toEmails);
+        if (sent == 0) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "status", "failed",
+                    "sent", sent,
+                    "failed", failed
+            ));
+        }
+        return ResponseEntity.ok(Map.of(
+                "status", "sent",
+                "sent", sent,
+                "failed", failed
+        ));
     }
 
     @GetMapping("/health/email")

@@ -1,13 +1,16 @@
 package com.bulc.homepage.service;
 
 import com.bulc.homepage.email.EmailCategory;
+import com.bulc.homepage.entity.EmailLog;
 import com.bulc.homepage.entity.User;
+import com.bulc.homepage.repository.EmailLogRepository;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -26,8 +29,11 @@ public class OperationalMailService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    private static final String LICENSE_EXPIRY_TEMPLATE = "license_expiry";
+
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final EmailLogRepository emailLogRepository;
 
     /**
      * 일반 운영 안내 발송 (프로그램 업데이트 / 약관 변경 / 보안 공지 공통 진입점).
@@ -67,10 +73,24 @@ public class OperationalMailService {
 
     /**
      * 라이선스 만료 임박 알림 발송 (LicenseExpiryNotificationScheduler 에서 호출).
+     *
+     * MDP-505: 동일 사용자에게 같은 날 license_expiry 알림이 이미 SUCCESS 로 발송됐다면 SKIP.
+     * 스케줄러 재실행 / 장애 복구 시 중복 발송 방지.
      */
     public void sendLicenseExpiryNotice(String toEmail, String planName,
                                         LocalDate validUntil, long daysRemaining,
                                         String renewUrl) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        boolean alreadySent = emailLogRepository
+                .existsByRecipientEmailAndTemplateKeyAndStatusAndSentAtBetween(
+                        toEmail, LICENSE_EXPIRY_TEMPLATE,
+                        EmailLog.Status.SUCCESS, startOfDay, endOfDay);
+        if (alreadySent) {
+            log.info("라이선스 만료 알림 중복 SKIP (오늘 이미 발송): {}", toEmail);
+            return;
+        }
+
         Map<String, String> vars = new HashMap<>();
         vars.put("plan_name", planName != null ? planName : "BUL:C");
         vars.put("valid_until", validUntil != null ? validUntil.format(DATE_FMT) : "-");
@@ -79,7 +99,7 @@ public class OperationalMailService {
 
         String subject = String.format("[BulC] 라이선스 만료 D-%d 안내", daysRemaining);
         emailService.sendByTemplate(EmailCategory.OPERATIONAL, toEmail,
-                "license_expiry", subject, vars);
+                LICENSE_EXPIRY_TEMPLATE, subject, vars);
     }
 
     private List<String> resolveRecipients(List<String> recipients) {

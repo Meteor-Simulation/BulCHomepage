@@ -67,8 +67,28 @@ public class AdminMailController {
             ));
         }
 
-        @SuppressWarnings("unchecked")
-        List<String> recipients = (List<String>) body.get("recipients");
+        Object recipientsRaw = body.get("recipients");
+        List<String> recipients;
+        if (recipientsRaw == null) {
+            recipients = null;
+        } else if (recipientsRaw instanceof List<?> list) {
+            for (Object e : list) {
+                if (e != null && !(e instanceof String)) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                            "error", "recipients 의 모든 요소는 문자열(이메일)이어야 합니다"
+                    ));
+                }
+            }
+            List<String> typed = new java.util.ArrayList<>(list.size());
+            for (Object e : list) {
+                if (e != null) typed.add((String) e);
+            }
+            recipients = typed;
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "recipients 는 배열이어야 합니다"
+            ));
+        }
 
         int count = operationalMailService.sendOperationalNotice(
                 title, contentHtml, subject, templateKey, recipients);
