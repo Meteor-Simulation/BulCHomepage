@@ -1335,19 +1335,6 @@
   box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.1);
 }
 
-.bulc-price__card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #7a9cc6;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  letter-spacing: 0.02em;
-}
-
 .bulc-price__card-price--empty {
   height: 48px;
 }
