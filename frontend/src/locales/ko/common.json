@@ -529,6 +529,8 @@
     "submitting": "가입 중...",
     "haveAccount": "이미 계정이 있으신가요?",
     "loginLink": "로그인",
+    "or": "또는",
+    "socialSignup": "간편 회원가입",
     "validation": {
       "needsAllChars": "영문, 숫자, 특수문자를 포함해주세요.",
       "minLength": "비밀번호를 8자 이상으로 만들어주세요.",
