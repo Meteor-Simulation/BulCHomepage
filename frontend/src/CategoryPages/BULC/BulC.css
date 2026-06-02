@@ -1248,6 +1248,13 @@
   margin: 0;
 }
 
+.bulc-price__card-period-text {
+  font-size: 16px;
+  color: #475569;
+  font-weight: 500;
+  margin: 8px 0 0;
+}
+
 .bulc-price__card-price {
   margin-bottom: 24px;
   display: flex;
