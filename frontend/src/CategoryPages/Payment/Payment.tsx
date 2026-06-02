@@ -521,7 +521,10 @@ const PaymentPage: React.FC = () => {
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
-                    const isEvacPlan = plan.name === 'BUL:C 3D Premium';
+                    const isSubscription = plan.name === 'BUL:C 3D Premium';
+                    const isPermanent = plan.name === 'BUL:C 3D Premium 영구';
+                    const isEvacPlan = isSubscription || isPermanent;
+                    const showBadges = isSubscription || isPermanent || isEvacPlan;
                     const isComingSoon = false;
                     return (
                       <div
@@ -536,14 +539,23 @@ const PaymentPage: React.FC = () => {
                         )}
                         <div className="plan-header">
                           <h3 className="plan-name">{plan.name}</h3>
-                          {isEvacPlan && (
+                          {showBadges && (
                             <div className="plan-badges">
-                              <span className="plan-badge plan-badge--subscription">
-                                {t('payment.subscription')}
-                              </span>
-                              <span className="plan-badge plan-badge--evac">
-                                {t('payment.evacIncluded')}
-                              </span>
+                              {isSubscription && (
+                                <span className="plan-badge plan-badge--subscription">
+                                  {t('payment.subscription')}
+                                </span>
+                              )}
+                              {isPermanent && (
+                                <span className="plan-badge plan-badge--permanent">
+                                  {t('payment.permanent')}
+                                </span>
+                              )}
+                              {isEvacPlan && (
+                                <span className="plan-badge plan-badge--evac">
+                                  {t('payment.evacIncluded')}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>

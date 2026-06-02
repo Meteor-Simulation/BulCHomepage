@@ -22,10 +22,13 @@ interface PriceSectionProps {
 const FEATURE_KEYS: Record<string, string> = {
   'BUL:C PRO': 'pro',
   'BUL:C 3D Premium': 'premium',
+  'BUL:C 3D Premium 영구': 'premium',
 };
 
 const COMING_SOON_PLANS: string[] = [];
-const EVAC_PLANS = ['BUL:C 3D Premium'];
+const SUBSCRIPTION_PLANS = ['BUL:C 3D Premium'];
+const PERMANENT_PLANS = ['BUL:C 3D Premium 영구'];
+const EVAC_PLANS = ['BUL:C 3D Premium', 'BUL:C 3D Premium 영구'];
 
 const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
@@ -121,7 +124,10 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               const features = getFeatures(plan.name);
               const includes = getIncludes(plan.name);
               const isComingSoon = COMING_SOON_PLANS.includes(plan.name);
+              const isSubscription = SUBSCRIPTION_PLANS.includes(plan.name);
+              const isPermanent = PERMANENT_PLANS.includes(plan.name);
               const isEvacPlan = EVAC_PLANS.includes(plan.name);
+              const showBadges = isSubscription || isPermanent || isEvacPlan;
               return (
                 <div key={plan.id} className={`bulc-price__card${isComingSoon ? ' bulc-price__card--coming-soon' : ''}`}>
                   {isComingSoon && (
@@ -131,14 +137,23 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   )}
                   <div className="bulc-price__card-header">
                     <h3 className="bulc-price__card-name">{plan.name}</h3>
-                    {isEvacPlan && (
+                    {showBadges && (
                       <div className="bulc-price__card-badges">
-                        <span className="bulc-price__card-badge bulc-price__card-badge--subscription">
-                          {t('payment.subscription')}
-                        </span>
-                        <span className="bulc-price__card-badge bulc-price__card-badge--evac">
-                          {t('payment.evacIncluded')}
-                        </span>
+                        {isSubscription && (
+                          <span className="bulc-price__card-badge bulc-price__card-badge--subscription">
+                            {t('payment.subscription')}
+                          </span>
+                        )}
+                        {isPermanent && (
+                          <span className="bulc-price__card-badge bulc-price__card-badge--permanent">
+                            {t('payment.permanent')}
+                          </span>
+                        )}
+                        {isEvacPlan && (
+                          <span className="bulc-price__card-badge bulc-price__card-badge--evac">
+                            {t('payment.evacIncluded')}
+                          </span>
+                        )}
                       </div>
                     )}
                     {plan.description && (

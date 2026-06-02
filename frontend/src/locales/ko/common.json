@@ -401,6 +401,7 @@
     "comingSoon": "준비 중인 상품입니다",
     "evacIncluded": "Evac(피난 시뮬레이션) 포함",
     "subscription": "구독형",
+    "permanent": "영구 라이선스",
     "methods": {
       "creditCard": "신용/체크카드",
       "creditCardDesc": "카드사 선택은 결제창에서",

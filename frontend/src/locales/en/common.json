@@ -401,6 +401,7 @@
     "comingSoon": "Coming soon",
     "evacIncluded": "Evac (Evacuation Simulation) included",
     "subscription": "Subscription",
+    "permanent": "Permanent License",
     "methods": {
       "creditCard": "Credit Card",
       "creditCardDesc": "VISA, MASTER, JCB",
