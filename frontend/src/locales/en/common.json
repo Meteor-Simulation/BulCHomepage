@@ -304,7 +304,7 @@
         ]
       },
       "premium": {
-        "includes": "",
+        "includes": "Evac (Evacuation Simulation)",
         "features": [
           "Multi-GPU acceleration",
           "Specialized library (Factory, Semiconductor, EV, Battery)",

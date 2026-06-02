@@ -304,7 +304,7 @@
         ]
       },
       "premium": {
-        "includes": "",
+        "includes": "Evac(피난 시뮬레이션)",
         "features": [
           "다중 GPU 가속",
           "특수 라이브러리 (공장, 반도체, 전기차, 배터리)",
