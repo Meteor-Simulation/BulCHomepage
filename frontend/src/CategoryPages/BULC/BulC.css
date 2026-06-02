@@ -1366,11 +1366,6 @@
   box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.3);
 }
 
-.bulc-price__card--quote {
-  border: 2px solid var(--accent, #C4320A);
-  box-shadow: 0 4px 6px -1px rgba(196, 50, 10, 0.1);
-}
-
 .bulc-price__card-btn--quote {
   background: var(--accent, #C4320A);
 }
