@@ -124,10 +124,10 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               const features = getFeatures(plan.name);
               const includes = getIncludes(plan.name);
               const isComingSoon = COMING_SOON_PLANS.includes(plan.name);
-              const isEvacPlan = EVAC_PLANS.includes(plan.name);
+              const isPremium = EVAC_PLANS.includes(plan.name);
               const isPermanent = isPermanentPlan(plan);
-              const isSubscription = isEvacPlan && !isPermanent;
-              const showBadges = isSubscription || isPermanent || isEvacPlan;
+              const isSubscription = isPremium && !isPermanent;
+              const showBadges = isSubscription || isPermanent;
               return (
                 <div key={plan.id} className={`bulc-price__card${isComingSoon ? ' bulc-price__card--coming-soon' : ''}`}>
                   {isComingSoon && (
@@ -147,11 +147,6 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                         {isPermanent && (
                           <span className="bulc-price__card-badge bulc-price__card-badge--permanent">
                             {t('payment.permanent')}
-                          </span>
-                        )}
-                        {isEvacPlan && (
-                          <span className="bulc-price__card-badge bulc-price__card-badge--evac">
-                            {t('payment.evacIncluded')}
                           </span>
                         )}
                       </div>

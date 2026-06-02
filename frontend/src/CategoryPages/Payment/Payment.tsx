@@ -521,10 +521,10 @@ const PaymentPage: React.FC = () => {
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
-                    const isEvacPlan = plan.name === 'BUL:C 3D Premium';
-                    const isPermanent = isEvacPlan && (plan.description?.includes('영구') ?? false);
-                    const isSubscription = isEvacPlan && !isPermanent;
-                    const showBadges = isSubscription || isPermanent || isEvacPlan;
+                    const isPremium = plan.name === 'BUL:C 3D Premium';
+                    const isPermanent = isPremium && (plan.description?.includes('영구') ?? false);
+                    const isSubscription = isPremium && !isPermanent;
+                    const showBadges = isSubscription || isPermanent;
                     const isComingSoon = false;
                     return (
                       <div
@@ -549,11 +549,6 @@ const PaymentPage: React.FC = () => {
                               {isPermanent && (
                                 <span className="plan-badge plan-badge--permanent">
                                   {t('payment.permanent')}
-                                </span>
-                              )}
-                              {isEvacPlan && (
-                                <span className="plan-badge plan-badge--evac">
-                                  {t('payment.evacIncluded')}
                                 </span>
                               )}
                             </div>
