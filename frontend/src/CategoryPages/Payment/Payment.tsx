@@ -537,9 +537,14 @@ const PaymentPage: React.FC = () => {
                         <div className="plan-header">
                           <h3 className="plan-name">{plan.name}</h3>
                           {isEvacPlan && (
-                            <span className="plan-badge plan-badge--evac">
-                              {t('payment.evacIncluded')}
-                            </span>
+                            <div className="plan-badges">
+                              <span className="plan-badge plan-badge--subscription">
+                                {t('payment.subscription')}
+                              </span>
+                              <span className="plan-badge plan-badge--evac">
+                                {t('payment.evacIncluded')}
+                              </span>
+                            </div>
                           )}
                         </div>
                         <div className="plan-price-row">

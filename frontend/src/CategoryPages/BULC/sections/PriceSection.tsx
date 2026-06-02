@@ -132,9 +132,14 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   <div className="bulc-price__card-header">
                     <h3 className="bulc-price__card-name">{plan.name}</h3>
                     {isEvacPlan && (
-                      <span className="bulc-price__card-badge bulc-price__card-badge--evac">
-                        {t('payment.evacIncluded')}
-                      </span>
+                      <div className="bulc-price__card-badges">
+                        <span className="bulc-price__card-badge bulc-price__card-badge--subscription">
+                          {t('payment.subscription')}
+                        </span>
+                        <span className="bulc-price__card-badge bulc-price__card-badge--evac">
+                          {t('payment.evacIncluded')}
+                        </span>
+                      </div>
                     )}
                     {plan.description && (
                       <p className="bulc-price__card-desc">{plan.description}</p>

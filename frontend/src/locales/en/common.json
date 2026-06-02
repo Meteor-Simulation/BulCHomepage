@@ -400,6 +400,7 @@
     "noPlans": "No plans available.",
     "comingSoon": "Coming soon",
     "evacIncluded": "Evac (Evacuation Simulation) included",
+    "subscription": "Subscription",
     "methods": {
       "creditCard": "Credit Card",
       "creditCardDesc": "VISA, MASTER, JCB",
