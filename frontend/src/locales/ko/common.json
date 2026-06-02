@@ -304,7 +304,7 @@
         ]
       },
       "premium": {
-        "includes": "PRO의 모든 기능 포함",
+        "includes": "Evac(피난 시뮬레이션)",
         "features": [
           "다중 GPU 가속",
           "특수 라이브러리 (공장, 반도체, 전기차, 배터리)",
@@ -400,6 +400,8 @@
     "noPlans": "등록된 요금제가 없습니다.",
     "comingSoon": "준비 중인 상품입니다",
     "evacIncluded": "Evac(피난 시뮬레이션) 포함",
+    "subscription": "구독형",
+    "permanent": "영구 라이선스",
     "methods": {
       "creditCard": "신용/체크카드",
       "creditCardDesc": "카드사 선택은 결제창에서",

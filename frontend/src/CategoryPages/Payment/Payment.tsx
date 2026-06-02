@@ -521,7 +521,11 @@ const PaymentPage: React.FC = () => {
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
-                    const isComingSoon = plan.name === 'BUL:C 3D Premium';
+                    const isPremium = plan.name === 'BUL:C 3D Premium';
+                    const isPermanent = isPremium && (plan.description?.includes('영구') ?? false);
+                    const isSubscription = isPremium && !isPermanent;
+                    const showBadges = isSubscription || isPermanent;
+                    const isComingSoon = false;
                     return (
                       <div
                         key={plan.id}
@@ -535,10 +539,19 @@ const PaymentPage: React.FC = () => {
                         )}
                         <div className="plan-header">
                           <h3 className="plan-name">{plan.name}</h3>
-                          {isComingSoon && (
-                            <span className="plan-badge plan-badge--evac">
-                              {t('payment.evacIncluded')}
-                            </span>
+                          {showBadges && (
+                            <div className="plan-badges">
+                              {isSubscription && (
+                                <span className="plan-badge plan-badge--subscription">
+                                  {t('payment.subscription')}
+                                </span>
+                              )}
+                              {isPermanent && (
+                                <span className="plan-badge plan-badge--permanent">
+                                  {t('payment.permanent')}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="plan-price-row">

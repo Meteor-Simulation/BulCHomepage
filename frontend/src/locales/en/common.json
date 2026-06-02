@@ -304,7 +304,7 @@
         ]
       },
       "premium": {
-        "includes": "All PRO features included",
+        "includes": "Evac (Evacuation Simulation)",
         "features": [
           "Multi-GPU acceleration",
           "Specialized library (Factory, Semiconductor, EV, Battery)",
@@ -400,6 +400,8 @@
     "noPlans": "No plans available.",
     "comingSoon": "Coming soon",
     "evacIncluded": "Evac (Evacuation Simulation) included",
+    "subscription": "Subscription",
+    "permanent": "Permanent License",
     "methods": {
       "creditCard": "Credit Card",
       "creditCardDesc": "VISA, MASTER, JCB",

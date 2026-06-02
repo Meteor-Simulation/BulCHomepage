@@ -219,19 +219,37 @@
   margin: 0 0 4px 0;
 }
 
+.plan-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .plan-badge {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
-  margin-top: 4px;
 }
 
 .plan-badge--evac {
   background: rgba(196, 50, 10, 0.1);
   color: var(--accent, #C4320A);
   border: 1px solid rgba(196, 50, 10, 0.3);
+}
+
+.plan-badge--subscription {
+  background: var(--accent, #C4320A);
+  color: #fff;
+  border: 1px solid var(--accent, #C4320A);
+}
+
+.plan-badge--permanent {
+  background: #7A1A04;
+  color: #fff;
+  border: 1px solid #7A1A04;
 }
 
 .plan-price-row {
