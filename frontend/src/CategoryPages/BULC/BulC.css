@@ -1174,12 +1174,14 @@
 /* Card Grid */
 .bulc-price__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 240px);
   gap: 24px;
+  justify-content: center;
 }
 
 /* Card */
 .bulc-price__card {
+  position: relative;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
@@ -1207,20 +1209,31 @@
   font-weight: 700;
   color: var(--text);
   margin: 0 0 8px;
+  white-space: pre-line;
 }
 
 .bulc-price__card-badges {
+  position: absolute;
+  top: 12px;
+  left: 12px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.bulc-price__card:hover .bulc-price__card-badges {
+  opacity: 1;
 }
 
 .bulc-price__card-badge {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -1268,6 +1281,11 @@
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.025em;
+}
+
+.bulc-price__card-amount-unit {
+  font-weight: 400;
+  margin-left: 2px;
 }
 
 .bulc-price__card-period {
@@ -1335,19 +1353,6 @@
   box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.1);
 }
 
-.bulc-price__card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #7a9cc6;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  letter-spacing: 0.02em;
-}
-
 .bulc-price__card-price--empty {
   height: 48px;
 }
@@ -1359,6 +1364,15 @@
 .bulc-price__card-btn--education:hover {
   background: #6889b0;
   box-shadow: 0 10px 15px -3px rgba(100, 140, 180, 0.3);
+}
+
+.bulc-price__card-btn--quote {
+  background: var(--accent, #C4320A);
+}
+
+.bulc-price__card-btn--quote:hover {
+  background: #a32a08;
+  box-shadow: 0 10px 15px -3px rgba(196, 50, 10, 0.3);
 }
 
 /* Education Link */

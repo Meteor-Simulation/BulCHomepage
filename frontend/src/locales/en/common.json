@@ -235,10 +235,10 @@
       "servicePeriod": "Service period: 1 year (365 days from purchase)",
       "comingSoon": "Coming Soon",
       "free": {
-        "name": "BUL:C Basic",
+        "name": "BUL:C\nBasic",
         "desc": "14-day free trial",
         "price": "$0",
-        "period": "/ 14 days",
+        "period": "",
         "button": "Start for Free",
         "features": [
           "CPU-based analysis",
@@ -248,13 +248,25 @@
           "ASET+RSET auto-analysis report"
         ]
       },
+      "quote": {
+        "name": "Workstation\n(License included)",
+        "desc": "Custom quote inquiry",
+        "price": "Contact Sales",
+        "period": "",
+        "button": "Request a Quote",
+        "features": [
+          "Quote-based onboarding · License auto-renews annually",
+          "Dedicated workstation",
+          "Custom setup"
+        ]
+      },
       "education": {
         "name": "Education / Research",
         "desc": "For universities & research institutions",
         "price": "Contact Us",
-        "period": "/ custom",
+        "period": "",
         "button": "Request a Quote",
-        "includes": "All Basic features included",
+        "includes": "",
         "features": [
           "Per-student license management"
         ],
@@ -306,7 +318,7 @@
       "premium": {
         "includes": "Evac (Evacuation Simulation)",
         "features": [
-          "Multi-GPU acceleration",
+          "GPU acceleration",
           "Specialized library (Factory, Semiconductor, EV, Battery)",
           "High-speed floor plan auto-design",
           "AI auto-analysis & reporting",

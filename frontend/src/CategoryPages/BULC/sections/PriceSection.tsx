@@ -57,11 +57,14 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
     fetchPlans(currency);
   }, [currency, fetchPlans]);
 
-  const formatPrice = (price: number, cur: string) => {
+  const formatPrice = (price: number, cur: string): { value: string; unit: string } => {
     if (cur === 'KRW') {
-      return price.toLocaleString() + '원';
+      if (price >= 10000 && price % 10000 === 0) {
+        return { value: (price / 10000).toLocaleString(), unit: '만원' };
+      }
+      return { value: price.toLocaleString(), unit: '원' };
     }
-    return '$' + price.toLocaleString();
+    return { value: '$' + price.toLocaleString(), unit: '' };
   };
 
   const getFeatures = (planName: string): string[] => {
@@ -106,8 +109,10 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 <p className="bulc-price__card-desc">{t('bulc.price.free.desc')}</p>
               </div>
               <div className="bulc-price__card-price">
-                <span className="bulc-price__card-amount">{t('bulc.price.free.price')}</span>
-                <span className="bulc-price__card-period">{t('bulc.price.free.period')}</span>
+                <span className="bulc-price__card-amount">
+                  {t('bulc.price.free.price')}
+                  {currency === 'KRW' && <span className="bulc-price__card-amount-unit">만원</span>}
+                </span>
               </div>
               <ul className="bulc-price__card-features">
                 {(t('bulc.price.free.features', { returnObjects: true }) as string[]).map((f, i) => (
@@ -115,7 +120,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 ))}
               </ul>
               <button className="bulc-price__card-btn bulc-price__card-btn--free" onClick={onFreeClick || onPurchaseClick}>
-                {isLoggedIn ? t('download.downloadBtn') : t('bulc.price.free.button')}
+                {t('bulc.price.free.button')}
               </button>
             </div>
 
@@ -157,7 +162,15 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   </div>
                   <div className="bulc-price__card-price">
                     <span className="bulc-price__card-amount">
-                      {formatPrice(plan.price, plan.currency)}
+                      {(() => {
+                        const p = formatPrice(plan.price, plan.currency);
+                        return (
+                          <>
+                            {p.value}
+                            {p.unit && <span className="bulc-price__card-amount-unit">{p.unit}</span>}
+                          </>
+                        );
+                      })()}
                     </span>
                   </div>
                   {(includes || features.length > 0) && (
@@ -178,6 +191,26 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 </div>
               );
             })}
+
+            {/* 프로그램 + 하드웨어 견적 문의 */}
+            <div className="bulc-price__card bulc-price__card--quote">
+              <div className="bulc-price__card-header">
+                <h3 className="bulc-price__card-name">{t('bulc.price.quote.name')}</h3>
+                <p className="bulc-price__card-desc">{t('bulc.price.quote.desc')}</p>
+              </div>
+              <div className="bulc-price__card-price">
+                <span className="bulc-price__card-amount">{t('bulc.price.quote.price')}</span>
+                <span className="bulc-price__card-period">{t('bulc.price.quote.period')}</span>
+              </div>
+              <ul className="bulc-price__card-features">
+                {(t('bulc.price.quote.features', { returnObjects: true }) as string[]).map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+              <button className="bulc-price__card-btn bulc-price__card-btn--quote" onClick={onContactClick}>
+                {t('bulc.price.quote.button')}
+              </button>
+            </div>
 
             {/* 교육/연구 플랜 */}
             <div className="bulc-price__card bulc-price__card--education">

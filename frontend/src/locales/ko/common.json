@@ -235,10 +235,10 @@
       "servicePeriod": "이용기간: 1년(구매일 기준 365일)",
       "comingSoon": "준비 중인 상품입니다",
       "free": {
-        "name": "BUL:C Basic",
+        "name": "BUL:C\nBasic",
         "desc": "14일 무료 체험",
-        "price": "₩0",
-        "period": "/ 14일",
+        "price": "0",
+        "period": "",
         "button": "무료 다운로드",
         "features": [
           "CPU 기반 해석",
@@ -248,13 +248,25 @@
           "ASET+RSET 자동 분석 보고서"
         ]
       },
+      "quote": {
+        "name": "워크스테이션\n(라이선스 포함)",
+        "desc": "맞춤 견적 문의",
+        "price": "견적 문의",
+        "period": "",
+        "button": "견적 문의하기",
+        "features": [
+          "맞춤 견적 후 도입, 라이선스 연 단위 자동갱신",
+          "전용 워크스테이션 (본체)",
+          "맞춤 설치"
+        ]
+      },
       "education": {
         "name": "교육/연구",
         "desc": "대학·연구기관 전용 라이선스",
         "price": "가격 문의",
-        "period": "/ 기간",
+        "period": "",
         "button": "견적 문의하기",
-        "includes": "Basic의 모든 기능 포함",
+        "includes": "",
         "features": [
           "학생 계정별 라이선스 관리"
         ],
@@ -306,7 +318,7 @@
       "premium": {
         "includes": "Evac(피난 시뮬레이션)",
         "features": [
-          "다중 GPU 가속",
+          "GPU 가속",
           "특수 라이브러리 (공장, 반도체, 전기차, 배터리)",
           "고속 도면인식 자동 설계",
           "AI 자동 분석 및 레포트",
