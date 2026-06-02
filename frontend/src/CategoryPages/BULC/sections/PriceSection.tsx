@@ -59,6 +59,9 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
 
   const formatPrice = (price: number, cur: string) => {
     if (cur === 'KRW') {
+      if (price >= 10000 && price % 10000 === 0) {
+        return (price / 10000).toLocaleString() + '만원';
+      }
       return price.toLocaleString() + '원';
     }
     return '$' + price.toLocaleString();
