@@ -179,6 +179,26 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               );
             })}
 
+            {/* 프로그램 + 하드웨어 견적 문의 */}
+            <div className="bulc-price__card bulc-price__card--quote">
+              <div className="bulc-price__card-header">
+                <h3 className="bulc-price__card-name">{t('bulc.price.quote.name')}</h3>
+                <p className="bulc-price__card-desc">{t('bulc.price.quote.desc')}</p>
+              </div>
+              <div className="bulc-price__card-price">
+                <span className="bulc-price__card-amount">{t('bulc.price.quote.price')}</span>
+                <span className="bulc-price__card-period">{t('bulc.price.quote.period')}</span>
+              </div>
+              <ul className="bulc-price__card-features">
+                {(t('bulc.price.quote.features', { returnObjects: true }) as string[]).map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+              <button className="bulc-price__card-btn bulc-price__card-btn--quote" onClick={onContactClick}>
+                {t('bulc.price.quote.button')}
+              </button>
+            </div>
+
             {/* 교육/연구 플랜 */}
             <div className="bulc-price__card bulc-price__card--education">
               <div className="bulc-price__card-header">

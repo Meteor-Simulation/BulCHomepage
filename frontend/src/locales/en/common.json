@@ -248,6 +248,19 @@
           "ASET+RSET auto-analysis report"
         ]
       },
+      "quote": {
+        "name": "Software + Hardware",
+        "desc": "Custom quote inquiry",
+        "price": "Contact Sales",
+        "period": "/ package",
+        "button": "Request a Quote",
+        "features": [
+          "Perpetual license + maintenance",
+          "Dedicated workstation",
+          "Auto-conversion option",
+          "Custom setup and training"
+        ]
+      },
       "education": {
         "name": "Education / Research",
         "desc": "For universities & research institutions",
