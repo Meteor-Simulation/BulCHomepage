@@ -109,8 +109,10 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 <p className="bulc-price__card-desc">{t('bulc.price.free.desc')}</p>
               </div>
               <div className="bulc-price__card-price">
-                <span className="bulc-price__card-amount">{t('bulc.price.free.price')}</span>
-                <span className="bulc-price__card-period">{t('bulc.price.free.period')}</span>
+                <span className="bulc-price__card-amount">
+                  {t('bulc.price.free.price')}
+                  {currency === 'KRW' && <span className="bulc-price__card-amount-unit">만원</span>}
+                </span>
               </div>
               <ul className="bulc-price__card-features">
                 {(t('bulc.price.free.features', { returnObjects: true }) as string[]).map((f, i) => (

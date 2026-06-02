@@ -238,7 +238,7 @@
         "name": "BUL:C Basic",
         "desc": "14-day free trial",
         "price": "$0",
-        "period": "/ 14 days",
+        "period": "",
         "button": "Start for Free",
         "features": [
           "CPU-based analysis",

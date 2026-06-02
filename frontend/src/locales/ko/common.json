@@ -237,8 +237,8 @@
       "free": {
         "name": "BUL:C Basic",
         "desc": "14일 무료 체험",
-        "price": "₩0",
-        "period": "/ 14일",
+        "price": "0",
+        "period": "",
         "button": "무료 다운로드",
         "features": [
           "CPU 기반 해석",
