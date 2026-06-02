@@ -22,13 +22,13 @@ interface PriceSectionProps {
 const FEATURE_KEYS: Record<string, string> = {
   'BUL:C PRO': 'pro',
   'BUL:C 3D Premium': 'premium',
-  'BUL:C 3D Premium 영구': 'premium',
 };
 
 const COMING_SOON_PLANS: string[] = [];
-const SUBSCRIPTION_PLANS = ['BUL:C 3D Premium'];
-const PERMANENT_PLANS = ['BUL:C 3D Premium 영구'];
-const EVAC_PLANS = ['BUL:C 3D Premium', 'BUL:C 3D Premium 영구'];
+const EVAC_PLANS = ['BUL:C 3D Premium'];
+
+const isPermanentPlan = (plan: PricePlan) =>
+  EVAC_PLANS.includes(plan.name) && plan.description?.includes('영구');
 
 const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
@@ -124,9 +124,9 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               const features = getFeatures(plan.name);
               const includes = getIncludes(plan.name);
               const isComingSoon = COMING_SOON_PLANS.includes(plan.name);
-              const isSubscription = SUBSCRIPTION_PLANS.includes(plan.name);
-              const isPermanent = PERMANENT_PLANS.includes(plan.name);
               const isEvacPlan = EVAC_PLANS.includes(plan.name);
+              const isPermanent = isPermanentPlan(plan);
+              const isSubscription = isEvacPlan && !isPermanent;
               const showBadges = isSubscription || isPermanent || isEvacPlan;
               return (
                 <div key={plan.id} className={`bulc-price__card${isComingSoon ? ' bulc-price__card--coming-soon' : ''}`}>
@@ -156,16 +156,17 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                         )}
                       </div>
                     )}
-                    {plan.description && (
-                      <p className="bulc-price__card-desc">{plan.description}</p>
-                    )}
                   </div>
                   <div className="bulc-price__card-price">
                     <span className="bulc-price__card-amount">
                       {formatPrice(plan.price, plan.currency)}
                     </span>
-                    <span className="bulc-price__card-period">{t('bulc.price.perYear')}</span>
-                    <span className="bulc-price__card-service-period">{t('bulc.price.servicePeriod')}</span>
+                    {plan.description && (
+                      <span className="bulc-price__card-period">{plan.description}</span>
+                    )}
+                    {!isPermanent && (
+                      <span className="bulc-price__card-service-period">{t('bulc.price.servicePeriod')}</span>
+                    )}
                   </div>
                   {(includes || features.length > 0) && (
                     <ul className="bulc-price__card-features">

@@ -521,9 +521,9 @@ const PaymentPage: React.FC = () => {
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
-                    const isSubscription = plan.name === 'BUL:C 3D Premium';
-                    const isPermanent = plan.name === 'BUL:C 3D Premium 영구';
-                    const isEvacPlan = isSubscription || isPermanent;
+                    const isEvacPlan = plan.name === 'BUL:C 3D Premium';
+                    const isPermanent = isEvacPlan && (plan.description?.includes('영구') ?? false);
+                    const isSubscription = isEvacPlan && !isPermanent;
                     const showBadges = isSubscription || isPermanent || isEvacPlan;
                     const isComingSoon = false;
                     return (
