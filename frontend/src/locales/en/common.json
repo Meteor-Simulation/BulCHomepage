@@ -306,7 +306,7 @@
       "premium": {
         "includes": "Evac (Evacuation Simulation)",
         "features": [
-          "Multi-GPU acceleration",
+          "GPU acceleration",
           "Specialized library (Factory, Semiconductor, EV, Battery)",
           "High-speed floor plan auto-design",
           "AI auto-analysis & reporting",
