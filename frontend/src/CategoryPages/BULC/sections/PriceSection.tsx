@@ -57,14 +57,14 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
     fetchPlans(currency);
   }, [currency, fetchPlans]);
 
-  const formatPrice = (price: number, cur: string) => {
+  const formatPrice = (price: number, cur: string): { value: string; unit: string } => {
     if (cur === 'KRW') {
       if (price >= 10000 && price % 10000 === 0) {
-        return (price / 10000).toLocaleString() + '만원';
+        return { value: (price / 10000).toLocaleString(), unit: '만원' };
       }
-      return price.toLocaleString() + '원';
+      return { value: price.toLocaleString(), unit: '원' };
     }
-    return '$' + price.toLocaleString();
+    return { value: '$' + price.toLocaleString(), unit: '' };
   };
 
   const getFeatures = (planName: string): string[] => {
@@ -160,7 +160,15 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   </div>
                   <div className="bulc-price__card-price">
                     <span className="bulc-price__card-amount">
-                      {formatPrice(plan.price, plan.currency)}
+                      {(() => {
+                        const p = formatPrice(plan.price, plan.currency);
+                        return (
+                          <>
+                            {p.value}
+                            {p.unit && <span className="bulc-price__card-amount-unit">{p.unit}</span>}
+                          </>
+                        );
+                      })()}
                     </span>
                   </div>
                   {(includes || features.length > 0) && (
