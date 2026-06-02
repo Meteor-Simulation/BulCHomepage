@@ -1209,6 +1209,21 @@
   margin: 0 0 8px;
 }
 
+.bulc-price__card-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.bulc-price__card-badge--evac {
+  background: rgba(196, 50, 10, 0.1);
+  color: var(--accent, #C4320A);
+  border: 1px solid rgba(196, 50, 10, 0.3);
+}
+
 .bulc-price__card-desc {
   font-size: 14px;
   color: #64748b;
