@@ -249,10 +249,10 @@
         ]
       },
       "quote": {
-        "name": "Software + Hardware",
+        "name": "License + Workstation",
         "desc": "Custom quote inquiry",
         "price": "Contact Sales",
-        "period": "/ package",
+        "period": "",
         "button": "Request a Quote",
         "features": [
           "Year 1: 9,900,000 KRW · Year 2+: 6,000,000 KRW",
