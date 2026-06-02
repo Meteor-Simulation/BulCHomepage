@@ -399,6 +399,7 @@
     "selectProductFirst": "Please select a product first.",
     "noPlans": "No plans available.",
     "comingSoon": "Coming soon",
+    "evacIncluded": "Evac (Evacuation Simulation) included",
     "methods": {
       "creditCard": "Credit Card",
       "creditCardDesc": "VISA, MASTER, JCB",

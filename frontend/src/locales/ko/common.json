@@ -399,6 +399,7 @@
     "selectProductFirst": "상품을 먼저 선택해주세요.",
     "noPlans": "등록된 요금제가 없습니다.",
     "comingSoon": "준비 중인 상품입니다",
+    "evacIncluded": "Evac(피난 시뮬레이션) 포함",
     "methods": {
       "creditCard": "신용/체크카드",
       "creditCardDesc": "카드사 선택은 결제창에서",

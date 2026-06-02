@@ -535,6 +535,11 @@ const PaymentPage: React.FC = () => {
                         )}
                         <div className="plan-header">
                           <h3 className="plan-name">{plan.name}</h3>
+                          {isComingSoon && (
+                            <span className="plan-badge plan-badge--evac">
+                              {t('payment.evacIncluded')}
+                            </span>
+                          )}
                         </div>
                         <div className="plan-price-row">
                           <span className="current-price">{formatPrice(plan.price)}</span>
