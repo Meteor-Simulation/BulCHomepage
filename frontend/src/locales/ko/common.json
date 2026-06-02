@@ -235,7 +235,7 @@
       "servicePeriod": "이용기간: 1년(구매일 기준 365일)",
       "comingSoon": "준비 중인 상품입니다",
       "free": {
-        "name": "BUL:C Basic",
+        "name": "BUL:C\nBasic",
         "desc": "14일 무료 체험",
         "price": "0",
         "period": "",
@@ -249,7 +249,7 @@
         ]
       },
       "quote": {
-        "name": "라이선스 + 워크스테이션",
+        "name": "워크스테이션\n(라이선스 포함)",
         "desc": "맞춤 견적 문의",
         "price": "견적 문의",
         "period": "",
@@ -264,7 +264,7 @@
         "name": "교육/연구",
         "desc": "대학·연구기관 전용 라이선스",
         "price": "가격 문의",
-        "period": "/ 기간",
+        "period": "",
         "button": "견적 문의하기",
         "includes": "Basic의 모든 기능 포함",
         "features": [

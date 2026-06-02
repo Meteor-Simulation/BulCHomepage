@@ -235,7 +235,7 @@
       "servicePeriod": "Service period: 1 year (365 days from purchase)",
       "comingSoon": "Coming Soon",
       "free": {
-        "name": "BUL:C Basic",
+        "name": "BUL:C\nBasic",
         "desc": "14-day free trial",
         "price": "$0",
         "period": "",
@@ -249,7 +249,7 @@
         ]
       },
       "quote": {
-        "name": "License + Workstation",
+        "name": "Workstation\n(License included)",
         "desc": "Custom quote inquiry",
         "price": "Contact Sales",
         "period": "",
@@ -264,7 +264,7 @@
         "name": "Education / Research",
         "desc": "For universities & research institutions",
         "price": "Contact Us",
-        "period": "/ custom",
+        "period": "",
         "button": "Request a Quote",
         "includes": "All Basic features included",
         "features": [
