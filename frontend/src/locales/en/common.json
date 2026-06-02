@@ -529,6 +529,8 @@
     "submitting": "Signing up...",
     "haveAccount": "Already have an account?",
     "loginLink": "Login",
+    "or": "OR",
+    "socialSignup": "Social Sign Up",
     "validation": {
       "needsAllChars": "Include letters, numbers, and special characters.",
       "minLength": "Password must be 8 characters or longer.",
