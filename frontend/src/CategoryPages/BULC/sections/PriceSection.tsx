@@ -120,7 +120,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 ))}
               </ul>
               <button className="bulc-price__card-btn bulc-price__card-btn--free" onClick={onFreeClick || onPurchaseClick}>
-                {isLoggedIn ? t('download.downloadBtn') : t('bulc.price.free.button')}
+                {t('bulc.price.free.button')}
               </button>
             </div>
 
