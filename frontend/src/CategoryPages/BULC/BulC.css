@@ -1237,9 +1237,9 @@
 }
 
 .bulc-price__card-badge--permanent {
-  background: #7A1A04;
+  background: var(--accent, #C4320A);
   color: #fff;
-  border: 1px solid #7A1A04;
+  border: 1px solid var(--accent, #C4320A);
 }
 
 .bulc-price__card-desc {
