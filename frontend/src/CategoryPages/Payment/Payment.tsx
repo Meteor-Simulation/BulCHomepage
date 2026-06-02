@@ -521,7 +521,8 @@ const PaymentPage: React.FC = () => {
               ) : (
                 <div className="plans-grid">
                   {pricePlans.map((plan) => {
-                    const isComingSoon = plan.name === 'BUL:C 3D Premium';
+                    const isEvacPlan = plan.name === 'BUL:C 3D Premium';
+                    const isComingSoon = false;
                     return (
                       <div
                         key={plan.id}
@@ -535,7 +536,7 @@ const PaymentPage: React.FC = () => {
                         )}
                         <div className="plan-header">
                           <h3 className="plan-name">{plan.name}</h3>
-                          {isComingSoon && (
+                          {isEvacPlan && (
                             <span className="plan-badge plan-badge--evac">
                               {t('payment.evacIncluded')}
                             </span>

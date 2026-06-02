@@ -24,7 +24,8 @@ const FEATURE_KEYS: Record<string, string> = {
   'BUL:C 3D Premium': 'premium',
 };
 
-const COMING_SOON_PLANS = ['BUL:C 3D Premium'];
+const COMING_SOON_PLANS: string[] = [];
+const EVAC_PLANS = ['BUL:C 3D Premium'];
 
 const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
@@ -120,6 +121,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
               const features = getFeatures(plan.name);
               const includes = getIncludes(plan.name);
               const isComingSoon = COMING_SOON_PLANS.includes(plan.name);
+              const isEvacPlan = EVAC_PLANS.includes(plan.name);
               return (
                 <div key={plan.id} className={`bulc-price__card${isComingSoon ? ' bulc-price__card--coming-soon' : ''}`}>
                   {isComingSoon && (
@@ -129,6 +131,11 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   )}
                   <div className="bulc-price__card-header">
                     <h3 className="bulc-price__card-name">{plan.name}</h3>
+                    {isEvacPlan && (
+                      <span className="bulc-price__card-badge bulc-price__card-badge--evac">
+                        {t('payment.evacIncluded')}
+                      </span>
+                    )}
                     {plan.description && (
                       <p className="bulc-price__card-desc">{plan.description}</p>
                     )}
