@@ -1,5 +1,6 @@
 export { default as HeroSection } from './HeroSection';
 export { default as ComparisonSection } from './ComparisonSection';
+export { default as SpecSection } from './SpecSection';
 export { default as CoreValuesSection } from './CoreValuesSection';
 export { default as LogoMarqueeSection } from './LogoMarqueeSection';
 export { default as WorkflowSection } from './WorkflowSection';

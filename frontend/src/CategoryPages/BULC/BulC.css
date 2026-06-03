@@ -1661,6 +1661,77 @@
 }
 
 /* ========================================
+   Spec Strip (제품 메인화면 아래 핵심 스펙)
+======================================== */
+.bulc-spec {
+  background: #fff;
+  padding: 0 0 96px;
+}
+
+.bulc-spec__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.bulc-spec__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: #e2e8f0;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bulc-spec__cell {
+  padding: 36px 28px;
+  background: #fff;
+}
+
+.bulc-spec__k {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.bulc-spec__v {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.bulc-spec__hl {
+  color: var(--accent);
+}
+
+.bulc-spec__d {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .bulc-spec__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .bulc-spec {
+    padding: 0 0 64px;
+  }
+  .bulc-spec__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
    Responsive Design
 ======================================== */
 

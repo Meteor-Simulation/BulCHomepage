@@ -48,6 +48,8 @@ const Footer: React.FC = () => {
       <div className="footer-content">
         {/* 왼쪽: 회사 안내 */}
         <div className="footer-section footer-contact">
+          <div className="footer-logo"><img src="/meteor_logo.png" alt="METEOR" /></div>
+          <div className="footer-co-text">
           <h4>{t('footer.companyInfo')}</h4>
           <p>{t('footer.representative')} : {info.company.representative}  |  {t('footer.contact')} : {info.contact.tel}  /  {info.contact.email}</p>
           <p>{info.company.name}  |  {t('footer.businessNumber')} : {info.company.businessNumber}
@@ -91,6 +93,7 @@ const Footer: React.FC = () => {
                 </svg>
               </a>
             )}
+          </div>
           </div>
         </div>
 
