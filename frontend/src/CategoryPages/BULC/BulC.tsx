@@ -19,6 +19,7 @@ import {
   WorkflowSection,
   CTASection,
   PriceSection,
+  TutorialHubSection,
 } from './sections';
 
 const BulCPage: React.FC = () => {
@@ -28,7 +29,7 @@ const BulCPage: React.FC = () => {
     { id: 'workflow', label: t('bulc.nav.workflow') },
     { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
-    { id: 'tutorial', label: t('bulc.nav.tutorial'), href: 'https://www.youtube.com/@SimulationMeteor' },
+    { id: 'tutorial', label: t('bulc.nav.tutorial') },
   ], [t]);
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
@@ -104,6 +105,8 @@ const BulCPage: React.FC = () => {
         return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} onContactClick={handleContactClick} onEducationContact={handleEducationContact} isLoggedIn={isLoggedIn} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
+      case 'tutorial':
+        return <TutorialHubSection />;
       default:
         return (
           <>

@@ -1661,6 +1661,353 @@
 }
 
 /* ========================================
+   Guide / 사용법 안내 (튜토리얼 허브)
+======================================== */
+.bulc-guide {
+  padding: 64px 0 96px;
+  background: #fff;
+}
+
+.bulc-guide__container {
+  max-width: 896px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.bulc-guide__header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.bulc-guide__eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.bulc-guide__title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.bulc-guide__subtitle {
+  font-size: 18px;
+  color: #475569;
+  margin: 0 auto;
+  max-width: 600px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* 카드 리스트 */
+.bulc-guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bulc-guide__card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  text-align: left;
+  padding: 24px 28px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.bulc-guide__card:hover:not(.bulc-guide__card--disabled) {
+  border-color: var(--accent);
+  box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.bulc-guide__card--disabled {
+  cursor: not-allowed;
+  background: #f8fafc;
+  opacity: 0.7;
+}
+
+.bulc-guide__card-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(196, 50, 10, 0.08);
+  color: var(--accent);
+}
+
+.bulc-guide__card--disabled .bulc-guide__card-icon {
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
+.bulc-guide__card-icon-svg {
+  width: 26px;
+  height: 26px;
+}
+
+.bulc-guide__card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.bulc-guide__card-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.bulc-guide__card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.bulc-guide__card-desc {
+  display: block;
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.bulc-guide__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.bulc-guide__card-arrow {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: #cbd5e1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.bulc-guide__card:hover:not(.bulc-guide__card--disabled) .bulc-guide__card-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+/* 뒤로가기 */
+.bulc-guide__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.bulc-guide__back:hover {
+  color: var(--accent);
+}
+
+.bulc-guide__back-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 상세 공통 */
+.bulc-guide__detail-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 12px;
+}
+
+.bulc-guide__detail-desc {
+  font-size: 17px;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0 0 28px;
+  max-width: 640px;
+  white-space: pre-line;
+}
+
+/* 동영상 상세 */
+.bulc-guide__video {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+
+.bulc-guide__video .bulc-guide__detail-desc {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bulc-guide__youtube-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  text-decoration: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.bulc-guide__youtube-btn:hover {
+  background: #a32a08;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+.bulc-guide__youtube-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* 문서(PDF) 상세 */
+.bulc-guide__doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.bulc-guide__doc-head .bulc-guide__detail-title {
+  margin: 0;
+}
+
+.bulc-guide__doc-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.bulc-guide__doc-download:hover {
+  background: #a32a08;
+}
+
+.bulc-guide__doc-download-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.bulc-guide__doc-frame {
+  width: 100%;
+  height: 70vh;
+  min-height: 480px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+/* 준비 중 안내 */
+.bulc-guide__placeholder {
+  text-align: center;
+  padding: 72px 24px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.bulc-guide__placeholder-icon {
+  width: 48px;
+  height: 48px;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.bulc-guide__placeholder-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 10px;
+}
+
+.bulc-guide__placeholder-desc {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .bulc-guide {
+    padding: 40px 0 64px;
+  }
+
+  .bulc-guide__title {
+    font-size: 26px;
+  }
+
+  .bulc-guide__subtitle {
+    font-size: 16px;
+  }
+
+  .bulc-guide__card {
+    gap: 16px;
+    padding: 18px 18px;
+  }
+
+  .bulc-guide__card-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .bulc-guide__card-icon-svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .bulc-guide__card-title {
+    font-size: 16px;
+  }
+
+  .bulc-guide__card-desc {
+    font-size: 13px;
+  }
+
+  .bulc-guide__doc-frame {
+    height: 60vh;
+    min-height: 360px;
+  }
+}
+
+/* ========================================
    Spec Strip (제품 메인화면 아래 핵심 스펙)
 ======================================== */
 .bulc-spec {

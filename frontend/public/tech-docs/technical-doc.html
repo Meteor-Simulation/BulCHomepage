@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FDS(GPU) Technical Documentation</title>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+    options: { enableMenu: false }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  :root {
+    --primary: #0d47a1;
+    --primary-light: #1565c0;
+    --bg: #fafafa;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-sec: #555;
+    --border: #ddd;
+    --code-bg: #f5f5f5;
+    --accent: #e3f2fd;
+    --accent2: #fff3e0;
+    --kernel: #e8eaf6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 15px;
+  }
+  header.hero {
+    background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+    color: white;
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+  header.hero h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  header.hero .subtitle { font-size: 16px; opacity: 0.85; }
+  header.hero .meta {
+    margin-top: 16px;
+    font-size: 13px;
+    opacity: 0.7;
+  }
+
+  .toc-bar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .toc-bar a {
+    display: inline-block;
+    padding: 12px 16px;
+    color: var(--text-sec);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .toc-bar a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 40px 0; }
+  section + section { border-top: 1px solid var(--border); }
+
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--primary);
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin: 28px 0 14px;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 10px;
+    color: #333;
+  }
+  p { margin-bottom: 12px; }
+  .eq-block {
+    background: var(--accent);
+    border-left: 4px solid var(--primary);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    overflow-x: auto;
+  }
+  .eq-block.secondary {
+    background: var(--accent2);
+    border-left-color: #e65100;
+  }
+  code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #263238;
+    color: #eeffff;
+    padding: 18px 22px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 14px 0 18px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  pre .cm { color: #546e7a; }
+  pre .kw { color: #89ddff; }
+  pre .fn { color: #82aaff; }
+  pre .ty { color: #ffcb6b; }
+  pre .st { color: #c3e88d; }
+  pre .nu { color: #f78c6c; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px;
+    font-size: 14px;
+  }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--accent); font-weight: 600; color: var(--primary); white-space: nowrap; }
+  tr:hover td { background: #f5f5f5; }
+
+  .kernel-card {
+    background: var(--kernel);
+    border: 1px solid #c5cae9;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 14px 0;
+  }
+  .kernel-card .kname {
+    font-family: 'Cascadia Code', monospace;
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 15px;
+  }
+  .kernel-card .kdesc { color: var(--text-sec); font-size: 14px; margin-top: 4px; }
+
+  .grid-fig {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .grid-fig svg { max-width: 100%; }
+
+  .algo-flow {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0;
+    margin: 16px 0;
+  }
+  .algo-flow .step-num {
+    background: var(--primary);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .algo-flow .step-content {
+    padding: 4px 0 16px 12px;
+    border-left: 2px solid #bbdefb;
+    margin-left: 15px;
+  }
+  .algo-flow .step-content:last-child { border-left-color: transparent; }
+
+  .note {
+    background: #fff8e1;
+    border-left: 4px solid #ff8f00;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .note strong { color: #e65100; }
+
+  /* Inline citations */
+  sup.cite { font-size: 11px; line-height: 0; vertical-align: super; }
+  sup.cite a {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0 1px;
+  }
+  sup.cite a:hover { text-decoration: underline; }
+  .src-note {
+    font-size: 12px;
+    color: var(--text-sec);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .src-note code { font-style: normal; }
+
+  /* References section */
+  .references h3 { margin-top: 24px; }
+  ol.ref-list {
+    list-style: none;
+    counter-reset: ref;
+    padding: 0;
+    margin: 8px 0;
+  }
+  ol.ref-list li {
+    counter-increment: ref;
+    position: relative;
+    padding: 8px 0 8px 44px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #eee;
+    line-height: 1.6;
+  }
+  ol.ref-list li::before {
+    content: "[" counter(ref) "]";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: 'Cascadia Code', monospace;
+    font-size: 13px;
+  }
+  ol.ref-list li:target { background: var(--accent); border-radius: 4px; }
+  ol.ref-list .ref-authors { font-weight: 500; }
+  ol.ref-list .ref-title { font-style: italic; }
+  ol.ref-list a { color: var(--primary-light); word-break: break-all; }
+
+  @media (max-width: 768px) {
+    header.hero h1 { font-size: 24px; }
+    h2 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <h1>FDS(GPU) Technical Documentation</h1>
+    <div class="subtitle">Staggered MAC Grid + cuFFT Poisson Solver &mdash; GPU-Accelerated Fire Dynamics</div>
+    <div class="meta">Rust + CUDA &bull; 93 GPU Kernels &bull; v0.22.2 &bull; BULC(불씨) Engine</div>
+    <div class="meta">물리 모델 출처: NIST FDS Technical Reference Guide (SP 1018-1, 6th ed.)<sup class="cite"><a href="#ref-1">[1]</a></sup> &bull; GPU 구현: NVIDIA CUDA / cuFFT<sup class="cite"><a href="#ref-15">[15]</a></sup></div>
+  </div>
+</header>
+
+<nav class="toc-bar">
+  <a href="#sec-governing">Governing Equations</a>
+  <a href="#sec-grid">Staggered Grid</a>
+  <a href="#sec-poisson">FFT Poisson Solver</a>
+  <a href="#sec-advection">Advection &amp; TVD</a>
+  <a href="#sec-turbulence">Turbulence (LES)</a>
+  <a href="#sec-combustion">Combustion</a>
+  <a href="#sec-radiation">Radiation</a>
+  <a href="#sec-solid">Solid Phase &amp; Pyrolysis</a>
+  <a href="#sec-soot">Soot Dynamics</a>
+  <a href="#sec-properties">Material Properties</a>
+  <a href="#sec-boundary">Boundary Conditions</a>
+  <a href="#sec-zones">Pressure Zones &amp; HVAC</a>
+  <a href="#sec-algorithm">Algorithm Flow</a>
+  <a href="#sec-kernels">CUDA Kernels</a>
+  <a href="#sec-particles">Particle System</a>
+  <a href="#sec-references">References</a>
+</nav>
+
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- 1. GOVERNING EQUATIONS -->
+<!-- ============================================================ -->
+<section id="sec-governing">
+<h2>1. Governing Equations</h2>
+
+<p>FDS(GPU)는 저마하수(Low Mach Number) 근사하에서의 비압축성 반응 유동 방정식을 풀며, 이는 NIST FDS의 수학적 기초와 동일합니다<sup class="cite"><a href="#ref-1">[1]</a></sup>. 저마하 근사는 Rehm &amp; Baum(1978)<sup class="cite"><a href="#ref-2">[2]</a></sup>의 정식화를 따릅니다. 배경압력 $\bar{p}$를 일정하게 가정하고, 압력 섭동 $p'$를 투사법(projection method)으로 구합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §2.1&ndash;2.5, §3.1&ndash;3.3, §4.1. 구현: <code>solver.rs</code>, <code>cuda/kernels.cu</code>.</p>
+
+<h3>1.1 Mass Conservation (Continuity)</h3>
+<div class="eq-block">
+$$\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \mathbf{u}) = 0$$
+</div>
+<p>저마하 근사에서 속도 발산은 열팽창에 의해 결정됩니다:</p>
+<div class="eq-block">
+$$\nabla \cdot \mathbf{u} = \mathcal{D} = \frac{\dot{q}''' - \dot{q}'''_{\text{rad}} + \nabla \cdot (k_{\text{mol}} \nabla T)}{\rho \, c_p \, T} - \frac{\mathbf{u} \cdot \nabla(\rho h_s)}{\rho \, c_p \, T} + \sum_{\alpha} \left(\frac{W_{\text{mix}}}{W_\alpha} - \frac{h_{s,\alpha}}{c_p T}\right)\frac{\dot{m}'''_\alpha}{\rho}$$
+</div>
+<p>여기서 $\mathcal{D}$는 <strong>divergence target</strong>이며 (FDS §3.3 "The Velocity Divergence"<sup class="cite"><a href="#ref-1">[1]</a></sup>), 3개 커널(<code>compute_div_target</code>, <code>subtract_enthalpy_advection</code>, <code>add_d_source_to_div</code>)로 순차 계산됩니다. 종 확산 기여항은 <code>compute_species_div_correction</code>이 FDS의 DIVERGENCE_PART_1과 동일하게 분자량+엔탈피 항을 모두 포함합니다.</p>
+
+<h3>1.2 Momentum Conservation</h3>
+<p>FDS §2.5 / §4.1<sup class="cite"><a href="#ref-1">[1]</a></sup>의 LES 운동량 방정식. 비보존형(non-conservative)으로 변형되어 압력 구배는 전압력(total pressure) $H = |\mathbf{u}|^2/2 + p'/\rho$를 통해 처리됩니다.</p>
+<div class="eq-block">
+$$\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla)\mathbf{u} = -\frac{1}{\rho}\nabla p' + \frac{1}{\rho}\nabla \cdot (\mu_{\text{eff}} \nabla \mathbf{u}) + \mathbf{g}\frac{(\rho_\infty - \rho)}{\rho_\infty}$$
+</div>
+<p>각 항의 의미:</p>
+<table>
+  <tr><th>Term</th><th>Physical Meaning</th><th>Numerical Treatment</th></tr>
+  <tr><td>$(\mathbf{u}\cdot\nabla)\mathbf{u}$</td><td>Advection (대류)</td><td>MINMOD TVD limiter, explicit</td></tr>
+  <tr><td>$-\frac{1}{\rho}\nabla p'$</td><td>Pressure gradient (압력 구배)</td><td>cuFFT Poisson solver, face-centered</td></tr>
+  <tr><td>$\frac{1}{\rho}\nabla\cdot(\mu_\text{eff}\nabla\mathbf{u})$</td><td>Viscous diffusion (점성 확산)</td><td>Central difference, explicit</td></tr>
+  <tr><td>$\mathbf{g}(\rho_\infty-\rho)/\rho_\infty$</td><td>Buoyancy (부력)</td><td>$z$-방향 only, $g=9.81$ m/s$^2$</td></tr>
+</table>
+
+<h3>1.3 Energy Conservation</h3>
+<div class="eq-block">
+$$\frac{\partial T}{\partial t} + \mathbf{u} \cdot \nabla T = \alpha_{\text{eff}} \nabla^2 T + \frac{\dot{q}''' - \dot{q}'''_{\text{rad}}}{\rho \, c_p}$$
+</div>
+<p>여기서 열 확산계수 $\alpha_{\text{eff}} = k_{\text{eff}} / (\rho \, c_p)$이며, $k_{\text{eff}} = k_{\text{mol}}(T) + \mu_t c_p / \text{Pr}_t$.</p>
+<p>FDS Fortran은 센시블 엔탈피 $\rho h_s$ 수송 방정식을 풀지만 (FDS §3.3.4&ndash;3.3.5<sup class="cite"><a href="#ref-1">[1]</a></sup>), FDS(GPU)는 온도를 직접 수송합니다. 소스항을 $\dot{q}'''/(\rho c_p)$로 적용하며, 온도 의존 비열 $c_p(T)$와 Wilke 혼합 법칙을 매 스텝 갱신합니다. 선택적으로 보존형 엔탈피 수송(<code>transport_enthalpy_staggered</code>)도 지원합니다.</p>
+<div class="note">
+  <strong>구현 차이:</strong> 온도 직접 수송 방식은 셀당 메모리·연산을 줄이지만 (GPU 친화적), 발산 목표 $\mathcal{D}$에 엔탈피 이류항 $\mathbf{u}\cdot\nabla(\rho h_s)$을 명시적으로 빼주는 보정(<code>subtract_enthalpy_advection</code>)이 반드시 필요합니다. 이 보정이 없으면 온도·속도가 크게 과대평가됩니다.
+</div>
+
+<h3>1.4 Species Transport</h3>
+<p>FDS §3.2 "Mass and Species Transport"<sup class="cite"><a href="#ref-1">[1]</a></sup>. FDS의 lumped-species 접근(§5.1)에 대응하여, 추적하는 종(species)은 다음 6종입니다.</p>
+<div class="eq-block">
+$$\frac{\partial Y_i}{\partial t} + \mathbf{u} \cdot \nabla Y_i = D_{\text{eff}} \nabla^2 Y_i + \frac{S_i}{\rho}$$
+</div>
+<p>추적하는 종(species): <strong>Fuel</strong>, <strong>O$_2$</strong>, <strong>CO$_2$</strong>, <strong>CO</strong>, <strong>Soot</strong>, <strong>H$_2$O</strong>의 6종. N$_2$는 $Y_{\text{N}_2} = 1 - \sum Y_i$로 계산합니다. H$_2$O는 스프링클러 증발 및 연소 생성물 수송을 위해 추가되었습니다.</p>
+<p>비보존형 수송(위 식)과 더불어, 질량 보존을 엄밀히 만족하는 <strong>보존형(conservative) $\rho Y$ 수송</strong>(<code>transport_species_conservative</code> → <code>recover_species_from_rhoY</code>)을 선택적으로 사용할 수 있습니다. 이는 FDS의 보존형 유한체적 이산화에 대응합니다.</p>
+<p>유효 확산계수: $D_{\text{eff}} = D_{\text{mol}} + \mu_t / (\rho \, \text{Sc}_t)$, $\text{Sc}_t = 0.5$.</p>
+
+<h3>1.5 Equation of State</h3>
+<p>FDS §3.1 "The Equation of State"<sup class="cite"><a href="#ref-1">[1]</a></sup>. 저마하 근사하의 완전기체 상태방정식:</p>
+<div class="eq-block">
+$$\rho = \frac{\bar{p} \, W_{\text{mix}}}{R \, T}, \qquad W_{\text{mix}} = \left(\sum_i \frac{Y_i}{W_i}\right)^{-1}$$
+</div>
+<p>상수: $\bar{p} = 101325$ Pa, $R = 8314.46$ J/(kmol&middot;K). 분자량 $W_i$ (g/mol):</p>
+<table>
+  <tr><th>Species</th><th>$W_i$</th><th>Species</th><th>$W_i$</th></tr>
+  <tr><td>Air (N$_2$)</td><td>28.014</td><td>O$_2$</td><td>31.998</td></tr>
+  <tr><td>CO$_2$</td><td>44.009</td><td>CO</td><td>28.010</td></tr>
+  <tr><td>Soot (C)</td><td>12.011</td><td>Fuel (Wood)</td><td>~100</td></tr>
+  <tr><td>H$_2$O</td><td>18.015</td><td></td><td></td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. STAGGERED GRID -->
+<!-- ============================================================ -->
+<section id="sec-grid">
+<h2>2. Staggered MAC Grid</h2>
+
+<p>FDS(GPU)는 <strong>Marker-and-Cell (MAC) 엇갈린 격자</strong>(Harlow &amp; Welch, 1965<sup class="cite"><a href="#ref-3">[3]</a></sup>)를 사용합니다. 이 배치는 collocated grid의 고질적 문제인 checkerboard 압력 불안정을 원천적으로 방지합니다. FDS도 동일한 staggered grid를 채택합니다 (FDS §2.2.1 "The Staggered Grid"<sup class="cite"><a href="#ref-1">[1]</a></sup>).</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §2.2. 원전: Harlow &amp; Welch (1965)<sup class="cite"><a href="#ref-3">[3]</a></sup>. 구현: <code>cuda/kernels.cu</code> (<code>IDX_C/IDX_U/IDX_V/IDX_W</code> 매크로), <code>compute_face_masks</code>.</p>
+
+<h3>2.1 Variable Placement</h3>
+
+<div class="grid-fig">
+<svg width="480" height="320" viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cell outline -->
+  <rect x="100" y="60" width="160" height="160" fill="none" stroke="#1565c0" stroke-width="2"/>
+  <rect x="260" y="60" width="160" height="160" fill="none" stroke="#1565c0" stroke-width="2" stroke-dasharray="6,4"/>
+
+  <!-- Cell center: p, T, rho -->
+  <circle cx="180" cy="140" r="8" fill="#d32f2f"/>
+  <text x="180" y="170" text-anchor="middle" font-size="12" font-weight="bold" fill="#d32f2f">p, T, &rho;, Y</text>
+  <text x="180" y="185" text-anchor="middle" font-size="11" fill="#666">cell (i,j)</text>
+
+  <circle cx="340" cy="140" r="8" fill="#d32f2f" opacity="0.4"/>
+  <text x="340" y="170" text-anchor="middle" font-size="12" fill="#d32f2f" opacity="0.5">cell (i+1,j)</text>
+
+  <!-- u-faces -->
+  <polygon points="100,140 108,132 108,148" fill="#1565c0"/>
+  <text x="82" y="128" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">u</text>
+  <text x="82" y="143" text-anchor="middle" font-size="10" fill="#1565c0">face i</text>
+
+  <polygon points="260,140 268,132 268,148" fill="#1565c0"/>
+  <text x="275" y="128" text-anchor="end" font-size="12" font-weight="bold" fill="#1565c0">u</text>
+  <text x="280" y="143" text-anchor="end" font-size="10" fill="#1565c0">face i+1</text>
+
+  <!-- v-faces -->
+  <polygon points="180,60 172,68 188,68" fill="#2e7d32"/>
+  <text x="200" y="55" text-anchor="middle" font-size="12" font-weight="bold" fill="#2e7d32">v (face j+1)</text>
+
+  <polygon points="180,220 172,212 188,212" fill="#2e7d32"/>
+  <text x="200" y="240" text-anchor="middle" font-size="12" font-weight="bold" fill="#2e7d32">v (face j)</text>
+
+  <!-- Axes -->
+  <line x1="40" y1="280" x2="440" y2="280" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="40" y1="280" x2="40" y2="30" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="440" y="298" font-size="13" font-weight="bold">x (i)</text>
+  <text x="22" y="30" font-size="13" font-weight="bold">y (j)</text>
+
+  <!-- Legend -->
+  <circle cx="100" cy="290" r="6" fill="#d32f2f"/>
+  <text x="112" y="295" font-size="11">Cell center (scalars)</text>
+  <polygon points="200,290 208,282 208,298" fill="#1565c0"/>
+  <text x="215" y="295" font-size="11">u-face (x-velocity)</text>
+  <polygon points="330,290 322,298 338,298" fill="#2e7d32"/>
+  <text x="345" y="295" font-size="11">v-face (y-velocity)</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<table>
+  <tr><th>Variable</th><th>Location</th><th>Array Size</th><th>Index Range</th></tr>
+  <tr><td>$p, T, \rho, Y_i, \dot{q}, \mu_t$</td><td>Cell center</td><td>$N_i \times N_j \times N_k$</td><td>$i \in [0, N_i)$</td></tr>
+  <tr><td>$u$ (x-velocity)</td><td>x-face (YZ plane)</td><td>$(N_i+1) \times N_j \times N_k$</td><td>$i \in [0, N_i]$</td></tr>
+  <tr><td>$v$ (y-velocity)</td><td>y-face (XZ plane)</td><td>$N_i \times (N_j+1) \times N_k$</td><td>$j \in [0, N_j]$</td></tr>
+  <tr><td>$w$ (z-velocity)</td><td>z-face (XY plane)</td><td>$N_i \times N_j \times (N_k+1)$</td><td>$k \in [0, N_k]$</td></tr>
+</table>
+
+<h3>2.2 Indexing (Row-Major)</h3>
+<p>모든 배열은 row-major (C-order)로 저장됩니다. $i$가 가장 빠르게 변합니다:</p>
+<div class="eq-block">
+$$\text{IDX\_C}(i,j,k) = k \cdot N_i \cdot N_j + j \cdot N_i + i$$
+$$\text{IDX\_U}(i,j,k) = k \cdot (N_i+1) \cdot N_j + j \cdot (N_i+1) + i$$
+$$\text{IDX\_V}(i,j,k) = k \cdot N_i \cdot (N_j+1) + j \cdot N_i + i$$
+$$\text{IDX\_W}(i,j,k) = k \cdot N_i \cdot N_j + j \cdot N_i + i \quad (k = 0 \ldots N_k)$$
+</div>
+
+<h3>2.3 Staggered Divergence (Exact)</h3>
+<p>Staggered grid에서 발산은 face 속도의 직접 차분으로 <strong>정확하게</strong> 계산됩니다:</p>
+<div class="eq-block">
+$$(\nabla \cdot \mathbf{u})_{i,j,k} = \frac{u_{i+1,j,k} - u_{i,j,k}}{\Delta x} + \frac{v_{i,j+1,k} - v_{i,j,k}}{\Delta y} + \frac{w_{i,j,k+1} - w_{i,j,k}}{\Delta z}$$
+</div>
+<p>이 이산화는 <strong>보간 없이</strong> face 값을 직접 사용하므로 2차 정확도이며, collocated grid에서 필요한 Rhie-Chow 보간이 불필요합니다.</p>
+
+<h3>2.4 Staggered Pressure Gradient</h3>
+<p>속도 보정 시 압력 구배도 인접 cell center 값의 직접 차분입니다:</p>
+<div class="eq-block">
+$$\left(\frac{\partial p}{\partial x}\right)_{i+\frac{1}{2}} = \frac{p_{i+1} - p_i}{\Delta x}, \qquad
+\left(\frac{\partial p}{\partial y}\right)_{j+\frac{1}{2}} = \frac{p_{j+1} - p_j}{\Delta y}, \qquad
+\left(\frac{\partial p}{\partial z}\right)_{k+\frac{1}{2}} = \frac{p_{k+1} - p_k}{\Delta z}$$
+</div>
+
+<h3>2.5 Obstacle Face Masks</h3>
+<p>Cell 기반 <code>solid[i,j,k]</code> 배열에서 face 마스크를 생성합니다:</p>
+<div class="eq-block">
+$$\text{solid\_u}_{i,j,k} = \text{solid}_{i-1,j,k} \;\texttt{OR}\; \text{solid}_{i,j,k}$$
+</div>
+<p>solid face의 속도는 0으로 강제됩니다 (no-penetration).</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. FFT POISSON SOLVER -->
+<!-- ============================================================ -->
+<section id="sec-poisson">
+<h2>3. cuFFT Poisson Solver</h2>
+
+<p>압력 Poisson 방정식을 cuFFT<sup class="cite"><a href="#ref-15">[15]</a></sup>를 이용해 <strong>기계 정밀도</strong>로 직접 풀어냅니다. SOR/Multigrid 같은 반복법이 불필요하여 수렴 문제가 없습니다. 이는 FDS의 직접 FFT 압력 해법(FDS §4.3.3 "The Poisson Equation for Pressure", eqs. 4.51&ndash;4.61<sup class="cite"><a href="#ref-1">[1]</a></sup>)과 동일한 전략이며, FDS의 CPU FFT(Crayfishpak 기반)를 GPU의 cuFFT로 대체한 것입니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §4.3.3. GPU 라이브러리: NVIDIA cuFFT<sup class="cite"><a href="#ref-15">[15]</a></sup>. 구현: <code>fft_symmetry_extend</code>, <code>fft_eigenvalue_divide</code>, <code>fft_extract_solution</code> (<code>cuda/kernels.cu</code>) + <code>cufftExecR2C/C2R</code> (<code>solver.rs</code>).</p>
+
+<h3>3.1 Pressure Poisson Equation</h3>
+<p>Projection method에서 예측 속도 $\mathbf{u}^*$의 발산을 목표값 $\mathcal{D}$로 보정:</p>
+<div class="eq-block">
+$$\nabla^2 p = \frac{1}{\Delta t}\left(\nabla \cdot \mathbf{u}^* - \mathcal{D}\right)$$
+</div>
+<p>이산화:</p>
+<div class="eq-block">
+$$\frac{p_{i+1} - 2p_i + p_{i-1}}{\Delta x^2} + \frac{p_{j+1} - 2p_j + p_{j-1}}{\Delta y^2} + \frac{p_{k+1} - 2p_k + p_{k-1}}{\Delta z^2} = f_{i,j,k}$$
+</div>
+<p>여기서 $f_{i,j,k} = (\text{div}(\mathbf{u}^*) - \mathcal{D}) / \Delta t$.</p>
+
+<h3>3.2 Boundary Conditions for Poisson</h3>
+<table>
+  <tr><th>Boundary Type</th><th>Condition</th><th>FFT Treatment</th></tr>
+  <tr><td>OPEN (Dirichlet)</td><td>$p = 0$</td><td>Odd symmetry (DST)</td></tr>
+  <tr><td>WALL (Neumann)</td><td>$\partial p / \partial n = 0$</td><td>Even symmetry (DCT)</td></tr>
+</table>
+
+<h3>3.3 Symmetry Extension Method</h3>
+<p>cuFFT는 DCT/DST를 직접 지원하지 않으므로, 대칭 확장 후 표준 R2C FFT를 사용합니다.</p>
+
+<h4>Dirichlet (Open BC) &mdash; Odd Extension</h4>
+<div class="eq-block">
+$$\tilde{f}(m) = \begin{cases} f(m) & 0 \le m < N \\ 0 & m = N \\ -f(2N - m) & N < m < 2N \end{cases}$$
+</div>
+
+<h4>Neumann (Wall BC) &mdash; Even Extension</h4>
+<div class="eq-block">
+$$\tilde{f}(m) = \begin{cases} f(m) & 0 \le m < N \\ f(2N - 1 - m) & N \le m < 2N \end{cases}$$
+</div>
+
+<p>확장된 배열 크기: $(2N_i) \times (2N_j) \times (2N_k)$. 예를 들어 220&times;80&times;25 격자는 440&times;160&times;50 = 3,520,000 크기로 확장됩니다.</p>
+
+<h3>3.4 Eigenvalue Division</h3>
+<p>주파수 영역에서 Laplacian 연산자의 고유값으로 나눕니다:</p>
+<div class="eq-block">
+$$\hat{p}_{l,m,n} = \frac{\hat{f}_{l,m,n}}{\lambda_{l,m,n}}$$
+</div>
+<p>고유값:</p>
+<div class="eq-block">
+$$\lambda_{l,m,n} = \frac{2(\cos(2\pi l / N_{ex}) - 1)}{\Delta x^2} + \frac{2(\cos(2\pi m / N_{ey}) - 1)}{\Delta y^2} + \frac{2(\cos(2\pi n / N_{ez}) - 1)}{\Delta z^2}$$
+</div>
+<p>여기서 $N_{ex} = 2N_i$, $N_{ey} = 2N_j$, $N_{ez} = 2N_k$. $\lambda = 0$ (영 모드)에서는 $\hat{p} = 0$으로 설정하여 평균 압력을 고정합니다.</p>
+
+<h3>3.5 Normalization</h3>
+<p>cuFFT는 역변환 시 정규화하지 않으므로, 추출 시 나눕니다:</p>
+<div class="eq-block">
+$$p_{i,j,k} = \frac{p^{\text{ext}}_{i,j,k}}{N_{ex} \cdot N_{ey} \cdot N_{ez}}$$
+</div>
+
+<h3>3.6 Complete FFT Pipeline</h3>
+<div class="algo-flow">
+  <div class="step-num">1</div>
+  <div class="step-content"><strong>Symmetry Extend</strong> &mdash; $N_i \times N_j \times N_k \to 2N_i \times 2N_j \times 2N_k$ (CUDA kernel <code>fft_symmetry_extend</code>)</div>
+  <div class="step-num">2</div>
+  <div class="step-content"><strong>Forward R2C FFT</strong> &mdash; <code>cufftExecR2C</code> (cuFFT library call)</div>
+  <div class="step-num">3</div>
+  <div class="step-content"><strong>Eigenvalue Division</strong> &mdash; 주파수 영역에서 $\hat{f}/\lambda$ (CUDA kernel <code>fft_eigenvalue_divide</code>)</div>
+  <div class="step-num">4</div>
+  <div class="step-content"><strong>Inverse C2R FFT</strong> &mdash; <code>cufftExecC2R</code> (cuFFT library call)</div>
+  <div class="step-num">5</div>
+  <div class="step-content"><strong>Extract &amp; Normalize</strong> &mdash; 확장 배열에서 원래 크기로 추출, $/(N_{ex} N_{ey} N_{ez})$ (CUDA kernel <code>fft_extract_solution</code>)</div>
+</div>
+
+<div class="note">
+  <strong>Note:</strong> cuFFT R2C 출력은 Hermitian 대칭이므로 마지막 차원이 $N_{ez}/2 + 1$ 복소수입니다. 전체 메모리: $(N_{ex}/2 + 1) \times N_{ey} \times N_{ez} \times 8$ bytes.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. ADVECTION -->
+<!-- ============================================================ -->
+<section id="sec-advection">
+<h2>4. Advection &amp; MINMOD TVD Scheme</h2>
+
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §3.2.1 "Flux Limiters". FDS 기본은 Superbee/CHARM 한정자이나, FDS(GPU)는 GPU 분기 효율을 위해 MINMOD를 채택합니다. 구현: <code>advect_velocity_staggered</code>, <code>transport_scalar_staggered</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>4.1 MINMOD Limiter</h3>
+<p>수치 진동을 억제하면서 2차 정확도를 유지하는 TVD (Total Variation Diminishing) 기울기 제한자입니다 (FDS §3.2.1<sup class="cite"><a href="#ref-1">[1]</a></sup>):</p>
+<div class="eq-block">
+$$\text{minmod}(a, b) = \begin{cases} 0 & \text{if } ab \le 0 \\ a & \text{if } |a| < |b| \\ b & \text{otherwise} \end{cases}$$
+</div>
+<p>각 셀에서 좌/우 기울기의 부호가 다르면 (극값) 기울기를 0으로, 같으면 절댓값이 작은 쪽을 채택합니다.</p>
+
+<h3>4.2 Velocity Advection (Staggered)</h3>
+<p>u-face $(i, j, k)$에서의 자기이류(self-advection):</p>
+<div class="eq-block">
+$$\text{adv}_u = u_c \cdot \frac{\partial u}{\partial x}\bigg|_{\text{TVD}} + v_c \cdot \frac{\partial u}{\partial y}\bigg|_{\text{TVD}} + w_c \cdot \frac{\partial u}{\partial z}\bigg|_{\text{TVD}}$$
+</div>
+<p>여기서 $v_c, w_c$는 face 위치로 보간된 접선 속도입니다. 각 기울기는 MINMOD로 제한됩니다:</p>
+<div class="eq-block">
+$$\left.\frac{\partial u}{\partial x}\right|_{\text{TVD}} = \text{minmod}\left(\frac{u_i - u_{i-1}}{\Delta x}, \frac{u_{i+1} - u_i}{\Delta x}\right)$$
+</div>
+
+<h3>4.3 Open Boundary Advection (Upwind)</h3>
+<p>Open 경계의 face에서는 ghost cell이 없어 MINMOD가 0을 반환하는 문제가 있었습니다 (속도 발산의 근본 원인). 해결책으로 <strong>1차 upwind scheme</strong>을 적용합니다:</p>
+
+<div class="eq-block secondary">
+$$\left.\frac{\partial u}{\partial x}\right|_{\text{boundary}} = \begin{cases}
+\dfrac{u_i - u_{i-1}}{\Delta x} & \text{outflow } (u > 0 \text{ at XMAX}) \\[8pt]
+0 & \text{inflow } (u < 0 \text{ at XMAX}) \\[8pt]
+\dfrac{u_{i+1} - u_i}{\Delta x} & \text{outflow } (u < 0 \text{ at XMIN}) \\[8pt]
+0 & \text{inflow } (u > 0 \text{ at XMIN})
+\end{cases}$$
+</div>
+
+<p>이 처리는 <strong>법선 방향 이류 기울기에만</strong> 적용됩니다. 접선 기울기와 확산 Laplacian은 기존 clamped ghost를 그대로 사용합니다.</p>
+
+<h3>4.4 Scalar Advection</h3>
+<p>Cell center 스칼라 $\phi$ (온도 또는 종 질량분율)를 staggered face 속도로 이류합니다:</p>
+<div class="eq-block">
+$$\frac{\partial \phi}{\partial t}\bigg|_{\text{adv}} = -u_c \cdot \text{minmod}\left(\frac{\phi_i - \phi_{i-1}}{\Delta x}, \frac{\phi_{i+1} - \phi_i}{\Delta x}\right) - v_c \cdot (\cdots) - w_c \cdot (\cdots)$$
+</div>
+<p>여기서 $u_c = \frac{1}{2}(u_{i} + u_{i+1})$는 face 속도의 cell center 평균입니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. TURBULENCE -->
+<!-- ============================================================ -->
+<section id="sec-turbulence">
+<h2>5. Turbulence Models (LES)</h2>
+
+<p>FDS(GPU)는 <strong>5종</strong>의 서브그리드 스케일(SGS) 난류 모델을 지원합니다. 기본값은 FDS와 동일한 <strong>Deardorff TKE</strong> 모델입니다. 모든 모델은 FDS §4.2 "Models for the Turbulent Viscosity"<sup class="cite"><a href="#ref-1">[1]</a></sup>에 정의된 것과 동일합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §4.2 (eqs. 4.15&ndash;4.24). 구현: <code>compute_turbulent_viscosity_deardorff / _smagorinsky / _wale / _vreman / _dynsmag</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>5.1 Deardorff TKE Model (Default)</h3>
+<p>FDS §4.2.3 (eq. 4.16)<sup class="cite"><a href="#ref-1">[1]</a></sup>, Deardorff(1980)<sup class="cite"><a href="#ref-4">[4]</a></sup>:</p>
+<div class="eq-block">
+$$\mu_t = \rho \, C_v \, \Delta \, \sqrt{k_{\text{sgs}}}, \qquad C_v = 0.1$$
+</div>
+<p>$k_{\text{sgs}}$는 서브그리드 난류 운동에너지로, 매 시간 스텝마다 생성·소산·확산 항을 통해 갱신됩니다.</p>
+
+<h3>5.2 Smagorinsky Model</h3>
+<p>FDS §4.2.1 (eq. 4.15)<sup class="cite"><a href="#ref-1">[1]</a></sup>, Smagorinsky(1963)<sup class="cite"><a href="#ref-5">[5]</a></sup>:</p>
+<div class="eq-block">
+$$\mu_t = \rho \, (C_s \Delta)^2 \, |\bar{S}|, \qquad C_s = 0.2$$
+</div>
+
+<h3>5.3 Dynamic Smagorinsky Model</h3>
+<p>Germano&ndash;Lilly 동적 절차로 $C_s$를 국소·순간적으로 자동 결정합니다 (FDS §4.2.2<sup class="cite"><a href="#ref-1">[1]</a></sup>). GPU 구현은 2-pass test filter 방식(<code>compute_turbulent_viscosity_dynsmag</code>, <code>pass=0</code>에서 SoA 모멘트 구성, <code>pass=1</code>에서 test-filter 후 $C_s^2$ 산출)을 사용합니다.</p>
+<div class="eq-block">
+$$(C_s\Delta)^2 = \frac{\langle L_{ij} M_{ij}\rangle}{\langle M_{ij} M_{ij}\rangle}, \qquad L_{ij} = \widehat{\rho u_i u_j} - \frac{\widehat{\rho u_i}\,\widehat{\rho u_j}}{\hat{\rho}}$$
+</div>
+
+<h3>5.4 WALE Model</h3>
+<p>Wall-Adapting Local Eddy-viscosity (FDS §4.2.5<sup class="cite"><a href="#ref-1">[1]</a></sup>, Nicoud &amp; Ducros, 1999<sup class="cite"><a href="#ref-7">[7]</a></sup>). 속도 구배 텐서의 제곱 기반으로, 벽면 근처 $y^3$ 점근 스케일링을 damping function 없이 포착합니다.</p>
+
+<h3>5.5 Vreman Model</h3>
+<p>속도 구배 텐서 불변량 기반 (FDS §4.2.4<sup class="cite"><a href="#ref-1">[1]</a></sup>, Vreman, 2004<sup class="cite"><a href="#ref-6">[6]</a></sup>). 층류 유동 및 순수 전단에서 자동으로 $\mu_t \to 0$.</p>
+
+<h3>5.6 Strain Rate Tensor</h3>
+<p>Staggered grid에서 대각 성분은 직접 계산:</p>
+<div class="eq-block">
+$$S_{11} = \frac{\partial u}{\partial x} = \frac{u_{i+1} - u_i}{\Delta x}, \quad
+S_{22} = \frac{\partial v}{\partial y} = \frac{v_{j+1} - v_j}{\Delta y}, \quad
+S_{33} = \frac{\partial w}{\partial z} = \frac{w_{k+1} - w_k}{\Delta z}$$
+</div>
+<p>비대각 성분은 face에서 cell center로 평균:</p>
+<div class="eq-block">
+$$S_{12} = \frac{1}{2}\left(\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x}\right), \quad
+S_{13} = \frac{1}{2}\left(\frac{\partial u}{\partial z} + \frac{\partial w}{\partial x}\right), \quad
+S_{23} = \frac{1}{2}\left(\frac{\partial v}{\partial z} + \frac{\partial w}{\partial y}\right)$$
+</div>
+
+<h3>5.7 Effective Transport Properties</h3>
+<p>FDS §4.2.6 "Thermal Conduction and Gas Species Diffusion"<sup class="cite"><a href="#ref-1">[1]</a></sup>:</p>
+<div class="eq-block">
+$$\mu_{\text{eff}} = \mu_{\text{mol}}(T) + \mu_t, \qquad
+k_{\text{eff}} = k_{\text{mol}}(T) + \frac{\mu_t \, c_p}{\text{Pr}_t}, \qquad
+D_{\text{eff}} = D_{\text{mol}} + \frac{\mu_t}{\rho \, \text{Sc}_t}$$
+</div>
+<p>$\text{Pr}_t = 0.5$, $\text{Sc}_t = 0.5$ (FDS 기본값).</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. COMBUSTION -->
+<!-- ============================================================ -->
+<section id="sec-combustion">
+<h2>6. Combustion Model</h2>
+
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> Ch. 5 (§5.2 Turbulent Combustion, §5.3 Extinction). 원전: Magnussen &amp; Hjertager (1977, EDC)<sup class="cite"><a href="#ref-8">[8]</a></sup>, McDermott et al. (2011, reaction time scale)<sup class="cite"><a href="#ref-9">[9]</a></sup>. 구현: <code>compute_combustion_v2</code>, <code>apply_fire_source</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>6.1 Mixing-Controlled Combustion</h3>
+<p>FDS의 EDC (Eddy Dissipation Concept, Magnussen &amp; Hjertager 1977<sup class="cite"><a href="#ref-8">[8]</a></sup>) 기반 혼합 제어 연소 모델을 구현합니다 (FDS §5.2<sup class="cite"><a href="#ref-1">[1]</a></sup>). 화학 반응 속도는 반응물의 혼합 속도에 의해 제한됩니다.</p>
+
+<h3>6.2 Three-Timescale Mixing</h3>
+<p>FDS §5.2.1 "Reaction Time Scale Model"<sup class="cite"><a href="#ref-1">[1]</a></sup> (McDermott, McGrattan &amp; Floyd, 2011<sup class="cite"><a href="#ref-9">[9]</a></sup>):</p>
+<div class="eq-block">
+$$\tau_{\text{mix}} = \min(\tau_D, \, \tau_U, \, \tau_G)$$
+</div>
+<table>
+  <tr><th>Timescale</th><th>Formula</th><th>Physical Meaning</th></tr>
+  <tr><td>$\tau_D$ (Diffusion)</td><td>$\Delta^2 / D_{\text{eff}}$</td><td>난류 확산 시간</td></tr>
+  <tr><td>$\tau_U$ (Advection)</td><td>$0.4 \, \Delta / u_{\text{sgs}}$</td><td>서브그리드 이류 시간</td></tr>
+  <tr><td>$\tau_G$ (Buoyancy)</td><td>$\sqrt{2\Delta / g}$</td><td>부력 혼합 시간</td></tr>
+</table>
+<p>여기서 $u_{\text{sgs}} = \mu_t / (\rho \, C_s \, \Delta)$. 하한: $\tau_{\text{mix}} \ge \Delta t$.</p>
+
+<h3>6.3 Reaction Rate</h3>
+<p>연료와 산소 중 부족한 쪽이 반응 속도를 결정합니다:</p>
+<div class="eq-block">
+$$Y_{\text{react}} = \min(Y_{\text{fuel}}, \, Y_{\text{O}_2} / s)$$
+$$\dot{\omega}_{\text{fuel}} = \rho \cdot \frac{Y_{\text{react}}}{\tau_{\text{mix}}}$$
+</div>
+<p>여기서 $s$ = stoichiometric O$_2$/fuel ratio (기본 1.2).</p>
+
+<h3>6.4 Extinction Criterion (LOI)</h3>
+<p>FDS §5.3 "Extinction"<sup class="cite"><a href="#ref-1">[1]</a></sup>의 임계 화염온도(Critical Flame Temperature, §5.3.1) 및 산소 기반 소화(§5.3.2)에 대응합니다. FDS의 EXTINCTION_1 모드와 동일한 산소 한계 농도(LOI) 기반 소화 판정:</p>
+<div class="eq-block">
+$$f_T = \frac{T_{\text{CFT}} - T}{T_{\text{CFT}} - T_\infty}, \qquad \text{LOI} = Y_{\text{O}_2,\min} \cdot \max(0, \min(1, f_T))$$
+$$\text{if } Y_{\text{O}_2} < \text{LOI}: \quad \dot{\omega} = 0$$
+</div>
+
+<h3>6.5 Species Source Terms</h3>
+<div class="eq-block">
+\begin{align}
+S_{\text{fuel}} &= -\dot{\omega}_{\text{fuel}} \\
+S_{\text{O}_2} &= -\dot{\omega}_{\text{fuel}} \cdot s \\
+S_{\text{CO}_2} &= +\dot{\omega}_{\text{fuel}} \cdot (1 + s)(1 - y_{\text{CO}} - y_{\text{soot}}) \\
+S_{\text{CO}} &= +\dot{\omega}_{\text{fuel}} \cdot y_{\text{CO}} \cdot (1 + s) \\
+S_{\text{soot}} &= +\dot{\omega}_{\text{fuel}} \cdot y_{\text{soot}} \cdot (1 + s) \\
+\dot{q}''' &= \dot{\omega}_{\text{fuel}} \cdot \Delta H_c
+\end{align}
+</div>
+<p>여기서 $y_{\text{CO}}, y_{\text{soot}}$는 CO_YIELD, SOOT_YIELD 입력값입니다.</p>
+
+<h3>6.6 Fire Source Injection</h3>
+<p>화원 표면에서 연료와 열을 주입합니다:</p>
+<div class="eq-block">
+$$S_{\text{fuel}}^{\text{fire}} = \frac{\text{HRRPUA} \cdot A_{\text{cell}} \cdot f(t)}{\Delta H_c \cdot V_{\text{cell}}} \qquad
+T_{\text{surface}} = T_{\text{ambient}} + \text{TMP\_FRONT}$$
+</div>
+<p>여기서 $f(t)$는 RAMP에 의한 시간 스케일링 인자, $A_{\text{cell}}$은 화원과 셀의 교차 면적입니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. RADIATION -->
+<!-- ============================================================ -->
+<section id="sec-radiation">
+<h2>7. Radiation Model (FVM6)</h2>
+
+<p>FDS(GPU)는 6방향 유한체적법(FVM6) 복사 모델을 사용합니다. 각 셀에서 6개 직교 방향 이웃 셀과의 복사 에너지 교환을 계산하며, 벽면 방사를 포함합니다. 이는 FDS의 복사 수송 방정식(RTE, §6.1) 및 유한체적 각도 이산화(§6.2, Raithby &amp; Chui 1990<sup class="cite"><a href="#ref-10">[10]</a></sup>)의 GPU 최적화 근사입니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> Ch. 6 (§6.1 RTE, §6.2 Numerical Method). 원전: Raithby &amp; Chui (1990, FVM)<sup class="cite"><a href="#ref-10">[10]</a></sup>. 구현: <code>compute_radiation_fvm6</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>7.1 Planck Mean Absorption Coefficient (Temperature-Dependent)</h3>
+<div class="eq-block">
+$$\kappa = 0.23 \left(\frac{T}{1000}\right)^{-0.5} Y_{\text{CO}_2} \rho + 1246 \left(\frac{T}{1000}\right) Y_{\text{soot}} \rho + 0.08 \left(\frac{T}{1000}\right)^{-0.6} Y_{\text{H}_2\text{O}} \rho$$
+</div>
+<p>CO$_2$/H$_2$O는 고온에서 진동-회전 포화로 흡수 감소, soot는 Rayleigh 영역에서 온도에 비례 증가.</p>
+
+<h3>7.2 FVM6 Radiation Exchange</h3>
+<div class="eq-block">
+$$\dot{q}'''_{\text{rad}} = 4\kappa\sigma T^4 - \alpha_s \cdot \kappa \cdot \frac{4}{N_{\text{nb}}} \sum_{d=1}^{N_{\text{nb}}} \kappa_d \sigma T_d^4 + \dot{q}''' \cdot \chi_r$$
+</div>
+<p>여기서 $N_{\text{nb}}$는 비고체 이웃 수(최대 6), $\alpha_s$는 재흡수 스케일링 인자, $\chi_r$은 radiative fraction (기본 0.35). 벽면 인접 셀에서는 벽면 방사($\varepsilon_w \sigma T_w^4$, $\varepsilon_w = 0.9$)가 흡수항에 추가됩니다.</p>
+
+<div class="note">
+  <strong>Note:</strong> FVM6는 FDS의 기본 104방향(angular discretization, §6.2.1<sup class="cite"><a href="#ref-1">[1]</a></sup>) FVM RTE 해법의 GPU 최적화 근사입니다. 6개 직교 방향만 사용하므로 완전 병렬화가 가능하며, cell 간 의존성이 없습니다. 정확도와 속도의 절충으로, 화재 시나리오의 주된 복사 열전달(천장 제트, 화염 주변)을 합리적으로 포착합니다.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. SOLID PHASE & PYROLYSIS -->
+<!-- ============================================================ -->
+<section id="sec-solid">
+<h2>8. Solid Phase, Pyrolysis &amp; Wall Heat Transfer</h2>
+
+<p>고체 표면의 열전도, 열분해(pyrolysis), 그리고 벽면 대류 열전달을 모델링합니다. 이는 FDS Chapter 7 "Solid Phase"<sup class="cite"><a href="#ref-1">[1]</a></sup>에 대응합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> Ch. 7 (§7.1 Heat Conduction, §7.1.2 Convective Heat Transfer, §7.2 Pyrolysis). 원전: Kader (1981, 열 log-law)<sup class="cite"><a href="#ref-11">[11]</a></sup>. 구현: <code>compute_pyrolysis</code>, <code>compute_combustible_boundary</code>, <code>solid_heat_conduction_CN</code>, <code>solid_heat_conduction_3d</code>, <code>apply_wall_heat_transfer</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>8.1 Solid Heat Conduction</h3>
+<p>고체 내부의 1D 열전도 방정식 (FDS §7.1, eq. 7.1<sup class="cite"><a href="#ref-1">[1]</a></sup>)을 벽 두께 방향으로 풀어냅니다:</p>
+<div class="eq-block">
+$$\rho_s c_s \frac{\partial T_s}{\partial t} = \frac{\partial}{\partial x}\left(k_s \frac{\partial T_s}{\partial x}\right) + \dot{q}'''_s$$
+</div>
+<p>GPU는 두 방식을 병용합니다:</p>
+<ul>
+  <li><strong>1D Crank-Nicolson</strong> (<code>solid_heat_conduction_CN</code>): 벽면 법선 방향으로 <code>N_DEPTH=10</code> 노드 깊이 프로필을 무조건 안정한 음해법으로 적분.</li>
+  <li><strong>3D 보완</strong> (<code>solid_heat_conduction_3d</code>): 인접 고체 셀 간 횡방향 열전도. 두꺼운/덩어리형 고체에서 1D 가정의 오차를 보완.</li>
+</ul>
+
+<h3>8.2 Convective Wall Heat Transfer (Kader Log-Law)</h3>
+<p>FDS §7.1.2<sup class="cite"><a href="#ref-1">[1]</a></sup>의 열 log-law 모델(Kader 1981<sup class="cite"><a href="#ref-11">[11]</a></sup>)을 사용하여 가스-벽 대류 열유속을 계산합니다. 운동량 경계층과 일관된 마찰속도 $u_\tau$를 공유합니다:</p>
+<div class="eq-block">
+$$T^+ = \begin{cases} \text{Pr}\, y^+ & y^+ < 11.81 \\[4pt] \dfrac{\text{Pr}_t}{\kappa}\ln y^+ + B_T & y^+ \ge 11.81 \end{cases}, \qquad B_T = \left(3.85\,\text{Pr}^{1/3} - 1.3\right)^2 + 2.12\ln\text{Pr}$$
+</div>
+<div class="eq-block">
+$$h_{\text{conv}} = \frac{\rho\, u_\tau\, c_p}{T^+}, \qquad \kappa = 0.41, \quad \text{Pr}_t = 0.5$$
+</div>
+<p>점성 부층($y^+ < 11.81$)에서는 선형 프로필, 그 외에는 로그 프로필을 사용합니다. 이는 기존 Nusselt 상관식($Re^{0.8}/Ra^{0.25}$)을 대체하여 FDS와 정합합니다.</p>
+
+<h3>8.3 Pyrolysis (Arrhenius)</h3>
+<p>고체 연료의 열분해 질량 방출은 Arrhenius 속도식을 따릅니다 (FDS §7.2.3 "Solid Fuels"<sup class="cite"><a href="#ref-1">[1]</a></sup>):</p>
+<div class="eq-block">
+$$\frac{dm}{dt} = -A\, m^{n_s}\, \exp\!\left(-\frac{E}{R\, T_s}\right), \qquad \dot{m}''_{\text{fuel}} = \frac{\Delta m \cdot \nu_{\text{fuel}}}{V_{\text{cell}}}$$
+</div>
+<p>여기서 $A$=전지수 인자, $E$=활성화 에너지(J/mol), $n_s$=반응 차수, $\nu_{\text{fuel}}$=연료 수율. 표면온도 $T_s < 400\,\text{K}$에서는 열분해가 일어나지 않으며, 방출된 연료는 인접 가스 셀에 <code>atomicAdd</code>로 주입됩니다.</p>
+
+<h3>8.4 Combustible Boundary (Simplified)</h3>
+<p>상세 열분해 입력이 없는 가연성 표면에는 점화온도 기반 단순 모델(<code>compute_combustible_boundary</code>)을 사용합니다. 고체 표면에 인접한 가스 셀 온도가 점화온도 $T_{\text{ig}}$를 초과하면 초과분에 비례하여 연료를 주입합니다 (FDS §7.2.2 "Scaling the Burning Rate by the Heat Flux"<sup class="cite"><a href="#ref-1">[1]</a></sup>):</p>
+<div class="eq-block">
+$$\dot{m}''_{\text{fuel}} = \dot{m}''_{\text{ref}} \cdot \min\!\left(\frac{T - T_{\text{ig}}}{500}, \, 2\right) \cdot \frac{A_{\text{face}}}{V_{\text{cell}}} \quad (T > T_{\text{ig}})$$
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. SOOT DYNAMICS -->
+<!-- ============================================================ -->
+<section id="sec-soot">
+<h2>9. Soot Dynamics: Deposition &amp; Oxidation</h2>
+
+<p>그을음(soot) 입자의 중력 침강·열영동 침착과 고온 산화를 모델링합니다. 이는 FDS Chapter 8 "Aerosols"<sup class="cite"><a href="#ref-1">[1]</a></sup>에 대응합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §8.1 (Aerosol Deposition: Gravitational Settling, Thermophoretic Deposition). 구현: <code>compute_soot_settling_velocity</code>, <code>apply_soot_settling_flux</code>, <code>compute_soot_oxidation</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>9.1 Gravitational Settling</h3>
+<p>FDS §8.1.1<sup class="cite"><a href="#ref-1">[1]</a></sup>의 Stokes 침강 속도 (Cunningham 슬립 보정 포함):</p>
+<div class="eq-block">
+$$w_{\text{grav}} = \frac{\rho_p\, d_p^2\, g}{18\, \mu}\, C_n, \qquad C_n = 1 + \mathrm{Kn}\left(1.257 + 0.4\, e^{-1.1/\mathrm{Kn}}\right)$$
+</div>
+<p>기본값: soot 평균 직경 $d_p = 10^{-7}$ m, 벌크 밀도 $\rho_p = 1800$ kg/m³. 중력 성분은 $z$방향($-$)에만 작용합니다.</p>
+
+<h3>9.2 Thermophoretic Deposition</h3>
+<p>온도 구배에 의한 입자 이동 (FDS §8.1.2<sup class="cite"><a href="#ref-1">[1]</a></sup>, Waldmann 형식):</p>
+<div class="eq-block">
+$$\mathbf{v}_{\text{th}} = -\frac{2\, C_s (\alpha + C_t\,\mathrm{Kn})\, C_n}{(1 + 3 C_m\,\mathrm{Kn})(1 + 2\alpha + 2 C_t\,\mathrm{Kn})} \cdot \frac{\mu}{\rho\, T}\, \nabla T$$
+</div>
+<p>계수: $C_s = 1.17$, $C_t = 2.2$, $C_m = 1.146$, $\alpha = k_{\text{gas}}/k_{\text{soot}}$. 침착 플럭스는 <code>apply_soot_settling_flux</code>가 staggered face 속도로 적용합니다.</p>
+
+<h3>9.3 Soot Oxidation</h3>
+<p>고온 영역에서 그을음이 산소와 반응하여 CO로 산화 ($\text{C} + \tfrac{1}{2}\text{O}_2 \to \text{CO}$):</p>
+<div class="eq-block">
+$$\dot{\omega}_{\text{soot}} = A_{\text{ox}}\, \rho\, Y_{\text{soot}}\, Y_{\text{O}_2}\, \exp\!\left(-\frac{E_{\text{ox}}}{R\, T}\right) \quad (T > T_{\min})$$
+</div>
+<p>질량 화학량론(kg soot당): $\Delta Y_{\text{O}_2} = -\tfrac{16}{12}$, $\Delta Y_{\text{CO}} = +\tfrac{28}{12}$, 발열 $\dot{q}''' = \dot{\omega}_{\text{soot}} \cdot \Delta H_{\text{ox}}$ ($\approx 9.2\,$MJ/kg). 수치 안정성을 위해 가용 soot 질량의 40%, 가용 O$_2$로 속도를 상한 처리합니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 10. MATERIAL PROPERTIES -->
+<!-- ============================================================ -->
+<section id="sec-properties">
+<h2>10. Temperature-Dependent Material Properties</h2>
+
+<p class="src-note">출처: 표준 기체 물성 (Sutherland 1893<sup class="cite"><a href="#ref-12">[12]</a></sup>); FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §4.2.6 / §4.2.8 (DNS transport coefficients). 구현: <code>compute_material_properties</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>10.1 Dynamic Viscosity &mdash; Sutherland's Law</h3>
+<p>Sutherland 점성 법칙<sup class="cite"><a href="#ref-12">[12]</a></sup> (Sutherland 상수 $S = 110.4$ K):</p>
+<div class="eq-block">
+$$\mu(T) = 1.716 \times 10^{-5} \left(\frac{T}{273.15}\right)^{3/2} \frac{383.55}{T + 110.4} \quad [\text{Pa}\cdot\text{s}]$$
+</div>
+
+<h3>10.2 Specific Heat Capacity &mdash; Polynomial Fit</h3>
+<div class="eq-block">
+$$c_p(T) = 1000 \left(1.0489 - 0.3661\theta + 0.8452\theta^2 - 0.3671\theta^3 + 0.0512\theta^4\right) \quad [\text{J/(kg}\cdot\text{K)}]$$
+</div>
+<p>여기서 $\theta = T / 1000$ [K]. 유효 범위: 200 &ndash; 2500 K.</p>
+
+<h3>10.3 Thermal Conductivity</h3>
+<div class="eq-block">
+$$k(T) = \frac{\mu(T) \cdot c_p(T)}{\text{Pr}}, \qquad \text{Pr} = 0.71$$
+</div>
+
+<h3>10.4 Summary at Key Temperatures</h3>
+<table>
+  <tr><th>$T$ [K]</th><th>$\mu$ [&mu;Pa&middot;s]</th><th>$c_p$ [J/(kg&middot;K)]</th><th>$k$ [W/(m&middot;K)]</th><th>$\rho$ [kg/m&sup3;]</th></tr>
+  <tr><td>293</td><td>18.1</td><td>1006</td><td>0.0257</td><td>1.199</td></tr>
+  <tr><td>500</td><td>26.6</td><td>1030</td><td>0.0386</td><td>0.703</td></tr>
+  <tr><td>1000</td><td>41.7</td><td>1141</td><td>0.0670</td><td>0.352</td></tr>
+  <tr><td>1500</td><td>52.5</td><td>1210</td><td>0.0895</td><td>0.235</td></tr>
+  <tr><td>2000</td><td>61.2</td><td>1250</td><td>0.1078</td><td>0.176</td></tr>
+  <tr><td>2500</td><td>68.5</td><td>1275</td><td>0.1231</td><td>0.141</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. BOUNDARY CONDITIONS -->
+<!-- ============================================================ -->
+<section id="sec-boundary">
+<h2>11. Boundary Conditions</h2>
+
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §3.2.3 (스칼라 BC), §4.4 "Velocity Boundary Conditions" (§4.4.1 Smooth Walls, §4.4.6 Open Boundaries). 구현: <code>apply_bc_staggered</code>, <code>apply_vent_velocity</code>, <code>apply_open_sponge</code>, <code>apply_neumann_pressure_bc</code> (<code>cuda/kernels.cu</code>).</p>
+
+<h3>11.1 Open Boundary (VENT SURF_ID='OPEN')</h3>
+<table>
+  <tr><th>Variable</th><th>Outflow</th><th>Inflow</th></tr>
+  <tr><td>Velocity (normal face)</td><td>Pressure correction determines</td><td>Pressure correction determines</td></tr>
+  <tr><td>Pressure</td><td>$p = 0$ (Dirichlet)</td><td>$p = 0$ (Dirichlet)</td></tr>
+  <tr><td>Temperature</td><td>Copy from interior</td><td>$T = T_\infty = 293.15$ K</td></tr>
+  <tr><td>Density</td><td>Copy from interior</td><td>$\rho = \rho_\infty = 1.199$ kg/m&sup3;</td></tr>
+  <tr><td>Species $Y_i$</td><td>Copy from interior</td><td>Ambient (O$_2$=0.231, else 0)</td></tr>
+</table>
+<p>Inflow/Outflow 판단: 경계 법선 face의 속도 부호로 결정합니다.</p>
+
+<h3>11.2 Wall Boundary (Default)</h3>
+<table>
+  <tr><th>Variable</th><th>Condition</th></tr>
+  <tr><td>Normal velocity</td><td>$u_n = 0$ (no-penetration)</td></tr>
+  <tr><td>Tangential velocity</td><td>No-slip (clamped ghost → 0)</td></tr>
+  <tr><td>Pressure</td><td>$\partial p / \partial n = 0$ (Neumann)</td></tr>
+  <tr><td>Temperature</td><td>Adiabatic (zero gradient)</td></tr>
+</table>
+<p>벽면 대류 열전달(Kader log-law)과 고체 열전도는 <a href="#sec-solid">§8 Solid Phase</a>에서 상세히 다룹니다.</p>
+
+<h3>11.3 Solid Obstacles</h3>
+<p>Face mask (<code>solid_u, solid_v, solid_w</code>)가 1인 face에서 속도를 0으로 강제합니다. Cell center 스칼라는 solid cell에서 갱신되지 않습니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12. PRESSURE ZONES & HVAC -->
+<!-- ============================================================ -->
+<section id="sec-zones">
+<h2>12. Pressure Zones &amp; HVAC</h2>
+
+<p>밀폐 구획(sealed compartment)의 배경압력 변화와 HVAC 덕트 네트워크를 모델링합니다. 이는 FDS §3.3.6 "Computing the Background Pressure Rise"와 Chapter 11 "HVAC"<sup class="cite"><a href="#ref-1">[1]</a></sup>에 대응합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §3.3.6&ndash;3.3.7, Ch. 11. 구현: <code>compute_pressure_zone</code> (<code>cuda/kernels.cu</code>), <code>HvacState::solve</code> (<code>solver.rs</code>). 입력: <code>&amp;ZONE</code>(PBZ), <code>&amp;HVAC</code>(DUCT/NODE) 네임리스트.</p>
+
+<h3>12.1 Background Pressure Rise (Sealed Zone)</h3>
+<p>밀폐 구획에서는 발열에 의해 배경압력 $\bar{p}$가 시간에 따라 상승합니다 (FDS eq. 3.34<sup class="cite"><a href="#ref-1">[1]</a></sup>). GPU는 도메인 전체를 블록 리덕션으로 적분합니다:</p>
+<div class="eq-block">
+$$\frac{d\bar{p}}{dt} = \frac{\gamma - 1}{V}\int_V \left(\dot{q}''' - \dot{q}'''_{\text{rad}}\right) dV$$
+</div>
+<p>여기서 $\gamma$=비열비, $V$=구획 부피. OPEN 경계가 없는 도메인에서 압력 누적을 정확히 추적하여 압력-팽창 결합을 보존합니다.</p>
+
+<h3>12.2 HVAC Network Solver</h3>
+<p>덕트-노드 네트워크를 CPU 측에서 반복적으로 풉니다 (FDS §11.2<sup class="cite"><a href="#ref-1">[1]</a></sup>). 각 덕트의 유량은 노드 간 압력차와 마찰·minor 손실로 결정됩니다 (Darcy-Weisbach):</p>
+<div class="eq-block">
+$$\Delta p = \left(f\frac{L}{D} + \sum K\right)\frac{\rho v^2}{2}, \qquad v = \sqrt{\frac{2\,|\Delta p|}{\rho\left(f L/D + \sum K\right)}}$$
+</div>
+<p>FAN 모드 덕트는 고정 체적유량 $\dot{V}$를 강제하고, 일반 덕트는 압력차로 유량을 갱신합니다. 노드 질량 보존(유입$-$유출)으로 노드 압력을 완화 갱신하며, 20회 반복으로 수렴시킵니다. 마찰계수 $f \approx 0.02$ (Moody 근사).</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 13. ALGORITHM FLOW -->
+<!-- ============================================================ -->
+<section id="sec-algorithm">
+<h2>13. Time-Stepping Algorithm</h2>
+
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> §2.7 "Solution Procedure", §4.5 "Time Step and Stability Constraints". 구현: <code>run_gpu</code> 타임스텝 루프 (<code>solver.rs</code>).</p>
+
+<h3>13.1 CFL-Adaptive Timestep</h3>
+<p>FDS §4.5.1 "The Courant-Friedrichs-Lewy (CFL) Constraint"<sup class="cite"><a href="#ref-1">[1]</a></sup>. 적응형 시간 간격은 CFL 목표값으로부터 산출되며, 상·하한으로 클램프됩니다:</p>
+<div class="eq-block">
+$$\Delta t = \mathrm{clamp}\!\left(\frac{\text{CFL}_{\text{target}}}{\displaystyle\max_{i,j,k}\left(\frac{|u|}{\Delta x} + \frac{|v|}{\Delta y} + \frac{|w|}{\Delta z}\right)}, \; \Delta t_{\min},\; \Delta t_{\max}\right)$$
+</div>
+<p>기본값: $\text{CFL}_{\text{target}} = 0.4$ (조정 가능), $\Delta t_{\max} = 0.25$ s, $\Delta t_{\min} = 0.001$ s (초기 $\Delta t = 0.0025$ s). 이로써 실제 Courant number $C \le \text{CFL}_{\text{target}}$가 보장됩니다. 추가로 점성 확산 안정성을 위한 <strong>Von Neumann 제약</strong>(FDS §4.5.2<sup class="cite"><a href="#ref-1">[1]</a></sup>)도 함께 적용됩니다.</p>
+
+<h3>13.2 Predictor-Corrector Step (Per Timestep)</h3>
+<p>Predictor-Corrector 2단계 시간 적분 (2차 시간 정확도)을 사용합니다. 환경변수로 predictor-only 모드 전환 가능:</p>
+
+<div class="algo-flow">
+  <div class="step-num">1</div>
+  <div class="step-content"><strong>CFL &rarr; Adaptive $\Delta t$</strong><br><code>compute_cfl_staggered</code> &rarr; max velocity reduction &rarr; $\Delta t$ calculation</div>
+
+  <div class="step-num">2</div>
+  <div class="step-content"><strong>Save $\mathbf{u}^n, T^n, \rho^n, Y_i^n$</strong><br><code>copy_field</code>: $u \to u_n, \; v \to v_n, \; w \to w_n, \; T \to T_n, \; \rho \to \rho_n, \; Y_i \to Y_{i,n}$</div>
+
+  <div class="step-num">3</div>
+  <div class="step-content"><strong>Material Properties</strong><br><code>compute_material_properties</code>: $\mu(T), c_p(T), k(T) \to \mu_{\text{eff}}, k_{\text{eff}}, c_p$</div>
+
+  <div class="step-num">4</div>
+  <div class="step-content"><strong>Turbulence</strong><br><code>compute_turbulent_viscosity_deardorff</code> (또는 <code>_wale</code>, <code>_vreman</code>, <code>_smagorinsky</code>): $\mathbf{u}^n, \rho \to \mu_t$</div>
+
+  <div class="step-num">5</div>
+  <div class="step-content"><strong>Stress &amp; Wall Model</strong><br>
+    <code>compute_stress_divergence</code>: $\tau_u, \tau_v, \tau_w$<br>
+    <code>compute_baroclinic</code>: 바로클리닉 토크<br>
+    <code>apply_wall_model</code>, <code>apply_wall_heat_transfer</code><br>
+    <code>solid_heat_conduction_CN</code>, <code>solid_heat_conduction_3d</code>
+  </div>
+
+  <div class="step-num">6</div>
+  <div class="step-content"><strong>Pyrolysis</strong><br>
+    <code>compute_pyrolysis</code>: Arrhenius 열분해<br>
+    <code>compute_combustible_boundary</code>: 연소 가능 경계면
+  </div>
+
+  <div class="step-num">7</div>
+  <div class="step-content"><strong>Source Terms</strong><br>
+    Zero all sources<br>
+    <code>apply_fire_source</code>: fuel injection + surface heating<br>
+    <code>compute_combustion_v2</code>: $Y_f, Y_{O_2}, T, \rho, \mu_t \to \dot{q}, S_i$ (LOI 소화 판정)<br>
+    <code>compute_radiation_fvm6</code>: $T, Y, \kappa(T) \to \dot{q}_{\text{rad}}$ (6방향 FVM)
+  </div>
+
+  <div class="step-num">8</div>
+  <div class="step-content"><strong>Divergence Target</strong><br>$\mathcal{D}$ via <code>compute_div_target</code> + <code>subtract_enthalpy_advection</code> + <code>add_d_source_to_div</code></div>
+
+  <div class="step-num">9</div>
+  <div class="step-content"><strong>Velocity Advection</strong><br><code>advect_velocity_staggered</code>: $\mathbf{u}^n \to \mathbf{u}^*$ (advection + diffusion + buoyancy + stress + baroclinic)</div>
+
+  <div class="step-num">10</div>
+  <div class="step-content"><strong>Divergence of $\mathbf{u}^*$</strong><br><code>compute_divergence_staggered</code></div>
+
+  <div class="step-num">11</div>
+  <div class="step-content"><strong>Poisson RHS</strong><br>$f = (\nabla \cdot \mathbf{u}^* - \mathcal{D}) / \Delta t$ (CUDA kernel)</div>
+
+  <div class="step-num">12</div>
+  <div class="step-content"><strong>FFT Pressure Solve</strong><br>
+    <code>fft_symmetry_extend</code> &rarr; <code>cufftExecR2C</code> &rarr; <code>fft_eigenvalue_divide</code> &rarr; <code>cufftExecC2R</code> &rarr; <code>fft_extract_solution</code>
+  </div>
+
+  <div class="step-num">13</div>
+  <div class="step-content"><strong>Velocity Correction</strong><br><code>correct_velocity_staggered</code>: $\mathbf{u}^{n+1} = \mathbf{u}^* - \Delta t \, \nabla p / \rho$<br><code>apply_vent_velocity</code>: 벤트 속도 프로필 적용</div>
+
+  <div class="step-num">14</div>
+  <div class="step-content"><strong>Scalar Transport</strong><br>
+    <code>compute_diffusivities</code>: $\alpha_{\text{eff}}, D_{\text{eff}}$<br>
+    <code>transport_scalar_staggered</code> &times; 7: $T, Y_f, Y_{O_2}, Y_{CO_2}, Y_{CO}, Y_{\text{soot}}, Y_{\text{H}_2\text{O}}$<br>
+    <code>normalize_species</code>: $\sum Y_i = 1$ 정규화
+  </div>
+
+  <div class="step-num">15</div>
+  <div class="step-content"><strong>Density Update</strong><br><code>update_density_v2</code>: $\rho = \bar{p} W_{\text{mix}} / (R T)$<br><code>apply_eos_consistency</code>: 상태 방정식 일관성 보정</div>
+
+  <div class="step-num">16</div>
+  <div class="step-content"><strong>Boundary Conditions</strong><br><code>apply_bc_staggered</code>: Open/Wall BC enforcement</div>
+
+  <div class="step-num">17</div>
+  <div class="step-content"><strong>Predictor-Corrector Averaging</strong><br><code>average_fields</code>: $\phi^{n+1} = (\phi^n + \phi^{**})/2$ (corrector 후)<br><code>average_rhoY</code>: 밀도-종 평균 (P-C용)</div>
+
+  <div class="step-num">18</div>
+  <div class="step-content"><strong>Lagrangian Particles</strong><br>
+    <code>particle_find_free_slots</code>: GPU 슬롯 재활용<br>
+    <code>particle_scatter_inject</code>: 스프링클러 입자 주입<br>
+    <code>particle_update</code>: 입자 수송 (항력, 증발, 중력)<br>
+    <code>particle_apply_momentum_sources</code>: 입자-가스 운동량 결합
+  </div>
+
+  <div class="step-num">19</div>
+  <div class="step-content"><strong>Diagnostics &amp; Output</strong><br><code>compute_visibility</code>, <code>interpolate_velocity_to_center</code>, <code>sample_device_point</code>, <code>compute_bndf</code>, <code>clamp_velocity</code>, <code>compute_velocity_error</code>, <code>compute_hrr_sum</code>, <code>compute_total_mass</code>, SLCF/S3D/PL3D/BNDF output</div>
+</div>
+
+<p>소스에는 158개의 <code>launch_kernel</code> 호출부가 있으며, 활성화된 물리 모델(스프링클러·열분해·HVAC 등)에 따라 매 스텝 약 100&ndash;130개 커널이 실행됩니다. 압력 해법은 predictor·corrector·최종 projection에서 각각 수행되어 <strong>최대 3회 × (R2C+C2R) = 6회 cuFFT 호출</strong>이 발생합니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 11. CUDA KERNELS -->
+<!-- ============================================================ -->
+<section id="sec-kernels">
+<h2>14. CUDA Kernel Reference</h2>
+
+<p><strong>93개</strong>의 CUDA 커널이 <code>kernels.cu</code>에 구현되어 있습니다. 모두 <code>extern "C" __global__</code>으로 선언되며, PTX (Parallel Thread Execution)<sup class="cite"><a href="#ref-16">[16]</a></sup>로 컴파일되어 CUDA Driver API<sup class="cite"><a href="#ref-14">[14]</a></sup>를 통해 런타임 로드됩니다 (<code>cuModuleLoadData</code> → <code>cuModuleGetFunction</code> → <code>cuLaunchKernel</code>). 커널은 256 threads/block 1D 구성이 기본이며, GPU 구현은 NVIDIA CUDA C++ 프로그래밍 모델<sup class="cite"><a href="#ref-13">[13]</a></sup>과 성능 모범사례<sup class="cite"><a href="#ref-17">[17]</a></sup>를 따릅니다. 아래는 대표 커널의 분류별 요약이며, 전체 목록은 소스(<code>cuda/kernels.cu</code>)를 참조하세요.</p>
+
+<h3>14.1 Utility Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">init_field(float* field, float value, int n)</div>
+  <div class="kdesc">배열을 상수값으로 초기화. $\text{field}[i] = \text{value}$ for $i \in [0, n)$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">copy_field(float* dst, const float* src, int n)</div>
+  <div class="kdesc">배열 복사. predictor step 시작 시 $\mathbf{u}^n$ 저장에 사용.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_face_masks(int* solid_u, int* solid_v, int* solid_w, const int* solid, ...)</div>
+  <div class="kdesc">Cell center solid 마스크에서 face 마스크 생성. $\text{solid\_u}[i] = \text{solid}[i-1] \lor \text{solid}[i]$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">average_fields(float* result, const float* a, const float* b, int n)</div>
+  <div class="kdesc">두 필드의 평균: $\text{result}[i] = 0.5 (a[i] + b[i])$. Predictor-corrector 시 사용.</div>
+</div>
+
+<h3>14.2 Physics Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">compute_material_properties(float* mu_eff, float* k_eff, float* cp_arr, const float* temp, const float* mu_t, const float* rho, const int* solid, ...)</div>
+  <div class="kdesc">Sutherland 점성 + polynomial $c_p$ + Prandtl 열전도도 계산. $\mu_{\text{eff}} = \mu_{\text{mol}}(T) + \mu_t$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_turbulent_viscosity_deardorff / _wale / _vreman / _smagorinsky</div>
+  <div class="kdesc">Deardorff TKE (기본), WALE, Vreman, Smagorinsky 4종 선택. 6개 변형률 성분을 staggered grid에서 계산.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_combustion_v2(float* q_dot, float* src_fuel, ..., const float* y_fuel, const float* y_o2, const float* temp, const float* rho, const float* mu_t, const int* solid, ...)</div>
+  <div class="kdesc">3-timescale 혼합 연소. LOI 기반 소화 판정, 종 소스항 및 열방출 계산.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_radiation_fvm6(float* q_rad, const float* temp, const float* y_co2, const float* y_soot, const float* y_h2o, const float* rho, const int* solid, ...)</div>
+  <div class="kdesc">FVM6 6방향 복사: 온도 의존 Planck mean 흡수 계수 + 이웃 셀 복사 교환 + 벽면 방사. $\kappa(T, Y_{\text{CO}_2}, Y_{\text{soot}}, Y_{\text{H}_2\text{O}})$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_fire_source(float* q_dot, float* src_fuel, float* temp, const float* fire_data, int n_fires, ...)</div>
+  <div class="kdesc">화원 셀에서 연료 주입 + TMP_FRONT 표면 가열. RAMP factor 적용.</div>
+</div>
+
+<h3>14.3 Solver Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">compute_divergence_staggered(float* div, const float* u, const float* v, const float* w, const int* solid, ...)</div>
+  <div class="kdesc">$\nabla \cdot \mathbf{u} = (u_{i+1}-u_i)/\Delta x + (v_{j+1}-v_j)/\Delta y + (w_{k+1}-w_k)/\Delta z$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_div_target + subtract_enthalpy_advection + add_d_source_to_div</div>
+  <div class="kdesc">3개 커널 순차: <code>compute_div_target</code> $(\dot{q} - \dot{q}_{\text{rad}} + \nabla\cdot k\nabla T)/(\rho c_p T)$ + <code>subtract_enthalpy_advection</code> $-\mathbf{u}\cdot\nabla(\rho h_s)/(\rho c_p T)$ + <code>add_d_source_to_div</code> 종 소스 기여.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">fft_symmetry_extend(float* rhs_ext, const float* rhs, int ni, int nj, int nk, int bcx0, int bcx1, int bcy0, int bcy1, int bcz0, int bcz1)</div>
+  <div class="kdesc">RHS를 $(2N_i) \times (2N_j) \times (2N_k)$으로 대칭 확장. BC 타입에 따라 odd/even 대칭.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">fft_eigenvalue_divide(float* complex_data, float dx, float dy, float dz, int nex, int ney, int nez)</div>
+  <div class="kdesc">주파수 영역에서 $\hat{f}/\lambda$ 나눗셈. $\lambda = 0$ 모드는 $\hat{p} = 0$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">fft_extract_solution(float* p, const float* p_ext, int ni, int nj, int nk, int nex, int ney, int nez)</div>
+  <div class="kdesc">확장 배열에서 $p[i,j,k] = p_{\text{ext}}[i,j,k] / (N_{ex} N_{ey} N_{ez})$ 추출.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">correct_velocity_staggered(float* u, float* v, float* w, const float* u_star, const float* v_star, const float* w_star, const float* p, const float* rho, const int* solid_u, const int* solid_v, const int* solid_w, ...)</div>
+  <div class="kdesc">$u^{n+1} = u^* - \Delta t \cdot \nabla p$. Open BC에서 factor-2 Dirichlet 보정. Solid face: $u=0$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">advect_velocity_staggered(float* u_new, float* v_new, float* w_new, const float* u, const float* v, const float* w, const float* rho, const float* temp, const float* mu_eff, const int* solid, ..., const int* bc_type, ...)</div>
+  <div class="kdesc">MINMOD TVD 이류 + Laplacian 확산 + 부력. Open 경계에서 1차 upwind. 모든 face 포함 (u: 0..ni, v: 0..nj, w: 0..nk).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">transport_scalar_staggered(float* phi_new, const float* phi, const float* u, const float* v, const float* w, const float* D_eff, const float* rho, const float* source, const float* cp_arr, const int* solid, ...)</div>
+  <div class="kdesc">Cell center 스칼라 이류 (MINMOD TVD) + 확산 + 소스. <code>cp_arr != NULL</code>이면 $S/(\rho c_p)$ (온도용), 아니면 $S/\rho$ (종용). 클램핑: $T \in [200, 2500]$, $Y \in [0, 1]$.</div>
+</div>
+
+<h3>14.4 State &amp; Diagnostic Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">update_density_v2(float* rho, const float* temp, const float* y_fuel, const float* y_o2, const float* y_co2, const float* y_co, const float* y_soot, const int* solid, ...)</div>
+  <div class="kdesc">$W_{\text{mix}} = 1/\sum(Y_i/W_i)$, $\rho = \bar{p} W/(RT)$, 클램핑 $[0.1, 5.0]$ kg/m&sup3;.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_diffusivities(float* alpha_eff, float* D_eff, const float* k_eff, const float* rho, const float* cp, const float* mu_t, const int* solid, ...)</div>
+  <div class="kdesc">$\alpha = k/(\rho c_p) + \mu_t/(\rho \, \text{Pr}_t)$, $D = D_0 + \mu_t/(\rho \, \text{Sc}_t)$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_cfl_staggered(float* max_vel, const float* u, const float* v, const float* w, const int* solid, ...)</div>
+  <div class="kdesc">Block-level shared memory reduction으로 $\max(|u|/\Delta x + |v|/\Delta y + |w|/\Delta z)$ 계산. <code>atomicMax</code>로 전역 최대값.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_visibility(float* vis, const float* y_soot, const float* rho, const int* solid, ...)</div>
+  <div class="kdesc">$\text{vis} = C / (K_m \cdot \rho \cdot Y_{\text{soot}})$, $K_m = 8700$ m&sup2;/kg, $C = 3$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">interpolate_velocity_to_center(float* uc, float* vc, float* wc, const float* u, const float* v, const float* w, ...)</div>
+  <div class="kdesc">Face &rarr; cell center 보간: $u_c = (u_i + u_{i+1})/2$. 출력 및 진단용.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">extract_slice_z(float* slice, const float* field, int k_level, int ni, int nj, int nk)</div>
+  <div class="kdesc">3D 필드에서 $z = k_{\text{level}}$ 2D 단면 추출.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_bc_staggered(float* u, float* v, float* w, float* temp, float* rho, float* y_fuel, ..., const int* bc_type, ...)</div>
+  <div class="kdesc">경계면에 Open/Wall BC 적용. 유입 시 ambient 설정, 유출 시 interior 복사.</div>
+</div>
+
+<h3>14.5 Stress &amp; Wall Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">compute_stress_divergence(...)</div>
+  <div class="kdesc">면 중심 점성 응력 텐서 발산 (VTRM). $\tau_u, \tau_v, \tau_w$ 계산.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_baroclinic(...)</div>
+  <div class="kdesc">바로클리닉 토크. 밀도 구배와 압력 구배의 교차항.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_wall_model(...)</div>
+  <div class="kdesc">벽면 전단 응력. 벽 함수 기반 접선 속도 보정.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_wall_heat_transfer(...)</div>
+  <div class="kdesc">벽면 대류 열전달. Nusselt 수 기반 열유속.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">solid_heat_conduction_CN(...)</div>
+  <div class="kdesc">1D Crank-Nicolson 고체 열전도 (N_DEPTH=10). 벽 두께 방향 온도 프로필.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">solid_heat_conduction_3d(...)</div>
+  <div class="kdesc">3D 고체 열전도 보완. 인접 고체 셀 간 열 교환.</div>
+</div>
+
+<h3>14.6 Pyrolysis &amp; Combustible Boundary Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">compute_pyrolysis(...)</div>
+  <div class="kdesc">Arrhenius 열분해. 고체 표면 온도에 따른 질량 방출 속도.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_combustible_boundary(...)</div>
+  <div class="kdesc">연소 가능 경계면. 가연성 고체 표면에서의 연료 발생.</div>
+</div>
+
+<h3>14.7 Particle Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">particle_update(...)</div>
+  <div class="kdesc">Lagrangian 입자 수송. 항력, 증발, 중력 통합. SoA 레이아웃.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">particle_find_free_slots(...)</div>
+  <div class="kdesc">GPU 슬롯 재활용. 비활성 입자 슬롯을 찾아 재사용.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">particle_scatter_inject(...)</div>
+  <div class="kdesc">스프링클러 입자 주입. 노즐 위치에서 물방울 생성.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">particle_apply_momentum_sources(...)</div>
+  <div class="kdesc">입자-가스 운동량 결합. <code>atomicAdd</code>로 가스 소스항에 반영.</div>
+</div>
+
+<h3>14.8 Additional Physics &amp; Utility Kernels</h3>
+
+<div class="kernel-card">
+  <div class="kname">normalize_species(...)</div>
+  <div class="kdesc">종 질량분율 정규화. $\sum Y_i = 1$ 보장.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_vent_velocity(...)</div>
+  <div class="kdesc">벤트 속도 프로필 적용. VENT 지정 면에 속도 강제.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_hrr_sum(...)</div>
+  <div class="kdesc">총 HRR 계산. 전체 도메인 열방출률 합산.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_total_mass(...)</div>
+  <div class="kdesc">총 질량 보존 검사. $\sum \rho \cdot \Delta V$ 계산.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">vector_axpy(...)</div>
+  <div class="kdesc">벡터 AXPY 연산. $y = \alpha x + y$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">vector_scale(...)</div>
+  <div class="kdesc">벡터 스케일링. $x = \alpha \cdot x$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">reduce_qdot_sum(...)</div>
+  <div class="kdesc">HRR 합산 리덕션. 블록 레벨 shared memory reduction.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">average_rhoY(...)</div>
+  <div class="kdesc">밀도-종 평균 (P-C용). $(\rho Y)^{n+1} = ((\rho Y)^n + (\rho Y)^{**})/2$.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_eos_consistency(...)</div>
+  <div class="kdesc">상태 방정식 일관성 보정. $\rho, T, Y_i$ 상호 일관성 확보.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">sample_device_point(...)</div>
+  <div class="kdesc">센서 포인트 샘플링. DEVC 위치에서 필드값 추출.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_bndf(...)</div>
+  <div class="kdesc">벽면 열유속 출력 (BNDF). Smokeview BNDF 포맷 데이터 생성.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">clamp_velocity(...)</div>
+  <div class="kdesc">속도 상한 제한. 수치 안정성을 위한 속도 클램핑.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_velocity_error(...)</div>
+  <div class="kdesc">속도 오차 진단. 발산 오차 및 최대 속도 모니터링. FDS ITERATIVE 압력 보정의 수렴 판정에 사용.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_turbulent_viscosity_dynsmag(...)</div>
+  <div class="kdesc">Dynamic Smagorinsky (Germano-Lilly). 2-pass test filter로 $C_s^2$ 자동 결정 (<a href="#sec-turbulence">§5.3</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_pyrolysis / compute_combustible_boundary</div>
+  <div class="kdesc">Arrhenius 열분해 / 점화온도 기반 가연성 경계 연료 주입 (<a href="#sec-solid">§8.3&ndash;8.4</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">solid_heat_conduction_CN / solid_heat_conduction_3d</div>
+  <div class="kdesc">1D Crank-Nicolson(N_DEPTH=10) + 3D 보완 고체 열전도 (<a href="#sec-solid">§8.1</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_wall_heat_transfer(...)</div>
+  <div class="kdesc">Kader 1981 열 log-law 벽면 대류 열전달 (<a href="#sec-solid">§8.2</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_soot_settling_velocity / apply_soot_settling_flux</div>
+  <div class="kdesc">중력 침강 + 열영동(thermophoresis) soot 침착 (<a href="#sec-soot">§9.1&ndash;9.2</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_soot_oxidation(...)</div>
+  <div class="kdesc">고온 soot 산화 $\text{C}+\tfrac12\text{O}_2\to\text{CO}$ Arrhenius (<a href="#sec-soot">§9.3</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_pressure_zone(...)</div>
+  <div class="kdesc">밀폐 구획 배경압력 상승 $d\bar{p}/dt$ 블록 리덕션 (<a href="#sec-zones">§12.1</a>).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">transport_species_conservative / recover_species_from_rhoY</div>
+  <div class="kdesc">보존형 $\rho Y$ 종 수송 및 $Y$ 복원. 질량 보존 정식화.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">transport_enthalpy_staggered(...)</div>
+  <div class="kdesc">선택적 보존형 센시블 엔탈피 수송 (온도 직접 수송의 대안).</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">transport_scalar_staggered_tiled(...)</div>
+  <div class="kdesc">공유 메모리 타일링 스칼라 수송. 3D blocking + halo 교환으로 대역폭 최적화.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">compute_species_div_correction(...)</div>
+  <div class="kdesc">종 확산의 발산 기여 (FDS DIVERGENCE_PART_1). 분자량 + 엔탈피 항 모두 포함.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">apply_open_sponge / apply_neumann_pressure_bc</div>
+  <div class="kdesc">Open 경계 스펀지 감쇠 / 내부 고체 Neumann 압력 BC.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">integrate_fire_suppression(...)</div>
+  <div class="kdesc">물 침적량 기반 화재 억제(K-factor, SURF E_COEFFICIENT). 스프링클러 소화 결합.</div>
+</div>
+
+<div class="kernel-card">
+  <div class="kname">fused_step_reductions(...)</div>
+  <div class="kdesc">진단량(HRR, 총질량, 최대값 등) 융합 리덕션. 커널 런치 오버헤드 절감.</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 15. PARTICLE SYSTEM -->
+<!-- ============================================================ -->
+<section id="sec-particles">
+<h2>15. Lagrangian Particle System</h2>
+
+<p>스프링클러·노즐 물방울과 추적 입자를 Lagrangian 방식으로 추적합니다. 이는 FDS Chapter 9 "Lagrangian Particles"<sup class="cite"><a href="#ref-1">[1]</a></sup>에 대응합니다.</p>
+<p class="src-note">출처: FDS Tech. Ref. Guide<sup class="cite"><a href="#ref-1">[1]</a></sup> Ch. 9 (§9.1 Particle Transport, §9.4 Heating and Evaporation, §9.5 Fire Suppression by Water). 구현: <code>particle_update</code>, <code>particle_find_free_slots</code>, <code>particle_scatter_inject</code>, <code>particle_apply_momentum_sources</code> (<code>cuda/kernels.cu</code>), <code>integrate_fire_suppression</code>.</p>
+
+<h3>15.1 Structure-of-Arrays (SoA) Layout</h3>
+<p>GPU 친화적 SoA 레이아웃으로 최대 <strong>500,000개</strong> 입자(<code>MAX_PARTICLES = 500_000</code>)를 관리합니다. 위치·속도·온도·질량·반경·상태가 각각 별도 배열로 저장되어 coalesced 메모리 접근을 보장합니다. 비활성 슬롯은 <code>particle_find_free_slots</code> 커널이 GPU 측에서 재활용하여 호스트-디바이스 동기화를 피합니다.</p>
+
+<h3>15.2 Particle Transport (Drag, Gravity, Evaporation)</h3>
+<p>FDS §9.1 (eq. 9.1)<sup class="cite"><a href="#ref-1">[1]</a></sup>의 입자 운동 방정식 — 항력 + 중력:</p>
+<div class="eq-block">
+$$m_p \frac{d\mathbf{u}_p}{dt} = \frac{1}{2} \rho\, C_d\, A_p\, |\mathbf{u} - \mathbf{u}_p|(\mathbf{u} - \mathbf{u}_p) + m_p \mathbf{g}$$
+</div>
+<p>물방울은 FDS §9.4<sup class="cite"><a href="#ref-1">[1]</a></sup>의 가열·증발 모델로 질량·온도가 변하며, 증발한 수증기는 H$_2$O 종 소스로 가스상에 추가됩니다.</p>
+
+<h3>15.3 Two-Way Momentum &amp; Energy Coupling</h3>
+<p>입자가 가스에 가하는 반작용(운동량·에너지·질량)은 <code>particle_apply_momentum_sources</code>가 <code>atomicAdd</code>로 가스 소스항에 누적합니다 (FDS §9.4.1 "Filtered Volumetric Source Terms"<sup class="cite"><a href="#ref-1">[1]</a></sup>). 이로써 물 분무에 의한 냉각·하강기류가 유동에 반영됩니다.</p>
+
+<h3>15.4 Fire Suppression by Water</h3>
+<p>표면에 침적된 물은 화재 억제에 기여합니다 (FDS §9.5<sup class="cite"><a href="#ref-1">[1]</a></sup>). <code>integrate_fire_suppression</code>이 침적 물질량과 SURF별 <code>E_COEFFICIENT</code> 기반 K-factor로 연소·열분해 속도를 감쇠시킵니다.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- 16. REFERENCES -->
+<!-- ============================================================ -->
+<section id="sec-references" class="references">
+<h2>16. References</h2>
+
+<p>본 문서의 물리 모델은 NIST FDS Technical Reference Guide<sup class="cite"><a href="#ref-1">[1]</a></sup>를 기반으로 하며, 각 모델의 원전(original sources)과 GPU 구현에 사용된 NVIDIA 문서를 함께 명시합니다. FDS 가이드의 절(§)·식 번호는 <strong>Sixth Edition (NIST SP 1018-1)</strong> 기준입니다.</p>
+
+<h3>A. Fire Dynamics &amp; Numerical Methods</h3>
+<ol class="ref-list">
+  <li id="ref-1"><span class="ref-authors">K. McGrattan, S. Hostikka, R. McDermott, J. Floyd, M. Vanella, E. Mueller, C. Paul.</span> <span class="ref-title">Fire Dynamics Simulator, Technical Reference Guide — Volume 1: Mathematical Model.</span> NIST Special Publication 1018-1, Sixth Edition. National Institute of Standards and Technology, Gaithersburg, MD. DOI: <a href="https://doi.org/10.6028/NIST.SP.1018" target="_blank" rel="noopener">10.6028/NIST.SP.1018</a>.</li>
+  <li id="ref-2"><span class="ref-authors">R. Rehm, H. Baum.</span> <span class="ref-title">"The Equations of Motion for Thermally Driven, Buoyant Flows".</span> Journal of Research of the NBS, 83 (1978), pp. 297&ndash;308. <em>(저마하수 근사의 기초)</em></li>
+  <li id="ref-3"><span class="ref-authors">F. H. Harlow, J. E. Welch.</span> <span class="ref-title">"Numerical Calculation of Time-Dependent Viscous Incompressible Flow of Fluid with Free Surface".</span> Physics of Fluids, 8.12 (1965), pp. 2182&ndash;2189. DOI: <a href="https://doi.org/10.1063/1.1761178" target="_blank" rel="noopener">10.1063/1.1761178</a>. <em>(MAC staggered grid)</em></li>
+  <li id="ref-4"><span class="ref-authors">J. W. Deardorff.</span> <span class="ref-title">"Stratocumulus-capped mixed layers derived from a three-dimensional model".</span> Boundary-Layer Meteorology, 18 (1980), pp. 495&ndash;527. DOI: <a href="https://doi.org/10.1007/BF00119502" target="_blank" rel="noopener">10.1007/BF00119502</a>. <em>(Deardorff TKE 난류 모델 — FDS 기본)</em></li>
+  <li id="ref-5"><span class="ref-authors">J. Smagorinsky.</span> <span class="ref-title">"General Circulation Experiments with the Primitive Equations. I. The Basic Experiment".</span> Monthly Weather Review, 91.3 (1963), pp. 99&ndash;164.</li>
+  <li id="ref-6"><span class="ref-authors">A. W. Vreman.</span> <span class="ref-title">"An eddy-viscosity subgrid-scale model for turbulent shear flow: Algebraic theory and applications".</span> Physics of Fluids, 16.10 (2004), pp. 3670&ndash;3681.</li>
+  <li id="ref-7"><span class="ref-authors">F. Nicoud, F. Ducros.</span> <span class="ref-title">"Subgrid-Scale Stress Modelling Based on the Square of the Velocity Gradient Tensor".</span> Flow, Turbulence and Combustion, 62 (1999), pp. 183&ndash;200. DOI: <a href="https://doi.org/10.1023/A:1009995426001" target="_blank" rel="noopener">10.1023/A:1009995426001</a>. <em>(WALE 모델)</em></li>
+  <li id="ref-8"><span class="ref-authors">B. F. Magnussen, B. H. Hjertager.</span> <span class="ref-title">"On Mathematical Modeling of Turbulent Combustion with Special Emphasis on Soot Formation and Combustion".</span> 16th Symposium (International) on Combustion, 1977, pp. 719&ndash;729. DOI: <a href="https://doi.org/10.1016/S0082-0784(77)80366-4" target="_blank" rel="noopener">10.1016/S0082-0784(77)80366-4</a>. <em>(Eddy Dissipation Concept)</em></li>
+  <li id="ref-9"><span class="ref-authors">R. McDermott, K. McGrattan, J. Floyd.</span> <span class="ref-title">"A Simple Reaction Time Scale for Under-Resolved Fire Dynamics".</span> Fire Safety Science — Proc. 10th Int. Symposium, IAFSS, 2011, pp. 809&ndash;820. DOI: <a href="https://doi.org/10.3801/IAFSS.FSS.10-809" target="_blank" rel="noopener">10.3801/IAFSS.FSS.10-809</a>. <em>(3-timescale 혼합 모델)</em></li>
+  <li id="ref-10"><span class="ref-authors">G. D. Raithby, E. H. Chui.</span> <span class="ref-title">"A Finite-Volume Method for Predicting Radiant Heat Transfer in Enclosures with Participating Media".</span> Journal of Heat Transfer, 112.2 (1990), pp. 415&ndash;423. <em>(유한체적 복사법)</em></li>
+  <li id="ref-11"><span class="ref-authors">B. A. Kader.</span> <span class="ref-title">"Temperature and concentration profiles in fully turbulent boundary layers".</span> International Journal of Heat and Mass Transfer, 24 (1981), pp. 1541&ndash;1544. DOI: <a href="https://doi.org/10.1016/0017-9310(81)90220-9" target="_blank" rel="noopener">10.1016/0017-9310(81)90220-9</a>. <em>(벽면 열 log-law)</em></li>
+  <li id="ref-12"><span class="ref-authors">W. Sutherland.</span> <span class="ref-title">"The viscosity of gases and molecular force".</span> Philosophical Magazine, Series 5, 36.223 (1893), pp. 507&ndash;531. DOI: <a href="https://doi.org/10.1080/14786449308620508" target="_blank" rel="noopener">10.1080/14786449308620508</a>. <em>(점성 법칙)</em></li>
+</ol>
+
+<h3>B. NVIDIA / GPU Computing</h3>
+<ol class="ref-list" start="13">
+  <li id="ref-13"><span class="ref-authors">NVIDIA Corporation.</span> <span class="ref-title">CUDA C++ Programming Guide.</span> <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/" target="_blank" rel="noopener">docs.nvidia.com/cuda/cuda-c-programming-guide</a>.</li>
+  <li id="ref-14"><span class="ref-authors">NVIDIA Corporation.</span> <span class="ref-title">CUDA Driver API Reference Manual.</span> <a href="https://docs.nvidia.com/cuda/cuda-driver-api/" target="_blank" rel="noopener">docs.nvidia.com/cuda/cuda-driver-api</a>. <em>(<code>cuInit</code>, <code>cuModuleLoadData</code>, <code>cuLaunchKernel</code> 등)</em></li>
+  <li id="ref-15"><span class="ref-authors">NVIDIA Corporation.</span> <span class="ref-title">cuFFT Library User's Guide.</span> <a href="https://docs.nvidia.com/cuda/cufft/" target="_blank" rel="noopener">docs.nvidia.com/cuda/cufft</a>. <em>(R2C/C2R FFT 기반 Poisson 해법)</em></li>
+  <li id="ref-16"><span class="ref-authors">NVIDIA Corporation.</span> <span class="ref-title">Parallel Thread Execution (PTX) ISA.</span> <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/" target="_blank" rel="noopener">docs.nvidia.com/cuda/parallel-thread-execution</a>.</li>
+  <li id="ref-17"><span class="ref-authors">NVIDIA Corporation.</span> <span class="ref-title">CUDA C++ Best Practices Guide.</span> <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/" target="_blank" rel="noopener">docs.nvidia.com/cuda/cuda-c-best-practices-guide</a>.</li>
+</ol>
+
+<div class="note">
+  <strong>인용 표기:</strong> 본문의 위첨자 번호(예: <sup class="cite"><a href="#ref-1">[1]</a></sup>)를 클릭하면 해당 참고문헌으로 이동합니다. FDS 가이드의 절(§) 번호는 모델 검증·재현을 위해 본문 각 절의 "출처" 표기에 함께 명시되어 있습니다.
+</div>
+</section>
+
+</div> <!-- container -->
+
+<footer style="text-align:center; padding:40px 24px; color:#666; font-size:13px; border-top:1px solid #ddd; margin-top:40px; background:white;">
+  <strong>FDS(GPU) v0.22.2 Technical Documentation</strong><br>
+  Staggered MAC Grid + cuFFT Poisson Solver + Deardorff LES + FVM6 Radiation + Lagrangian Particles<br>
+  Implementation: Rust (host) + CUDA PTX (device) &bull; 93 GPU Kernels &bull; BULC(불씨) Engine<br>
+  <span style="font-size:12px; opacity:0.8;">물리 모델 출처: NIST FDS Technical Reference Guide (SP 1018-1, 6th ed.) &bull; GPU: NVIDIA CUDA / cuFFT &bull; 자세한 내용은 <a href="#sec-references" style="color:var(--primary-light);">References</a> 참조</span>
+</footer>
+
+</body>
+</html>

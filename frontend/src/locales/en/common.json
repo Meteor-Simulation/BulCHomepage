@@ -361,6 +361,36 @@
           "answer": "When you log in from a new device, any existing active session is automatically terminated. This means you will almost never be locked out due to a stuck session."
         }
       ]
+    },
+    "guide": {
+      "eyebrow": "USER GUIDE",
+      "title": "How to Use",
+      "subtitle": "New to BUL:C? Pick the guide you need and follow along step by step.",
+      "back": "Back to list",
+      "badgeWip": "In progress",
+      "download": "Download PDF",
+      "preparingTitle": "This document is being prepared",
+      "preparingDesc": "This material is currently in preparation. We'll make it available soon.",
+      "items": {
+        "video": {
+          "title": "Tutorial Video",
+          "desc": "Master BUL:C's core features quickly with step-by-step videos.",
+          "detailDesc": "Watch the entire workflow—from installation to simulation and reporting—on the official BUL:C YouTube channel.",
+          "youtube": "Watch on YouTube"
+        },
+        "tutorialDoc": {
+          "title": "Tutorial Document (PDF)",
+          "desc": "A step-by-step tutorial you can follow along on screen."
+        },
+        "usage": {
+          "title": "User Manual (PDF)",
+          "desc": "A manual covering detailed usage for each feature."
+        },
+        "techGuide": {
+          "title": "Technical Guidebook",
+          "desc": "Technical material on analysis theory and settings for advanced users."
+        }
+      }
     }
   },
   "download": {
