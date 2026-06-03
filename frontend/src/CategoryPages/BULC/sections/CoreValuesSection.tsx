@@ -10,6 +10,9 @@ const Check: React.FC<{className?: string}> = ({className}) => (
 const Server: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
 );
+const Zap: React.FC<{className?: string}> = ({className}) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+);
 const Workflow: React.FC<{className?: string}> = ({className}) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg>
 );
@@ -31,7 +34,7 @@ const CoreValuesSection: React.FC = () => {
           <div className="bulc-values__item">
             <div className="bulc-values__image-wrap">
               <img
-                src="/images/bulc/accuracy.webp"
+                src="/images/bulc/accuracy-cpu-gpu.png"
                 alt={t('bulc.coreValues.accuracy.title')}
                 className="bulc-values__image"
               />
@@ -63,7 +66,7 @@ const CoreValuesSection: React.FC = () => {
           <div className="bulc-values__item bulc-values__item--reverse">
             <div className="bulc-values__image-wrap">
               <img
-                src="/images/bulc/speed.webp"
+                src="/images/bulc/speed-chart.svg"
                 alt={t('bulc.coreValues.speed.title')}
                 className="bulc-values__image"
               />
@@ -71,7 +74,7 @@ const CoreValuesSection: React.FC = () => {
             <div className="bulc-values__text">
               <div className="bulc-values__icon-row">
                 <div className="bulc-values__icon-wrap">
-                  <Server className="bulc-values__icon" />
+                  <Zap className="bulc-values__icon" />
                 </div>
                 <h3 className="bulc-values__name">{t('bulc.coreValues.speed.title')}</h3>
               </div>
@@ -83,6 +86,10 @@ const CoreValuesSection: React.FC = () => {
                   <Check className="bulc-values__check-icon" />
                   {t('bulc.coreValues.speed.check1')}
                 </li>
+                <li className="bulc-values__check-item">
+                  <Check className="bulc-values__check-icon" />
+                  {t('bulc.coreValues.speed.check2')}
+                </li>
               </ul>
             </div>
           </div>
@@ -91,7 +98,7 @@ const CoreValuesSection: React.FC = () => {
           <div className="bulc-values__item">
             <div className="bulc-values__image-wrap">
               <img
-                src="/images/bulc/automation.webp"
+                src="/images/bulc/automation-app.png"
                 alt={t('bulc.coreValues.automation.title')}
                 className="bulc-values__image"
               />
@@ -114,6 +121,10 @@ const CoreValuesSection: React.FC = () => {
                 <li className="bulc-values__check-item">
                   <Check className="bulc-values__check-icon" />
                   {t('bulc.coreValues.automation.check2')}
+                </li>
+                <li className="bulc-values__check-item">
+                  <Check className="bulc-values__check-icon" />
+                  {t('bulc.coreValues.automation.check3')}
                 </li>
               </ul>
             </div>

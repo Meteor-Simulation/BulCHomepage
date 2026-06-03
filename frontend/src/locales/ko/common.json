@@ -125,8 +125,10 @@
     "hero": {
       "badge": "회원 가입 시 무료 라이선스 14일 지원",
       "title1": "for Fire Safety Engineering",
-      "title2": "Next-Gen Fire Simulator",
-      "description": "미리 설정된 라이브러리, 화재 시뮬레이션 연동 EVAC 해석, AI 자동 설정, GPU 기반 고속 해석, 리포트 자동 생성 기능으로 현실성 있고 생산성 높은 성능 위주 설계를 수행하세요",
+      "title2": "Fast FDS Calculation",
+      "titleMid": "Powered by GPU",
+      "brand": "BULC-불씨",
+      "description": "소방성능위주 설계용 프로그램, GPU기반 초고속 해석, 미리설정된 라이브러리, 화재-피난 연동 해석, AI 자동 설정",
       "startFree": "무료 다운로드",
       "downloadAlert": "로그인을 해야 다운받을 수 있습니다.",
       "watchDemo": "데모 보기",
@@ -136,7 +138,7 @@
     "comparison": {
       "label": "비교",
       "title": "지금 BUL:C로 전환해야 하는 이유",
-      "subtitle": "기존 방식은 느리고, 오류가 많으며, 비용이 많이 듭니다. 이제 워크플로우를 업그레이드할 때입니다.",
+      "subtitle": "기존 방식은 느리고, 오류가 많으며, 비용이 많이 듭니다.\n이제 워크플로우를 업그레이드할 때입니다.",
       "card1": {
         "title": "수동 문서 작성",
         "problem1": "구문 오류 발생 가능성",
@@ -160,24 +162,33 @@
         "solutionDesc": "3D 시각화가 포함된 인터랙티브 리포트를 즉시 생성합니다."
       }
     },
+    "spec": {
+      "solver": { "label": "Solver", "suffix": "가속", "desc": "GPU 코어에서 병렬 처리" },
+      "physics": { "label": "Physics", "value": "FDS 물리엔진", "desc": "검증된 화재 물리 모델" },
+      "standard": { "label": "Standard", "value": "NIST 검증", "desc": "엄격한 국제 안전 기준 충족" },
+      "analysis": { "label": "Analysis", "value": "화재-피난 연동", "desc": "EVAC 연계 통합 해석" },
+      "library": { "label": "Library", "value": "화재 라이브러리", "desc": "미리설정된 화재 시나리오 라이브러리" }
+    },
     "coreValues": {
       "title": "",
       "accuracy": {
         "title": "정확성",
-        "desc": "생명이 걸린 문제에서 정밀도는 타협할 수 없습니다. BUL:C는 검증된 FDS 물리 엔진을 사용하여 모든 시뮬레이션이 엄격한 국제 안전 기준(NIST)을 충족하도록 보장합니다.",
+        "desc": "생명이 걸린 문제에서 정밀도는 타협할 수 없습니다. BUL:C는 검증된 FDS (NIST) 화재 물리 엔진을 사용하여 모든 시뮬레이션이 엄격한 국제 안전 기준을 충족하도록 보장합니다.",
         "check1": "실제 화재 시험 대비 검증됨",
         "check2": "정밀한 연기 및 열 전파 모델"
       },
       "speed": {
         "title": "압도적인 속도",
         "desc": "시간은 돈입니다. 복잡한 계산을 GPU로 오프로드하여, 며칠 걸리던 작업을 몇 시간 만에 완료합니다. 더 빠르게 반복하고 더 빨리 결과를 전달하세요.",
-        "check1": "GPU 코어에서 병렬 처리"
+        "check1": "GPU 코어에서 병렬 처리",
+        "check2": "X107배 빠른 해석 (Nvidia 4090 기준)"
       },
       "automation": {
-        "title": "완전 자동화 (출시 예정)",
-        "desc": "CAD 도면 가져오기부터 최종 PDF 법규 준수 리포트 생성까지 전체 파이프라인이 자동화됩니다. 서류 작업 대신 엔지니어링에 집중하세요.",
-        "check1": "원클릭 리포트 생성",
-        "check2": "자동 피난 경로 분석"
+        "title": "AI 자동화",
+        "desc": "AI 라이브러리 기반 자동화로 소방 전문지식 RAG 데이터베이스를 사용하세요. CAD 도면 AI 자동 인식부터 법규 준수 레포트 생성까지 전체 파이프라인이 자동화됩니다. 서류 작업 대신 엔지니어링에 집중하세요.",
+        "check1": "검증된 라이브러리",
+        "check2": "AI 기반 자동화",
+        "check3": "원클릭 리포트 생성"
       }
     },
     "workflow": {
@@ -201,10 +212,10 @@
       },
       "step3": {
         "title1": "시뮬레이션",
-        "title2": "GPU Solver로, 시뮬레이션 시간을 87배 단축하세요",
-        "desc": "화재 시뮬레이션은 대규모 행렬 연산이 반복되는 계산 집약 작업입니다. BUL:C는 이 연산을 GPU에서 처리하도록 설계한 전용 Solver를 개발해, 시뮬레이션 대기 시간을 획기적으로 줄였습니다. 자체 벤치마크 기준 최대 87배까지 단축되었습니다.",
+        "title2": "GPU Solver로, 시뮬레이션 시간을 107배 단축하세요",
+        "desc": "화재 시뮬레이션은 대규모 행렬 연산이 반복되는 계산 집약 작업입니다. BUL:C는 이 연산을 GPU에서 처리하도록 설계한 전용 Solver를 개발해, 시뮬레이션 대기 시간을 획기적으로 줄였습니다. 자체 벤치마크 기준 최대 107배까지 (Nvidia 4090) 단축되었습니다.",
         "feature1": "GPU 가속 Solver",
-        "feature2": "87배 단축",
+        "feature2": "107배 단축",
         "feature3": "대기 시간 감소"
       },
       "step4": {

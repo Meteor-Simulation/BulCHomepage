@@ -24,11 +24,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onPurchaseClick, onDownloadCl
       <div className="bulc-hero__container">
         <div className="bulc-hero__content">
           <h1 className="bulc-hero__title">
-            <span className="bulc-hero__title-gradient">
-              {t('bulc.hero.title2')}
-            </span>
+            <span className="bulc-hero__title-line">{t('bulc.hero.title2')}</span>
             <br />
-            {t('bulc.hero.title1')}
+            <span className="bulc-hero__title-line">{t('bulc.hero.titleMid')}</span>
+            <br />
+            <span className="bulc-hero__title-gradient">{t('bulc.hero.brand')}</span>
           </h1>
 
           <p className="bulc-hero__description">

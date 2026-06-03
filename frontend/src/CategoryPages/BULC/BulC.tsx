@@ -13,6 +13,7 @@ import { isSubdomainAccess } from '../../utils/subdomain';
 import {
   HeroSection,
   ComparisonSection,
+  SpecSection,
   CoreValuesSection,
   LogoMarqueeSection,
   WorkflowSection,
@@ -92,6 +93,7 @@ const BulCPage: React.FC = () => {
           <>
             <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
+            <SpecSection />
             <CoreValuesSection />
             <LogoMarqueeSection />
           </>
@@ -107,6 +109,7 @@ const BulCPage: React.FC = () => {
           <>
             <HeroSection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />
             <ComparisonSection />
+            <SpecSection />
             <CoreValuesSection />
             <LogoMarqueeSection />
           </>
