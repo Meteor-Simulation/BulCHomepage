@@ -7,11 +7,22 @@
 <script>
   window.MathJax = {
     tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+    svg: { fontCache: 'global' },
     options: { enableMenu: false }
   };
+  // MathJax 로더: 로컬 자체완결형 엔진(mathjax-tex-svg.js) 우선, 실패 시 CDN 폴백.
+  // 오프라인·방화벽·CSP 환경에서도 수식이 렌더되도록 외부 의존을 제거한다.
+  (function () {
+    function load(src, onerror) {
+      var s = document.createElement('script');
+      s.src = src; s.async = true; if (onerror) s.onerror = onerror;
+      document.head.appendChild(s);
+    }
+    load('mathjax-tex-svg.js', function () {
+      load('https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js');
+    });
+  })();
 </script>
-<!-- MathJax: 로컬 번들(오프라인/사내망에서도 수식 렌더링). CDN 의존 제거 -->
-<script async src="mathjax/tex-svg.js"></script>
 <style>
   :root {
     --primary: #0d47a1;
@@ -1411,6 +1422,25 @@ $$m_p \frac{d\mathbf{u}_p}{dt} = \frac{1}{2} \rho\, C_d\, A_p\, |\mathbf{u} - \m
   Staggered MAC Grid + cuFFT Poisson Solver + Deardorff LES + FVM6 Radiation + Lagrangian Particles<br>
   Implementation: Rust (host) + CUDA PTX (device) &bull; 93 GPU Kernels &bull; BULC(불씨) Engine<br>
   <span style="font-size:12px; opacity:0.8;">물리 모델 출처: NIST FDS Technical Reference Guide (SP 1018-1, 6th ed.) &bull; GPU: NVIDIA CUDA / cuFFT &bull; 자세한 내용은 <a href="#sec-references" style="color:var(--primary-light);">References</a> 참조</span>
+
+  <div style="max-width:900px; margin:30px auto 0; padding:22px 26px; border:1px solid #d6d6d6; border-radius:12px; background:#fafafa; text-align:left; line-height:1.75; color:#444;">
+    <div style="font-weight:700; color:#0d47a1; font-size:15px; margin-bottom:6px; text-align:center; letter-spacing:0.2px;">저작권 및 소유권 고지 &mdash; Copyright &amp; Ownership</div>
+    <div style="text-align:center; font-weight:700; font-size:13.5px; color:#222; margin-bottom:14px;">&copy; 2026 메테오 시뮬레이션 (Meteor Simulation). 모든 권리 보유 &middot; All Rights Reserved.</div>
+
+    <p style="margin:8px 0; font-size:12.5px;"><strong>문서 저작권 (Documentation).</strong> 본 기술 문서의 모든 텍스트, 도표, 수식 해설, 구성 및 편집 저작물은 메테오 시뮬레이션(Meteor Simulation)의 저작물입니다. 저작권자의 사전 서면 동의 없이 복제, 배포, 전송, 번역, 2차적 저작물 작성을 금합니다.</p>
+
+    <p style="margin:8px 0; font-size:12.5px;"><strong>소프트웨어 소유권 (Software).</strong> FDS(GPU) &mdash; BULC(불씨) 엔진의 소스 코드(Rust 호스트 + CUDA 커널), GPU 병렬화 설계, 커널 구현, 수치 최적화 및 알고리즘 구성은 메테오 시뮬레이션의 독점 자산(proprietary)이자 영업비밀입니다. 무단 사용, 복제, 배포, 역공학(reverse engineering)을 금합니다.</p>
+
+    <p style="margin:8px 0; font-size:12.5px;"><strong>원 물리모델 출처 (Underlying Models).</strong> 본 엔진이 구현하는 화재역학 수학·물리 모델은 미국 표준기술연구소(NIST)의 Fire Dynamics Simulator (FDS, NIST Special Publication 1018-1)에 기반합니다. FDS는 미국 정부 저작물로서 공개되어 있으며, 본 GPU 구현은 이를 <strong>독립적으로 재구현·가속</strong>한 것입니다. NIST는 본 소프트웨어를 보증하거나 추천하지 않으며, 본 제품과 어떠한 제휴 관계도 없습니다.</p>
+
+    <p style="margin:8px 0; font-size:12.5px;"><strong>상표 (Trademark).</strong> &ldquo;BULC&rdquo;, &ldquo;불씨&rdquo;는 메테오 시뮬레이션의 상표입니다.</p>
+
+    <p style="margin:8px 0; font-size:12.5px;"><strong>무보증 및 면책 (Disclaimer &amp; No Warranty).</strong> 메테오 시뮬레이션은 FDS(GPU) &mdash; BULC(불씨) 소프트웨어 및 본 문서에 대하여 명시적이든 묵시적이든 어떠한 보증(상품성, 특정 목적에의 적합성 등을 포함하되 이에 한정되지 않음)도 하지 않으며, 그 사용에 대하여 어떠한 책임도 지지 않습니다. 사용자는 특정 응용에서의 적합성 판단, 결과로부터 도출된 결론, 그리고 본 도구를 이용한 해석의 결과로 취하거나 취하지 않은 모든 조치에 대하여 전적인 책임을 부담합니다. 본 소프트웨어는 유체역학, 열전달, 연소 및 화재 동역학 분야에 능숙한 전문가의 사용을 전제로 하며, 산출된 결과는 반드시 자격을 갖춘 전문가의 공학적 판단으로 검증되어야 합니다.</p>
+
+    <p style="margin:14px 0 0; font-size:11.5px; color:#777; border-top:1px dashed #ccc; padding-top:12px;">&copy; 2026 Meteor Simulation. All rights reserved. This document and the FDS(GPU) / BULC engine source code (Rust host + CUDA kernels), including its GPU parallelization design, kernel implementations, and numerical optimizations, are proprietary works and trade secrets of Meteor Simulation. The underlying fire-dynamics models are based on the U.S. National Institute of Standards and Technology (NIST) Fire Dynamics Simulator (NIST SP 1018-1), a public-domain U.S. Government work; this GPU implementation is an independent re-implementation and is neither endorsed by nor affiliated with NIST. Unauthorized reproduction, distribution, translation, or reverse engineering is prohibited.</p>
+
+    <p style="margin:8px 0 0; font-size:11.5px; color:#777;"><strong>Disclaimer &amp; No Warranty.</strong> Meteor Simulation makes no warranty, expressed or implied &mdash; including, without limitation, any warranty of merchantability or fitness for a particular purpose &mdash; with respect to the FDS(GPU) / BULC software or this document, and accepts no responsibility for their use. Users assume sole responsibility for determining the appropriateness of use in any particular application, for any conclusions drawn from the results, and for any actions taken or not taken as a result of analyses performed using these tools. This software is intended for use only by those competent in the fields of fluid dynamics, heat transfer, combustion, and fire dynamics, and all results must be verified by qualified professional engineering judgment.</p>
+  </div>
 </footer>
 
 </body>
