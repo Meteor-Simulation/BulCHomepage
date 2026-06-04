@@ -165,7 +165,7 @@
     },
     "spec": {
       "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
-      "physics": { "label": "Physics", "value": "FDS-Compatible Model", "desc": "Validated vs. NIST FDS & experiments" },
+      "physics": { "label": "Physics", "value": "FDS Physics Model", "desc": "Validated vs. NIST FDS & experiments" },
       "standard": { "label": "Standard", "value": "NIST FDS", "desc": "Internationally adopted fire-analysis code" },
       "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
       "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
@@ -180,8 +180,8 @@
           "desc": "A purpose-built GPU Solver parallelizes large-scale matrix operations, cutting analysis time by up to 107x versus CPU in our internal benchmark."
         },
         "fds": {
-          "title": "FDS-Compatible Fire & Smoke Analysis",
-          "desc": "Follows the same fire physics as FDS to analyze smoke transport, temperature, and heat transfer; results are validated against NIST FDS and experimental data."
+          "title": "NIST FDS · GPU Dual Solver",
+          "desc": "Run the NIST FDS (CPU) solver directly, or accelerate with the in-house GPU solver — validated against NIST FDS results and experimental data."
         },
         "evac": {
           "title": "EVAC Evacuation Simulation",
@@ -213,7 +213,7 @@
       "title": "",
       "accuracy": {
         "title": "Accuracy",
-        "desc": "Precision is non-negotiable when lives are at stake. BUL:C's in-house GPU solver is validated against NIST FDS results and experimental data, supporting reliable analysis for performance-based design (PBD) and fire safety review.",
+        "desc": "Precision is non-negotiable when lives are at stake. BUL:C lets you run the NIST FDS (CPU) solver or its own GPU solver, with the GPU solver validated against NIST FDS results and experimental data — supporting reliable analysis for performance-based design (PBD) and fire safety review.",
         "check1": "Validated against NIST FDS results and experimental data",
         "check2": "Smoke transport, temperature, and heat-transfer analysis"
       },

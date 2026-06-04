@@ -165,7 +165,7 @@
     },
     "spec": {
       "solver": { "label": "Solver", "suffix": "가속", "desc": "GPU 코어에서 병렬 처리" },
-      "physics": { "label": "Physics", "value": "FDS 호환 모델", "desc": "NIST FDS·실험 데이터 대비 검증" },
+      "physics": { "label": "Physics", "value": "FDS 물리 모델", "desc": "NIST FDS·실험 데이터 대비 검증" },
       "standard": { "label": "Standard", "value": "NIST FDS", "desc": "국제적으로 통용되는 화재 해석 표준 코드" },
       "analysis": { "label": "Analysis", "value": "화재-피난 연동", "desc": "EVAC 연계 통합 해석" },
       "library": { "label": "Library", "value": "화재 라이브러리", "desc": "미리설정된 화재 시나리오 라이브러리" }
@@ -180,8 +180,8 @@
           "desc": "전용 GPU Solver가 대규모 행렬 연산을 병렬 처리해, 자체 벤치마크 기준 CPU 대비 최대 107배까지 해석 시간을 단축합니다."
         },
         "fds": {
-          "title": "FDS 호환 화재·연기 해석",
-          "desc": "FDS와 동일한 물리 모델 기반으로 연기 이동·온도 분포·열전달을 해석하고, 결과는 NIST FDS 및 실험 데이터와 비교 검증되었습니다."
+          "title": "NIST FDS · GPU 듀얼 솔버",
+          "desc": "NIST FDS(CPU)를 그대로 사용하거나 자체 GPU 솔버로 가속할 수 있습니다. GPU 솔버는 NIST FDS 결과 및 실험 데이터와 비교 검증되었습니다."
         },
         "evac": {
           "title": "EVAC 피난 시뮬레이션",
@@ -213,7 +213,7 @@
       "title": "",
       "accuracy": {
         "title": "정확성",
-        "desc": "생명이 걸린 문제에서 정밀도는 타협할 수 없습니다. BUL:C의 자체 GPU 솔버는 NIST FDS 결과 및 실험 데이터와 비교 검증되었으며, 성능위주설계(PBD)와 화재 안전 검토에 필요한 신뢰도 높은 결과 산출을 지원합니다.",
+        "desc": "생명이 걸린 문제에서 정밀도는 타협할 수 없습니다. BUL:C는 NIST FDS(CPU)와 자체 GPU 솔버를 선택해 사용할 수 있으며, GPU 솔버는 NIST FDS 결과 및 실험 데이터와 비교 검증되었습니다. 성능위주설계(PBD)와 화재 안전 검토에 필요한 신뢰도 높은 결과 산출을 지원합니다.",
         "check1": "NIST FDS 결과·실험 데이터와 비교 검증",
         "check2": "연기 이동·온도 분포·열전달 해석"
       },
