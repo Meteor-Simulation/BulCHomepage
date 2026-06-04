@@ -128,7 +128,7 @@
       "title1": "for Fire Safety Engineering",
       "title2": "Fast FDS Calculation",
       "titleMid": "Powered by GPU",
-      "brand": "BULC-불씨",
+      "brand": "BUL:C",
       "description": "Performance-based fire design software, GPU-accelerated ultra-fast analysis, preconfigured libraries, fire–evacuation linked analysis, AI auto-configuration",
       "startFree": "Free Download",
       "downloadAlert": "Please log in to download.",
@@ -165,7 +165,7 @@
     },
     "spec": {
       "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
-      "physics": { "label": "Physics", "value": "FDS Physics Model", "desc": "Validated fire & smoke behavior analysis" },
+      "physics": { "label": "Physics", "value": "FDS-Compatible Model", "desc": "Validated vs. NIST FDS & experiments" },
       "standard": { "label": "Standard", "value": "NIST FDS", "desc": "Internationally adopted fire-analysis code" },
       "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
       "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
@@ -180,8 +180,8 @@
           "desc": "A purpose-built GPU Solver parallelizes large-scale matrix operations, cutting analysis time by up to 107x versus CPU in our internal benchmark."
         },
         "fds": {
-          "title": "FDS-Based Fire & Smoke Analysis",
-          "desc": "Built on NIST's validated FDS physics, it analyzes key fire behavior such as smoke transport, temperature distribution, and heat transfer."
+          "title": "FDS-Compatible Fire & Smoke Analysis",
+          "desc": "Follows the same fire physics as FDS to analyze smoke transport, temperature, and heat transfer; results are validated against NIST FDS and experimental data."
         },
         "evac": {
           "title": "EVAC Evacuation Simulation",
@@ -213,8 +213,8 @@
       "title": "",
       "accuracy": {
         "title": "Accuracy",
-        "desc": "Precision is non-negotiable when lives are at stake. Built on NIST's validated FDS fire and smoke physics, BUL:C supports reliable analysis for performance-based design (PBD) and fire safety review.",
-        "check1": "Based on published FDS validation cases",
+        "desc": "Precision is non-negotiable when lives are at stake. BUL:C's in-house GPU solver is validated against NIST FDS results and experimental data, supporting reliable analysis for performance-based design (PBD) and fire safety review.",
+        "check1": "Validated against NIST FDS results and experimental data",
         "check2": "Smoke transport, temperature, and heat-transfer analysis"
       },
       "speed": {
