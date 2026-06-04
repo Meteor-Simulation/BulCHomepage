@@ -149,7 +149,7 @@ const TutorialHubSection: React.FC = () => {
         </div>
 
         <div className="bulc-guide__list">
-          {ITEMS.map((item) => {
+          {ITEMS.filter((item) => item.status !== 'wip').map((item) => {
             const { key, Icon, status, href } = item;
             const isWip = status === 'wip';
             return (

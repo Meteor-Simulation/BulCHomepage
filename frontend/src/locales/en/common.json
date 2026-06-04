@@ -130,7 +130,7 @@
       "titleMid": "Powered by GPU",
       "brand": "BUL:C",
       "description": "Performance-based fire design software, GPU-accelerated ultra-fast analysis, preconfigured libraries, fire–evacuation linked analysis, AI auto-configuration",
-      "startFree": "Free Download",
+      "startFree": "Start 14-Day Free Trial",
       "downloadAlert": "Please log in to download.",
       "watchDemo": "Watch Demo",
       "videoTitle": "BUL:C Interface Walkthrough",
@@ -167,7 +167,7 @@
       "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
       "physics": { "label": "Physics", "value": "FDS Physics Model", "desc": "Validated vs. NIST FDS & experiments" },
       "standard": { "label": "Standard", "value": "NIST FDS", "desc": "Internationally adopted fire-analysis code" },
-      "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
+      "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis with ASET/RSET" },
       "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
     },
     "features": {
@@ -185,7 +185,7 @@
         },
         "evac": {
           "title": "EVAC Evacuation Simulation",
-          "desc": "Supports collision, social-force, and multi-floor evacuation models, linked with fire analysis to review evacuation safety together."
+          "desc": "Supports collision, social-force, and multi-floor evacuation models, linked with fire analysis to review evacuation safety against ASET (available safe egress time) and RSET (required safe egress time)."
         },
         "aset": {
           "title": "Automated ASET/RSET Analysis",
@@ -213,15 +213,15 @@
       "title": "",
       "accuracy": {
         "title": "Accuracy",
-        "desc": "Precision is non-negotiable when lives are at stake. BUL:C lets you run the NIST FDS (CPU) solver or its own GPU solver, with the GPU solver validated against NIST FDS results and experimental data — supporting reliable analysis for performance-based design (PBD) and fire safety review.",
+        "desc": "When life safety is on the line, the precision of fire analysis is a non-negotiable, top priority. BUL:C lets you run the NIST FDS (CPU) solver or its own GPU solver, with the GPU solver validated against NIST FDS results and experimental data — supporting reliable analysis for performance-based design (PBD) and fire safety review.",
         "check1": "Validated against NIST FDS results and experimental data",
         "check2": "Smoke transport, temperature, and heat-transfer analysis"
       },
       "speed": {
         "title": "Unrivaled Speed",
-        "desc": "Time is money. By offloading complex calculations to GPU, what used to take days now takes hours. Iterate faster and deliver results sooner.",
+        "desc": "Shorter analysis lead times are a direct competitive advantage. By offloading complex calculations to the GPU, work that once took days now takes hours — so you iterate faster and deliver sooner.",
         "check1": "Parallel processing on GPU cores",
-        "check2": "Up to 107x faster analysis (based on Nvidia 4090)"
+        "check2": "Up to 107x faster analysis vs. CPU (RTX 4090)"
       },
       "automation": {
         "title": "AI Automation",
