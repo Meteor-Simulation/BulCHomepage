@@ -234,12 +234,6 @@
   font-weight: 500;
 }
 
-.plan-badge--evac {
-  background: rgba(196, 50, 10, 0.1);
-  color: var(--accent, #C4320A);
-  border: 1px solid rgba(196, 50, 10, 0.3);
-}
-
 .plan-badge--subscription {
   background: var(--accent, #C4320A);
   color: #fff;
