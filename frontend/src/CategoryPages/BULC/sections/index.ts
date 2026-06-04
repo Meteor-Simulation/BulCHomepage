@@ -7,3 +7,4 @@ export { default as WorkflowSection } from './WorkflowSection';
 export { default as CTASection } from './CTASection';
 export { default as PriceSection } from './PriceSection';
 export { default as TutorialHubSection } from './TutorialHubSection';
+export { default as FeaturesSection } from './FeaturesSection';

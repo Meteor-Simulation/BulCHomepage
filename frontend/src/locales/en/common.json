@@ -112,6 +112,7 @@
   "bulc": {
     "nav": {
       "intro": "Intro",
+      "features": "Features",
       "comparison": "Comparison",
       "coreValues": "Core Values",
       "workflow": "Workflow",
@@ -133,7 +134,7 @@
       "downloadAlert": "Please log in to download.",
       "watchDemo": "Watch Demo",
       "videoTitle": "BUL:C Interface Walkthrough",
-      "videoSubtitle": "See how automation saves 40+ hours per project"
+      "videoSubtitle": "See how our automation reduces repetitive setup work"
     },
     "comparison": {
       "label": "Comparison",
@@ -152,7 +153,7 @@
         "problem1": "Days of CPU rendering",
         "problem2": "Bottlenecked by hardware",
         "solutionTitle": "GPU Acceleration",
-        "solutionDesc": "Leverage cloud GPUs to run simulations 100x faster than local CPUs."
+        "solutionDesc": "With GPU acceleration, run simulations up to 107x faster than local CPUs."
       },
       "card3": {
         "title": "Static Reporting",
@@ -164,18 +165,57 @@
     },
     "spec": {
       "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
-      "physics": { "label": "Physics", "value": "FDS Physics Engine", "desc": "Validated fire physics model" },
-      "standard": { "label": "Standard", "value": "NIST Verified", "desc": "Meets strict international safety standards" },
+      "physics": { "label": "Physics", "value": "FDS Physics Model", "desc": "Validated fire & smoke behavior analysis" },
+      "standard": { "label": "Standard", "value": "NIST FDS", "desc": "Internationally adopted fire-analysis code" },
       "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
       "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
+    },
+    "features": {
+      "eyebrow": "FEATURES",
+      "title": "Features",
+      "subtitle": "See the core capabilities BUL:C provides at a glance.",
+      "items": {
+        "gpu": {
+          "title": "GPU-Accelerated Solver",
+          "desc": "A purpose-built GPU Solver parallelizes large-scale matrix operations, cutting analysis time by up to 107x versus CPU in our internal benchmark."
+        },
+        "fds": {
+          "title": "FDS-Based Fire & Smoke Analysis",
+          "desc": "Built on NIST's validated FDS physics, it analyzes key fire behavior such as smoke transport, temperature distribution, and heat transfer."
+        },
+        "evac": {
+          "title": "EVAC Evacuation Simulation",
+          "desc": "Supports collision, social-force, and multi-floor evacuation models, linked with fire analysis to review evacuation safety together."
+        },
+        "aset": {
+          "title": "Automated ASET/RSET Analysis",
+          "desc": "Automatically analyzes results in the ASET/RSET framework, quantifying compliance margins and safety headroom."
+        },
+        "recognition": {
+          "title": "AI Floor Plan Recognition",
+          "desc": "Recognizes CAD drawings with AI and aligns scale and coordinates to auto-generate the initial setup. (iOS RoomPlan spatial scanning coming soon)"
+        },
+        "mcp": {
+          "title": "MCP Natural-Language Setup & Code Reference",
+          "desc": "Fire codes, standards, and regulations are connected via MCP, letting AI reference them to assist natural-language setup and review."
+        },
+        "library": {
+          "title": "Standard & Specialized Libraries",
+          "desc": "Standard templates (apartment, officetel) and specialized libraries (factory, semiconductor, EV, battery) reduce repetitive configuration."
+        },
+        "report": {
+          "title": "Automated Report Generation",
+          "desc": "Automatically generates interactive web reports and standard PDFs, including compliance-review tables and contours."
+        }
+      }
     },
     "coreValues": {
       "title": "",
       "accuracy": {
         "title": "Accuracy",
-        "desc": "Precision is non-negotiable when lives are at stake. BUL:C uses a validated FDS (NIST) fire physics engine, ensuring every simulation meets rigorous international safety standards.",
-        "check1": "Validated against real-world fire tests",
-        "check2": "Precise smoke and heat propagation models"
+        "desc": "Precision is non-negotiable when lives are at stake. Built on NIST's validated FDS fire and smoke physics, BUL:C supports reliable analysis for performance-based design (PBD) and fire safety review.",
+        "check1": "Based on published FDS validation cases",
+        "check2": "Smoke transport, temperature, and heat-transfer analysis"
       },
       "speed": {
         "title": "Unrivaled Speed",
@@ -185,7 +225,7 @@
       },
       "automation": {
         "title": "AI Automation",
-        "desc": "Leverage a fire-safety domain RAG database with AI library-based automation. From AI-powered CAD drawing recognition to compliance report generation, the entire pipeline is automated. Focus on engineering, not paperwork.",
+        "desc": "Fire codes, standards, and regulations are connected through MCP, letting AI reference them to answer questions and assist setup. From AI-powered CAD drawing recognition to compliance-review reporting, the entire pipeline is automated. Focus on engineering, not paperwork.",
         "check1": "Validated library",
         "check2": "AI-based automation",
         "check3": "One-click report generation"
@@ -212,10 +252,10 @@
       },
       "step3": {
         "title1": "Simulate",
-        "title2": "Cut simulation time by 107x with GPU Solver",
-        "desc": "Fire simulation is a compute-intensive task involving repeated large-scale matrix operations. BUL:C features a purpose-built Solver designed to process these operations on GPUs, dramatically reducing simulation wait times — up to 107x faster based on our internal benchmarks (Nvidia 4090).",
+        "title2": "Cut simulation time by up to 107x with GPU Solver",
+        "desc": "Fire simulation is a compute-intensive task involving repeated large-scale matrix operations. BUL:C features a purpose-built Solver designed to process these operations on GPUs, dramatically reducing simulation wait times — up to 107x faster based on our internal benchmark (AMD Ryzen 9 7950X CPU vs. NVIDIA RTX 4090 GPU; 0.1 m mesh, ~120k cells, 100 s simulation).",
         "feature1": "GPU-accelerated Solver",
-        "feature2": "107x faster",
+        "feature2": "Up to 107x faster",
         "feature3": "Reduced wait time"
       },
       "step4": {
@@ -340,7 +380,7 @@
     },
     "cta": {
       "title": "Ready to automate your simulations?",
-      "subtitle": "Join 500+ fire safety engineers who have switched to BUL:C.",
+      "subtitle": "Join fire safety engineers who have switched to BUL:C.",
       "button": "Free Download",
       "downloadBtn": "Download Program",
       "faqs": [

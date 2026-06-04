@@ -37,7 +37,7 @@ const YOUTUBE_URL = 'https://www.youtube.com/@SimulationMeteor';
 // 기술문서(테크니컬 가이드북) HTML 경로 — 새 창으로 열립니다. (frontend/public/tech-docs/)
 const TECH_GUIDE_HTML_URL = '/tech-docs/technical-doc.html';
 
-// PDF 자료 경로 (파일이 준비되면 아래 경로를 채워주세요. 비어 있으면 '준비 중'으로 안내됩니다.)
+// PDF 자료 경로 (파일이 준비되면 아래 경로를 채우고, ITEMS의 tutorialDoc status를 'active'로 변경하세요.)
 const TUTORIAL_PDF_URL = '';
 
 type GuideView = 'hub' | 'video' | 'tutorialDoc' | 'usage' | 'techGuide';
@@ -53,7 +53,7 @@ interface GuideItem {
 
 const ITEMS: GuideItem[] = [
   { key: 'video', Icon: PlayCircle, status: 'active' },
-  { key: 'tutorialDoc', Icon: FileText, status: 'active' },
+  { key: 'tutorialDoc', Icon: FileText, status: 'wip' },
   { key: 'usage', Icon: BookOpen, status: 'wip' },
   { key: 'techGuide', Icon: Cpu, status: 'active', href: TECH_GUIDE_HTML_URL },
 ];

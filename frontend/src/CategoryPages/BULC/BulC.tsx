@@ -20,12 +20,14 @@ import {
   CTASection,
   PriceSection,
   TutorialHubSection,
+  FeaturesSection,
 } from './sections';
 
 const BulCPage: React.FC = () => {
   const { t } = useTranslation();
   const SUB_NAV_ITEMS = useMemo(() => [
     { id: 'hero', label: t('bulc.nav.intro') },
+    { id: 'features', label: t('bulc.nav.features') },
     { id: 'workflow', label: t('bulc.nav.workflow') },
     { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
@@ -99,6 +101,8 @@ const BulCPage: React.FC = () => {
             <LogoMarqueeSection />
           </>
         );
+      case 'features':
+        return <FeaturesSection />;
       case 'workflow':
         return <WorkflowSection />;
       case 'price':
