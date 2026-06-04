@@ -53,8 +53,9 @@ public class LeadContactAdminController {
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String sourceEvent,
             @RequestParam(defaultValue = "false") boolean activeOnly,
+            @RequestParam(defaultValue = "false") boolean inactiveOnly,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, activeOnly, pageable);
+        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, activeOnly, inactiveOnly, pageable);
         return ResponseEntity.ok(page.map(LeadContactResponse::from));
     }
 
@@ -83,6 +84,12 @@ public class LeadContactAdminController {
             @Valid @RequestBody(required = false) LeadContactUnsubscribeRequest req) {
         String reason = req == null ? null : req.getReason();
         return ResponseEntity.ok(LeadContactResponse.from(leadContactService.unsubscribeById(id, reason)));
+    }
+
+    /** 관리자가 비활성 컨택을 다시 활성화 (수신 재개) */
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<LeadContactResponse> reactivate(@PathVariable Long id) {
+        return ResponseEntity.ok(LeadContactResponse.from(leadContactService.reactivateById(id)));
     }
 
     /**

@@ -103,12 +103,17 @@ public class LeadContactService {
     }
 
     private static final List<DateTimeFormatter> DATE_FORMATS = List.of(
-            DateTimeFormatter.ISO_LOCAL_DATE,                  // 2026-06-04
+            DateTimeFormatter.ISO_LOCAL_DATE,                       // 2026-06-04
             DateTimeFormatter.ofPattern("yyyy.MM.dd"),
             DateTimeFormatter.ofPattern("yyyy/MM/dd"),
             DateTimeFormatter.ofPattern("yyyy. M. d"),
             DateTimeFormatter.ofPattern("yyyy-M-d"),
-            DateTimeFormatter.ofPattern("M/d/yyyy")
+            DateTimeFormatter.ofPattern("M/d/yyyy"),
+            // 한글 표기 (zero-pad / 1자리 모두 허용)
+            DateTimeFormatter.ofPattern("yyyy'년' MM'월' dd'일'"),
+            DateTimeFormatter.ofPattern("yyyy'년' M'월' d'일'"),
+            DateTimeFormatter.ofPattern("yyyy'년'MM'월'dd'일'"),
+            DateTimeFormatter.ofPattern("yyyy'년'M'월'd'일'")
     );
 
     // ---- CRUD --------------------------------------------------------------
@@ -196,7 +201,8 @@ public class LeadContactService {
 
     @Transactional(readOnly = true)
     public Page<LeadContact> search(String emailQ, String nameQ, String companyQ,
-                                    String tagQ, String sourceEventQ, boolean activeOnly,
+                                    String tagQ, String sourceEventQ,
+                                    boolean activeOnly, boolean inactiveOnly,
                                     Pageable pageable) {
         return leadContactRepository.search(
                 nullToEmpty(emailQ),
@@ -205,6 +211,7 @@ public class LeadContactService {
                 nullToEmpty(tagQ),
                 nullToEmpty(sourceEventQ),
                 activeOnly,
+                inactiveOnly,
                 pageable
         );
     }
@@ -214,6 +221,21 @@ public class LeadContactService {
         LeadContact c = findById(id);
         if (c.isActive()) {
             c.markUnsubscribed(reason);
+            leadContactRepository.save(c);
+        }
+        return c;
+    }
+
+    /**
+     * 관리자 재활성화. unsubscribed_at / unsubscribe_reason 초기화.
+     * <p>opt_in_marketing / opt_in_transactional 은 그대로 유지 (별도 동의 갱신은 필요 시 update API 사용).
+     */
+    @Transactional
+    public LeadContact reactivateById(Long id) {
+        LeadContact c = findById(id);
+        if (!c.isActive()) {
+            c.setUnsubscribedAt(null);
+            c.setUnsubscribeReason(null);
             leadContactRepository.save(c);
         }
         return c;
@@ -243,16 +265,23 @@ public class LeadContactService {
      */
     @Transactional
     public LeadContactImportResult importFile(MultipartFile file, UUID adminId) {
-        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
-        List<List<String>> rows;
+        byte[] bytes;
         try {
-            if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
-                rows = readExcel(file);
-            } else {
-                rows = readCsv(file);
-            }
+            bytes = file.getBytes();
         } catch (IOException e) {
             throw new RuntimeException("파일을 읽는 중 오류: " + e.getMessage(), e);
+        }
+
+        List<List<String>> rows;
+        try {
+            if (isExcelBytes(bytes)) {
+                // 확장자가 .csv 여도 실제 내용이 Excel(XLSX/XLS)이면 Excel로 처리
+                rows = readExcelBytes(bytes);
+            } else {
+                rows = readCsvBytes(bytes);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("파일 파싱 오류: " + e.getMessage(), e);
         }
 
         if (rows.isEmpty()) {
@@ -262,7 +291,16 @@ public class LeadContactService {
         List<String> headerRow = rows.get(0);
         Map<String, Integer> colIdx = resolveHeader(headerRow);
         if (!colIdx.containsKey("email")) {
-            throw new IllegalArgumentException("헤더에 이메일 컬럼이 필요합니다 (전자 메일 주소 / 이메일 / email).");
+            // 디버그용: 원본 헤더 + canonicalize 결과 함께 노출
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < headerRow.size(); i++) {
+                String raw = headerRow.get(i);
+                sb.append("[").append(i).append("] '").append(raw == null ? "" : raw)
+                  .append("' → canonical='").append(canonicalize(raw)).append("'; ");
+            }
+            throw new IllegalArgumentException(
+                    "헤더에 이메일 컬럼이 필요합니다 (전자 메일 주소 / 이메일 / email). 인식된 헤더: " + sb
+            );
         }
 
         int total = 0;
@@ -331,9 +369,27 @@ public class LeadContactService {
 
     // ---- helpers -----------------------------------------------------------
 
-    private List<List<String>> readCsv(MultipartFile file) throws IOException {
+    /**
+     * 파일 내용(magic bytes)이 Excel 인지 검사.
+     * XLSX = ZIP(PK\x03\x04), XLS = CFB/OLE2(D0CF11E0A1B11AE1)
+     */
+    private static boolean isExcelBytes(byte[] bytes) {
+        if (bytes == null || bytes.length < 4) return false;
+        // XLSX/ZIP signature
+        if (bytes[0] == 'P' && bytes[1] == 'K' && bytes[2] == 0x03 && bytes[3] == 0x04) return true;
+        // XLS / CFB signature
+        if (bytes.length >= 8
+                && (bytes[0] & 0xFF) == 0xD0 && (bytes[1] & 0xFF) == 0xCF
+                && (bytes[2] & 0xFF) == 0x11 && (bytes[3] & 0xFF) == 0xE0
+                && (bytes[4] & 0xFF) == 0xA1 && (bytes[5] & 0xFF) == 0xB1
+                && (bytes[6] & 0xFF) == 0x1A && (bytes[7] & 0xFF) == 0xE1) return true;
+        return false;
+    }
+
+    private List<List<String>> readCsvBytes(byte[] bytes) throws IOException {
         List<List<String>> rows = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new java.io.ByteArrayInputStream(bytes), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 rows.add(parseCsvLine(line));
@@ -342,10 +398,10 @@ public class LeadContactService {
         return rows;
     }
 
-    private List<List<String>> readExcel(MultipartFile file) throws IOException {
+    private List<List<String>> readExcelBytes(byte[] bytes) throws IOException {
         List<List<String>> rows = new ArrayList<>();
         DataFormatter formatter = new DataFormatter();
-        try (InputStream is = file.getInputStream();
+        try (InputStream is = new java.io.ByteArrayInputStream(bytes);
              Workbook workbook = WorkbookFactory.create(is)) {
             Sheet sheet = workbook.getSheetAt(0);
             int lastRow = sheet.getLastRowNum();
@@ -378,7 +434,14 @@ public class LeadContactService {
 
     private static String canonicalize(String header) {
         if (header == null) return null;
-        String key = header.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+        String key = header
+                .replace("﻿", "")          // UTF-8 BOM
+                .replace(" ", "")          // non-breaking space (NBSP)
+                .replace("​", "")          // zero-width space
+                .replace("　", "")          // CJK 전각 공백
+                .trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[\\s\\p{Z}]+", ""); // 일반·Unicode 공백 일괄 제거
         return HEADER_ALIASES.get(key);
     }
 
@@ -398,7 +461,8 @@ public class LeadContactService {
 
     private static LocalDate parseFlexibleDate(String s) {
         if (s == null || s.isBlank()) return null;
-        String v = s.trim();
+        // 다중 공백 단일화, 양끝 공백 제거
+        String v = s.trim().replaceAll("\\s+", " ");
         for (DateTimeFormatter fmt : DATE_FORMATS) {
             try {
                 return LocalDate.parse(v, fmt);

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getApiBaseUrl } from '../../../utils/api';
 import { useAlert } from '../../../components/AlertProvider';
 import './AdminMailingPanel.css';
@@ -94,14 +94,8 @@ const CONSENT_METHODS = [
   { value: 'import', label: '일괄 임포트' },
 ];
 
-const PAGE_SIZE = 20;
-
-const formatDate = (iso?: string | null) => {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return iso;
-  return d.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-};
+const ACTIVE_PAGE_SIZE = 10;
+const INACTIVE_PAGE_SIZE = 20;
 
 const formatDateOnly = (iso?: string | null) => {
   if (!iso) return '';
@@ -115,21 +109,25 @@ const AdminMailingPanel: React.FC = () => {
   const [filterEmail, setFilterEmail] = useState('');
   const [filterName, setFilterName] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
-  const [filterTag, setFilterTag] = useState('');
-  const [filterSourceEvent, setFilterSourceEvent] = useState('');
-  const [activeOnly, setActiveOnly] = useState(true);
 
   // 적용된 검색 조건 (실제 fetch에 쓰임)
   const [appliedFilters, setAppliedFilters] = useState({
-    email: '', name: '', company: '', tag: '', sourceEvent: '', activeOnly: true,
+    email: '', name: '', company: '',
   });
 
-  // 페이징
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [contacts, setContacts] = useState<LeadContact[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // 활성 섹션
+  const [activeContacts, setActiveContacts] = useState<LeadContact[]>([]);
+  const [activePage, setActivePage] = useState(0);
+  const [activeTotalPages, setActiveTotalPages] = useState(0);
+  const [activeTotalElements, setActiveTotalElements] = useState(0);
+  const [isLoadingActive, setIsLoadingActive] = useState(false);
+
+  // 비활성 섹션
+  const [inactiveContacts, setInactiveContacts] = useState<LeadContact[]>([]);
+  const [inactivePage, setInactivePage] = useState(0);
+  const [inactiveTotalPages, setInactiveTotalPages] = useState(0);
+  const [inactiveTotalElements, setInactiveTotalElements] = useState(0);
+  const [isLoadingInactive, setIsLoadingInactive] = useState(false);
 
   // 등록/편집 모달
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -144,60 +142,74 @@ const AdminMailingPanel: React.FC = () => {
   const [csvDragOver, setCsvDragOver] = useState(false);
   const [csvResult, setCsvResult] = useState<{ totalRows: number; registered: number; skipped: number; errors: { rowNumber: number; email: string; message: string }[] } | null>(null);
 
-  // 해지 입력
+  // 수신 비활성 입력
   const [unsubReasonModal, setUnsubReasonModal] = useState<{ id: number; email: string } | null>(null);
   const [unsubReason, setUnsubReason] = useState('');
 
-  const fetchContacts = useCallback(async () => {
-    setIsLoading(true);
+  const fetchSection = useCallback(async (isActiveSection: boolean, pageNum: number) => {
+    const setLoading = isActiveSection ? setIsLoadingActive : setIsLoadingInactive;
+    const setContacts = isActiveSection ? setActiveContacts : setInactiveContacts;
+    const setTotalPagesFn = isActiveSection ? setActiveTotalPages : setInactiveTotalPages;
+    const setTotalElementsFn = isActiveSection ? setActiveTotalElements : setInactiveTotalElements;
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (appliedFilters.email) params.set('email', appliedFilters.email);
       if (appliedFilters.name) params.set('name', appliedFilters.name);
       if (appliedFilters.company) params.set('company', appliedFilters.company);
-      if (appliedFilters.tag) params.set('tag', appliedFilters.tag);
-      if (appliedFilters.sourceEvent) params.set('sourceEvent', appliedFilters.sourceEvent);
-      params.set('activeOnly', String(appliedFilters.activeOnly));
-      params.set('page', String(page));
-      params.set('size', String(PAGE_SIZE));
+      if (isActiveSection) {
+        params.set('activeOnly', 'true');
+      } else {
+        params.set('inactiveOnly', 'true');
+      }
+      params.set('page', String(pageNum));
+      params.set('size', String(isActiveSection ? ACTIVE_PAGE_SIZE : INACTIVE_PAGE_SIZE));
 
       const res = await fetch(`${API}/api/v1/admin/lead-contacts?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) {
-        showAlert({ message: '컨택 목록 조회 실패', type: 'error' });
+        showAlert({ message: `${isActiveSection ? '활성' : '비활성'} 목록 조회 실패`, type: 'error' });
         return;
       }
       const data: PageResponse<LeadContact> = await res.json();
       setContacts(data.content);
-      setTotalPages(data.totalPages);
-      setTotalElements(data.totalElements);
+      setTotalPagesFn(data.totalPages);
+      setTotalElementsFn(data.totalElements);
     } catch {
-      showAlert({ message: '컨택 목록 조회 중 오류', type: 'error' });
+      showAlert({ message: '목록 조회 중 오류', type: 'error' });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [appliedFilters, page, showAlert]);
+  }, [appliedFilters, showAlert]);
 
+  // 활성 섹션 페이지/필터 변경 시
   useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
+    fetchSection(true, activePage);
+  }, [fetchSection, activePage]);
+
+  // 비활성 섹션 페이지/필터 변경 시
+  useEffect(() => {
+    fetchSection(false, inactivePage);
+  }, [fetchSection, inactivePage]);
+
+  const refreshBoth = async () => {
+    await Promise.all([fetchSection(true, activePage), fetchSection(false, inactivePage)]);
+  };
 
   const handleApplySearch = () => {
     setAppliedFilters({
       email: filterEmail.trim(),
       name: filterName.trim(),
       company: filterCompany.trim(),
-      tag: filterTag.trim(),
-      sourceEvent: filterSourceEvent.trim(),
-      activeOnly,
     });
-    setPage(0);
+    setActivePage(0);
+    setInactivePage(0);
   };
 
   const handleResetSearch = () => {
     setFilterEmail(''); setFilterName(''); setFilterCompany('');
-    setFilterTag(''); setFilterSourceEvent(''); setActiveOnly(true);
-    setAppliedFilters({ email: '', name: '', company: '', tag: '', sourceEvent: '', activeOnly: true });
-    setPage(0);
+    setAppliedFilters({ email: '', name: '', company: '' });
+    setActivePage(0);
+    setInactivePage(0);
   };
 
   // ---- Form CRUD ----
@@ -286,7 +298,7 @@ const AdminMailingPanel: React.FC = () => {
       showAlert({ message: editingId ? '수정되었습니다' : '등록되었습니다', type: 'success' });
       setIsFormModalOpen(false);
       setEditingId(null);
-      await fetchContacts();
+      await refreshBoth();
     } catch {
       showAlert({ message: '저장 중 오류', type: 'error' });
     } finally {
@@ -302,7 +314,7 @@ const AdminMailingPanel: React.FC = () => {
     });
     if (res.ok || res.status === 204) {
       showAlert({ message: '삭제되었습니다', type: 'success' });
-      await fetchContacts();
+      await refreshBoth();
     } else {
       showAlert({ message: '삭제 실패', type: 'error' });
     }
@@ -322,11 +334,25 @@ const AdminMailingPanel: React.FC = () => {
       body: JSON.stringify({ reason: unsubReason || null }),
     });
     if (res.ok) {
-      showAlert({ message: '해지 처리되었습니다', type: 'success' });
+      showAlert({ message: '수신 비활성으로 변경되었습니다', type: 'success' });
       setUnsubReasonModal(null);
-      await fetchContacts();
+      await refreshBoth();
     } else {
-      showAlert({ message: '해지 처리 실패', type: 'error' });
+      showAlert({ message: '수신 비활성 처리 실패', type: 'error' });
+    }
+  };
+
+  const handleReactivate = async (c: LeadContact) => {
+    if (!window.confirm(`${c.email} 컨택을 수신 활성으로 되돌리시겠습니까?`)) return;
+    const res = await fetch(`${API}/api/v1/admin/lead-contacts/${c.id}/reactivate`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (res.ok) {
+      showAlert({ message: '수신 활성으로 복구되었습니다', type: 'success' });
+      await refreshBoth();
+    } else {
+      showAlert({ message: '재활성화 실패', type: 'error' });
     }
   };
 
@@ -364,7 +390,7 @@ const AdminMailingPanel: React.FC = () => {
       }
       const data = await res.json();
       setCsvResult(data);
-      await fetchContacts();
+      await refreshBoth();
     } catch {
       showAlert({ message: '임포트 중 오류', type: 'error' });
     } finally {
@@ -387,12 +413,60 @@ const AdminMailingPanel: React.FC = () => {
 
   // ---- Render helpers ----
 
-  const pages = useMemo(() => {
-    if (totalPages === 0) return [];
-    const max = Math.min(totalPages, 10);
-    const start = Math.max(0, Math.min(page - 4, totalPages - max));
+  const buildPages = (currentPage: number, totalPgs: number): number[] => {
+    if (totalPgs === 0) return [];
+    const max = Math.min(totalPgs, 10);
+    const start = Math.max(0, Math.min(currentPage - 4, totalPgs - max));
     return Array.from({ length: max }, (_, i) => start + i);
-  }, [totalPages, page]);
+  };
+
+  const renderTable = (rows: LeadContact[], isActiveSection: boolean) => (
+    <table className="amp-table">
+      <thead>
+        <tr>
+          <th>이메일</th>
+          <th>이름</th>
+          <th>회사</th>
+          <th>광고/안내</th>
+          <th>액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(c => (
+          <tr key={c.id} className={isActiveSection ? '' : 'amp-row--unsub'}>
+            <td className="amp-email">{c.email}</td>
+            <td>{c.contactName || '-'}</td>
+            <td>{c.companyName || '-'}</td>
+            <td className="amp-optin">
+              <span className={c.optInMarketing ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>광고{c.optInMarketing ? '✓' : '✗'}</span>
+              <span className={c.optInTransactional ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>안내{c.optInTransactional ? '✓' : '✗'}</span>
+            </td>
+            <td className="amp-row-actions">
+              <button className="amp-btn amp-btn--small" onClick={() => openEditModal(c)}>편집</button>
+              {isActiveSection
+                ? <button className="amp-btn amp-btn--small amp-btn--warn" onClick={() => openUnsubscribeModal(c)}>비활성화</button>
+                : <button className="amp-btn amp-btn--small amp-btn--primary" onClick={() => handleReactivate(c)}>재활성화</button>}
+              <button className="amp-btn amp-btn--small amp-btn--danger" onClick={() => handleDelete(c)}>삭제</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderPagination = (currentPage: number, totalPgs: number, setPg: (p: number | ((p: number) => number)) => void) => (
+    totalPgs > 1 ? (
+      <div className="amp-pagination">
+        <button className="amp-btn amp-btn--small" disabled={currentPage === 0} onClick={() => setPg(0)}>«</button>
+        <button className="amp-btn amp-btn--small" disabled={currentPage === 0} onClick={() => setPg(p => p - 1)}>‹</button>
+        {buildPages(currentPage, totalPgs).map(p => (
+          <button key={p} className={`amp-btn amp-btn--small ${p === currentPage ? 'amp-btn--page-active' : ''}`} onClick={() => setPg(p)}>{p + 1}</button>
+        ))}
+        <button className="amp-btn amp-btn--small" disabled={currentPage >= totalPgs - 1} onClick={() => setPg(p => p + 1)}>›</button>
+        <button className="amp-btn amp-btn--small" disabled={currentPage >= totalPgs - 1} onClick={() => setPg(totalPgs - 1)}>»</button>
+      </div>
+    ) : null
+  );
 
   return (
     <div className="admin-mailing-panel">
@@ -401,101 +475,74 @@ const AdminMailingPanel: React.FC = () => {
         <p className="amp-desc">전시회·세미나 등에서 수집한 외부 컨택을 관리합니다.</p>
       </div>
 
-      {/* 필터 */}
-      <div className="amp-filter">
-        <div className="amp-filter-row">
-          <input type="text" placeholder="이메일" value={filterEmail} onChange={e => setFilterEmail(e.target.value)} />
-          <input type="text" placeholder="이름" value={filterName} onChange={e => setFilterName(e.target.value)} />
-          <input type="text" placeholder="회사" value={filterCompany} onChange={e => setFilterCompany(e.target.value)} />
-          <input type="text" placeholder="태그" value={filterTag} onChange={e => setFilterTag(e.target.value)} />
-          <input type="text" placeholder="수집 행사" value={filterSourceEvent} onChange={e => setFilterSourceEvent(e.target.value)} />
+      {/* 1. 메일 등록 */}
+      <div className="amp-section">
+        <div className="amp-section-header">
+          <h3 className="amp-section-title">메일 등록</h3>
         </div>
-        <div className="amp-filter-row amp-filter-actions">
-          <label className="amp-checkbox">
-            <input type="checkbox" checked={activeOnly} onChange={e => setActiveOnly(e.target.checked)} />
-            <span>해지자 제외</span>
-          </label>
-          <div className="amp-filter-buttons">
-            <button className="amp-btn amp-btn--secondary" onClick={handleResetSearch}>초기화</button>
-            <button className="amp-btn amp-btn--primary" onClick={handleApplySearch}>검색</button>
+        <div className="amp-actions">
+          <div className="amp-actions-right">
+            <button className="amp-btn amp-btn--secondary" onClick={openCsvModal}>CSV / Excel 임포트</button>
+            <button className="amp-btn amp-btn--primary" onClick={openCreateModal}>+ 신규 등록</button>
           </div>
         </div>
       </div>
 
-      {/* 액션 */}
-      <div className="amp-actions">
-        <div className="amp-actions-left">
-          총 <strong>{totalElements}</strong> 명
+      {/* 2. 메일 검색 */}
+      <div className="amp-section">
+        <div className="amp-section-header">
+          <h3 className="amp-section-title">메일 검색</h3>
         </div>
-        <div className="amp-actions-right">
-          <button className="amp-btn amp-btn--secondary" onClick={openCsvModal}>CSV 임포트</button>
-          <button className="amp-btn amp-btn--primary" onClick={openCreateModal}>+ 신규 등록</button>
+        <div className="amp-filter">
+          <div className="amp-filter-row">
+            <input type="text" placeholder="이메일" value={filterEmail} onChange={e => setFilterEmail(e.target.value)} />
+            <input type="text" placeholder="이름" value={filterName} onChange={e => setFilterName(e.target.value)} />
+            <input type="text" placeholder="회사" value={filterCompany} onChange={e => setFilterCompany(e.target.value)} />
+          </div>
+          <div className="amp-filter-row amp-filter-actions">
+            <div className="amp-filter-buttons">
+              <button className="amp-btn amp-btn--secondary" onClick={handleResetSearch}>초기화</button>
+              <button className="amp-btn amp-btn--primary" onClick={handleApplySearch}>검색</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 목록 */}
-      <div className="amp-table-wrap">
-        {isLoading ? (
-          <div className="amp-empty">불러오는 중...</div>
-        ) : contacts.length === 0 ? (
-          <div className="amp-empty">조회된 컨택이 없습니다.</div>
-        ) : (
-          <table className="amp-table">
-            <thead>
-              <tr>
-                <th>이메일</th>
-                <th>이름</th>
-                <th>회사</th>
-                <th>수집 행사</th>
-                <th>태그</th>
-                <th>광고/안내</th>
-                <th>상태</th>
-                <th>등록일</th>
-                <th>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map(c => (
-                <tr key={c.id} className={c.active ? '' : 'amp-row--unsub'}>
-                  <td className="amp-email">{c.email}</td>
-                  <td>{c.contactName || '-'}</td>
-                  <td>{c.companyName || '-'}</td>
-                  <td>{c.sourceEvent || '-'}</td>
-                  <td className="amp-tags">{c.tags || '-'}</td>
-                  <td className="amp-optin">
-                    <span className={c.optInMarketing ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>광고{c.optInMarketing ? '✓' : '✗'}</span>
-                    <span className={c.optInTransactional ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>안내{c.optInTransactional ? '✓' : '✗'}</span>
-                  </td>
-                  <td>
-                    {c.active
-                      ? <span className="amp-status amp-status--active">구독중</span>
-                      : <span className="amp-status amp-status--unsub">해지</span>}
-                  </td>
-                  <td>{formatDate(c.createdAt)}</td>
-                  <td className="amp-row-actions">
-                    <button className="amp-btn amp-btn--small" onClick={() => openEditModal(c)}>편집</button>
-                    {c.active && <button className="amp-btn amp-btn--small amp-btn--warn" onClick={() => openUnsubscribeModal(c)}>해지</button>}
-                    <button className="amp-btn amp-btn--small amp-btn--danger" onClick={() => handleDelete(c)}>삭제</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* 3. 수신 활성 목록 */}
+      <div className="amp-section">
+        <div className="amp-section-header">
+          <h3 className="amp-section-title">수신 활성 목록</h3>
+          <span className="amp-section-count">총 <strong>{activeTotalElements}</strong> 명</span>
+        </div>
+        <div className="amp-table-wrap">
+          {isLoadingActive ? (
+            <div className="amp-empty">불러오는 중...</div>
+          ) : activeContacts.length === 0 ? (
+            <div className="amp-empty">활성 컨택이 없습니다.</div>
+          ) : (
+            renderTable(activeContacts, true)
+          )}
+        </div>
+        {renderPagination(activePage, activeTotalPages, setActivePage)}
       </div>
 
-      {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <div className="amp-pagination">
-          <button className="amp-btn amp-btn--small" disabled={page === 0} onClick={() => setPage(0)}>«</button>
-          <button className="amp-btn amp-btn--small" disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹</button>
-          {pages.map(p => (
-            <button key={p} className={`amp-btn amp-btn--small ${p === page ? 'amp-btn--page-active' : ''}`} onClick={() => setPage(p)}>{p + 1}</button>
-          ))}
-          <button className="amp-btn amp-btn--small" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>›</button>
-          <button className="amp-btn amp-btn--small" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>»</button>
+      {/* 4. 수신 비활성 목록 */}
+      <div className="amp-section">
+        <div className="amp-section-header">
+          <h3 className="amp-section-title">수신 비활성 목록</h3>
+          <span className="amp-section-count">총 <strong>{inactiveTotalElements}</strong> 명</span>
         </div>
-      )}
+        <div className="amp-table-wrap">
+          {isLoadingInactive ? (
+            <div className="amp-empty">불러오는 중...</div>
+          ) : inactiveContacts.length === 0 ? (
+            <div className="amp-empty">비활성 컨택이 없습니다.</div>
+          ) : (
+            renderTable(inactiveContacts, false)
+          )}
+        </div>
+        {renderPagination(inactivePage, inactiveTotalPages, setInactivePage)}
+      </div>
 
       {/* 등록/편집 모달 */}
       {isFormModalOpen && (
@@ -599,21 +646,21 @@ const AdminMailingPanel: React.FC = () => {
         </div>
       )}
 
-      {/* 해지 사유 모달 */}
+      {/* 비활성 사유 모달 */}
       {unsubReasonModal && (
         <div className="amp-modal-backdrop" onClick={() => setUnsubReasonModal(null)}>
           <div className="amp-modal amp-modal--small" onClick={e => e.stopPropagation()}>
             <div className="amp-modal-header">
-              <h3>관리자 강제 해지</h3>
+              <h3>수신 비활성화</h3>
               <button className="amp-modal-close" onClick={() => setUnsubReasonModal(null)}>×</button>
             </div>
             <div className="amp-modal-body">
-              <p>{unsubReasonModal.email} 을(를) 해지 처리합니다. 사유를 입력해주세요. (선택)</p>
-              <textarea value={unsubReason} onChange={e => setUnsubReason(e.target.value)} rows={3} placeholder="해지 사유" />
+              <p>{unsubReasonModal.email} 을(를) 수신 비활성으로 변경합니다. 사유를 입력해주세요. (선택)</p>
+              <textarea value={unsubReason} onChange={e => setUnsubReason(e.target.value)} rows={3} placeholder="비활성 사유" />
             </div>
             <div className="amp-modal-footer">
               <button className="amp-btn amp-btn--secondary" onClick={() => setUnsubReasonModal(null)}>취소</button>
-              <button className="amp-btn amp-btn--warn" onClick={handleUnsubscribe}>해지</button>
+              <button className="amp-btn amp-btn--warn" onClick={handleUnsubscribe}>비활성화</button>
             </div>
           </div>
         </div>
