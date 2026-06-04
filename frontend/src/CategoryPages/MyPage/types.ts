@@ -1,7 +1,7 @@
 import React from 'react';
 
 // 메뉴 타입 정의
-export type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'redeem' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions' | 'admin-redeem' | 'admin-popups';
+export type MenuSection = 'profile' | 'account' | 'subscription' | 'payment' | 'redeem' | 'admin-users' | 'admin-payments' | 'admin-products' | 'admin-licenses' | 'admin-promotions' | 'admin-redeem' | 'admin-popups' | 'admin-mailing';
 
 // 관리자용 인터페이스
 export interface AdminUser {

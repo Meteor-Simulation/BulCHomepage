@@ -20,6 +20,7 @@ import {
   ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, RedeemPanel,
   AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
   AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
+  AdminMailingPanel,
 } from './panels';
 import './MyPage.css';
 
@@ -920,6 +921,7 @@ const MyPage: React.FC = () => {
                   <button className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-promotions')}>{t('myPage.menu.adminPromotions')}</button>
                   <button className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-redeem')}>{t('myPage.menu.adminRedeem')}</button>
                   <button className={`menu-child ${activeMenu === 'admin-popups' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-popups')}>{t('myPage.menu.adminPopups')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-mailing' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-mailing')}>{t('myPage.menu.adminMailing')}</button>
                 </div>
               </div>
               )}
@@ -1132,6 +1134,10 @@ const MyPage: React.FC = () => {
 
               {isAdmin && activeMenu === 'admin-popups' && (
                 <AdminPopupsPanel />
+              )}
+
+              {isAdmin && activeMenu === 'admin-mailing' && (
+                <AdminMailingPanel />
               )}
 
               {/* 모바일용 로그아웃 버튼 */}
