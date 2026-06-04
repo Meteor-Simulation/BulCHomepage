@@ -10,7 +10,12 @@ interface LeadContact {
   email: string;
   contactName: string | null;
   companyName: string | null;
+  department: string | null;
   role: string | null;
+  address: string | null;
+  workPhone: string | null;
+  workFax: string | null;
+  mobilePhone: string | null;
   sourceEvent: string | null;
   sourceDate: string | null;
   collectedBy: string | null;
@@ -41,7 +46,12 @@ interface FormState {
   email: string;
   contactName: string;
   companyName: string;
+  department: string;
   role: string;
+  address: string;
+  workPhone: string;
+  workFax: string;
+  mobilePhone: string;
   sourceEvent: string;
   sourceDate: string;
   collectedBy: string;
@@ -58,7 +68,12 @@ const emptyForm = (): FormState => ({
   email: '',
   contactName: '',
   companyName: '',
+  department: '',
   role: '',
+  address: '',
+  workPhone: '',
+  workFax: '',
+  mobilePhone: '',
   sourceEvent: '',
   sourceDate: '',
   collectedBy: '',
@@ -126,6 +141,7 @@ const AdminMailingPanel: React.FC = () => {
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
+  const [csvDragOver, setCsvDragOver] = useState(false);
   const [csvResult, setCsvResult] = useState<{ totalRows: number; registered: number; skipped: number; errors: { rowNumber: number; email: string; message: string }[] } | null>(null);
 
   // 해지 입력
@@ -198,7 +214,12 @@ const AdminMailingPanel: React.FC = () => {
       email: c.email,
       contactName: c.contactName || '',
       companyName: c.companyName || '',
+      department: c.department || '',
       role: c.role || '',
+      address: c.address || '',
+      workPhone: c.workPhone || '',
+      workFax: c.workFax || '',
+      mobilePhone: c.mobilePhone || '',
       sourceEvent: c.sourceEvent || '',
       sourceDate: formatDateOnly(c.sourceDate),
       collectedBy: c.collectedBy || '',
@@ -230,7 +251,12 @@ const AdminMailingPanel: React.FC = () => {
         email: form.email.trim(),
         contactName: form.contactName || null,
         companyName: form.companyName || null,
+        department: form.department || null,
         role: form.role || null,
+        address: form.address || null,
+        workPhone: form.workPhone || null,
+        workFax: form.workFax || null,
+        mobilePhone: form.mobilePhone || null,
         sourceEvent: form.sourceEvent || null,
         sourceDate: form.sourceDate || null,
         collectedBy: form.collectedBy || null,
@@ -326,7 +352,7 @@ const AdminMailingPanel: React.FC = () => {
     try {
       const fd = new FormData();
       fd.append('file', csvFile);
-      const res = await fetch(`${API}/api/v1/admin/lead-contacts/import/csv`, {
+      const res = await fetch(`${API}/api/v1/admin/lead-contacts/import`, {
         method: 'POST',
         credentials: 'include',
         body: fd,
@@ -347,9 +373,10 @@ const AdminMailingPanel: React.FC = () => {
   };
 
   const downloadCsvTemplate = () => {
-    const header = 'email,contact_name,company_name,role,source_event,source_date,collected_by,consent_method,consent_date,opt_in_marketing,opt_in_transactional,tags,notes';
-    const example = 'hong@example.com,홍길동,예시주식회사,차장,2026 소방안전 전시회,2026-06-04,강주원,business_card,2026-06-04,true,true,"fire_safety,2026_kfse",명함 회수';
-    const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv;charset=utf-8;' });
+    // 사용자 명함 양식 12개 컬럼 순서대로
+    const header = '회사,이름,부서,직함,전자 메일 주소,근무지 주소 번지,근무처 전화,근무처 팩스,휴대폰,명함 등록일,명함첩 이름,메모';
+    const example = '예시주식회사,홍길동,영업본부,차장,hong@example.com,서울특별시 강남구 테헤란로 123,02-555-1234,02-555-5678,010-1234-5678,2026-06-04,2026 소방안전 전시회,부스 방문';
+    const blob = new Blob(['﻿' + header + '\n' + example + '\n'], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -493,8 +520,24 @@ const AdminMailingPanel: React.FC = () => {
                   <input type="text" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} />
                 </div>
                 <div className="amp-form-row">
-                  <label>직책</label>
+                  <label>부서</label>
+                  <input type="text" value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} />
+                </div>
+                <div className="amp-form-row">
+                  <label>직함</label>
                   <input type="text" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} />
+                </div>
+                <div className="amp-form-row">
+                  <label>휴대폰</label>
+                  <input type="tel" value={form.mobilePhone} onChange={e => setForm({ ...form, mobilePhone: e.target.value })} placeholder="010-0000-0000" />
+                </div>
+                <div className="amp-form-row">
+                  <label>근무처 전화</label>
+                  <input type="tel" value={form.workPhone} onChange={e => setForm({ ...form, workPhone: e.target.value })} placeholder="02-000-0000" />
+                </div>
+                <div className="amp-form-row">
+                  <label>근무처 팩스</label>
+                  <input type="tel" value={form.workFax} onChange={e => setForm({ ...form, workFax: e.target.value })} />
                 </div>
                 <div className="amp-form-row">
                   <label>수집 행사</label>
@@ -518,6 +561,10 @@ const AdminMailingPanel: React.FC = () => {
                   <label>동의 일자</label>
                   <input type="date" value={form.consentDate} onChange={e => setForm({ ...form, consentDate: e.target.value })} />
                 </div>
+              </div>
+              <div className="amp-form-row">
+                <label>근무지 주소</label>
+                <input type="text" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="서울특별시 강남구 ..." />
               </div>
               <div className="amp-form-row">
                 <label>동의 증빙 (자유)</label>
@@ -582,16 +629,37 @@ const AdminMailingPanel: React.FC = () => {
             </div>
             <div className="amp-modal-body">
               <ul className="amp-csv-help">
-                <li>UTF-8 인코딩, 헤더 행 필수, <code>email</code> 컬럼은 필수입니다.</li>
-                <li>지원 컬럼: <code>email, contact_name, company_name, role, source_event, source_date, collected_by, consent_method, consent_date, opt_in_marketing, opt_in_transactional, tags, notes</code></li>
-                <li>날짜는 <code>yyyy-MM-dd</code>, 불리언은 <code>true</code>/<code>false</code> 또는 <code>1</code>/<code>0</code></li>
+                <li><strong>CSV / Excel (.xlsx, .xls)</strong> 모두 지원. 헤더 행 필수, 이메일 컬럼 필수.</li>
+                <li>한국어 명함 양식 헤더 자동 인식: <code>회사 · 이름 · 부서 · 직함 · 전자 메일 주소 · 근무지 주소 번지 · 근무처 전화 · 근무처 팩스 · 휴대폰 · 명함 등록일 · 명함첩 이름 · 메모</code></li>
+                <li>날짜는 <code>yyyy-MM-dd</code> / <code>yyyy.MM.dd</code> / <code>yyyy/MM/dd</code> 자동 인식, Excel 시리얼 날짜도 처리</li>
                 <li>이미 등록된 이메일은 건너뜁니다.</li>
+                <li>명함 임포트는 기본값 <code>광고성 동의=false</code>, <code>안내성 동의=true</code>, <code>동의 방식=import</code>로 등록됨 (정보통신망법 안전 기본값).</li>
               </ul>
               <button className="amp-btn amp-btn--secondary amp-btn--small" onClick={downloadCsvTemplate}>템플릿 다운로드</button>
-              <div className="amp-csv-file">
-                <input type="file" accept=".csv,text/csv" onChange={e => setCsvFile(e.target.files?.[0] ?? null)} />
-                {csvFile && <span>선택됨: {csvFile.name}</span>}
-              </div>
+              <label
+                className={`amp-csv-drop${csvDragOver ? ' amp-csv-drop--over' : ''}`}
+                onDragOver={e => { e.preventDefault(); e.stopPropagation(); setCsvDragOver(true); }}
+                onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setCsvDragOver(true); }}
+                onDragLeave={e => { e.preventDefault(); e.stopPropagation(); setCsvDragOver(false); }}
+                onDrop={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCsvDragOver(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) setCsvFile(f);
+                }}
+              >
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  onChange={e => setCsvFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="amp-csv-drop-text">
+                  {csvFile
+                    ? <>선택됨: <strong>{csvFile.name}</strong></>
+                    : <>CSV / Excel 파일을 여기에 드래그하거나, <span className="amp-csv-drop-link">클릭하여 선택</span>하세요.</>}
+                </div>
+              </label>
               {csvResult && (
                 <div className="amp-csv-result">
                   <p>총 {csvResult.totalRows}행 · 등록 {csvResult.registered} · 건너뜀 {csvResult.skipped}</p>

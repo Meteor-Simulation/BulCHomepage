@@ -28,7 +28,21 @@ public class LeadContactUpdateRequest {
     private String companyName;
 
     @Size(max = 100)
+    private String department;
+
+    @Size(max = 100)
     private String role;
+
+    private String address;
+
+    @Size(max = 50)
+    private String workPhone;
+
+    @Size(max = 50)
+    private String workFax;
+
+    @Size(max = 50)
+    private String mobilePhone;
 
     @Size(max = 200)
     private String sourceEvent;

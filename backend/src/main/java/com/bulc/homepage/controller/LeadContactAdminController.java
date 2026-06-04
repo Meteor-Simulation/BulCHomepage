@@ -28,7 +28,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/admin/lead-contacts")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 @RequiredArgsConstructor
 public class LeadContactAdminController {
 
@@ -86,20 +86,29 @@ public class LeadContactAdminController {
     }
 
     /**
-     * CSV 일괄 임포트.
-     * <p>multipart/form-data, field name: file
-     * <p>헤더 필수, email 컬럼 필수. 컬럼: email, contact_name, company_name, role,
-     * source_event, source_date(yyyy-MM-dd), collected_by, consent_method, consent_date(yyyy-MM-dd),
-     * opt_in_marketing(true/false/1/0), opt_in_transactional, tags, notes
+     * CSV / Excel 일괄 임포트 (자동 감지).
+     *
+     * <p>multipart/form-data, field name: {@code file}.
+     * 파일명 확장자(.csv / .xlsx / .xls)로 자동 분기. 헤더는 한국어 명함 양식
+     * (회사·이름·부서·직함·전자 메일 주소·근무지 주소 번지·근무처 전화·근무처 팩스·
+     * 휴대폰·명함 등록일·명함첩 이름·메모) 또는 영어 모두 허용. 이메일 컬럼 필수.
      */
-    @PostMapping(value = "/import/csv", consumes = "multipart/form-data")
-    public ResponseEntity<LeadContactImportResult> importCsv(
+    @PostMapping(value = "/import", consumes = "multipart/form-data")
+    public ResponseEntity<LeadContactImportResult> importFile(
             @RequestPart("file") MultipartFile file,
             Authentication authentication) {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         UUID adminId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(leadContactService.importCsv(file, adminId));
+        return ResponseEntity.ok(leadContactService.importFile(file, adminId));
+    }
+
+    /** Backward-compat alias for the previous CSV-only endpoint. */
+    @PostMapping(value = "/import/csv", consumes = "multipart/form-data")
+    public ResponseEntity<LeadContactImportResult> importCsvLegacy(
+            @RequestPart("file") MultipartFile file,
+            Authentication authentication) {
+        return importFile(file, authentication);
     }
 }
