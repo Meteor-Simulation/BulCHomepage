@@ -16,6 +16,74 @@
   gap: 12px;
 }
 
+.amp-section-header--inline {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.amp-section-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.amp-search-inline {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.amp-search-inline input[type="text"] {
+  width: 150px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.amp-section-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.amp-section-search input[type="text"] {
+  width: 220px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.amp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.amp-icon-btn:hover {
+  background: #f1f5f9;
+  color: var(--accent, #C4320A);
+  border-color: var(--accent, #C4320A);
+}
+
 .amp-section-title {
   margin: 0;
   font-size: 16px;
@@ -58,10 +126,20 @@
   flex-wrap: wrap;
 }
 
+.amp-filter-row--single {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.amp-filter-row--single .amp-filter-buttons {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .amp-filter-row input[type="text"],
 .amp-filter-row input[type="email"] {
-  flex: 1 1 140px;
-  min-width: 120px;
+  flex: 0 0 auto;
+  width: 180px;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -70,7 +148,7 @@
 }
 
 .amp-filter-actions {
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
@@ -186,7 +264,15 @@
   min-width: 720px;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
 }
+
+/* 컬럼 너비 비율 (이메일 25% / 이름 17% / 회사 25% / 광고·안내 15% / 액션 18%) */
+.amp-table th:nth-child(1), .amp-table td:nth-child(1) { width: 25%; }
+.amp-table th:nth-child(2), .amp-table td:nth-child(2) { width: 17%; }
+.amp-table th:nth-child(3), .amp-table td:nth-child(3) { width: 25%; }
+.amp-table th:nth-child(4), .amp-table td:nth-child(4) { width: 15%; }
+.amp-table th:nth-child(5), .amp-table td:nth-child(5) { width: 18%; }
 
 .amp-table th,
 .amp-table td {
@@ -202,6 +288,12 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* 4번째(광고/안내) · 5번째(액션) 컬럼 헤더는 가운데, 행 셀은 우측 정렬 (.amp-optin / .amp-row-actions) */
+.amp-table th:nth-child(4),
+.amp-table th:nth-child(5) {
+  text-align: center;
 }
 
 .amp-table tr:last-child td {
@@ -226,7 +318,7 @@
 
 .amp-optin {
   white-space: nowrap;
-  min-width: 110px;
+  text-align: right;
 }
 
 .amp-optin span {
@@ -276,7 +368,6 @@
 .amp-row-actions {
   white-space: nowrap;
   text-align: right;
-  min-width: 180px;
 }
 
 .amp-row-actions button {

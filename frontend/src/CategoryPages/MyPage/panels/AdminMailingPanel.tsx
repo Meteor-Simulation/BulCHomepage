@@ -105,22 +105,15 @@ const formatDateOnly = (iso?: string | null) => {
 const AdminMailingPanel: React.FC = () => {
   const { showAlert } = useAlert();
 
-  // 검색 폼
-  const [filterEmail, setFilterEmail] = useState('');
-  const [filterName, setFilterName] = useState('');
-  const [filterCompany, setFilterCompany] = useState('');
-
-  // 적용된 검색 조건 (실제 fetch에 쓰임)
-  const [appliedFilters, setAppliedFilters] = useState({
-    email: '', name: '', company: '',
-  });
-
   // 활성 섹션
   const [activeContacts, setActiveContacts] = useState<LeadContact[]>([]);
   const [activePage, setActivePage] = useState(0);
   const [activeTotalPages, setActiveTotalPages] = useState(0);
   const [activeTotalElements, setActiveTotalElements] = useState(0);
   const [isLoadingActive, setIsLoadingActive] = useState(false);
+  const [activeSearchOpen, setActiveSearchOpen] = useState(false);
+  const [activeSearchInput, setActiveSearchInput] = useState('');
+  const [activeQ, setActiveQ] = useState('');
 
   // 비활성 섹션
   const [inactiveContacts, setInactiveContacts] = useState<LeadContact[]>([]);
@@ -128,6 +121,9 @@ const AdminMailingPanel: React.FC = () => {
   const [inactiveTotalPages, setInactiveTotalPages] = useState(0);
   const [inactiveTotalElements, setInactiveTotalElements] = useState(0);
   const [isLoadingInactive, setIsLoadingInactive] = useState(false);
+  const [inactiveSearchOpen, setInactiveSearchOpen] = useState(false);
+  const [inactiveSearchInput, setInactiveSearchInput] = useState('');
+  const [inactiveQ, setInactiveQ] = useState('');
 
   // 등록/편집 모달
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -151,12 +147,11 @@ const AdminMailingPanel: React.FC = () => {
     const setContacts = isActiveSection ? setActiveContacts : setInactiveContacts;
     const setTotalPagesFn = isActiveSection ? setActiveTotalPages : setInactiveTotalPages;
     const setTotalElementsFn = isActiveSection ? setActiveTotalElements : setInactiveTotalElements;
+    const q = isActiveSection ? activeQ : inactiveQ;
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (appliedFilters.email) params.set('email', appliedFilters.email);
-      if (appliedFilters.name) params.set('name', appliedFilters.name);
-      if (appliedFilters.company) params.set('company', appliedFilters.company);
+      if (q) params.set('q', q);
       if (isActiveSection) {
         params.set('activeOnly', 'true');
       } else {
@@ -179,7 +174,7 @@ const AdminMailingPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [appliedFilters, showAlert]);
+  }, [activeQ, inactiveQ, showAlert]);
 
   // 활성 섹션 페이지/필터 변경 시
   useEffect(() => {
@@ -195,20 +190,39 @@ const AdminMailingPanel: React.FC = () => {
     await Promise.all([fetchSection(true, activePage), fetchSection(false, inactivePage)]);
   };
 
-  const handleApplySearch = () => {
-    setAppliedFilters({
-      email: filterEmail.trim(),
-      name: filterName.trim(),
-      company: filterCompany.trim(),
-    });
-    setActivePage(0);
-    setInactivePage(0);
+  const toggleActiveSearch = () => {
+    if (activeSearchOpen) {
+      setActiveSearchOpen(false);
+      setActiveSearchInput('');
+      if (activeQ) {
+        setActiveQ('');
+        setActivePage(0);
+      }
+    } else {
+      setActiveSearchOpen(true);
+    }
   };
 
-  const handleResetSearch = () => {
-    setFilterEmail(''); setFilterName(''); setFilterCompany('');
-    setAppliedFilters({ email: '', name: '', company: '' });
+  const applyActiveSearch = () => {
+    setActiveQ(activeSearchInput.trim());
     setActivePage(0);
+  };
+
+  const toggleInactiveSearch = () => {
+    if (inactiveSearchOpen) {
+      setInactiveSearchOpen(false);
+      setInactiveSearchInput('');
+      if (inactiveQ) {
+        setInactiveQ('');
+        setInactivePage(0);
+      }
+    } else {
+      setInactiveSearchOpen(true);
+    }
+  };
+
+  const applyInactiveSearch = () => {
+    setInactiveQ(inactiveSearchInput.trim());
     setInactivePage(0);
   };
 
@@ -444,8 +458,8 @@ const AdminMailingPanel: React.FC = () => {
             <td className="amp-row-actions">
               <button className="amp-btn amp-btn--small" onClick={() => openEditModal(c)}>편집</button>
               {isActiveSection
-                ? <button className="amp-btn amp-btn--small amp-btn--warn" onClick={() => openUnsubscribeModal(c)}>비활성화</button>
-                : <button className="amp-btn amp-btn--small amp-btn--primary" onClick={() => handleReactivate(c)}>재활성화</button>}
+                ? <button className="amp-btn amp-btn--small amp-btn--primary" onClick={() => openUnsubscribeModal(c)}>비활성화</button>
+                : <button className="amp-btn amp-btn--small amp-btn--warn" onClick={() => handleReactivate(c)}>재활성화</button>}
               <button className="amp-btn amp-btn--small amp-btn--danger" onClick={() => handleDelete(c)}>삭제</button>
             </td>
           </tr>
@@ -470,49 +484,42 @@ const AdminMailingPanel: React.FC = () => {
 
   return (
     <div className="admin-mailing-panel">
-      <div className="amp-header">
-        <h2>메일링 컨택 관리</h2>
-        <p className="amp-desc">전시회·세미나 등에서 수집한 외부 컨택을 관리합니다.</p>
-      </div>
-
       {/* 1. 메일 등록 */}
       <div className="amp-section">
-        <div className="amp-section-header">
+        <div className="amp-section-header amp-section-header--inline">
           <h3 className="amp-section-title">메일 등록</h3>
-        </div>
-        <div className="amp-actions">
-          <div className="amp-actions-right">
-            <button className="amp-btn amp-btn--secondary" onClick={openCsvModal}>CSV / Excel 임포트</button>
-            <button className="amp-btn amp-btn--primary" onClick={openCreateModal}>+ 신규 등록</button>
+          <div className="amp-section-actions">
+            <button className="amp-btn amp-btn--secondary" onClick={openCsvModal}>파일 임포트</button>
+            <button className="amp-btn amp-btn--primary" onClick={openCreateModal}>신규 등록</button>
           </div>
         </div>
       </div>
 
-      {/* 2. 메일 검색 */}
+      {/* 2. 수신 활성 목록 */}
       <div className="amp-section">
-        <div className="amp-section-header">
-          <h3 className="amp-section-title">메일 검색</h3>
-        </div>
-        <div className="amp-filter">
-          <div className="amp-filter-row">
-            <input type="text" placeholder="이메일" value={filterEmail} onChange={e => setFilterEmail(e.target.value)} />
-            <input type="text" placeholder="이름" value={filterName} onChange={e => setFilterName(e.target.value)} />
-            <input type="text" placeholder="회사" value={filterCompany} onChange={e => setFilterCompany(e.target.value)} />
-          </div>
-          <div className="amp-filter-row amp-filter-actions">
-            <div className="amp-filter-buttons">
-              <button className="amp-btn amp-btn--secondary" onClick={handleResetSearch}>초기화</button>
-              <button className="amp-btn amp-btn--primary" onClick={handleApplySearch}>검색</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. 수신 활성 목록 */}
-      <div className="amp-section">
-        <div className="amp-section-header">
+        <div className="amp-section-header amp-section-header--inline">
           <h3 className="amp-section-title">수신 활성 목록</h3>
           <span className="amp-section-count">총 <strong>{activeTotalElements}</strong> 명</span>
+          <div className="amp-section-search">
+            {activeSearchOpen && (
+              <input
+                type="text"
+                autoFocus
+                placeholder="이메일·이름·회사 검색"
+                value={activeSearchInput}
+                onChange={e => setActiveSearchInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyActiveSearch(); }}
+              />
+            )}
+            <button className="amp-icon-btn" onClick={toggleActiveSearch} aria-label="검색" title={activeSearchOpen ? '검색 닫기' : '검색'}>
+              {activeSearchOpen ? '✕' : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
         <div className="amp-table-wrap">
           {isLoadingActive ? (
@@ -526,11 +533,31 @@ const AdminMailingPanel: React.FC = () => {
         {renderPagination(activePage, activeTotalPages, setActivePage)}
       </div>
 
-      {/* 4. 수신 비활성 목록 */}
+      {/* 3. 수신 비활성 목록 */}
       <div className="amp-section">
-        <div className="amp-section-header">
+        <div className="amp-section-header amp-section-header--inline">
           <h3 className="amp-section-title">수신 비활성 목록</h3>
           <span className="amp-section-count">총 <strong>{inactiveTotalElements}</strong> 명</span>
+          <div className="amp-section-search">
+            {inactiveSearchOpen && (
+              <input
+                type="text"
+                autoFocus
+                placeholder="이메일·이름·회사 검색"
+                value={inactiveSearchInput}
+                onChange={e => setInactiveSearchInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyInactiveSearch(); }}
+              />
+            )}
+            <button className="amp-icon-btn" onClick={toggleInactiveSearch} aria-label="검색" title={inactiveSearchOpen ? '검색 닫기' : '검색'}>
+              {inactiveSearchOpen ? '✕' : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
         <div className="amp-table-wrap">
           {isLoadingInactive ? (

@@ -201,7 +201,7 @@ public class LeadContactService {
 
     @Transactional(readOnly = true)
     public Page<LeadContact> search(String emailQ, String nameQ, String companyQ,
-                                    String tagQ, String sourceEventQ,
+                                    String tagQ, String sourceEventQ, String q,
                                     boolean activeOnly, boolean inactiveOnly,
                                     Pageable pageable) {
         return leadContactRepository.search(
@@ -210,6 +210,7 @@ public class LeadContactService {
                 nullToEmpty(companyQ),
                 nullToEmpty(tagQ),
                 nullToEmpty(sourceEventQ),
+                nullToEmpty(q),
                 activeOnly,
                 inactiveOnly,
                 pageable

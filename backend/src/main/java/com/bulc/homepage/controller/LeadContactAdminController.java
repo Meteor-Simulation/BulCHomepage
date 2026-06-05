@@ -44,7 +44,11 @@ public class LeadContactAdminController {
         return ResponseEntity.ok(LeadContactResponse.from(saved));
     }
 
-    /** 검색 + 페이징 */
+    /**
+     * 검색 + 페이징.
+     * <p>{@code q}: 통합 검색 키워드 (이메일·이름·회사 중 하나라도 매칭).
+     * 개별 필드(email/name/company/tag/sourceEvent)는 AND로 추가 조합 가능.
+     */
     @GetMapping
     public ResponseEntity<Page<LeadContactResponse>> search(
             @RequestParam(required = false) String email,
@@ -52,10 +56,11 @@ public class LeadContactAdminController {
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String sourceEvent,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "false") boolean activeOnly,
             @RequestParam(defaultValue = "false") boolean inactiveOnly,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, activeOnly, inactiveOnly, pageable);
+        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, q, activeOnly, inactiveOnly, pageable);
         return ResponseEntity.ok(page.map(LeadContactResponse::from));
     }
 

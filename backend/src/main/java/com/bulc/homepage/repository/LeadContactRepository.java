@@ -30,6 +30,11 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
                AND (:companyQ = '' OR LOWER(COALESCE(lc.companyName, '')) LIKE LOWER(CONCAT('%', :companyQ, '%')))
                AND (:tagQ = '' OR LOWER(COALESCE(lc.tags, '')) LIKE LOWER(CONCAT('%', :tagQ, '%')))
                AND (:sourceEventQ = '' OR LOWER(COALESCE(lc.sourceEvent, '')) LIKE LOWER(CONCAT('%', :sourceEventQ, '%')))
+               AND (:q = '' OR (
+                     LOWER(lc.email) LIKE LOWER(CONCAT('%', :q, '%'))
+                  OR LOWER(COALESCE(lc.contactName, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+                  OR LOWER(COALESCE(lc.companyName, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+               ))
                AND (:activeOnly = false OR lc.unsubscribedAt IS NULL)
                AND (:inactiveOnly = false OR lc.unsubscribedAt IS NOT NULL)
             """)
@@ -39,6 +44,7 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
             @Param("companyQ") String companyQ,
             @Param("tagQ") String tagQ,
             @Param("sourceEventQ") String sourceEventQ,
+            @Param("q") String q,
             @Param("activeOnly") boolean activeOnly,
             @Param("inactiveOnly") boolean inactiveOnly,
             Pageable pageable
