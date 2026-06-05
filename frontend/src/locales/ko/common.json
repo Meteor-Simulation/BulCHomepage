@@ -25,6 +25,9 @@
       "subscription": "구독 정보",
       "payment": "결제 정보",
       "admin": "관리자",
+      "adminGroupUsers": "사용자",
+      "adminGroupSales": "상품/결제",
+      "adminGroupLicenses": "라이선스",
       "adminUsers": "사용자 관리",
       "adminPayments": "결제 관리",
       "adminProducts": "상품 관리",
@@ -32,6 +35,7 @@
       "adminPromotions": "프로모션 관리",
       "adminRedeem": "리딤 캠페인 발행",
       "adminPopups": "팝업 관리",
+      "adminMailing": "메일링 관리",
       "redeem": "쿠폰 등록"
     },
     "profile": "프로필 정보",

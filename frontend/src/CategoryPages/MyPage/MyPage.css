@@ -91,6 +91,13 @@
   margin-bottom: 12px;
 }
 
+/* 관리자 하위 그룹 구분선 (사용자 / 상품·결제 / 라이선스 사이) */
+.menu-divider {
+  height: 1px;
+  background: #e5e5e5;
+  margin: 8px 14px;
+}
+
 .menu-child {
   width: 100%;
   display: block;

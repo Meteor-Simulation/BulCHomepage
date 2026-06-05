@@ -25,6 +25,9 @@
       "subscription": "Subscription",
       "payment": "Payment",
       "admin": "Admin",
+      "adminGroupUsers": "Users",
+      "adminGroupSales": "Products / Payments",
+      "adminGroupLicenses": "Licenses",
       "adminUsers": "User Management",
       "adminPayments": "Payment Management",
       "adminProducts": "Product Management",
@@ -32,6 +35,7 @@
       "adminPromotions": "Promotion Management",
       "adminRedeem": "Redeem Campaigns",
       "adminPopups": "Popup Management",
+      "adminMailing": "Mailing",
       "redeem": "Redeem Code"
     },
     "profile": "Profile",

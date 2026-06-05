@@ -16,7 +16,12 @@ public class LeadContactResponse {
     private String email;
     private String contactName;
     private String companyName;
+    private String department;
     private String role;
+    private String address;
+    private String workPhone;
+    private String workFax;
+    private String mobilePhone;
     private String sourceEvent;
     private LocalDate sourceDate;
     private String collectedBy;
@@ -40,7 +45,12 @@ public class LeadContactResponse {
                 .email(c.getEmail())
                 .contactName(c.getContactName())
                 .companyName(c.getCompanyName())
+                .department(c.getDepartment())
                 .role(c.getRole())
+                .address(c.getAddress())
+                .workPhone(c.getWorkPhone())
+                .workFax(c.getWorkFax())
+                .mobilePhone(c.getMobilePhone())
                 .sourceEvent(c.getSourceEvent())
                 .sourceDate(c.getSourceDate())
                 .collectedBy(c.getCollectedBy())

@@ -10,3 +10,4 @@ export { default as AdminLicensesPanel } from './AdminLicensesPanel';
 export { default as AdminPromotionsPanel } from './AdminPromotionsPanel';
 export { default as AdminRedeemPanel } from './AdminRedeemPanel';
 export { default as AdminPopupsPanel } from './AdminPopupsPanel';
+export { default as AdminMailingPanel } from './AdminMailingPanel';

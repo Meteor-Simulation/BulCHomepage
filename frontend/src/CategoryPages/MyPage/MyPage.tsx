@@ -20,6 +20,7 @@ import {
   ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, RedeemPanel,
   AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
   AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
+  AdminMailingPanel,
 } from './panels';
 import './MyPage.css';
 
@@ -912,14 +913,28 @@ const MyPage: React.FC = () => {
                   </svg>
                   <span>{t('myPage.menu.admin')}</span>
                 </div>
+                {/* 사용자 */}
                 <div className="menu-children">
                   <button className={`menu-child ${activeMenu === 'admin-users' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-users')}>{t('myPage.menu.adminUsers')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-payments' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-payments')}>{t('myPage.menu.adminPayments')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-products' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-products')}>{t('myPage.menu.adminProducts')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-licenses')}>{t('myPage.menu.adminLicenses')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-promotions')}>{t('myPage.menu.adminPromotions')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-redeem')}>{t('myPage.menu.adminRedeem')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-mailing' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-mailing')}>{t('myPage.menu.adminMailing')}</button>
                   <button className={`menu-child ${activeMenu === 'admin-popups' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-popups')}>{t('myPage.menu.adminPopups')}</button>
+                </div>
+
+                <div className="menu-divider" />
+
+                {/* 상품/결제 */}
+                <div className="menu-children">
+                  <button className={`menu-child ${activeMenu === 'admin-products' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-products')}>{t('myPage.menu.adminProducts')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-payments' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-payments')}>{t('myPage.menu.adminPayments')}</button>
+                </div>
+
+                <div className="menu-divider" />
+
+                {/* 라이선스 */}
+                <div className="menu-children">
+                  <button className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-licenses')}>{t('myPage.menu.adminLicenses')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-redeem')}>{t('myPage.menu.adminRedeem')}</button>
+                  <button className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-promotions')}>{t('myPage.menu.adminPromotions')}</button>
                 </div>
               </div>
               )}
@@ -1132,6 +1147,10 @@ const MyPage: React.FC = () => {
 
               {isAdmin && activeMenu === 'admin-popups' && (
                 <AdminPopupsPanel />
+              )}
+
+              {isAdmin && activeMenu === 'admin-mailing' && (
+                <AdminMailingPanel />
               )}
 
               {/* 모바일용 로그아웃 버튼 */}

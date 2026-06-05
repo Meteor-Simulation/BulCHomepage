@@ -28,7 +28,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/admin/lead-contacts")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 @RequiredArgsConstructor
 public class LeadContactAdminController {
 
@@ -44,7 +44,11 @@ public class LeadContactAdminController {
         return ResponseEntity.ok(LeadContactResponse.from(saved));
     }
 
-    /** 검색 + 페이징 */
+    /**
+     * 검색 + 페이징.
+     * <p>{@code q}: 통합 검색 키워드 (이메일·이름·회사 중 하나라도 매칭).
+     * 개별 필드(email/name/company/tag/sourceEvent)는 AND로 추가 조합 가능.
+     */
     @GetMapping
     public ResponseEntity<Page<LeadContactResponse>> search(
             @RequestParam(required = false) String email,
@@ -52,9 +56,11 @@ public class LeadContactAdminController {
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String sourceEvent,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "false") boolean activeOnly,
+            @RequestParam(defaultValue = "false") boolean inactiveOnly,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, activeOnly, pageable);
+        Page<LeadContact> page = leadContactService.search(email, name, company, tag, sourceEvent, q, activeOnly, inactiveOnly, pageable);
         return ResponseEntity.ok(page.map(LeadContactResponse::from));
     }
 
@@ -85,21 +91,36 @@ public class LeadContactAdminController {
         return ResponseEntity.ok(LeadContactResponse.from(leadContactService.unsubscribeById(id, reason)));
     }
 
+    /** 관리자가 비활성 컨택을 다시 활성화 (수신 재개) */
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<LeadContactResponse> reactivate(@PathVariable Long id) {
+        return ResponseEntity.ok(LeadContactResponse.from(leadContactService.reactivateById(id)));
+    }
+
     /**
-     * CSV 일괄 임포트.
-     * <p>multipart/form-data, field name: file
-     * <p>헤더 필수, email 컬럼 필수. 컬럼: email, contact_name, company_name, role,
-     * source_event, source_date(yyyy-MM-dd), collected_by, consent_method, consent_date(yyyy-MM-dd),
-     * opt_in_marketing(true/false/1/0), opt_in_transactional, tags, notes
+     * CSV / Excel 일괄 임포트 (자동 감지).
+     *
+     * <p>multipart/form-data, field name: {@code file}.
+     * 파일명 확장자(.csv / .xlsx / .xls)로 자동 분기. 헤더는 한국어 명함 양식
+     * (회사·이름·부서·직함·전자 메일 주소·근무지 주소 번지·근무처 전화·근무처 팩스·
+     * 휴대폰·명함 등록일·명함첩 이름·메모) 또는 영어 모두 허용. 이메일 컬럼 필수.
      */
-    @PostMapping(value = "/import/csv", consumes = "multipart/form-data")
-    public ResponseEntity<LeadContactImportResult> importCsv(
+    @PostMapping(value = "/import", consumes = "multipart/form-data")
+    public ResponseEntity<LeadContactImportResult> importFile(
             @RequestPart("file") MultipartFile file,
             Authentication authentication) {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         UUID adminId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(leadContactService.importCsv(file, adminId));
+        return ResponseEntity.ok(leadContactService.importFile(file, adminId));
+    }
+
+    /** Backward-compat alias for the previous CSV-only endpoint. */
+    @PostMapping(value = "/import/csv", consumes = "multipart/form-data")
+    public ResponseEntity<LeadContactImportResult> importCsvLegacy(
+            @RequestPart("file") MultipartFile file,
+            Authentication authentication) {
+        return importFile(file, authentication);
     }
 }

@@ -35,7 +35,22 @@ public class LeadContact {
     private String companyName;
 
     @Column(length = 100)
+    private String department;
+
+    @Column(length = 100)
     private String role;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "work_phone", length = 50)
+    private String workPhone;
+
+    @Column(name = "work_fax", length = 50)
+    private String workFax;
+
+    @Column(name = "mobile_phone", length = 50)
+    private String mobilePhone;
 
     @Column(name = "source_event", length = 200)
     private String sourceEvent;
