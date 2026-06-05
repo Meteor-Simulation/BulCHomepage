@@ -1,4 +1,4 @@
-# BUL:C - AI Fire Simulation Software
+# BUL:C - AI-Automated Fire Simulation Software
 
 > BUL:C는 주식회사 메테오시뮬레이션이 개발한 GPU 가속 기반 차세대 화재 시뮬레이션 소프트웨어입니다.
 
@@ -14,12 +14,12 @@
 ## BUL:C 제품 소개
 
 BUL:C는 화재 안전 엔지니어링을 위한 차세대 시뮬레이션 소프트웨어입니다.
-NIST 검증 FDS 물리 엔진 기반으로 정확한 화재·연기 확산을 분석하고,
-GPU 가속을 통해 기존 CPU 대비 최대 87배 빠른 시뮬레이션 속도를 제공합니다.
+NIST FDS(CPU)와 자체 GPU 솔버를 선택해 화재·연기 확산을 분석하며(GPU 솔버는 NIST FDS 결과·실험 데이터 대비 검증),
+GPU 가속을 통해 기존 CPU 대비 최대 107배 빠른 시뮬레이션 속도를 제공합니다.
 
 ### 핵심 기능
 
-1. **GPU 가속 CFD 시뮬레이션**: NVIDIA CUDA 기반, CPU 대비 최대 87배 빠른 처리
+1. **GPU 가속 CFD 시뮬레이션**: NVIDIA CUDA 기반, CPU 대비 최대 107배 빠른 처리
 2. **EVAC 피난 시뮬레이션**: 충돌 모델, 사회력 모델, 다층 피난 분석
 3. **AI 자동 설정**: 자연어 기반 환경 설정, AI 도면 자동 인식
 4. **자동 보고서 생성**: ASET/RSET 분석, 성능위주설계(PBD) 보고서 자동 생성

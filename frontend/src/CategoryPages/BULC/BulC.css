@@ -2334,3 +2334,122 @@
     display: block;
   }
 }
+
+/* ========================================
+   Features / 기능
+======================================== */
+.bulc-features {
+  padding: 64px 0 96px;
+  background: #f8fafc;
+}
+
+.bulc-features__container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.bulc-features__header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.bulc-features__eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.bulc-features__title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.bulc-features__subtitle {
+  font-size: 18px;
+  color: #475569;
+  margin: 0 auto;
+  max-width: 600px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.bulc-features__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.bulc-features__card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px 24px;
+  transition: all 0.2s;
+}
+
+.bulc-features__card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.bulc-features__card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(196, 50, 10, 0.08);
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+.bulc-features__card-icon-svg {
+  width: 26px;
+  height: 26px;
+}
+
+.bulc-features__card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.bulc-features__card-desc {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .bulc-features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .bulc-features {
+    padding: 40px 0 64px;
+  }
+
+  .bulc-features__title {
+    font-size: 26px;
+  }
+
+  .bulc-features__subtitle {
+    font-size: 16px;
+  }
+
+  .bulc-features__grid {
+    grid-template-columns: 1fr;
+  }
+}
