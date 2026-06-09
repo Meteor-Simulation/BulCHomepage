@@ -69,11 +69,6 @@ const BulCPage: React.FC = () => {
     }
   };
 
-  const handleContactClick = () => {
-    const contactBtn = document.querySelector('.floating-contact-btn') as HTMLButtonElement;
-    if (contactBtn) contactBtn.click();
-  };
-
   const handleEducationContact = () => {
     setEducationModalOpen(true);
   };
@@ -102,7 +97,7 @@ const BulCPage: React.FC = () => {
       case 'workflow':
         return <WorkflowSection />;
       case 'price':
-        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} onContactClick={handleContactClick} onEducationContact={handleEducationContact} isLoggedIn={isLoggedIn} />;
+        return <PriceSection onPurchaseClick={handlePurchaseClick} onFreeClick={handleDownloadClick} onEducationContact={handleEducationContact} isLoggedIn={isLoggedIn} />;
       case 'cta':
         return <CTASection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
       case 'tutorial':
