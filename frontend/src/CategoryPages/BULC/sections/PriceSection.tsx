@@ -196,6 +196,11 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
             <div className="bulc-price__card bulc-price__card--quote">
               <div className="bulc-price__card-header">
                 <h3 className="bulc-price__card-name">{t('bulc.price.quote.name')}</h3>
+                <div className="bulc-price__card-badges">
+                  <span className="bulc-price__card-badge bulc-price__card-badge--subscription">
+                    {t('payment.subscription')}
+                  </span>
+                </div>
                 <p className="bulc-price__card-desc">{t('bulc.price.quote.desc')}</p>
               </div>
               <div className="bulc-price__card-price">

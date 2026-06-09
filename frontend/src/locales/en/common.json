@@ -264,15 +264,14 @@
         ]
       },
       "quote": {
-        "name": "Workstation\n(License included)",
-        "desc": "Custom quote inquiry",
-        "price": "Contact Sales",
+        "name": "License\n(+ Workstation)",
+        "desc": "+ 9,900,000 KRW",
+        "price": "9,900,000 KRW",
         "period": "",
         "button": "Request a Quote",
         "features": [
-          "Quote-based onboarding · License auto-renews annually",
-          "Dedicated workstation",
-          "Custom setup"
+          "Year 1: License + workstation combined, then auto-renew at 6,000,000 KRW/year",
+          "Dedicated workstation included"
         ]
       },
       "education": {

@@ -80,28 +80,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // 토큰 갱신 함수 (쿠키 기반 — REFRESH_TOKEN 쿠키가 자동 전송됨)
+  // 동시 호출 방지를 위해 in-flight Promise 캐시. RTR 토큰 1회 사용 정책상
+  // 같은 refresh 토큰으로 두 번 호출하면 백엔드가 탈취 의심으로 모든 세션 종료시킴.
+  const refreshingRef = useRef<Promise<boolean> | null>(null);
+
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({}),
-      });
+    if (refreshingRef.current) {
+      return refreshingRef.current;
+    }
 
-      const result = await response.json();
+    const promise = (async (): Promise<boolean> => {
+      try {
+        const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({}),
+        });
 
-      if (result.success && result.data) {
-        // 토큰 만료 시간 갱신 (쿠키는 백엔드가 자동 설정)
-        const expiresIn = result.data.expiresIn;
-        if (expiresIn) {
-          tokenExpiresAtRef.current = Date.now() + expiresIn * 1000;
+        // 400 (RTR 거부) / 401 (refresh 토큰 만료/무효) — 재시도해도 의미 없음
+        if (!response.ok) {
+          return false;
         }
-        return true;
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          const expiresIn = result.data.expiresIn;
+          if (expiresIn) {
+            tokenExpiresAtRef.current = Date.now() + expiresIn * 1000;
+          }
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
       }
-      return false;
-    } catch (error) {
-      return false;
+    })();
+
+    refreshingRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      refreshingRef.current = null;
     }
   }, []);
 
@@ -137,6 +157,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const checkSession = async () => {
       if (!tokenExpiresAtRef.current) return;
+      // refresh 진행 중이면 동일 토큰으로 중복 호출 방지 (RTR 탈취 의심 트리거)
+      if (refreshingRef.current) return;
 
       const timeLeft = Math.floor((tokenExpiresAtRef.current - Date.now()) / 1000);
 
@@ -148,15 +170,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           logout();
         }
       } else if (timeLeft <= 60) {
-        // 1분 이하 남았을 때 자동 갱신
-        await refreshAccessToken();
+        // 1분 이하 남았을 때 사전 자동 갱신. 실패 시 즉시 로그아웃 (재시도 루프 차단)
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+          showAlert({ message: t('alerts.sessionExpired'), type: 'warning' });
+          logout();
+        }
       } else {
         setSessionTimeLeft(timeLeft);
       }
     };
 
     checkSession();
-    const interval = setInterval(checkSession, 1000);
+    // 1초 → 5초: refresh 폭주 방지. 5초 정확도면 사전 갱신 윈도우(60초)에 충분히 잡힘
+    const interval = setInterval(checkSession, 5000);
     return () => clearInterval(interval);
   }, [user, logout, refreshAccessToken]);
 
