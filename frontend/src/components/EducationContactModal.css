@@ -5,7 +5,7 @@
 @import '../styles/modal.css';
 
 .education-contact-modal {
-  max-width: 560px;
+  max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
 }

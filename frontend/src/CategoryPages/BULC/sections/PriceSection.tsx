@@ -14,7 +14,6 @@ interface PricePlan {
 interface PriceSectionProps {
   onPurchaseClick: () => void;
   onFreeClick?: () => void;
-  onContactClick?: () => void;
   onEducationContact?: () => void;
   isLoggedIn?: boolean;
 }
@@ -30,7 +29,7 @@ const EVAC_PLANS = ['BUL:C 3D Premium'];
 const isPermanentPlan = (plan: PricePlan) =>
   EVAC_PLANS.includes(plan.name) && plan.description?.includes('영구');
 
-const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onContactClick, onEducationContact, isLoggedIn }) => {
+const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const currency = language === 'ko' ? 'KRW' : 'USD';
@@ -212,8 +211,8 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                   <li key={i}>{f}</li>
                 ))}
               </ul>
-              <button className="bulc-price__card-btn bulc-price__card-btn--quote" onClick={onContactClick}>
-                {t('bulc.price.quote.button')}
+              <button className="bulc-price__card-btn" onClick={onPurchaseClick}>
+                {t('bulc.price.purchase')}
               </button>
             </div>
 
