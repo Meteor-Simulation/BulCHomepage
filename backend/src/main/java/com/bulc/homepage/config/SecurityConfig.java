@@ -81,6 +81,8 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/logs/activity").permitAll()
                         .requestMatchers("/api/health/**").permitAll()
+                        // 검색엔진용 사이트맵 (공개)
+                        .requestMatchers("/sitemap/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         // OAuth 2.0 엔드포인트 (PKCE)
                         .requestMatchers("/oauth/**").permitAll()

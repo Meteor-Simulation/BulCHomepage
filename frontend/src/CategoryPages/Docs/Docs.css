@@ -1,0 +1,154 @@
+/* FAQ · 기술 문서 페이지 공통 스타일 */
+
+.docs-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+
+.docs-container h1 {
+  font-size: 2rem;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.docs-lead {
+  color: var(--text-secondary, #555);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+/* FAQ */
+.faq-category {
+  margin-bottom: 40px;
+}
+
+.faq-category > h2 {
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent, #c4320a);
+}
+
+.faq-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  padding: 16px 18px;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: '+';
+  font-size: 1.2rem;
+  color: var(--accent, #c4320a);
+  flex-shrink: 0;
+}
+
+.faq-item[open] summary::after {
+  content: '−';
+}
+
+.faq-item .faq-answer {
+  padding: 0 18px 16px;
+  line-height: 1.7;
+  color: var(--text-secondary, #444);
+}
+
+/* 기술 문서 */
+.docs-article section {
+  margin-bottom: 32px;
+}
+
+.docs-article h2 {
+  font-size: 1.35rem;
+  margin: 36px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent, #c4320a);
+}
+
+.docs-article p,
+.docs-article li {
+  line-height: 1.8;
+  color: var(--text-primary, #222);
+}
+
+.docs-article ul,
+.docs-article ol {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.docs-article li {
+  margin-bottom: 6px;
+}
+
+.docs-article a {
+  color: var(--accent, #c4320a);
+  text-decoration: underline;
+}
+
+.docs-meta {
+  color: var(--text-secondary, #777);
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+}
+
+.docs-related {
+  margin-top: 56px;
+  padding: 20px 24px;
+  background: rgba(196, 50, 10, 0.05);
+  border-radius: 12px;
+}
+
+.docs-related h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  border-bottom: none;
+}
+
+.docs-related ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.docs-related li {
+  margin-bottom: 8px;
+}
+
+.docs-related a {
+  color: var(--accent, #c4320a);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.docs-related a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .docs-container {
+    padding: 32px 16px 64px;
+  }
+
+  .docs-container h1 {
+    font-size: 1.5rem;
+  }
+}

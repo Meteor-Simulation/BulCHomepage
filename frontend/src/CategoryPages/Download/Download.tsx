@@ -5,6 +5,7 @@ import '../Common/CategoryPages.css';
 import './Download.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import Seo from '../../components/Seo';
 
 const DOWNLOAD_URL = 'https://github.com/Meteor-Simulation/bulc-releases/releases/latest/download/BULC-latest-win-x64.exe';
 
@@ -60,6 +61,11 @@ const DownloadPage: React.FC = () => {
 
   return (
     <div className="app">
+      <Seo
+        title="BUL:C 다운로드 | 화재 시뮬레이션 소프트웨어 14일 무료 체험"
+        description="화재 시뮬레이션 소프트웨어 BUL:C를 무료로 다운로드하세요. Windows 10/11 지원, 회원가입 시 14일 무료 체험 라이선스 제공. 시스템 요구사항과 설치 안내를 확인할 수 있습니다."
+        path="/download"
+      />
       <Header logoText="BUL:C" />
       <main className="main-content sub-page">
         <div className="download-page">

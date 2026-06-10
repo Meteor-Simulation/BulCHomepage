@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
+import Seo from '../../components/Seo';
 import LoginModal from '../../components/LoginModal';
 import { useAlert } from '../../components/AlertProvider';
 import BoothGiftBanner from '../../components/BoothGiftBanner';
@@ -853,6 +854,7 @@ const MyPage: React.FC = () => {
 
   return (
     <>
+      <Seo title="마이페이지 | BUL:C" noindex />
       <Header logoText="BUL:C" hideUserMenu={true} />
       <div className="mypage-container">
         <div className="mypage-layout">

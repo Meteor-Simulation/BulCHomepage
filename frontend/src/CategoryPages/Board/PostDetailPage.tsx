@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAlert } from '../../components/AlertProvider';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
+import Seo from '../../components/Seo';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
 import { PostDetail } from './types';
 import katex from 'katex';
@@ -111,6 +112,11 @@ const PostDetailPage: React.FC = () => {
 
   return (
     <div className="post-detail-page">
+      <Seo
+        title={`${post.title} | BUL:C 게시판`}
+        description={`BUL:C 게시판 - ${post.title}`}
+        path={`/board/${id}`}
+      />
       <Header />
       <div className="post-detail-container">
         <article className="post-article">

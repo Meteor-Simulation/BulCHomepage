@@ -2,6 +2,19 @@
 
 > BUL:C는 주식회사 메테오시뮬레이션이 개발한 GPU 가속 기반 차세대 화재 시뮬레이션 소프트웨어입니다.
 
+전체 상세 문서: https://bulc.msimul.com/llms-full.txt
+
+## 주요 페이지
+
+- 제품 소개: https://bulc.msimul.com/
+- 다운로드 (14일 무료 체험): https://bulc.msimul.com/download
+- 자주 묻는 질문(FAQ): https://bulc.msimul.com/faq
+- 기술 문서 - 성능위주설계(PBD)란: https://bulc.msimul.com/docs/performance-based-design
+- 기술 문서 - ASET과 RSET이란: https://bulc.msimul.com/docs/aset-rset
+- 기술 문서 - FDS와 GPU 가속: https://bulc.msimul.com/docs/fds-gpu-acceleration
+- 게시판(공지·기술 자료): https://bulc.msimul.com/board
+- 환불 정책: https://bulc.msimul.com/refund-policy
+
 ## 회사 정보
 
 - 회사명: 주식회사 메테오시뮬레이션 (Meteor Simulation Co., Ltd.)
