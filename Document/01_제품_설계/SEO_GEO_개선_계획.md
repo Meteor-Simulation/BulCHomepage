@@ -134,7 +134,39 @@ CSR 문제(P1)를 해결해야 SEO/GEO 모두 실질 효과가 납니다. 선택
 | 5 | 서브도메인 메타 분기, sitemap 정비, og:image | 중간 | 2~3일 |
 | 6 | 영어 URL 분리 + hreflang | 해외 타깃 시 | 1주+ |
 
-## 4. 검증 방법
+## 4. 구현 현황 (2026-06-10, Phase 1~3 1차 구현)
+
+### 구현된 항목
+
+| 항목 | 구현 내용 |
+|------|-----------|
+| 라우트별 메타 태그 | `src/components/Seo.tsx` — React 19 메타데이터 호이스팅 사용. title/description/canonical/OG/JSON-LD를 페이지별 적용. `index.html`의 기본 태그는 `data-seo-default`로 표시되어 React 마운트 시 제거됨(중복 canonical 방지) |
+| 페이지 적용 | BulC(루트), Meteor/VR(서브도메인별 canonical), Download, RefundPolicy, Board 목록/상세(동적 title). MyPage/Payment/결제결과/404는 `noindex` |
+| 프리렌더링 (Phase 2) | `scripts/prerender.mjs` — 빌드 후 헤드리스 Chrome으로 6개 정적 라우트(/download, /refund-policy, /faq, /docs/* 3종)를 `dist/<route>/index.html`로 스냅숏. `npm run build`에 통합(Chrome 없으면 자동 스킵, `PRERENDER_STRICT=1`로 강제). 루트(/)는 가격 API 의존 + 서브도메인 분기 때문에 제외 |
+| FAQ 페이지 | `/faq` — 17개 Q&A (ko/en), FAQPage JSON-LD 자동 생성 |
+| 기술 문서 | `/docs/aset-rset`, `/docs/performance-based-design`, `/docs/fds-gpu-acceleration` — 질문형 지식 콘텐츠 + TechArticle JSON-LD |
+| llms.txt 확장 | 주요 페이지 링크 추가 + `llms-full.txt` 신설 (제품 상세, 기술 배경, FAQ 전문) |
+| sitemap.xml | lastmod 추가, FAQ/docs/board 추가. 로그인 필수인 /payment는 제거 |
+| 게시글 동적 사이트맵 | 백엔드 `SitemapController` — `GET /sitemap/posts.xml` (공개 게시글, robots.txt에서 크로스 호스트 참조). 단위 테스트 포함 |
+| og:image | 1200×630 전용 이미지 생성 (`public/og-image.png`) |
+| 폰트 최적화 | Google Fonts → 셀프호스팅 가변 폰트 (`public/fonts/`) — 외부 렌더 블로킹 요청 제거 |
+| 내부 링크 | Footer에 "자료" 섹션 (FAQ/기술문서/다운로드) |
+
+### 배포 시 확인 사항
+
+1. Cloudflare Pages 빌드 명령은 기존 `npm run build` 그대로 — 프리렌더가 포함됨. 빌드 환경에서 Chrome 다운로드가 실패하면 자동으로 SPA로 폴백되므로 배포가 깨지지 않음. 배포 후 `curl -A "GPTBot" https://bulc.msimul.com/faq | grep canonical` 으로 프리렌더 적용 여부 확인.
+2. 백엔드 배포 후 `https://api.msimul.com/sitemap/posts.xml` 접근 확인 (API 도메인이 다르면 robots.txt의 Sitemap 줄도 수정).
+3. `app.frontend-base-url` 프로퍼티로 사이트맵 기본 URL 재정의 가능 (기본값 `https://bulc.msimul.com`).
+4. Phase 0(서치콘솔·서치어드바이저·Bing 등록)은 콘솔 작업이므로 별도 진행 필요.
+
+### 미구현 (후속 과제)
+
+- 루트(/) 프리렌더링 — 가격 섹션의 API 의존 제거(빌드타임 주입) 또는 SSG 프레임워크 전환 필요
+- 영어 URL 분리 + hreflang (해외 타깃 확정 시)
+- 게시글 상세 프리렌더/SSR (현재는 동적 sitemap + CSR 메타만)
+- _headers CSP에서 fonts.googleapis.com / fonts.gstatic.com 제거 가능 (셀프호스팅 전환 완료 후)
+
+## 5. 검증 방법
 
 | 검증 | 도구/명령 |
 |------|-----------|

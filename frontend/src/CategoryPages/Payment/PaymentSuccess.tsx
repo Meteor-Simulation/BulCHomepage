@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
+import Seo from '../../components/Seo';
 import './PaymentResult.css';
 
 interface PaymentResult {
@@ -129,6 +130,7 @@ const PaymentSuccess: React.FC = () => {
   if (isProcessing) {
     return (
       <div className="payment-result-page">
+        <Seo title="결제 결과 | BUL:C" noindex />
         <Header hideUserMenu={true} />
         <div className="payment-result-container">
           <div className="payment-result-card processing">
@@ -144,6 +146,7 @@ const PaymentSuccess: React.FC = () => {
   if (error) {
     return (
       <div className="payment-result-page">
+        <Seo title="결제 결과 | BUL:C" noindex />
         <Header hideUserMenu={true} />
         <div className="payment-result-container">
           <div className="payment-result-card error">
@@ -188,6 +191,7 @@ const PaymentSuccess: React.FC = () => {
 
     return (
       <div className="payment-result-page">
+        <Seo title="결제 결과 | BUL:C" noindex />
         <Header hideUserMenu={true} />
         <div className="payment-result-container">
           <div className="payment-result-card waiting">
@@ -242,6 +246,7 @@ const PaymentSuccess: React.FC = () => {
   // 일반 결제 완료 UI (카드, 계좌이체 등)
   return (
     <div className="payment-result-page">
+      <Seo title="결제 결과 | BUL:C" noindex />
       <Header hideUserMenu={true} />
       <div className="payment-result-container">
         <div className="payment-result-card success">

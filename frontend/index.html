@@ -5,30 +5,35 @@
     <link rel="icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#C4320A" />
-    <meta name="description" content="메테오시뮬레이션 | AI 화재 시뮬레이션의 새로운 기준. BUL:C 프로그램으로 화재를 예측하고 생명을 보호합니다. GPU 가속 CFD 시뮬레이션, 피난 분석, 성능위주설계(PBD) 자동 보고서 생성." />
+    <!--
+      기본 SEO 메타 태그 (JS를 실행하지 않는 크롤러용 fallback).
+      data-seo-default가 붙은 태그는 React의 Seo 컴포넌트가 마운트되면 제거되고
+      페이지별 메타 태그로 대체된다. (src/components/Seo.tsx 참조)
+    -->
+    <meta data-seo-default name="description" content="메테오시뮬레이션 | AI 화재 시뮬레이션의 새로운 기준. BUL:C 프로그램으로 화재를 예측하고 생명을 보호합니다. GPU 가속 CFD 시뮬레이션, 피난 분석, 성능위주설계(PBD) 자동 보고서 생성." />
 
     <!-- SEO Meta Tags -->
-    <meta name="keywords" content="화재 시뮬레이션, CFD 시뮬레이션, 화재 안전, BUL:C, 피난 시뮬레이션, 성능위주설계, PBD, 화재 분석, GPU 시뮬레이션, FDS, EVAC, 화재 안전 소프트웨어, fire simulation, fire safety engineering" />
+    <meta data-seo-default name="keywords" content="화재 시뮬레이션, CFD 시뮬레이션, 화재 안전, BUL:C, 피난 시뮬레이션, 성능위주설계, PBD, 화재 분석, GPU 시뮬레이션, FDS, EVAC, 화재 안전 소프트웨어, fire simulation, fire safety engineering" />
     <meta name="author" content="메테오시뮬레이션 (Meteor Simulation)" />
-    <link rel="canonical" href="https://bulc.msimul.com" />
+    <link data-seo-default rel="canonical" href="https://bulc.msimul.com" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="메테오시뮬레이션" />
-    <meta property="og:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
-    <meta property="og:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속으로 기존 대비 87배 빠른 CFD 분석, AI 자동 설정, 피난 분석(EVAC), 자동 보고서 생성." />
-    <meta property="og:url" content="https://bulc.msimul.com" />
-    <meta property="og:image" content="https://bulc.msimul.com/logo.png" />
-    <meta property="og:locale" content="ko_KR" />
+    <meta data-seo-default property="og:type" content="website" />
+    <meta data-seo-default property="og:site_name" content="메테오시뮬레이션" />
+    <meta data-seo-default property="og:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
+    <meta data-seo-default property="og:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속으로 기존 대비 87배 빠른 CFD 분석, AI 자동 설정, 피난 분석(EVAC), 자동 보고서 생성." />
+    <meta data-seo-default property="og:url" content="https://bulc.msimul.com" />
+    <meta data-seo-default property="og:image" content="https://bulc.msimul.com/og-image.png" />
+    <meta data-seo-default property="og:locale" content="ko_KR" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
-    <meta name="twitter:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속 CFD, 피난 분석, 자동 보고서." />
-    <meta name="twitter:image" content="https://bulc.msimul.com/logo.png" />
+    <meta data-seo-default name="twitter:card" content="summary_large_image" />
+    <meta data-seo-default name="twitter:title" content="메테오시뮬레이션 | AI 화재 시뮬레이션" />
+    <meta data-seo-default name="twitter:description" content="BUL:C로 생명을 구하고 피해를 예방하는 화재 시뮬레이션. GPU 가속 CFD, 피난 분석, 자동 보고서." />
+    <meta data-seo-default name="twitter:image" content="https://bulc.msimul.com/og-image.png" />
 
     <!-- JSON-LD: Organization -->
-    <script type="application/ld+json">
+    <script data-seo-default type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -59,7 +64,7 @@
     </script>
 
     <!-- JSON-LD: SoftwareApplication (BUL:C) -->
-    <script type="application/ld+json">
+    <script data-seo-default type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -105,7 +110,7 @@
     </script>
 
     <!-- JSON-LD: FAQPage -->
-    <script type="application/ld+json">
+    <script data-seo-default type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -154,14 +159,13 @@
     }
     </script>
 
-    <!-- Google Fonts - DM Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- DM Sans (셀프호스팅, 가변 폰트) - 외부 요청/렌더 블로킹 제거 -->
+    <link rel="preload" href="/fonts/dmsans-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/fonts/fonts.css">
 
     <link rel="apple-touch-icon" href="/logo.png" />
 
-    <title>메테오시뮬레이션 | AI 화재 시뮬레이션</title>
+    <title data-seo-default>메테오시뮬레이션 | AI 화재 시뮬레이션</title>
   </head>
   <body>
     <noscript>이 앱을 사용하려면 JavaScript를 활성화해야 합니다.</noscript>

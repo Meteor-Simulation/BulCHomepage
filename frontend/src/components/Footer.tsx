@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Footer.css';
 import PolicyModal, { PolicyType } from './PolicyModal';
@@ -95,6 +96,14 @@ const Footer: React.FC = () => {
             )}
           </div>
           </div>
+        </div>
+
+        {/* 가운데: 자료 링크 (SEO 내부 링크) */}
+        <div className="footer-section footer-legal">
+          <h4>{t('footer.resources')}</h4>
+          <Link to="/faq" className="footer-legal-link">{t('footer.faq')}</Link>
+          <Link to="/docs/performance-based-design" className="footer-legal-link">{t('footer.techDocs')}</Link>
+          <Link to="/download" className="footer-legal-link">{t('footer.downloadLink')}</Link>
         </div>
 
         {/* 오른쪽: 법적 링크 */}

@@ -30,12 +30,15 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.0",
+    "puppeteer": "^25.1.0",
     "typescript": "^5.4.5",
     "vite": "^6.0.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/prerender.mjs",
+    "build:spa": "tsc --noEmit && vite build",
+    "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview --port 3000"
   },
   "browserslist": {

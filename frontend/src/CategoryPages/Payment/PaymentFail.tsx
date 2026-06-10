@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
+import Seo from '../../components/Seo';
 import './PaymentResult.css';
 
 const PaymentFail: React.FC = () => {
@@ -25,6 +26,7 @@ const PaymentFail: React.FC = () => {
 
   return (
     <div className="payment-result-page">
+      <Seo title="결제 실패 | BUL:C" noindex />
       <Header hideUserMenu={true} />
       <div className="payment-result-container">
         <div className="payment-result-card error">

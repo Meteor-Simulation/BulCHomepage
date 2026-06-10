@@ -760,6 +760,10 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "refund": "Refund Policy",
-    "electronic": "Electronic Financial Transactions Terms"
+    "electronic": "Electronic Financial Transactions Terms",
+    "resources": "Resources",
+    "faq": "FAQ",
+    "techDocs": "Tech Docs",
+    "downloadLink": "Download"
   }
 }

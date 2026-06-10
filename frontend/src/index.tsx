@@ -24,13 +24,22 @@ import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
 import PostEditorPage from './CategoryPages/Board/PostEditorPage';
 import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
+import FaqPage from './CategoryPages/Docs/FaqPage';
+import DocsArticlePage from './CategoryPages/Docs/DocsArticlePage';
 import PopupRenderer from './components/PopupRenderer';
+import Seo from './components/Seo';
 
 // 404 페이지 래퍼 컴포넌트
 const NotFoundPage: React.FC = () => {
   const notFoundError = new Error('요청하신 페이지를 찾을 수 없습니다.');
   (notFoundError as any).code = 404;
-  return <ErrorPage error={notFoundError} />;
+  return (
+    <>
+      {/* SPA 특성상 404도 HTTP 200으로 응답되므로 noindex로 색인을 차단한다 (soft-404 완화) */}
+      <Seo title="페이지를 찾을 수 없습니다 | 메테오시뮬레이션" noindex />
+      <ErrorPage error={notFoundError} />
+    </>
+  );
 };
 
 // 서브도메인에 따른 카테고리 페이지 컴포넌트
@@ -74,6 +83,8 @@ const App: React.FC = () => {
             <Route path="/board/write" element={<PostEditorPage />} />
             <Route path="/board/edit/:id" element={<PostEditorPage />} />
             <Route path="/board/:id" element={<PostDetailPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/docs/:slug" element={<DocsArticlePage />} />
             <Route path="/event/booth-gift" element={<BoothGiftPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}

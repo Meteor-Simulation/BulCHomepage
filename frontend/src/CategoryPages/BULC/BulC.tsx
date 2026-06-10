@@ -9,6 +9,8 @@ import LoginModal from '../../components/LoginModal';
 import EducationContactModal from '../../components/EducationContactModal';
 import { useAuth } from '../../context/AuthContext';
 import { isSubdomainAccess } from '../../utils/subdomain';
+import Seo from '../../components/Seo';
+import { ORGANIZATION_JSONLD, BULC_SOFTWARE_JSONLD } from '../../seo/jsonld';
 
 import {
   HeroSection,
@@ -117,6 +119,12 @@ const BulCPage: React.FC = () => {
 
   return (
     <div className="app">
+      <Seo
+        title="BUL:C | AI 화재 시뮬레이션 소프트웨어 - 메테오시뮬레이션"
+        description="GPU 가속으로 기존 대비 87배 빠른 화재 시뮬레이션. NIST 검증 FDS 물리 엔진, EVAC 피난 분석, AI 자동 설정, 성능위주설계(PBD) 보고서 자동 생성. 14일 무료 체험."
+        path="/"
+        jsonLd={[ORGANIZATION_JSONLD, BULC_SOFTWARE_JSONLD]}
+      />
       <Header
         showSubNav={true}
         subNavItems={SUB_NAV_ITEMS}

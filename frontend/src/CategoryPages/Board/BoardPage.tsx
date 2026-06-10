@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import AlertModal from '../../components/AlertModal';
+import Seo from '../../components/Seo';
 import { PostListItem, PostDetail, PostPage, TreeNode } from './types';
 import ImageAnnotator, { AnnotatedImage } from './components/ImageAnnotator';
 import katex from 'katex';
@@ -302,6 +303,11 @@ const BoardPage: React.FC = () => {
 
   return (
     <div className="board-page">
+      <Seo
+        title="게시판 | BUL:C - 메테오시뮬레이션"
+        description="BUL:C 화재 시뮬레이션 공지사항, 사용 팁, 기술 자료를 확인할 수 있는 게시판입니다."
+        path="/board"
+      />
       <Header />
       <div className="board-layout">
         <aside className={`board-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>

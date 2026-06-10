@@ -30,3 +30,5 @@ User-agent: cohere-ai
 Allow: /
 
 Sitemap: https://bulc.msimul.com/sitemap.xml
+# 게시판 게시글 동적 사이트맵 (백엔드에서 생성, 크로스 호스트 제출)
+Sitemap: https://api.msimul.com/sitemap/posts.xml

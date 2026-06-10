@@ -5,6 +5,7 @@ import './RefundPolicy.css';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { POLICY_SECTIONS, PolicyLang } from '../../components/policyContent';
+import Seo from '../../components/Seo';
 
 const RefundPolicyPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,11 @@ const RefundPolicyPage: React.FC = () => {
 
   return (
     <div className="app">
+      <Seo
+        title="환불 정책 | BUL:C - 메테오시뮬레이션"
+        description="BUL:C 소프트웨어 결제 취소·환불·구독 해지에 관한 정책 안내. 결제일로부터 7일 이내, 라이선스 미활성화 시 전액 환불 기준 등을 확인하세요."
+        path="/refund-policy"
+      />
       <Header />
 
       <main className="main-content sub-page">

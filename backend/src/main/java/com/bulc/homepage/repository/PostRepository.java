@@ -8,10 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByIsDeletedFalseOrderBySortOrderAscCreatedAtDesc(Pageable pageable);
+
+    // 사이트맵용 공개 게시글 목록 (SitemapController)
+    List<Post> findTop1000ByIsDeletedFalseAndVisibilityOrderByUpdatedAtDesc(String visibility);
 
     @Query("SELECT p FROM Post p WHERE p.isDeleted = false " +
            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')))" +

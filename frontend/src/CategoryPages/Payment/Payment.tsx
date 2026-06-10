@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAlert } from '../../components/AlertProvider';
 import { POLICY_SECTIONS, PolicyLang } from '../../components/policyContent';
+import Seo from '../../components/Seo';
 import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
@@ -464,6 +465,7 @@ const PaymentPage: React.FC = () => {
 
   return (
     <div className="payment-page">
+      <Seo title="구매하기 | BUL:C" noindex />
       <Header hideUserMenu={true} />
 
       <div className="payment-container">
