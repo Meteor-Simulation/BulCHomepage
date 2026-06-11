@@ -374,6 +374,10 @@
       "download": "Download PDF",
       "preparingTitle": "This document is being prepared",
       "preparingDesc": "This material is currently in preparation. We'll make it available soon.",
+      "faq": {
+        "title": "FAQ",
+        "desc": "Quick answers about licensing, payment, system requirements, and more."
+      },
       "items": {
         "video": {
           "title": "Tutorial Video",

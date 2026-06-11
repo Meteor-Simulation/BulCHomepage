@@ -72,7 +72,8 @@ const Seo: React.FC<SeoProps> = ({
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          // '<'를 이스케이프해 사용자 입력이 JSON-LD에 섞여도 </script> 탈출(XSS)을 방지한다.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
         />
       ))}
     </>

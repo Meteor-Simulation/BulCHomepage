@@ -1792,6 +1792,46 @@
   transform: translateX(4px);
 }
 
+/* FAQ 바로가기 배너 (가이드 목록 최상단) */
+.bulc-guide__faq {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  text-align: left;
+  padding: 22px 28px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(196, 50, 10, 0.06), rgba(196, 50, 10, 0.13));
+  border: 1px solid rgba(196, 50, 10, 0.3);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.bulc-guide__faq:hover {
+  border-color: var(--accent);
+  box-shadow: 0 10px 20px -8px rgba(196, 50, 10, 0.3);
+  transform: translateY(-2px);
+}
+
+.bulc-guide__faq:hover .bulc-guide__card-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+.bulc-guide__faq-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+}
+
 /* 뒤로가기 */
 .bulc-guide__back {
   display: inline-flex;
@@ -1965,7 +2005,13 @@
     padding: 18px 18px;
   }
 
-  .bulc-guide__card-icon {
+  .bulc-guide__faq {
+    gap: 16px;
+    padding: 18px 18px;
+  }
+
+  .bulc-guide__card-icon,
+  .bulc-guide__faq-icon {
     width: 44px;
     height: 44px;
   }

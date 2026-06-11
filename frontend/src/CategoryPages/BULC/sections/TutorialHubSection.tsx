@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 const PlayCircle: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
@@ -31,6 +32,9 @@ const Clock: React.FC<{ className?: string }> = ({ className }) => (
 const ExternalLink: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
 );
+const HelpCircle: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>
+);
 
 const YOUTUBE_URL = 'https://www.youtube.com/@SimulationMeteor';
 
@@ -60,6 +64,7 @@ const ITEMS: GuideItem[] = [
 
 const TutorialHubSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [view, setView] = useState<GuideView>('hub');
 
   const renderPreparing = () => (
@@ -147,6 +152,19 @@ const TutorialHubSection: React.FC = () => {
           <h2 className="bulc-guide__title">{t('bulc.guide.title')}</h2>
           <p className="bulc-guide__subtitle">{t('bulc.guide.subtitle')}</p>
         </div>
+
+        <button type="button" className="bulc-guide__faq" onClick={() => navigate('/faq')}>
+          <span className="bulc-guide__faq-icon">
+            <HelpCircle className="bulc-guide__card-icon-svg" />
+          </span>
+          <span className="bulc-guide__card-body">
+            <span className="bulc-guide__card-titlerow">
+              <span className="bulc-guide__card-title">{t('bulc.guide.faq.title')}</span>
+            </span>
+            <span className="bulc-guide__card-desc">{t('bulc.guide.faq.desc')}</span>
+          </span>
+          <ChevronRight className="bulc-guide__card-arrow" />
+        </button>
 
         <div className="bulc-guide__list">
           {ITEMS.map((item) => {
