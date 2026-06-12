@@ -223,6 +223,21 @@ const FaqPage: React.FC = () => {
                   <p className="faq-answer">{highlight(item.answer, query)}</p>
                 </details>
               ))}
+
+              {category.relatedLinks && category.relatedLinks.length > 0 && (
+                <div className="faq-category-docs">
+                  <span className="faq-category-docs-label">
+                    {lang === 'en' ? 'Related technical documents' : '관련 기술 문서'}
+                  </span>
+                  <ul>
+                    {category.relatedLinks.map((link) => (
+                      <li key={link.to}>
+                        <Link to={link.to}>{link.label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           ))}
 

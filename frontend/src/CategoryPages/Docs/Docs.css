@@ -233,6 +233,58 @@
   color: var(--text-secondary, #444);
 }
 
+/* 카테고리 하단 관련 기술 문서 링크 */
+.faq-category-docs {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid rgba(196, 50, 10, 0.18);
+  border-radius: 10px;
+  background: rgba(196, 50, 10, 0.04);
+}
+
+.faq-category-docs-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent, #c4320a);
+  margin-bottom: 10px;
+}
+
+.faq-category-docs ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.faq-category-docs li {
+  margin-bottom: 6px;
+}
+
+.faq-category-docs li:last-child {
+  margin-bottom: 0;
+}
+
+.faq-category-docs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent, #c4320a);
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+.faq-category-docs a::before {
+  content: '→';
+  color: var(--accent, #c4320a);
+}
+
+.faq-category-docs a:hover {
+  text-decoration: underline;
+}
+
 /* FAQ 검색 결과 없음 */
 .faq-empty {
   text-align: center;

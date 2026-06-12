@@ -12,6 +12,8 @@ export interface FaqItem {
 export interface FaqCategory {
   title: string;
   items: FaqItem[];
+  /** 카테고리 하단에 노출할 관련 문서 링크 (선택) */
+  relatedLinks?: { label: string; to: string }[];
 }
 
 export const FAQ_CONTENT: Record<'ko' | 'en', FaqCategory[]> = {
@@ -44,6 +46,41 @@ export const FAQ_CONTENT: Record<'ko' | 'en', FaqCategory[]> = {
           answer:
             '네, 회원가입 시 14일 무료 체험 라이선스가 제공됩니다. 체험판에서는 CPU 기반 분석, 기본 라이브러리, EVAC 피난 분석 등 핵심 기능을 사용할 수 있습니다.',
         },
+      ],
+    },
+    {
+      title: '소방성능위주설계(PBD)',
+      items: [
+        {
+          question: '소방성능위주설계(PBD)란 무엇인가요?',
+          answer:
+            '성능위주설계(PBD, Performance-Based Design)는 법령에서 정한 일률적인 사양 기준(사양위주설계)을 그대로 적용하는 대신, 건축물의 용도·구조·재실자 특성을 반영한 화재 시나리오를 설정하고 화재·피난 시뮬레이션 등 공학적 분석으로 소방시설의 성능을 입증하는 설계 방식입니다. 초고층·대규모·복합 건축물처럼 표준 기준만으로 안전성을 담보하기 어려운 대상에 적용됩니다.',
+        },
+        {
+          question: '성능위주설계는 어떤 건축물에 적용되나요?',
+          answer:
+            '국내에서는 소방시설 설치 및 관리에 관한 법령에 따라 일정 규모 이상의 특정소방대상물에 성능위주설계가 요구됩니다. 대표적으로 연면적이 매우 큰 대규모 건축물, 고층·초고층 건축물(아파트 포함), 철도·공항 등 대규모 다중이용시설, 다수의 상영관이 밀집된 영화상영관 등이 해당하며, 세부 기준은 현행 법령을 확인해야 합니다.',
+        },
+        {
+          question: '성능위주설계는 어떤 절차로 진행되나요?',
+          answer:
+            '일반적으로 ① 설계 개요 및 화재 시나리오 설정, ② 화재 시뮬레이션(CFD)으로 열·연기·독성가스 확산을 예측하고 ASET 산정, ③ 피난 시뮬레이션으로 RSET 산정, ④ ASET과 RSET 비교를 통한 피난 안전성 평가, ⑤ 미달 시 설계 보완 후 재해석 및 심의용 보고서 작성의 순서로 진행됩니다.',
+        },
+        {
+          question: '성능위주설계에서 화재·피난 시뮬레이션은 어떤 역할을 하나요?',
+          answer:
+            '성능위주설계의 핵심 근거 자료가 바로 화재·피난 시뮬레이션 결과입니다. 화재 시뮬레이션(CFD)으로 열·연기·독성가스 확산을 예측해 ASET(이용 가능 안전 피난 시간)을 산정하고, 피난 시뮬레이션(EVAC)으로 RSET(필요 안전 피난 시간)을 산정한 뒤 ASET이 RSET보다 큰지(ASET > RSET)로 피난 안전성을 판정합니다. 신뢰성을 위해 NIST의 FDS처럼 국제적으로 검증된 해석 도구가 사용되며, 다양한 시나리오를 검토할수록 설계 신뢰도가 높아집니다.',
+        },
+        {
+          question: 'BUL:C로 성능위주설계를 수행할 수 있나요?',
+          answer:
+            '네. BUL:C는 NIST 검증 FDS 물리 엔진 기반 화재 해석과 EVAC 피난 시뮬레이션, ASET/RSET 자동 분석, 성능위주설계(PBD) 보고서 자동 생성을 하나의 프로그램에서 제공합니다. GPU 가속으로 해석 시간을 크게 단축해 같은 기간에 더 많은 시나리오를 검토할 수 있고, AI 도면 자동 인식으로 모델링 시간도 줄일 수 있습니다.',
+        },
+      ],
+      relatedLinks: [
+        { label: '성능위주설계(PBD)란? 대상·절차·시뮬레이션', to: '/docs/performance-based-design' },
+        { label: 'ASET과 RSET이란? 피난 안전성 평가의 핵심 개념', to: '/docs/aset-rset' },
+        { label: 'FDS 기반 화재 시뮬레이션과 GPU 가속', to: '/docs/fds-gpu-acceleration' },
       ],
     },
     {
@@ -150,6 +187,41 @@ export const FAQ_CONTENT: Record<'ko' | 'en', FaqCategory[]> = {
           answer:
             'Yes. A 14-day free trial license is provided upon sign-up, including CPU-based analysis, the basic library, and EVAC evacuation analysis.',
         },
+      ],
+    },
+    {
+      title: 'Performance-Based Design (PBD)',
+      items: [
+        {
+          question: 'What is Performance-Based Design (PBD)?',
+          answer:
+            'Performance-Based Design (PBD) is an approach that, instead of simply applying the uniform prescriptive criteria set by code (prescriptive design), defines fire scenarios reflecting a building’s use, structure, and occupant characteristics and demonstrates the performance of fire safety systems through engineering analysis such as fire and evacuation simulation. It is applied to buildings—high-rise, large-scale, or complex—where standard criteria alone cannot guarantee safety.',
+        },
+        {
+          question: 'Which buildings require performance-based design?',
+          answer:
+            'In Korea, performance-based design is required for certain fire-service target facilities above a defined scale under the relevant fire safety laws. Typical targets include very large buildings by gross floor area, high-rise and super high-rise buildings (including apartments), large multi-use facilities such as railways and airports, and movie theaters with many densely packed auditoriums. Exact thresholds should be checked against current legislation.',
+        },
+        {
+          question: 'What is the procedure for performance-based design?',
+          answer:
+            'It generally proceeds as follows: (1) define the design overview and fire scenarios, (2) run fire simulation (CFD) to predict heat, smoke, and toxic-gas spread and determine ASET, (3) run evacuation simulation to determine RSET, (4) assess egress safety by comparing ASET and RSET, and (5) if the criteria are not met, revise the design, re-analyze, and prepare the review report.',
+        },
+        {
+          question: 'What role do fire and evacuation simulations play in PBD?',
+          answer:
+            'Fire and evacuation simulation results are the core supporting evidence for performance-based design. Fire simulation (CFD) predicts heat, smoke, and toxic-gas spread to determine ASET (Available Safe Egress Time), evacuation simulation (EVAC) determines RSET (Required Safe Egress Time), and egress safety is judged by whether ASET exceeds RSET. Internationally validated tools such as NIST’s FDS are used for reliability, and reviewing more scenarios increases design confidence.',
+        },
+        {
+          question: 'Can I perform performance-based design with BUL:C?',
+          answer:
+            'Yes. BUL:C provides NIST-validated FDS-based fire analysis, EVAC evacuation simulation, automatic ASET/RSET analysis, and automatic PBD report generation in a single program. GPU acceleration greatly shortens analysis time so you can review more scenarios in the same period, and AI drawing recognition reduces modeling time.',
+        },
+      ],
+      relatedLinks: [
+        { label: 'What is Performance-Based Design (PBD)?', to: '/docs/performance-based-design' },
+        { label: 'What are ASET and RSET?', to: '/docs/aset-rset' },
+        { label: 'FDS fire simulation and GPU acceleration', to: '/docs/fds-gpu-acceleration' },
       ],
     },
     {
