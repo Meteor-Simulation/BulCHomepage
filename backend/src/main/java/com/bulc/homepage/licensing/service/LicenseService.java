@@ -1443,6 +1443,59 @@ public class LicenseService {
         return LicenseResponse.from(licenseRepository.save(license));
     }
 
+    /**
+     * 구독 자동 갱신용 라이선스 연장.
+     *
+     * Billing 모듈(SubscriptionBillingService)에서 구독 갱신 결제 완료 시 호출한다.
+     * HTTP API로 노출하지 않는다.
+     *
+     * 동작:
+     *  - owner + product 의 SUBSCRIPTION 라이선스(만료 상태 포함)를 찾으면 validUntil 을 연장한다.
+     *  - 없으면 신규 발급(issueLicenseWithPlanForBilling)으로 폴백한다.
+     *
+     * 신규 발급이 아니라 연장을 우선하는 이유:
+     *  1) issueLicenseWithPlanForBilling 은 ACTIVE/PENDING 유상 라이선스 보유 시
+     *     LICENSE_ALREADY_EXISTS 로 막힌다. 갱신은 종료 7일 전에 발동하므로 기존 라이선스가
+     *     아직 ACTIVE → 신규 발급만 시도하면 갱신마다 실패한다.
+     *  2) 라이선스 키/기기 활성화의 연속성을 유지해야 한다.
+     *
+     * @param newValidUntil 연장할 만료 시각 (보통 갱신된 구독의 endDate)
+     * @return 연장 또는 신규 발급된 라이선스
+     */
+    @Transactional
+    public LicenseResponse renewSubscriptionLicense(OwnerType ownerType, UUID ownerId,
+                                                    UUID planId, UUID sourceOrderId,
+                                                    UsageCategory usageCategory,
+                                                    Instant newValidUntil) {
+        LicensePlan plan = planRepository.findAvailableById(planId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.PLAN_NOT_AVAILABLE));
+
+        // 연장 후보: ACTIVE/PENDING + 만료(GRACE/HARD)까지 포함. List 반환이라 다중 라이선스에도 안전.
+        List<License> candidates = licenseRepository.findByOwnerAndProductAndStatusIn(
+                ownerType, ownerId, plan.getProductId(),
+                List.of(LicenseStatus.ACTIVE, LicenseStatus.PENDING,
+                        LicenseStatus.EXPIRED_GRACE, LicenseStatus.EXPIRED_HARD));
+
+        Optional<License> renewable = candidates.stream()
+                .filter(l -> l.getLicenseType() == LicenseType.SUBSCRIPTION)
+                .findFirst();
+
+        if (renewable.isPresent()) {
+            License license = renewable.get();
+            license.renew(newValidUntil); // 만료 상태여도 ACTIVE 로 복구됨 (SUBSCRIPTION 타입만 허용)
+            log.info("[구독갱신] 기존 라이선스 연장: licenseId={}, ownerId={}, validUntil={}",
+                    license.getId(), ownerId, newValidUntil);
+            return LicenseResponse.from(licenseRepository.save(license));
+        }
+
+        // 폴백: 연장 대상 SUBSCRIPTION 라이선스 없음 → 신규 발급으로 권한 공백 방지.
+        log.warn("[구독갱신] 연장 대상 SUBSCRIPTION 라이선스 없음 → 신규 발급 폴백: ownerId={}, productId={}",
+                ownerId, plan.getProductId());
+        LicenseIssueResult issued = issueLicenseWithPlanForBilling(
+                ownerType, ownerId, planId, sourceOrderId, usageCategory);
+        return getLicense(issued.id());
+    }
+
     // === Private 헬퍼 메서드 ===
 
     private License findLicenseOrThrow(UUID licenseId) {
