@@ -73,6 +73,7 @@
     "paymentCurrency": "Payment Country/Currency",
     "noPaymentMethod": "No payment methods registered.",
     "paymentMethodHelper": "Register a card during payment to use for auto-renewal.",
+    "addCard": "Add card",
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "Deleting your account will permanently remove all data.",
     "logout": "Logout",

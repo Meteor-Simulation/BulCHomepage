@@ -73,6 +73,7 @@
     "paymentCurrency": "결제 국가/통화",
     "noPaymentMethod": "등록된 결제 수단이 없습니다.",
     "paymentMethodHelper": "결제 시 카드를 등록하면 자동 갱신에 사용할 수 있습니다.",
+    "addCard": "카드 추가",
     "deleteAccount": "계정 삭제",
     "deleteAccountDesc": "계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.",
     "logout": "로그아웃",

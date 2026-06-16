@@ -14,6 +14,7 @@ interface PaymentPanelProps {
   onSaveSettings: () => void;
   onCancelSettings: () => void;
   onTempCountryChange: (value: string) => void;
+  onAddCard: () => void;
   onSetDefaultCard: (billingKeyId: number) => void;
   onDeleteCard: (billingKeyId: number) => void;
 }
@@ -28,6 +29,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
   onSaveSettings,
   onCancelSettings,
   onTempCountryChange,
+  onAddCard,
   onSetDefaultCard,
   onDeleteCard,
 }) => {
@@ -124,6 +126,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
             </div>
           ))}
         </div>
+      )}
+
+      {!isLoadingBillingKeys && (
+        <button type="button" className="add-card-btn" onClick={onAddCard}>
+          + {t('myPage.addCard')}
+        </button>
       )}
     </div>
   );
