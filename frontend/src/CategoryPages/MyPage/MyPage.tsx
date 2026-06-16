@@ -10,6 +10,7 @@ import { useAlert } from '../../components/AlertProvider';
 import BoothGiftBanner from '../../components/BoothGiftBanner';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
+import { loadTossPayments } from '@tosspayments/payment-sdk';
 import {
   MenuSection,
   UserInfo, License, Activation, Subscription, BillingKey,
@@ -24,6 +25,9 @@ import {
   AdminMailingPanel,
 } from './panels';
 import './MyPage.css';
+
+// 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
+const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -545,6 +549,32 @@ const MyPage: React.FC = () => {
     } catch { showError('자동 갱신 설정 중 오류가 발생했습니다.'); }
   };
 
+  const handleAddCard = async () => {
+    try {
+      // 1) 백엔드와 동일한 customerKey 확보 (빌링 인증 ↔ 빌링키 발급 키 일치 보장)
+      const ckRes = await fetch(`${API_URL}/api/subscriptions/billing-keys/customer-key`, {
+        credentials: 'include' as RequestCredentials,
+      });
+      if (!ckRes.ok) { showError('카드 등록 준비에 실패했습니다. 잠시 후 다시 시도해주세요.'); return; }
+      const ckData = await ckRes.json();
+      const customerKey = ckData?.data?.customerKey;
+      if (!customerKey) { showError('카드 등록 준비에 실패했습니다. 잠시 후 다시 시도해주세요.'); return; }
+
+      // 2) 토스 빌링 인증창 호출 (결제 아님 - 카드 등록/토큰화). 성공 시 successUrl로 리다이렉트됨.
+      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+      await tossPayments.requestBillingAuth('카드', {
+        customerKey,
+        successUrl: `${window.location.origin}/billing/success`,
+        failUrl: `${window.location.origin}/billing/fail`,
+      });
+      // 리다이렉트되므로 이 아래는 실행되지 않음
+    } catch (err: any) {
+      // 사용자가 인증창을 닫은 경우(USER_CANCEL)는 조용히 무시
+      if (err?.code === 'USER_CANCEL') return;
+      showError('카드 등록 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleSetDefaultCard = async (billingKeyId: number) => {
     try {
       const response = await fetch(`${API_URL}/api/subscriptions/billing-keys/${billingKeyId}/default`, {
@@ -1045,6 +1075,7 @@ const MyPage: React.FC = () => {
                   onSaveSettings={handleSaveSettings}
                   onCancelSettings={handleCancelSettings}
                   onTempCountryChange={setTempCountry}
+                  onAddCard={handleAddCard}
                   onSetDefaultCard={handleSetDefaultCard}
                   onDeleteCard={handleDeleteCard}
                 />

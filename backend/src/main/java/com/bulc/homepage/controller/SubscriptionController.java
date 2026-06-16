@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -115,6 +116,19 @@ public class SubscriptionController {
     }
 
     // ======== 빌링키 관련 API ========
+
+    /**
+     * 카드 등록(빌링 인증)용 customerKey 조회.
+     *
+     * 프론트는 tossPayments.requestBillingAuth 호출 직전에 이 값을 받아,
+     * 빌링키 발급 시 백엔드가 쓰는 customerKey와 동일하게 맞춘다.
+     */
+    @GetMapping("/billing-keys/customer-key")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getBillingCustomerKey() {
+        UUID userId = getCurrentUserId();
+        String customerKey = billingKeyService.getCustomerKey(userId);
+        return ResponseEntity.ok(ApiResponse.success("customerKey 조회 성공", Map.of("customerKey", customerKey)));
+    }
 
     /**
      * 빌링키 발급 (카드 등록)

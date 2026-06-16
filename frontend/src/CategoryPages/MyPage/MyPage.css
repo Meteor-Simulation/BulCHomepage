@@ -2166,6 +2166,27 @@
   color: #fff;
 }
 
+.add-card-btn {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px dashed #C4320A;
+  background: transparent;
+  color: #C4320A;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-card-btn:hover {
+  background: #C4320A;
+  color: #fff;
+  border-style: solid;
+}
+
 /* 모바일 반응형 - 구독 & 결제 수단 */
 @media (max-width: 480px) {
   .subscription-header {

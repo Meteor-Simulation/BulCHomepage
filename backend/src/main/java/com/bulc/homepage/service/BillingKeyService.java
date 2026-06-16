@@ -36,14 +36,25 @@ public class BillingKeyService {
     private static final String BILLING_PAYMENT_URL = "https://api.tosspayments.com/v1/billing";
 
     /**
+     * 사용자별 고유 customerKey 생성.
+     *
+     * 토스 빌링 인증(requestBillingAuth)과 빌링키 발급(/authorizations/issue)에서
+     * 동일한 customerKey를 써야 하므로, 프론트도 이 값을 그대로 사용하도록 노출한다.
+     * userId 기반 결정적(deterministic) 생성이라 항상 같은 값이 나온다.
+     */
+    public String getCustomerKey(UUID userId) {
+        return UUID.nameUUIDFromBytes(userId.toString().getBytes(StandardCharsets.UTF_8)).toString();
+    }
+
+    /**
      * 빌링키 발급 (authKey를 사용하여 빌링키 발급)
      */
     @Transactional
     public BillingKeyResponse issueBillingKey(BillingKeyIssueRequest request, UUID userId) {
         log.info("빌링키 발급 요청: userId={}, authKey={}", userId, request.getAuthKey());
 
-        // customerKey 생성 (사용자별 고유 키)
-        String customerKey = UUID.nameUUIDFromBytes(userId.toString().getBytes(StandardCharsets.UTF_8)).toString();
+        // customerKey 생성 (FE requestBillingAuth와 동일 값이어야 함)
+        String customerKey = getCustomerKey(userId);
 
         HttpHeaders headers = createAuthHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
