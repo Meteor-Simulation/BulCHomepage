@@ -397,13 +397,11 @@ const MyPage: React.FC = () => {
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
-        body: JSON.stringify({ name: editName, phone: cleanPhoneNumber(editPhone), country: userInfo.country, language: tempLanguage }),
+        body: JSON.stringify({ name: editName, phone: cleanPhoneNumber(editPhone), country: userInfo.country }),
       });
       if (response.ok) {
         const data = await response.json();
         setUserInfo(data);
-        setSelectedLanguage(tempLanguage);
-        changeGlobalLanguage(tempLanguage);
         setIsEditingProfile(false);
         showSuccess(t('myPage.profileSaved'));
       } else { showError('프로필 저장에 실패했습니다.'); }
@@ -413,30 +411,31 @@ const MyPage: React.FC = () => {
   const handleCancelProfile = () => {
     setEditName(userInfo.name || '');
     setEditPhone(formatPhoneNumber(userInfo.phone) || '');
-    setTempLanguage(selectedLanguage);
     setIsEditingProfile(false);
   };
 
   // ========== 설정 핸들러 ==========
 
-  const handleStartEditSettings = () => { setTempCountry(selectedCountry); setIsEditingSettings(true); };
+  const handleStartEditSettings = () => { setTempCountry(selectedCountry); setTempLanguage(selectedLanguage); setIsEditingSettings(true); };
 
   const handleSaveSettings = async () => {
     try {
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }, credentials: 'include' as RequestCredentials,
-        body: JSON.stringify({ name: userInfo.name, phone: userInfo.phone, country: tempCountry }),
+        body: JSON.stringify({ name: userInfo.name, phone: userInfo.phone, country: tempCountry, language: tempLanguage }),
       });
       if (response.ok) {
         const data = await response.json();
-        setUserInfo(data); setSelectedCountry(tempCountry); setIsEditingSettings(false);
-        showSuccess('결제 통화가 저장되었습니다.');
+        setUserInfo(data); setSelectedCountry(tempCountry);
+        setSelectedLanguage(tempLanguage); changeGlobalLanguage(tempLanguage);
+        setIsEditingSettings(false);
+        showSuccess('언어/통화가 저장되었습니다.');
       } else { showError('설정 저장에 실패했습니다.'); }
     } catch { showError('설정 저장 중 오류가 발생했습니다.'); }
   };
 
-  const handleCancelSettings = () => { setTempCountry(selectedCountry); setIsEditingSettings(false); };
+  const handleCancelSettings = () => { setTempCountry(selectedCountry); setTempLanguage(selectedLanguage); setIsEditingSettings(false); };
 
   // ========== 비밀번호 핸들러 ==========
 
@@ -911,6 +910,9 @@ const MyPage: React.FC = () => {
                   <button className={`menu-child ${activeMenu === 'account' ? 'active' : ''}`} onClick={() => handleMenuChange('account')}>
                     {t('myPage.menu.account')}
                   </button>
+                  <button className={`menu-child ${activeMenu === 'payment' ? 'active' : ''}`} onClick={() => handleMenuChange('payment')}>
+                    {t('myPage.menu.payment')}
+                  </button>
                 </div>
               </div>
 
@@ -925,9 +927,6 @@ const MyPage: React.FC = () => {
                 <div className="menu-children">
                   <button className={`menu-child ${activeMenu === 'subscription' ? 'active' : ''}`} onClick={() => handleMenuChange('subscription')}>
                     {t('myPage.menu.subscription')}
-                  </button>
-                  <button className={`menu-child ${activeMenu === 'payment' ? 'active' : ''}`} onClick={() => handleMenuChange('payment')}>
-                    {t('myPage.menu.payment')}
                   </button>
                   <button className={`menu-child ${activeMenu === 'redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('redeem')}>
                     {t('myPage.menu.redeem')}
@@ -1007,6 +1006,13 @@ const MyPage: React.FC = () => {
                   onTempLanguageChange={setTempLanguage}
                   onSave={handleSaveProfile}
                   onCancel={handleCancelProfile}
+                  isEditingSettings={isEditingSettings}
+                  tempCountry={tempCountry}
+                  selectedCountry={selectedCountry}
+                  onStartEditSettings={handleStartEditSettings}
+                  onSaveSettings={handleSaveSettings}
+                  onCancelSettings={handleCancelSettings}
+                  onTempCountryChange={setTempCountry}
                 />
               )}
 
@@ -1066,15 +1072,8 @@ const MyPage: React.FC = () => {
 
               {activeMenu === 'payment' && (
                 <PaymentPanel
-                  isEditingSettings={isEditingSettings}
-                  tempCountry={tempCountry}
-                  selectedCountry={selectedCountry}
                   isLoadingBillingKeys={isLoadingBillingKeys}
                   billingKeys={billingKeys}
-                  onStartEditSettings={handleStartEditSettings}
-                  onSaveSettings={handleSaveSettings}
-                  onCancelSettings={handleCancelSettings}
-                  onTempCountryChange={setTempCountry}
                   onAddCard={handleAddCard}
                   onSetDefaultCard={handleSetDefaultCard}
                   onDeleteCard={handleDeleteCard}
