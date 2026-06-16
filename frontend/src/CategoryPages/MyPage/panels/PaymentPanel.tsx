@@ -1,89 +1,29 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLanguage } from '../../../context/LanguageContext';
 import { BillingKey } from '../types';
-import { COUNTRIES } from '../constants';
 
 interface PaymentPanelProps {
-  isEditingSettings: boolean;
-  tempCountry: string;
-  selectedCountry: string;
   isLoadingBillingKeys: boolean;
   billingKeys: BillingKey[];
-  onStartEditSettings: () => void;
-  onSaveSettings: () => void;
-  onCancelSettings: () => void;
-  onTempCountryChange: (value: string) => void;
   onAddCard: () => void;
   onSetDefaultCard: (billingKeyId: number) => void;
   onDeleteCard: (billingKeyId: number) => void;
 }
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({
-  isEditingSettings,
-  tempCountry,
-  selectedCountry,
   isLoadingBillingKeys,
   billingKeys,
-  onStartEditSettings,
-  onSaveSettings,
-  onCancelSettings,
-  onTempCountryChange,
   onAddCard,
   onSetDefaultCard,
   onDeleteCard,
 }) => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
-  // 결제 통화는 언어 설정 기준으로 결정 (Payment 페이지/PriceSection과 동일 규칙)
-  const displayCurrency = language === 'ko' ? 'KRW' : 'USD';
 
   return (
     <div className="info-card payment-methods-card">
       <div className="card-header">
         <h2 className="card-title">{t('myPage.paymentMethod')}</h2>
-        {!isEditingSettings && (
-          <button className="edit-btn" onClick={onStartEditSettings}>
-            {t('myPage.edit')}
-          </button>
-        )}
       </div>
-
-      {/* 결제 통화 설정 */}
-      {isEditingSettings ? (
-        <div className="edit-form currency-edit-form">
-          <div className="form-group">
-            <label>{t('myPage.paymentCurrency')}</label>
-            <div className="input-wrapper">
-              <select
-                value={tempCountry}
-                onChange={(e) => onTempCountryChange(e.target.value)}
-                className="country-dropdown"
-              >
-                {COUNTRIES.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.name} ({country.currency})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="form-actions">
-            <button className="save-btn" onClick={onSaveSettings}>{t('myPage.save')}</button>
-            <button className="cancel-btn" onClick={onCancelSettings}>{t('myPage.cancel')}</button>
-          </div>
-        </div>
-      ) : (
-        <div className="currency-info-section">
-          <div className="info-row">
-            <span className="info-label">{t('myPage.paymentCurrency')}</span>
-            <span className="info-value">
-              {COUNTRIES.find(c => c.code === selectedCountry)?.name || selectedCountry}
-              ({displayCurrency})
-            </span>
-          </div>
-        </div>
-      )}
 
       {isLoadingBillingKeys ? (
         <div className="loading-text">{t('myPage.loading')}</div>

@@ -87,7 +87,7 @@
 .amp-section-title {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: #1a1a1a;
 }
 
@@ -186,7 +186,7 @@
 /* Buttons */
 .amp-btn {
   padding: 8px 14px;
-  border: 1px solid transparent;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
@@ -259,46 +259,8 @@
   background: #fff;
 }
 
-.amp-table {
-  width: 100%;
-  min-width: 720px;
-  border-collapse: collapse;
-  font-size: 13px;
-  table-layout: fixed;
-}
-
-/* 컬럼 너비 비율 (이메일 25% / 이름 17% / 회사 25% / 광고·안내 15% / 액션 18%) */
-.amp-table th:nth-child(1), .amp-table td:nth-child(1) { width: 25%; }
-.amp-table th:nth-child(2), .amp-table td:nth-child(2) { width: 17%; }
-.amp-table th:nth-child(3), .amp-table td:nth-child(3) { width: 25%; }
-.amp-table th:nth-child(4), .amp-table td:nth-child(4) { width: 15%; }
-.amp-table th:nth-child(5), .amp-table td:nth-child(5) { width: 18%; }
-
-.amp-table th,
-.amp-table td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.amp-table th {
-  background: #f8fafc;
-  color: #475569;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-/* 4번째(광고/안내) · 5번째(액션) 컬럼 헤더는 가운데, 행 셀은 우측 정렬 (.amp-optin / .amp-row-actions) */
-.amp-table th:nth-child(4),
-.amp-table th:nth-child(5) {
-  text-align: center;
-}
-
-.amp-table tr:last-child td {
-  border-bottom: none;
-}
+/* 테이블 자체 스타일은 공통 .admin-table (MyPage.css) 사용.
+   아래는 셀 콘텐츠 전용 클래스(amp-email / amp-optin / amp-badge / amp-status / amp-btn 등)만 유지 */
 
 .amp-row--unsub {
   background: #fafafa;
@@ -306,7 +268,6 @@
 }
 
 .amp-email {
-  font-family: 'DM Mono', monospace;
   color: #1a1a1a;
 }
 

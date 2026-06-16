@@ -435,7 +435,7 @@ const AdminMailingPanel: React.FC = () => {
   };
 
   const renderTable = (rows: LeadContact[], isActiveSection: boolean) => (
-    <table className="amp-table">
+    <table className="admin-table">
       <thead>
         <tr>
           <th>이메일</th>
