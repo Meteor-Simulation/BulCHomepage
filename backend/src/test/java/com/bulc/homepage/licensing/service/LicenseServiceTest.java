@@ -591,6 +591,124 @@ class LicenseServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("구독 자동 갱신 라이선스 연장 (renewSubscriptionLicense)")
+    class RenewSubscriptionLicense {
+
+        private LicensePlan subscriptionPlan(UUID planId) {
+            LicensePlan plan = LicensePlan.builder()
+                    .productId(PRODUCT_ID)
+                    .code("PRO_1Y")
+                    .name("Pro 1Y")
+                    .licenseType(LicenseType.SUBSCRIPTION)
+                    .durationDays(365)
+                    .graceDays(7)
+                    .maxActivations(3)
+                    .maxConcurrentSessions(1)
+                    .allowOfflineDays(7)
+                    .build();
+            ReflectionTestUtils.setField(plan, "id", planId);
+            return plan;
+        }
+
+        private License subscriptionLicense(UUID ownerId, LicenseStatus status, Instant validUntil) {
+            License license = License.builder()
+                    .ownerType(OwnerType.USER)
+                    .ownerId(ownerId)
+                    .productId(PRODUCT_ID)
+                    .licenseType(LicenseType.SUBSCRIPTION)
+                    .validUntil(validUntil)
+                    .build();
+            ReflectionTestUtils.setField(license, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(license, "status", status);
+            return license;
+        }
+
+        @Test
+        @DisplayName("기존 ACTIVE 구독 라이선스가 있으면 신규 발급 없이 만료일을 연장한다")
+        void shouldRenewExistingActiveLicense() {
+            // given
+            UUID planId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            Instant newValidUntil = Instant.now().plus(370, ChronoUnit.DAYS);
+            License existing = subscriptionLicense(ownerId, LicenseStatus.ACTIVE,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(subscriptionPlan(planId)));
+            given(licenseRepository.findByOwnerAndProductAndStatusIn(
+                    eq(OwnerType.USER), eq(ownerId), eq(PRODUCT_ID), any()))
+                    .willReturn(List.of(existing));
+            given(licenseRepository.save(any(License.class))).willAnswer(inv -> inv.getArgument(0));
+
+            // when
+            LicenseResponse response = licenseService.renewSubscriptionLicense(
+                    OwnerType.USER, ownerId, planId, ORDER_ID, UsageCategory.COMMERCIAL, newValidUntil);
+
+            // then
+            assertThat(response.validUntil()).isEqualTo(newValidUntil);
+            assertThat(response.status()).isEqualTo(LicenseStatus.ACTIVE);
+            verify(licenseRepository).save(existing);
+            // 중복 차단(신규 발급)을 타지 않았는지: existsActiveOrPendingPaidLicense 미호출
+            verify(licenseRepository, never()).existsActiveOrPendingPaidLicense(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("만료(EXPIRED_GRACE) 구독 라이선스도 ACTIVE로 복구하며 연장한다")
+        void shouldRecoverExpiredLicenseOnRenewal() {
+            // given
+            UUID planId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            Instant newValidUntil = Instant.now().plus(365, ChronoUnit.DAYS);
+            License expired = subscriptionLicense(ownerId, LicenseStatus.EXPIRED_GRACE,
+                    Instant.now().minus(1, ChronoUnit.DAYS));
+
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(subscriptionPlan(planId)));
+            given(licenseRepository.findByOwnerAndProductAndStatusIn(
+                    eq(OwnerType.USER), eq(ownerId), eq(PRODUCT_ID), any()))
+                    .willReturn(List.of(expired));
+            given(licenseRepository.save(any(License.class))).willAnswer(inv -> inv.getArgument(0));
+
+            // when
+            LicenseResponse response = licenseService.renewSubscriptionLicense(
+                    OwnerType.USER, ownerId, planId, ORDER_ID, UsageCategory.COMMERCIAL, newValidUntil);
+
+            // then
+            assertThat(response.status()).isEqualTo(LicenseStatus.ACTIVE);
+            assertThat(response.validUntil()).isEqualTo(newValidUntil);
+        }
+
+        @Test
+        @DisplayName("연장 대상 SUBSCRIPTION 라이선스가 없으면 신규 발급으로 폴백한다")
+        void shouldFallbackToIssueWhenNoRenewableLicense() {
+            // given
+            UUID planId = UUID.randomUUID();
+            UUID ownerId = UUID.randomUUID();
+            Instant newValidUntil = Instant.now().plus(365, ChronoUnit.DAYS);
+            License issued = subscriptionLicense(ownerId, LicenseStatus.ACTIVE, newValidUntil);
+            UUID issuedId = issued.getId();
+
+            LicenseService spy = spy(licenseService);
+            given(planRepository.findAvailableById(planId)).willReturn(Optional.of(subscriptionPlan(planId)));
+            given(licenseRepository.findByOwnerAndProductAndStatusIn(
+                    eq(OwnerType.USER), eq(ownerId), eq(PRODUCT_ID), any()))
+                    .willReturn(List.of());
+            doReturn(LicenseIssueResult.from(issued)).when(spy).issueLicenseWithPlanForBilling(
+                    eq(OwnerType.USER), eq(ownerId), eq(planId), any(), eq(UsageCategory.COMMERCIAL));
+            doReturn(LicenseResponse.from(issued)).when(spy).getLicense(issuedId);
+
+            // when
+            LicenseResponse response = spy.renewSubscriptionLicense(
+                    OwnerType.USER, ownerId, planId, ORDER_ID, UsageCategory.COMMERCIAL, newValidUntil);
+
+            // then
+            assertThat(response.id()).isEqualTo(issuedId);
+            verify(spy).issueLicenseWithPlanForBilling(
+                    eq(OwnerType.USER), eq(ownerId), eq(planId), any(), eq(UsageCategory.COMMERCIAL));
+            // 연장 경로(save)는 타지 않는다
+            verify(licenseRepository, never()).save(any(License.class));
+        }
+    }
+
     // ==========================================
     // v1.1 계정 기반 검증 테스트 (validateAndActivateByUser)
     // ==========================================

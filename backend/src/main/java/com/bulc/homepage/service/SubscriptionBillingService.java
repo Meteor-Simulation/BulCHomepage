@@ -15,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -281,8 +284,12 @@ public class SubscriptionBillingService {
     }
 
     /**
-     * 라이선스 갱신
-     * TODO: 라이선스 시스템 연결 시 아래 주석 해제
+     * 라이선스 갱신.
+     *
+     * 구독 갱신 결제 성공 후 호출되어, 구독에 연결된 라이선스의 만료일을 갱신된 구독 종료일까지 연장한다.
+     * (LicenseService.renewSubscriptionLicense: 기존 SUBSCRIPTION 라이선스 연장, 없으면 신규 발급 폴백)
+     *
+     * 호출 시점에 subscription.renew()가 먼저 적용되어 있으므로 getEndDate()는 '갱신된' 종료일이다.
      */
     private void renewLicense(Subscription subscription) {
         if (subscription.getPricePlan() == null) {
@@ -290,27 +297,37 @@ public class SubscriptionBillingService {
             return;
         }
 
-        // TODO: 라이선스 시스템 연결 시 아래 로직 활성화
-        /*
-        try {
-            UUID userId = UUID.nameUUIDFromBytes(subscription.getUserEmail().getBytes(StandardCharsets.UTF_8));
-            UUID sourceOrderId = UUID.nameUUIDFromBytes(("subscription-" + subscription.getId() + "-" + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8));
+        UUID licensePlanId = subscription.getPricePlan().getLicensePlanId();
+        if (licensePlanId == null) {
+            log.warn("라이선스 플랜이 연결되지 않은 요금제: subscriptionId={}, pricePlanId={}",
+                    subscription.getId(), subscription.getPricePlan().getId());
+            return;
+        }
 
-            licenseService.issueLicenseWithPlanForBilling(
+        try {
+            // 갱신 회차별로 고유한 sourceOrderId (신규 발급 폴백 시 멱등 키로 사용)
+            UUID sourceOrderId = UUID.nameUUIDFromBytes(
+                    ("subscription-renew-" + subscription.getId() + "-" + subscription.getEndDate())
+                            .getBytes(StandardCharsets.UTF_8));
+            // 구독 종료일(LocalDateTime, 서버 로컬)을 라이선스 만료 Instant로 변환
+            Instant newValidUntil = subscription.getEndDate().atZone(ZoneId.systemDefault()).toInstant();
+
+            licenseService.renewSubscriptionLicense(
                     OwnerType.USER,
-                    userId,
-                    subscription.getPricePlan().getLicensePlanId(),
+                    subscription.getUserId(),
+                    licensePlanId,
                     sourceOrderId,
-                    UsageCategory.COMMERCIAL
+                    UsageCategory.COMMERCIAL,
+                    newValidUntil
             );
 
-            log.info("라이선스 갱신 성공: subscriptionId={}", subscription.getId());
+            log.info("라이선스 갱신 성공: subscriptionId={}, validUntil={}",
+                    subscription.getId(), newValidUntil);
         } catch (Exception e) {
-            log.error("라이선스 갱신 실패: subscriptionId={}, error={}", subscription.getId(), e.getMessage());
+            // 라이선스 연장 실패는 결제(이미 성공)를 롤백하지 않는다. 로그로 추적 후 별도 대응.
+            log.error("라이선스 갱신 실패: subscriptionId={}, error={}",
+                    subscription.getId(), e.getMessage(), e);
         }
-        */
-
-        log.info("구독 갱신 처리 완료 (라이선스 발급 대기): subscriptionId={}", subscription.getId());
     }
 
     /**
