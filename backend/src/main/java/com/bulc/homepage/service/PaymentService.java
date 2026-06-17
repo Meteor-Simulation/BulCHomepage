@@ -1,6 +1,7 @@
 package com.bulc.homepage.service;
 
 import com.bulc.homepage.config.TossPaymentsConfig;
+import com.bulc.homepage.dto.BillingPaymentRequest;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
 import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
@@ -49,6 +50,7 @@ public class PaymentService {
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+    private final BillingKeyService billingKeyService;
 
     /**
      * 토스페이먼츠 결제 승인
@@ -402,6 +404,137 @@ public class PaymentService {
     /**
      * 결제 완료 시 구독 생성 (1년 구독)
      */
+    /**
+     * 등록 카드(빌링키)로 즉시 결제.
+     *
+     * 인터랙티브 결제(requestPayment) 대신, 선택한 빌링키로 서버가 즉시 청구한다.
+     * 성공 시 구독 생성 + 라이선스 발급, 구독형(enableAutoRenew=true)이면 자동갱신 ON.
+     */
+    @Transactional
+    public Map<String, Object> payWithBillingKey(BillingPaymentRequest request, String userIdStr, String clientIp) {
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdStr);
+        } catch (Exception e) {
+            throw new RuntimeException("사용자 인증 정보가 올바르지 않습니다.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다."));
+
+        PricePlan pricePlan = pricePlanRepository.findById(request.getPricePlanId())
+                .orElseThrow(() -> new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId()));
+        int amount = pricePlan.getPrice().intValue();
+
+        // 동일 product 중복 구매 차단 (청구 전)
+        if (pricePlan.getLicensePlanId() != null) {
+            try {
+                licenseService.requireUserCanPurchasePlan(userId, pricePlan.getLicensePlanId());
+            } catch (LicenseException e) {
+                if (e.getErrorCode() == ErrorCode.LICENSE_ALREADY_EXISTS) {
+                    throw new RuntimeException("이미 해당 제품의 라이선스를 보유하고 있습니다.");
+                }
+                throw e;
+            }
+        }
+
+        String orderId = "BILL-" + pricePlan.getId() + "-" + System.currentTimeMillis();
+        String orderName = pricePlan.getName();
+
+        // 빌링키로 즉시 청구 (소유권 검증은 requestBillingPayment 내부에서 수행)
+        Map<String, Object> charge = billingKeyService.requestBillingPayment(
+                request.getBillingKeyId(), orderId, orderName, amount, userId);
+        if (!Boolean.TRUE.equals(charge.get("success"))) {
+            throw new RuntimeException("결제에 실패했습니다.");
+        }
+
+        // 결제 이력 저장
+        Payment payment = Payment.builder()
+                .amount(BigDecimal.valueOf(amount))
+                .currency(pricePlan.getCurrency())
+                .orderName(orderName)
+                .status("C")
+                .userId(userId)
+                .userEmail(user.getEmail())
+                .userName(user.getName())
+                .pricePlan(pricePlan)
+                .clientIp(clientIp)
+                .paidAt(LocalDateTime.now())
+                .build();
+        PaymentDetail detail = PaymentDetail.builder()
+                .payment(payment)
+                .orderId(orderId)
+                .paymentKey((String) charge.get("paymentKey"))
+                .paymentMethod("CARD")
+                .paymentProvider("TOSS")
+                .tossStatus("DONE")
+                .build();
+        payment.setPaymentDetail(detail);
+        paymentRepository.save(payment);
+
+        // 구독 생성
+        Subscription subscription = createSubscriptionForUser(userId, pricePlan);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("orderId", orderId);
+        result.put("orderName", orderName);
+        result.put("amount", amount);
+        result.put("currency", pricePlan.getCurrency());
+        result.put("paymentStatus", "DONE");
+        result.put("subscriptionId", subscription.getId());
+        result.put("subscriptionEndDate", subscription.getEndDate().toString());
+
+        // 라이선스 발급
+        if (pricePlan.getLicensePlanId() != null) {
+            try {
+                UUID sourceOrderId = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
+                LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
+                        OwnerType.USER, userId, pricePlan.getLicensePlanId(), sourceOrderId, UsageCategory.COMMERCIAL);
+                result.put("licenseKey", licenseResult.licenseKey());
+                result.put("licenseId", licenseResult.id().toString());
+                if (licenseResult.validUntil() != null) {
+                    result.put("licenseValidUntil", licenseResult.validUntil().toString());
+                }
+            } catch (Exception e) {
+                log.error("[빌링결제] 라이선스 발급 실패 (결제는 완료) - orderId={}, error={}", orderId, e.getMessage(), e);
+                payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
+                paymentRepository.save(payment);
+                result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
+            }
+        }
+
+        // 구독형이면 자동갱신 활성화 (연 1회 — 스케줄러가 빌링키로 재청구 + 라이선스 연장)
+        if (request.isEnableAutoRenew()) {
+            try {
+                subscription.enableAutoRenew(request.getBillingKeyId(), "YEARLY");
+                subscriptionRepository.save(subscription);
+                result.put("autoRenew", true);
+            } catch (Exception e) {
+                log.error("[빌링결제] 자동갱신 활성화 실패 - subscriptionId={}, error={}", subscription.getId(), e.getMessage());
+            }
+        }
+
+        log.info("[빌링결제] 완료 - orderId={}, userId={}, amount={}, autoRenew={}",
+                orderId, userId, amount, request.isEnableAutoRenew());
+        return result;
+    }
+
+    /** userId 기준 구독 생성 (payWithBillingKey용 — 이메일 의존 없이). */
+    private Subscription createSubscriptionForUser(UUID userId, PricePlan pricePlan) {
+        LocalDateTime now = LocalDateTime.now();
+        Subscription subscription = Subscription.builder()
+                .userId(userId)
+                .productCode(pricePlan.getProductCode())
+                .pricePlan(pricePlan)
+                .status("A")
+                .startDate(now)
+                .endDate(now.plusYears(1))
+                .autoRenew(false)
+                .billingCycle("YEARLY")
+                .build();
+        return subscriptionRepository.save(subscription);
+    }
+
     private Subscription createSubscriptionForPayment(String userEmail, PricePlan pricePlan) {
         UUID userId = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userEmail))

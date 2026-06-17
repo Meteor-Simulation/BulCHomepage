@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
 import Seo from '../../components/Seo';
@@ -30,12 +30,20 @@ const formatAmount = (amount: number, currency: string) => {
 const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(true);
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isConfirming = useRef(false); // 중복 요청 방지
 
   useEffect(() => {
+    // 빌링키 즉시 결제 결과(navigation state) → 확인 API 없이 바로 표시
+    const billingResult = (location.state as any)?.billingResult;
+    if (billingResult) {
+      setPaymentResult(billingResult as PaymentResult);
+      setIsProcessing(false);
+      return;
+    }
     const confirmPayment = async () => {
       // 이미 처리 중이면 무시
       if (isConfirming.current) return;
@@ -125,7 +133,7 @@ const PaymentSuccess: React.FC = () => {
     };
 
     confirmPayment();
-  }, [searchParams]);
+  }, [searchParams, location.state]);
 
   if (isProcessing) {
     return (

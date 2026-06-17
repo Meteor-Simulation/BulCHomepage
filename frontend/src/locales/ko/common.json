@@ -460,6 +460,15 @@
     "evacIncluded": "Evac(피난 시뮬레이션) 포함",
     "subscription": "구독형",
     "permanent": "영구 라이선스",
+    "cards": {
+      "selectLabel": "결제할 카드를 선택하세요",
+      "loading": "카드 불러오는 중...",
+      "empty": "등록된 카드가 없습니다.",
+      "register": "카드 등록하기",
+      "fallback": "카드",
+      "default": "기본",
+      "selectRequired": "결제할 카드를 선택하거나 먼저 카드를 등록해주세요."
+    },
     "methods": {
       "creditCard": "신용/체크카드",
       "creditCardDesc": "카드사 선택은 결제창에서",

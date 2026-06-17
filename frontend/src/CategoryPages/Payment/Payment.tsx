@@ -108,6 +108,11 @@ const PaymentPage: React.FC = () => {
   const [couponError, setCouponError] = useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
 
+  // 등록 카드(빌링키) 선택 — 카드 결제 시
+  const [billingCards, setBillingCards] = useState<Array<{ id: number; cardCompany: string | null; cardNumber: string; isDefault: boolean }>>([]);
+  const [selectedBillingKeyId, setSelectedBillingKeyId] = useState<number | null>(null);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+
   // 새로고침 방지 - 상품이 선택되었거나 결제 정보가 입력되었을 때
   const hasPaymentProgress = selectedProduct !== null ||
     paymentInfo.name.length > 0 ||
@@ -324,6 +329,33 @@ const PaymentPage: React.FC = () => {
   };
 
   // 결제 처리
+  // 카드 결제 선택 시 등록 카드(빌링키) 목록 로드
+  useEffect(() => {
+    if (selectedPaymentType !== 'card' || !isLoggedIn) return;
+    let active = true;
+    setIsLoadingCards(true);
+    fetch(`${API_URL}/api/subscriptions/billing-keys`, { credentials: 'include' as RequestCredentials })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((d) => {
+        if (!active) return;
+        const cards = d.data || [];
+        setBillingCards(cards);
+        const def = cards.find((c: any) => c.isDefault) || cards[0];
+        setSelectedBillingKeyId(def ? def.id : null);
+      })
+      .catch(() => { if (active) setBillingCards([]); })
+      .finally(() => { if (active) setIsLoadingCards(false); });
+    return () => { active = false; };
+  }, [selectedPaymentType, isLoggedIn]);
+
+  // 구독형 플랜 여부 (자동갱신 활성화 판단)
+  const isSubscriptionPlan = (plan: PricePlan | null): boolean => {
+    if (!plan) return false;
+    const isPremium = plan.name === 'BUL:C 3D Premium';
+    const isPermanent = isPremium && (plan.description?.includes('영구') ?? false);
+    return isPremium && !isPermanent;
+  };
+
   const handlePayment = async () => {
     if (!selectedProduct) {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
@@ -353,6 +385,35 @@ const PaymentPage: React.FC = () => {
 
     // 구매자 정보 저장
     await saveUserInfo();
+
+    // 카드 결제 → 등록 카드(빌링키)로 즉시 결제
+    if (selectedPaymentType === 'card') {
+      if (!selectedBillingKeyId) {
+        showAlert({ message: t('payment.cards.selectRequired'), type: 'warning' });
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/payments/billing`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include' as RequestCredentials,
+          body: JSON.stringify({
+            pricePlanId: selectedPlan.id,
+            billingKeyId: selectedBillingKeyId,
+            enableAutoRenew: isSubscriptionPlan(selectedPlan),
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          navigate('/payment/success', { state: { billingResult: data } });
+        } else {
+          showAlert({ message: data.message || t('alerts.paymentRequestFailed'), type: 'error' });
+        }
+      } catch {
+        showAlert({ message: t('alerts.paymentRequestFailed'), type: 'error' });
+      }
+      return;
+    }
 
     try {
       const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
@@ -628,6 +689,42 @@ const PaymentPage: React.FC = () => {
                   </button>
                 )}
               </div>
+
+              {/* 등록 카드 선택 (카드 결제 시) */}
+              {selectedPaymentType === 'card' && isLoggedIn && (
+                <div className="registered-cards">
+                  {isLoadingCards ? (
+                    <p className="cards-loading">{t('payment.cards.loading')}</p>
+                  ) : billingCards.length === 0 ? (
+                    <div className="cards-empty">
+                      <p>{t('payment.cards.empty')}</p>
+                      <button type="button" className="register-card-btn" onClick={() => navigate('/mypage?tab=payment')}>
+                        {t('payment.cards.register')}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="cards-label">{t('payment.cards.selectLabel')}</p>
+                      <div className="cards-list">
+                        {billingCards.map((card) => (
+                          <button
+                            key={card.id}
+                            type="button"
+                            className={`card-option ${selectedBillingKeyId === card.id ? 'selected' : ''}`}
+                            onClick={() => setSelectedBillingKeyId(card.id)}
+                          >
+                            <span className="card-option-info">
+                              <span className="card-option-company">{card.cardCompany || t('payment.cards.fallback')}</span>
+                              <span className="card-option-number">{card.cardNumber}</span>
+                            </span>
+                            {card.isDefault && <span className="card-option-default">{t('payment.cards.default')}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* Step 4: 쿠폰 입력 */}
