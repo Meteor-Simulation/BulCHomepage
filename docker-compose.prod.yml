@@ -56,6 +56,8 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
       TOSS_SUCCESS_URL: ${TOSS_SUCCESS_URL}
       TOSS_FAIL_URL: ${TOSS_FAIL_URL}
+      # 빌링키 at-rest 암호화 키 (base64 32바이트). 미설정 시 개발 폴백 키 사용(WARN).
+      BILLING_ENC_KEY: ${BILLING_ENC_KEY:-}
       # Email (Microsoft Graph)
       MS_TENANT_ID: ${MS_TENANT_ID}
       MS_CLIENT_ID: ${MS_CLIENT_ID}
