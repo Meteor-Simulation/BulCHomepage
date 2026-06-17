@@ -166,6 +166,12 @@ toss:
     success-url: ${TOSS_SUCCESS_URL:http://localhost:3000/payment/success}
     fail-url: ${TOSS_FAIL_URL:http://localhost:3000/payment/fail}
 
+# 빌링키 at-rest 암호화 키 (base64 32바이트 권장). 운영은 반드시 BILLING_ENC_KEY 환경변수 설정.
+# 미설정 시 개발용 폴백 키 사용(운영 금지, 기동 시 WARN).
+billing:
+  encryption:
+    key: ${BILLING_ENC_KEY:}
+
 # 개발 환경 설정
 ---
 spring:

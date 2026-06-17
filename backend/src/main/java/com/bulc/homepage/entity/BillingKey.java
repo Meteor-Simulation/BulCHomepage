@@ -1,5 +1,6 @@
 package com.bulc.homepage.entity;
 
+import com.bulc.homepage.crypto.BillingKeyCryptoConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ public class BillingKey {
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
+    @Convert(converter = BillingKeyCryptoConverter.class)
     @Column(name = "billing_key", nullable = false, length = 255)
     private String billingKey;
 
