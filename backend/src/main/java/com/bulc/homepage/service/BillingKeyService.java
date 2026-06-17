@@ -51,7 +51,7 @@ public class BillingKeyService {
      */
     @Transactional
     public BillingKeyResponse issueBillingKey(BillingKeyIssueRequest request, UUID userId) {
-        log.info("빌링키 발급 요청: userId={}, authKey={}", userId, request.getAuthKey());
+        log.info("빌링키 발급 요청: userId={}", userId);
 
         // customerKey 생성 (FE requestBillingAuth와 동일 값이어야 함)
         String customerKey = getCustomerKey(userId);
