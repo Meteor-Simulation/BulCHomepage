@@ -467,7 +467,9 @@
       "register": "카드 등록하기",
       "fallback": "카드",
       "default": "기본",
-      "selectRequired": "결제할 카드를 선택하거나 먼저 카드를 등록해주세요."
+      "selectRequired": "결제할 카드를 선택하거나 먼저 카드를 등록해주세요.",
+      "addAnother": "카드 추가",
+      "registerFailed": "카드 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
     },
     "methods": {
       "creditCard": "신용/체크카드",

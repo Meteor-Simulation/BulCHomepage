@@ -12,6 +12,7 @@ const BillingFail: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const errorMessage = searchParams.get('message');
+  const returnTo = searchParams.get('returnTo');
 
   return (
     <div className="payment-result-page">
@@ -29,9 +30,15 @@ const BillingFail: React.FC = () => {
           <p>{errorMessage || '카드 등록이 취소되었거나 오류가 발생했습니다.'}</p>
 
           <div className="result-actions">
-            <button className="btn-secondary" onClick={() => navigate('/mypage?tab=payment')}>
-              결제 수단 관리
-            </button>
+            {returnTo === 'payment' ? (
+              <button className="btn-secondary" onClick={() => navigate('/payment')}>
+                결제 페이지로 돌아가기
+              </button>
+            ) : (
+              <button className="btn-secondary" onClick={() => navigate('/mypage?tab=payment')}>
+                결제 수단 관리
+              </button>
+            )}
             <button className="btn-primary" onClick={() => navigate('/')}>
               홈으로
             </button>

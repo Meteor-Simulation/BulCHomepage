@@ -19,6 +19,10 @@ const BillingSuccess: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const isRegistering = useRef(false); // 중복 요청 방지
 
+  // 결제 페이지에서 카드 등록을 시작했으면 등록 후 결제 페이지로 복귀한다.
+  const returnTo = searchParams.get('returnTo');
+  const successPath = returnTo === 'payment' ? '/payment' : '/mypage?tab=payment';
+
   useEffect(() => {
     const registerCard = async () => {
       if (isRegistering.current) return;
@@ -40,8 +44,8 @@ const BillingSuccess: React.FC = () => {
         });
 
         if (response.ok) {
-          // 카드 등록 성공 → 마이페이지 결제 탭으로 이동
-          navigate('/mypage?tab=payment', { replace: true });
+          // 카드 등록 성공 → 시작 지점(결제 페이지 또는 마이페이지 결제 탭)으로 복귀
+          navigate(successPath, { replace: true });
         } else {
           const data = await response.json().catch(() => ({}));
           setError(data.error || '카드 등록에 실패했습니다. 다시 시도해주세요.');
@@ -53,7 +57,7 @@ const BillingSuccess: React.FC = () => {
       }
     };
     registerCard();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, successPath]);
 
   if (isProcessing) {
     return (
@@ -86,8 +90,8 @@ const BillingSuccess: React.FC = () => {
           <h2>카드 등록에 실패했습니다</h2>
           <p>{error}</p>
           <div className="result-actions">
-            <button className="btn-primary" onClick={() => navigate('/mypage?tab=payment', { replace: true })}>
-              결제 수단 관리로 이동
+            <button className="btn-primary" onClick={() => navigate(successPath, { replace: true })}>
+              {returnTo === 'payment' ? '결제 페이지로 이동' : '결제 수단 관리로 이동'}
             </button>
           </div>
           <p className="result-notice">
