@@ -16,6 +16,10 @@ import './Payment.css';
 // 토스페이먼츠 클라이언트 키
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
 
+// 카드 등록(빌링 인증) 모달은 성공 시 토스가 결제 페이지를 떠나 successUrl로 리다이렉트한다.
+// 등록 후 결제 페이지로 복귀했을 때 직전 결제 진행 상태를 복원하기 위한 임시 저장 키.
+const CHECKOUT_STATE_KEY = 'bulc_checkout_state';
+
 // 상품 타입
 interface Product {
   id: string;
@@ -108,12 +112,41 @@ const PaymentPage: React.FC = () => {
   const [couponError, setCouponError] = useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
 
+  // 등록 카드(빌링키) 선택 — 카드 결제 시
+  const [billingCards, setBillingCards] = useState<Array<{ id: number; cardCompany: string | null; cardNumber: string; isDefault: boolean }>>([]);
+  const [selectedBillingKeyId, setSelectedBillingKeyId] = useState<number | null>(null);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+
   // 새로고침 방지 - 상품이 선택되었거나 결제 정보가 입력되었을 때
   const hasPaymentProgress = selectedProduct !== null ||
     paymentInfo.name.length > 0 ||
     paymentInfo.phone.length > 0 ||
     selectedPaymentType !== null;
   usePreventRefresh(hasPaymentProgress);
+
+  // 카드 등록(빌링 인증) 모달 성공 후 결제 페이지로 복귀 시, 직전 결제 진행 상태 복원.
+  // (토스 빌링 인증은 성공 시 successUrl로 리다이렉트되어 React 상태가 초기화되므로 sessionStorage로 이어준다)
+  useEffect(() => {
+    const raw = sessionStorage.getItem(CHECKOUT_STATE_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(CHECKOUT_STATE_KEY);
+    try {
+      const s = JSON.parse(raw);
+      if (s.product) setSelectedProduct(s.product);
+      if (s.plan) setSelectedPlan(s.plan);
+      if (s.paymentType) setSelectedPaymentType(s.paymentType);
+      if (s.coupon) setAppliedCoupon(s.coupon);
+      if (s.paymentInfo) {
+        setPaymentInfo(s.paymentInfo);
+        setInitialUserInfo(s.paymentInfo);
+        setUserInfoLoaded(true);
+      }
+      if (s.agreeTermsOfService) setAgreeTermsOfService(true);
+      if (s.agreePrivacy) setAgreePrivacy(true);
+    } catch {
+      // 복원 실패 시 무시 — 사용자가 처음부터 다시 선택
+    }
+  }, []);
 
   // 로그인 체크 - 비로그인시 BulC Download 탭으로 이동
   useEffect(() => {
@@ -324,6 +357,82 @@ const PaymentPage: React.FC = () => {
   };
 
   // 결제 처리
+  // 카드 결제 선택 시 등록 카드(빌링키) 목록 로드
+  useEffect(() => {
+    if (selectedPaymentType !== 'card' || !isLoggedIn) return;
+    let active = true;
+    setIsLoadingCards(true);
+    fetch(`${API_URL}/api/subscriptions/billing-keys`, { credentials: 'include' as RequestCredentials })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((d) => {
+        if (!active) return;
+        const cards = d.data || [];
+        setBillingCards(cards);
+        const def = cards.find((c: any) => c.isDefault) || cards[0];
+        setSelectedBillingKeyId(def ? def.id : null);
+      })
+      .catch(() => { if (active) setBillingCards([]); })
+      .finally(() => { if (active) setIsLoadingCards(false); });
+    return () => { active = false; };
+  }, [selectedPaymentType, isLoggedIn]);
+
+  // 카드 등록 직전, 현재 결제 진행 상태를 저장 (등록 성공 후 복귀 시 복원용)
+  const persistCheckoutState = () => {
+    try {
+      sessionStorage.setItem(CHECKOUT_STATE_KEY, JSON.stringify({
+        product: selectedProduct,
+        plan: selectedPlan,
+        paymentType: selectedPaymentType,
+        coupon: appliedCoupon,
+        paymentInfo,
+        agreeTermsOfService,
+        agreePrivacy,
+      }));
+    } catch {
+      // 저장 실패 시 무시 — 복원만 안 될 뿐 등록 흐름은 정상 진행
+    }
+  };
+
+  // 카드 등록 — 페이지 이동 없이 결제 페이지 위에 토스 빌링 인증 모달(iframe)을 띄운다.
+  const handleAddCard = async () => {
+    try {
+      // 1) 백엔드와 동일한 customerKey 확보 (빌링 인증 ↔ 빌링키 발급 키 일치 보장)
+      const ckRes = await fetch(`${API_URL}/api/subscriptions/billing-keys/customer-key`, {
+        credentials: 'include' as RequestCredentials,
+      });
+      if (!ckRes.ok) { showAlert({ message: t('payment.cards.registerFailed'), type: 'error' }); return; }
+      const ckData = await ckRes.json();
+      const customerKey = ckData?.data?.customerKey;
+      if (!customerKey) { showAlert({ message: t('payment.cards.registerFailed'), type: 'error' }); return; }
+
+      // 2) 등록 성공 시 토스가 successUrl로 리다이렉트하므로, 복귀 후 복원을 위해 현재 상태 저장
+      persistCheckoutState();
+
+      // 3) 토스 빌링 인증창을 iframe(모달)로 호출 → 결제 페이지를 떠나지 않고 카드 등록.
+      //    성공 시 ?returnTo=payment 를 붙여 결제 페이지로 되돌아온다.
+      const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
+      await tossPayments.requestBillingAuth('카드', {
+        customerKey,
+        successUrl: `${window.location.origin}/billing/success?returnTo=payment`,
+        failUrl: `${window.location.origin}/billing/fail?returnTo=payment`,
+        windowTarget: 'iframe',
+      });
+    } catch (err: any) {
+      // 사용자가 모달을 닫은 경우(USER_CANCEL)는 조용히 무시하고, 저장해 둔 상태도 정리
+      sessionStorage.removeItem(CHECKOUT_STATE_KEY);
+      if (err?.code === 'USER_CANCEL') return;
+      showAlert({ message: t('payment.cards.registerFailed'), type: 'error' });
+    }
+  };
+
+  // 구독형 플랜 여부 (자동갱신 활성화 판단)
+  const isSubscriptionPlan = (plan: PricePlan | null): boolean => {
+    if (!plan) return false;
+    const isPremium = plan.name === 'BUL:C 3D Premium';
+    const isPermanent = isPremium && (plan.description?.includes('영구') ?? false);
+    return isPremium && !isPermanent;
+  };
+
   const handlePayment = async () => {
     if (!selectedProduct) {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
@@ -353,6 +462,35 @@ const PaymentPage: React.FC = () => {
 
     // 구매자 정보 저장
     await saveUserInfo();
+
+    // 카드 결제 → 등록 카드(빌링키)로 즉시 결제
+    if (selectedPaymentType === 'card') {
+      if (!selectedBillingKeyId) {
+        showAlert({ message: t('payment.cards.selectRequired'), type: 'warning' });
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/payments/billing`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include' as RequestCredentials,
+          body: JSON.stringify({
+            pricePlanId: selectedPlan.id,
+            billingKeyId: selectedBillingKeyId,
+            enableAutoRenew: isSubscriptionPlan(selectedPlan),
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          navigate('/payment/success', { state: { billingResult: data } });
+        } else {
+          showAlert({ message: data.message || t('alerts.paymentRequestFailed'), type: 'error' });
+        }
+      } catch {
+        showAlert({ message: t('alerts.paymentRequestFailed'), type: 'error' });
+      }
+      return;
+    }
 
     try {
       const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
@@ -628,6 +766,45 @@ const PaymentPage: React.FC = () => {
                   </button>
                 )}
               </div>
+
+              {/* 등록 카드 선택 (카드 결제 시) */}
+              {selectedPaymentType === 'card' && isLoggedIn && (
+                <div className="registered-cards">
+                  {isLoadingCards ? (
+                    <p className="cards-loading">{t('payment.cards.loading')}</p>
+                  ) : billingCards.length === 0 ? (
+                    <div className="cards-empty">
+                      <p>{t('payment.cards.empty')}</p>
+                      <button type="button" className="register-card-btn" onClick={handleAddCard}>
+                        {t('payment.cards.register')}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="cards-label">{t('payment.cards.selectLabel')}</p>
+                      <div className="cards-list">
+                        {billingCards.map((card) => (
+                          <button
+                            key={card.id}
+                            type="button"
+                            className={`card-option ${selectedBillingKeyId === card.id ? 'selected' : ''}`}
+                            onClick={() => setSelectedBillingKeyId(card.id)}
+                          >
+                            <span className="card-option-info">
+                              <span className="card-option-company">{card.cardCompany || t('payment.cards.fallback')}</span>
+                              <span className="card-option-number">{card.cardNumber}</span>
+                            </span>
+                            {card.isDefault && <span className="card-option-default">{t('payment.cards.default')}</span>}
+                          </button>
+                        ))}
+                      </div>
+                      <button type="button" className="add-card-link" onClick={handleAddCard}>
+                        + {t('payment.cards.addAnother')}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* Step 4: 쿠폰 입력 */}

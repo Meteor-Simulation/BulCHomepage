@@ -1,5 +1,6 @@
 package com.bulc.homepage.controller;
 
+import com.bulc.homepage.dto.BillingPaymentRequest;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
 import com.bulc.homepage.service.ActivityLogService;
 import com.bulc.homepage.service.PaymentService;
@@ -87,6 +88,40 @@ public class PaymentController {
                 log.warn("결제 실패 로그 기록 오류: {}", logError.getMessage());
             }
 
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 등록 카드(빌링키)로 즉시 결제 API.
+     * 결제 페이지에서 등록 카드를 선택해 결제할 때 호출.
+     */
+    @PostMapping("/billing")
+    public ResponseEntity<Map<String, Object>> payWithBillingKey(
+            @Valid @RequestBody BillingPaymentRequest request,
+            HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userId = null;
+            if (authentication != null && authentication.isAuthenticated()
+                    && !"anonymousUser".equals(authentication.getPrincipal())) {
+                userId = authentication.getName();
+            }
+            if (userId == null) {
+                throw new RuntimeException("로그인이 필요합니다.");
+            }
+
+            log.info("[빌링결제 요청] pricePlanId={}, billingKeyId={}, autoRenew={}, userId={}",
+                    request.getPricePlanId(), request.getBillingKeyId(), request.isEnableAutoRenew(), userId);
+
+            Map<String, Object> result = paymentService.payWithBillingKey(request, userId, clientIp);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("[빌링결제 실패] pricePlanId={}, error={}", request.getPricePlanId(), e.getMessage(), e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", e.getMessage());

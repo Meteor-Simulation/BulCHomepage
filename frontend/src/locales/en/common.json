@@ -460,6 +460,17 @@
     "evacIncluded": "Evac (Evacuation Simulation) included",
     "subscription": "Subscription",
     "permanent": "Permanent License",
+    "cards": {
+      "selectLabel": "Select a card to pay with",
+      "loading": "Loading cards...",
+      "empty": "No registered cards.",
+      "register": "Register a card",
+      "fallback": "Card",
+      "default": "Default",
+      "selectRequired": "Please select a card or register one first.",
+      "addAnother": "Add card",
+      "registerFailed": "An error occurred while registering the card. Please try again shortly."
+    },
     "methods": {
       "creditCard": "Credit Card",
       "creditCardDesc": "VISA, MASTER, JCB",
