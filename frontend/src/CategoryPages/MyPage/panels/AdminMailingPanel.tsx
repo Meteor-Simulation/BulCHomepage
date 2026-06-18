@@ -94,6 +94,31 @@ const CONSENT_METHODS = [
   { value: 'import', label: '일괄 임포트' },
 ];
 
+// 발송 분류(email_log) 키 — 백엔드 ALLOWED_TEMPLATE_KEYS 와 일치해야 함
+const SEND_TEMPLATE_KEYS = [
+  { value: 'program_update', label: '프로그램 업데이트 안내' },
+  { value: 'terms_change', label: '약관 변경 안내' },
+  { value: 'security_notice', label: '보안 공지' },
+];
+
+interface SendForm {
+  templateKey: string;
+  subject: string;
+  title: string;
+  contentHtml: string;
+  includeMembers: boolean;
+  includeContacts: boolean;
+}
+
+const emptySendForm = (): SendForm => ({
+  templateKey: 'program_update',
+  subject: '',
+  title: '',
+  contentHtml: '',
+  includeMembers: false,
+  includeContacts: true,
+});
+
 const ACTIVE_PAGE_SIZE = 10;
 const INACTIVE_PAGE_SIZE = 20;
 
@@ -111,7 +136,6 @@ const AdminMailingPanel: React.FC = () => {
   const [activeTotalPages, setActiveTotalPages] = useState(0);
   const [activeTotalElements, setActiveTotalElements] = useState(0);
   const [isLoadingActive, setIsLoadingActive] = useState(false);
-  const [activeSearchOpen, setActiveSearchOpen] = useState(false);
   const [activeSearchInput, setActiveSearchInput] = useState('');
   const [activeQ, setActiveQ] = useState('');
 
@@ -121,7 +145,6 @@ const AdminMailingPanel: React.FC = () => {
   const [inactiveTotalPages, setInactiveTotalPages] = useState(0);
   const [inactiveTotalElements, setInactiveTotalElements] = useState(0);
   const [isLoadingInactive, setIsLoadingInactive] = useState(false);
-  const [inactiveSearchOpen, setInactiveSearchOpen] = useState(false);
   const [inactiveSearchInput, setInactiveSearchInput] = useState('');
   const [inactiveQ, setInactiveQ] = useState('');
 
@@ -141,6 +164,12 @@ const AdminMailingPanel: React.FC = () => {
   // 수신 비활성 입력
   const [unsubReasonModal, setUnsubReasonModal] = useState<{ id: number; email: string } | null>(null);
   const [unsubReason, setUnsubReason] = useState('');
+
+  // 메일 발송 모달
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [sendForm, setSendForm] = useState<SendForm>(emptySendForm());
+  const [isSending, setIsSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ targetCount: number; sentCount: number; failedCount: number } | null>(null);
 
   const fetchSection = useCallback(async (isActiveSection: boolean, pageNum: number) => {
     const setLoading = isActiveSection ? setIsLoadingActive : setIsLoadingInactive;
@@ -190,39 +219,25 @@ const AdminMailingPanel: React.FC = () => {
     await Promise.all([fetchSection(true, activePage), fetchSection(false, inactivePage)]);
   };
 
-  const toggleActiveSearch = () => {
-    if (activeSearchOpen) {
-      setActiveSearchOpen(false);
-      setActiveSearchInput('');
-      if (activeQ) {
-        setActiveQ('');
-        setActivePage(0);
-      }
-    } else {
-      setActiveSearchOpen(true);
-    }
-  };
-
   const applyActiveSearch = () => {
     setActiveQ(activeSearchInput.trim());
     setActivePage(0);
   };
 
-  const toggleInactiveSearch = () => {
-    if (inactiveSearchOpen) {
-      setInactiveSearchOpen(false);
-      setInactiveSearchInput('');
-      if (inactiveQ) {
-        setInactiveQ('');
-        setInactivePage(0);
-      }
-    } else {
-      setInactiveSearchOpen(true);
-    }
+  const clearActiveSearch = () => {
+    setActiveSearchInput('');
+    setActiveQ('');
+    setActivePage(0);
   };
 
   const applyInactiveSearch = () => {
     setInactiveQ(inactiveSearchInput.trim());
+    setInactivePage(0);
+  };
+
+  const clearInactiveSearch = () => {
+    setInactiveSearchInput('');
+    setInactiveQ('');
     setInactivePage(0);
   };
 
@@ -370,6 +385,69 @@ const AdminMailingPanel: React.FC = () => {
     }
   };
 
+  // ---- 메일 발송 ----
+
+  const openSendModal = () => {
+    setSendForm(emptySendForm());
+    setSendResult(null);
+    setIsSendModalOpen(true);
+  };
+
+  const closeSendModal = () => {
+    if (isSending) return;
+    setIsSendModalOpen(false);
+    setSendResult(null);
+  };
+
+  const handleSend = async () => {
+    if (!sendForm.subject.trim() || !sendForm.title.trim() || !sendForm.contentHtml.trim()) {
+      showAlert({ message: '메일 제목 · 본문 제목 · 본문 내용을 모두 입력하세요', type: 'error' });
+      return;
+    }
+    if (!sendForm.includeMembers && !sendForm.includeContacts) {
+      showAlert({ message: '발송 대상을 한 가지 이상 선택하세요', type: 'error' });
+      return;
+    }
+    const targetLabel = [
+      sendForm.includeMembers && '홈페이지 회원',
+      sendForm.includeContacts && '직접 등록 컨택',
+    ].filter(Boolean).join(', ');
+    if (!window.confirm(`안내성 메일을 발송하시겠습니까?\n발송 대상: ${targetLabel}`)) return;
+
+    setIsSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch(`${API}/api/admin/mails/operational`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          templateKey: sendForm.templateKey,
+          subject: sendForm.subject.trim(),
+          title: sendForm.title.trim(),
+          contentHtml: sendForm.contentHtml,
+          includeMembers: sendForm.includeMembers,
+          includeContacts: sendForm.includeContacts,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: '발송 실패' }));
+        showAlert({ message: err.error || err.message || '발송 실패', type: 'error' });
+        return;
+      }
+      const data = await res.json();
+      setSendResult({ targetCount: data.targetCount, sentCount: data.sentCount, failedCount: data.failedCount });
+      showAlert({
+        message: `발송 완료 — 대상 ${data.targetCount} · 성공 ${data.sentCount} · 실패 ${data.failedCount}`,
+        type: 'success',
+      });
+    } catch {
+      showAlert({ message: '발송 중 오류가 발생했습니다', type: 'error' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   // ---- CSV ----
 
   const openCsvModal = () => {
@@ -427,245 +505,279 @@ const AdminMailingPanel: React.FC = () => {
 
   // ---- Render helpers ----
 
-  const buildPages = (currentPage: number, totalPgs: number): number[] => {
-    if (totalPgs === 0) return [];
-    const max = Math.min(totalPgs, 10);
-    const start = Math.max(0, Math.min(currentPage - 4, totalPgs - max));
-    return Array.from({ length: max }, (_, i) => start + i);
-  };
-
   const renderTable = (rows: LeadContact[], isActiveSection: boolean) => (
-    <table className="admin-table">
-      <thead>
-        <tr>
-          <th>이메일</th>
-          <th>이름</th>
-          <th>회사</th>
-          <th>광고/안내</th>
-          <th>액션</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(c => (
-          <tr key={c.id} className={isActiveSection ? '' : 'amp-row--unsub'}>
-            <td className="amp-email">{c.email}</td>
-            <td>{c.contactName || '-'}</td>
-            <td>{c.companyName || '-'}</td>
-            <td className="amp-optin">
-              <span className={c.optInMarketing ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>광고{c.optInMarketing ? '✓' : '✗'}</span>
-              <span className={c.optInTransactional ? 'amp-badge amp-badge--on' : 'amp-badge amp-badge--off'}>안내{c.optInTransactional ? '✓' : '✗'}</span>
-            </td>
-            <td className="amp-row-actions">
-              <button className="amp-btn amp-btn--small" onClick={() => openEditModal(c)}>편집</button>
-              {isActiveSection
-                ? <button className="amp-btn amp-btn--small amp-btn--primary" onClick={() => openUnsubscribeModal(c)}>비활성화</button>
-                : <button className="amp-btn amp-btn--small amp-btn--warn" onClick={() => handleReactivate(c)}>재활성화</button>}
-              <button className="amp-btn amp-btn--small amp-btn--danger" onClick={() => handleDelete(c)}>삭제</button>
-            </td>
+    <div className="admin-table-wrapper">
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>이메일</th>
+            <th>이름</th>
+            <th>회사</th>
+            <th>광고/안내</th>
+            <th>액션</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.length > 0 ? rows.map(c => (
+            <tr key={c.id}>
+              <td>{c.email}</td>
+              <td>{c.contactName || '-'}</td>
+              <td>{c.companyName || '-'}</td>
+              <td>
+                <span className={`status-toggle-btn ${c.optInMarketing ? 'active' : 'inactive'}`}>광고</span>{' '}
+                <span className={`status-toggle-btn ${c.optInTransactional ? 'active' : 'inactive'}`}>안내</span>
+              </td>
+              <td>
+                <div className="action-btn-group">
+                  <button className="action-btn edit" onClick={() => openEditModal(c)}>편집</button>
+                  {isActiveSection
+                    ? <button className="action-btn warning" onClick={() => openUnsubscribeModal(c)}>비활성화</button>
+                    : <button className="action-btn success" onClick={() => handleReactivate(c)}>재활성화</button>}
+                  <button className="action-btn danger" onClick={() => handleDelete(c)}>삭제</button>
+                </div>
+              </td>
+            </tr>
+          )) : (
+            <tr><td colSpan={5} className="empty-row">{isActiveSection ? '활성 컨택이 없습니다.' : '비활성 컨택이 없습니다.'}</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 
-  const renderPagination = (currentPage: number, totalPgs: number, setPg: (p: number | ((p: number) => number)) => void) => (
+  const renderPagination = (currentPage: number, totalPgs: number, setPg: (p: number) => void) => (
     totalPgs > 1 ? (
-      <div className="amp-pagination">
-        <button className="amp-btn amp-btn--small" disabled={currentPage === 0} onClick={() => setPg(0)}>«</button>
-        <button className="amp-btn amp-btn--small" disabled={currentPage === 0} onClick={() => setPg(p => p - 1)}>‹</button>
-        {buildPages(currentPage, totalPgs).map(p => (
-          <button key={p} className={`amp-btn amp-btn--small ${p === currentPage ? 'amp-btn--page-active' : ''}`} onClick={() => setPg(p)}>{p + 1}</button>
-        ))}
-        <button className="amp-btn amp-btn--small" disabled={currentPage >= totalPgs - 1} onClick={() => setPg(p => p + 1)}>›</button>
-        <button className="amp-btn amp-btn--small" disabled={currentPage >= totalPgs - 1} onClick={() => setPg(totalPgs - 1)}>»</button>
+      <div className="admin-pagination">
+        <button disabled={currentPage === 0} onClick={() => setPg(currentPage - 1)}>&lsaquo;</button>
+        <span>{currentPage + 1} / {totalPgs}</span>
+        <button disabled={currentPage >= totalPgs - 1} onClick={() => setPg(currentPage + 1)}>&rsaquo;</button>
       </div>
     ) : null
   );
 
   return (
-    <div className="admin-mailing-panel">
-      {/* 1. 메일 등록 */}
-      <div className="amp-section">
-        <div className="amp-section-header amp-section-header--inline">
-          <h3 className="amp-section-title">메일 등록</h3>
-          <div className="amp-section-actions">
-            <button className="amp-btn amp-btn--secondary" onClick={openCsvModal}>파일 임포트</button>
-            <button className="amp-btn amp-btn--primary" onClick={openCreateModal}>신규 등록</button>
+    <>
+      {/* 등록/발송 */}
+      <div className="info-card admin-section-card wide amp-actionbar">
+        <div className="card-header">
+          <h2 className="card-title">등록/발송</h2>
+          <span className="amp-hint amp-hint--inline">홈페이지 회원과 직접 등록한 컨택에게 안내성 메일을 발송합니다. (광고성 발송은 준비 중)</span>
+          <div className="action-btn-group" style={{ marginLeft: 'auto' }}>
+            <button className="action-btn edit" onClick={openCsvModal}>파일 등록</button>
+            <button className="action-btn edit" onClick={openCreateModal}>수동 등록</button>
+            <button className="action-btn edit" onClick={openSendModal}>발송</button>
           </div>
         </div>
       </div>
 
-      {/* 2. 수신 활성 목록 */}
-      <div className="amp-section">
-        <div className="amp-section-header amp-section-header--inline">
-          <h3 className="amp-section-title">수신 활성 목록</h3>
-          <span className="amp-section-count">총 <strong>{activeTotalElements}</strong> 명</span>
-          <div className="amp-section-search">
-            {activeSearchOpen && (
-              <input
-                type="text"
-                autoFocus
-                placeholder="이메일·이름·회사 검색"
-                value={activeSearchInput}
-                onChange={e => setActiveSearchInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') applyActiveSearch(); }}
-              />
-            )}
-            <button className="amp-icon-btn" onClick={toggleActiveSearch} aria-label="검색" title={activeSearchOpen ? '검색 닫기' : '검색'}>
-              {activeSearchOpen ? '✕' : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-              )}
-            </button>
-          </div>
+      {/* 수신 활성 목록 */}
+      <div className="info-card admin-section-card wide">
+        <div className="card-header">
+          <h2 className="card-title">수신 활성 목록</h2>
+          <span className="admin-count">{activeTotalElements}명</span>
         </div>
-        <div className="amp-table-wrap">
-          {isLoadingActive ? (
-            <div className="amp-empty">불러오는 중...</div>
-          ) : activeContacts.length === 0 ? (
-            <div className="amp-empty">활성 컨택이 없습니다.</div>
-          ) : (
-            renderTable(activeContacts, true)
-          )}
+        <div className="admin-search-bar">
+          <input
+            type="text"
+            placeholder="이메일, 이름, 회사로 검색"
+            value={activeSearchInput}
+            onChange={e => setActiveSearchInput(e.target.value)}
+            onKeyPress={e => { if (e.key === 'Enter') applyActiveSearch(); }}
+          />
+          <button onClick={applyActiveSearch}>조회</button>
+          {activeQ && <button className="clear" onClick={clearActiveSearch}>초기화</button>}
         </div>
-        {renderPagination(activePage, activeTotalPages, setActivePage)}
+        {isLoadingActive ? (
+          <div className="admin-loading">데이터 로딩 중...</div>
+        ) : (
+          <>
+            {renderTable(activeContacts, true)}
+            {renderPagination(activePage, activeTotalPages, setActivePage)}
+          </>
+        )}
       </div>
 
-      {/* 3. 수신 비활성 목록 */}
-      <div className="amp-section">
-        <div className="amp-section-header amp-section-header--inline">
-          <h3 className="amp-section-title">수신 비활성 목록</h3>
-          <span className="amp-section-count">총 <strong>{inactiveTotalElements}</strong> 명</span>
-          <div className="amp-section-search">
-            {inactiveSearchOpen && (
-              <input
-                type="text"
-                autoFocus
-                placeholder="이메일·이름·회사 검색"
-                value={inactiveSearchInput}
-                onChange={e => setInactiveSearchInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') applyInactiveSearch(); }}
-              />
-            )}
-            <button className="amp-icon-btn" onClick={toggleInactiveSearch} aria-label="검색" title={inactiveSearchOpen ? '검색 닫기' : '검색'}>
-              {inactiveSearchOpen ? '✕' : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
+      {/* 수신 비활성 목록 */}
+      <div className="info-card admin-section-card wide">
+        <div className="card-header">
+          <h2 className="card-title">수신 비활성 목록</h2>
+          <span className="admin-count">{inactiveTotalElements}명</span>
+        </div>
+        <div className="admin-search-bar">
+          <input
+            type="text"
+            placeholder="이메일, 이름, 회사로 검색"
+            value={inactiveSearchInput}
+            onChange={e => setInactiveSearchInput(e.target.value)}
+            onKeyPress={e => { if (e.key === 'Enter') applyInactiveSearch(); }}
+          />
+          <button onClick={applyInactiveSearch}>조회</button>
+          {inactiveQ && <button className="clear" onClick={clearInactiveSearch}>초기화</button>}
+        </div>
+        {isLoadingInactive ? (
+          <div className="admin-loading">데이터 로딩 중...</div>
+        ) : (
+          <>
+            {renderTable(inactiveContacts, false)}
+            {renderPagination(inactivePage, inactiveTotalPages, setInactivePage)}
+          </>
+        )}
+      </div>
+
+      {/* 메일 발송 모달 */}
+      {isSendModalOpen && (
+        <div className="admin-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeSendModal(); }}>
+          <div className="admin-modal">
+            <button className="admin-modal-close" onClick={closeSendModal}>&times;</button>
+            <div className="admin-modal-header">
+              <h3>메일 발송</h3>
+            </div>
+            <div className="admin-modal-body">
+              <div className="form-group">
+                <label>메일 종류</label>
+                <div className="admin-modal-radio-group">
+                  <label><input type="radio" name="amp-mailtype" checked readOnly /> 안내성 (수신동의 불필요)</label>
+                  <label className="disabled" title="회원 수신거부 기능 완료 후 활성화 예정"><input type="radio" name="amp-mailtype" disabled /> 광고성 (준비 중)</label>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>분류</label>
+                <select className="admin-modal-input" value={sendForm.templateKey} onChange={e => setSendForm({ ...sendForm, templateKey: e.target.value })}>
+                  {SEND_TEMPLATE_KEYS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>발송 대상 <span>*</span></label>
+                <div className="amp-checks">
+                  <label><input type="checkbox" checked={sendForm.includeMembers} onChange={e => setSendForm({ ...sendForm, includeMembers: e.target.checked })} /> 홈페이지 회원 (활성 회원 전체)</label>
+                  <label><input type="checkbox" checked={sendForm.includeContacts} onChange={e => setSendForm({ ...sendForm, includeContacts: e.target.checked })} /> 직접 등록 컨택 (안내성 동의 + 활성)</label>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>메일 제목 <span>*</span></label>
+                <input type="text" className="admin-modal-input" value={sendForm.subject} onChange={e => setSendForm({ ...sendForm, subject: e.target.value })} placeholder="예: [BUL:C] v1.2.0 업데이트 안내" />
+              </div>
+              <div className="form-group">
+                <label>본문 제목 <span>*</span></label>
+                <input type="text" className="admin-modal-input" value={sendForm.title} onChange={e => setSendForm({ ...sendForm, title: e.target.value })} placeholder="메일 본문 상단의 큰 제목" />
+              </div>
+              <div className="form-group vertical">
+                <label>본문 내용 (HTML 허용) <span>*</span></label>
+                <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={8} placeholder="<p>안녕하세요. ...</p>" />
+              </div>
+              {sendResult && (
+                <div className="amp-send-result">
+                  발송 결과 — 대상 <strong>{sendResult.targetCount}</strong> · 성공 <strong>{sendResult.sentCount}</strong> · 실패 <strong>{sendResult.failedCount}</strong>
+                </div>
               )}
-            </button>
+            </div>
+            <div className="admin-modal-footer">
+              <button className="cancel-btn" onClick={closeSendModal} disabled={isSending}>닫기</button>
+              <button className="save-btn" onClick={handleSend} disabled={isSending}>{isSending ? '발송 중...' : '발송'}</button>
+            </div>
           </div>
         </div>
-        <div className="amp-table-wrap">
-          {isLoadingInactive ? (
-            <div className="amp-empty">불러오는 중...</div>
-          ) : inactiveContacts.length === 0 ? (
-            <div className="amp-empty">비활성 컨택이 없습니다.</div>
-          ) : (
-            renderTable(inactiveContacts, false)
-          )}
-        </div>
-        {renderPagination(inactivePage, inactiveTotalPages, setInactivePage)}
-      </div>
+      )}
 
       {/* 등록/편집 모달 */}
       {isFormModalOpen && (
-        <div className="amp-modal-backdrop" onClick={closeFormModal}>
-          <div className="amp-modal" onClick={e => e.stopPropagation()}>
-            <div className="amp-modal-header">
+        <div className="admin-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeFormModal(); }}>
+          <div className="admin-modal">
+            <button className="admin-modal-close" onClick={closeFormModal}>&times;</button>
+            <div className="admin-modal-header">
               <h3>{editingId ? '컨택 수정' : '신규 컨택 등록'}</h3>
-              <button className="amp-modal-close" onClick={closeFormModal}>×</button>
             </div>
-            <div className="amp-modal-body">
-              <div className="amp-form-row">
-                <label>이메일 *</label>
-                <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <div className="admin-modal-body">
+              <div className="form-group">
+                <label>이메일 <span>*</span></label>
+                <input type="email" className="admin-modal-input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
               </div>
-              <div className="amp-form-grid">
-                <div className="amp-form-row">
+              <div className="admin-modal-form-row">
+                <div className="form-group">
                   <label>이름</label>
-                  <input type="text" value={form.contactName} onChange={e => setForm({ ...form, contactName: e.target.value })} />
+                  <input type="text" className="admin-modal-input" value={form.contactName} onChange={e => setForm({ ...form, contactName: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
+                <div className="form-group">
                   <label>회사</label>
-                  <input type="text" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} />
+                  <input type="text" className="admin-modal-input" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
+              </div>
+              <div className="admin-modal-form-row">
+                <div className="form-group">
                   <label>부서</label>
-                  <input type="text" value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} />
+                  <input type="text" className="admin-modal-input" value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
+                <div className="form-group">
                   <label>직함</label>
-                  <input type="text" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} />
+                  <input type="text" className="admin-modal-input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
+              </div>
+              <div className="admin-modal-form-row">
+                <div className="form-group">
                   <label>휴대폰</label>
-                  <input type="tel" value={form.mobilePhone} onChange={e => setForm({ ...form, mobilePhone: e.target.value })} placeholder="010-0000-0000" />
+                  <input type="tel" className="admin-modal-input" value={form.mobilePhone} onChange={e => setForm({ ...form, mobilePhone: e.target.value })} placeholder="010-0000-0000" />
                 </div>
-                <div className="amp-form-row">
+                <div className="form-group">
                   <label>근무처 전화</label>
-                  <input type="tel" value={form.workPhone} onChange={e => setForm({ ...form, workPhone: e.target.value })} placeholder="02-000-0000" />
+                  <input type="tel" className="admin-modal-input" value={form.workPhone} onChange={e => setForm({ ...form, workPhone: e.target.value })} placeholder="02-000-0000" />
                 </div>
-                <div className="amp-form-row">
+              </div>
+              <div className="admin-modal-form-row">
+                <div className="form-group">
                   <label>근무처 팩스</label>
-                  <input type="tel" value={form.workFax} onChange={e => setForm({ ...form, workFax: e.target.value })} />
+                  <input type="tel" className="admin-modal-input" value={form.workFax} onChange={e => setForm({ ...form, workFax: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
-                  <label>수집 행사</label>
-                  <input type="text" value={form.sourceEvent} onChange={e => setForm({ ...form, sourceEvent: e.target.value })} placeholder="예: 2026 소방안전 전시회" />
-                </div>
-                <div className="amp-form-row">
-                  <label>수집 일자</label>
-                  <input type="date" value={form.sourceDate} onChange={e => setForm({ ...form, sourceDate: e.target.value })} />
-                </div>
-                <div className="amp-form-row">
+                <div className="form-group">
                   <label>수집자</label>
-                  <input type="text" value={form.collectedBy} onChange={e => setForm({ ...form, collectedBy: e.target.value })} />
+                  <input type="text" className="admin-modal-input" value={form.collectedBy} onChange={e => setForm({ ...form, collectedBy: e.target.value })} />
                 </div>
-                <div className="amp-form-row">
+              </div>
+              <div className="admin-modal-form-row">
+                <div className="form-group">
+                  <label>수집 행사</label>
+                  <input type="text" className="admin-modal-input" value={form.sourceEvent} onChange={e => setForm({ ...form, sourceEvent: e.target.value })} placeholder="예: 2026 소방안전 전시회" />
+                </div>
+                <div className="form-group">
+                  <label>수집 일자</label>
+                  <input type="date" className="admin-modal-input" value={form.sourceDate} onChange={e => setForm({ ...form, sourceDate: e.target.value })} />
+                </div>
+              </div>
+              <div className="admin-modal-form-row">
+                <div className="form-group">
                   <label>동의 방식</label>
-                  <select value={form.consentMethod} onChange={e => setForm({ ...form, consentMethod: e.target.value })}>
+                  <select className="admin-modal-input" value={form.consentMethod} onChange={e => setForm({ ...form, consentMethod: e.target.value })}>
                     {CONSENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
                 </div>
-                <div className="amp-form-row">
+                <div className="form-group">
                   <label>동의 일자</label>
-                  <input type="date" value={form.consentDate} onChange={e => setForm({ ...form, consentDate: e.target.value })} />
+                  <input type="date" className="admin-modal-input" value={form.consentDate} onChange={e => setForm({ ...form, consentDate: e.target.value })} />
                 </div>
               </div>
-              <div className="amp-form-row">
+              <div className="form-group">
                 <label>근무지 주소</label>
-                <input type="text" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="서울특별시 강남구 ..." />
+                <input type="text" className="admin-modal-input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="서울특별시 강남구 ..." />
               </div>
-              <div className="amp-form-row">
+              <div className="form-group">
                 <label>동의 증빙 (자유)</label>
-                <input type="text" value={form.consentEvidence} onChange={e => setForm({ ...form, consentEvidence: e.target.value })} placeholder="명함 파일명, 부스 사인업 URL 등" />
+                <input type="text" className="admin-modal-input" value={form.consentEvidence} onChange={e => setForm({ ...form, consentEvidence: e.target.value })} placeholder="명함 파일명, 부스 사인업 URL 등" />
               </div>
-              <div className="amp-form-row">
+              <div className="form-group">
                 <label>태그 (쉼표 구분)</label>
-                <input type="text" value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="fire_safety, hospital, 2026_kfse" />
+                <input type="text" className="admin-modal-input" value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="fire_safety, hospital, 2026_kfse" />
               </div>
-              <div className="amp-form-row">
+              <div className="form-group vertical">
                 <label>메모</label>
-                <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={3} />
+                <textarea className="admin-modal-input" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={3} />
               </div>
-              <div className="amp-form-checks">
-                <label className="amp-checkbox">
-                  <input type="checkbox" checked={form.optInMarketing} onChange={e => setForm({ ...form, optInMarketing: e.target.checked })} />
-                  <span>광고성 메일 수신 동의 (정보통신망법 50조)</span>
-                </label>
-                <label className="amp-checkbox">
-                  <input type="checkbox" checked={form.optInTransactional} onChange={e => setForm({ ...form, optInTransactional: e.target.checked })} />
-                  <span>안내성 메일 수신 동의</span>
-                </label>
+              <div className="amp-checks">
+                <label><input type="checkbox" checked={form.optInMarketing} onChange={e => setForm({ ...form, optInMarketing: e.target.checked })} /> 광고성 메일 수신 동의 (정보통신망법 50조)</label>
+                <label><input type="checkbox" checked={form.optInTransactional} onChange={e => setForm({ ...form, optInTransactional: e.target.checked })} /> 안내성 메일 수신 동의</label>
               </div>
             </div>
-            <div className="amp-modal-footer">
-              <button className="amp-btn amp-btn--secondary" onClick={closeFormModal} disabled={isSubmitting}>취소</button>
-              <button className="amp-btn amp-btn--primary" onClick={handleFormSubmit} disabled={isSubmitting}>
+            <div className="admin-modal-footer">
+              <button className="cancel-btn" onClick={closeFormModal} disabled={isSubmitting}>취소</button>
+              <button className="save-btn" onClick={handleFormSubmit} disabled={isSubmitting}>
                 {isSubmitting ? '저장 중...' : (editingId ? '수정' : '등록')}
               </button>
             </div>
@@ -675,19 +787,22 @@ const AdminMailingPanel: React.FC = () => {
 
       {/* 비활성 사유 모달 */}
       {unsubReasonModal && (
-        <div className="amp-modal-backdrop" onClick={() => setUnsubReasonModal(null)}>
-          <div className="amp-modal amp-modal--small" onClick={e => e.stopPropagation()}>
-            <div className="amp-modal-header">
+        <div className="admin-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) setUnsubReasonModal(null); }}>
+          <div className="admin-modal">
+            <button className="admin-modal-close" onClick={() => setUnsubReasonModal(null)}>&times;</button>
+            <div className="admin-modal-header">
               <h3>수신 비활성화</h3>
-              <button className="amp-modal-close" onClick={() => setUnsubReasonModal(null)}>×</button>
             </div>
-            <div className="amp-modal-body">
-              <p>{unsubReasonModal.email} 을(를) 수신 비활성으로 변경합니다. 사유를 입력해주세요. (선택)</p>
-              <textarea value={unsubReason} onChange={e => setUnsubReason(e.target.value)} rows={3} placeholder="비활성 사유" />
+            <div className="admin-modal-body">
+              <p className="amp-hint">{unsubReasonModal.email} 을(를) 수신 비활성으로 변경합니다. 사유를 입력해주세요. (선택)</p>
+              <div className="form-group vertical">
+                <label>비활성 사유</label>
+                <textarea className="admin-modal-input" value={unsubReason} onChange={e => setUnsubReason(e.target.value)} rows={3} placeholder="비활성 사유" />
+              </div>
             </div>
-            <div className="amp-modal-footer">
-              <button className="amp-btn amp-btn--secondary" onClick={() => setUnsubReasonModal(null)}>취소</button>
-              <button className="amp-btn amp-btn--warn" onClick={handleUnsubscribe}>비활성화</button>
+            <div className="admin-modal-footer">
+              <button className="cancel-btn" onClick={() => setUnsubReasonModal(null)}>취소</button>
+              <button className="save-btn" onClick={handleUnsubscribe}>비활성화</button>
             </div>
           </div>
         </div>
@@ -695,13 +810,13 @@ const AdminMailingPanel: React.FC = () => {
 
       {/* CSV 모달 */}
       {isCsvModalOpen && (
-        <div className="amp-modal-backdrop" onClick={closeCsvModal}>
-          <div className="amp-modal amp-modal--medium" onClick={e => e.stopPropagation()}>
-            <div className="amp-modal-header">
+        <div className="admin-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeCsvModal(); }}>
+          <div className="admin-modal">
+            <button className="admin-modal-close" onClick={closeCsvModal}>&times;</button>
+            <div className="admin-modal-header">
               <h3>CSV 일괄 임포트</h3>
-              <button className="amp-modal-close" onClick={closeCsvModal}>×</button>
             </div>
-            <div className="amp-modal-body">
+            <div className="admin-modal-body">
               <ul className="amp-csv-help">
                 <li><strong>CSV / Excel (.xlsx, .xls)</strong> 모두 지원. 헤더 행 필수, 이메일 컬럼 필수.</li>
                 <li>한국어 명함 양식 헤더 자동 인식: <code>회사 · 이름 · 부서 · 직함 · 전자 메일 주소 · 근무지 주소 번지 · 근무처 전화 · 근무처 팩스 · 휴대폰 · 명함 등록일 · 명함첩 이름 · 메모</code></li>
@@ -709,7 +824,7 @@ const AdminMailingPanel: React.FC = () => {
                 <li>이미 등록된 이메일은 건너뜁니다.</li>
                 <li>명함 임포트는 기본값 <code>광고성 동의=false</code>, <code>안내성 동의=true</code>, <code>동의 방식=import</code>로 등록됨 (정보통신망법 안전 기본값).</li>
               </ul>
-              <button className="amp-btn amp-btn--secondary amp-btn--small" onClick={downloadCsvTemplate}>템플릿 다운로드</button>
+              <button className="action-btn edit" onClick={downloadCsvTemplate}>템플릿 다운로드</button>
               <label
                 className={`amp-csv-drop${csvDragOver ? ' amp-csv-drop--over' : ''}`}
                 onDragOver={e => { e.preventDefault(); e.stopPropagation(); setCsvDragOver(true); }}
@@ -750,16 +865,16 @@ const AdminMailingPanel: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="amp-modal-footer">
-              <button className="amp-btn amp-btn--secondary" onClick={closeCsvModal} disabled={csvImporting}>닫기</button>
-              <button className="amp-btn amp-btn--primary" onClick={handleCsvImport} disabled={!csvFile || csvImporting}>
+            <div className="admin-modal-footer">
+              <button className="cancel-btn" onClick={closeCsvModal} disabled={csvImporting}>닫기</button>
+              <button className="save-btn" onClick={handleCsvImport} disabled={!csvFile || csvImporting}>
                 {csvImporting ? '임포트 중...' : '임포트 실행'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

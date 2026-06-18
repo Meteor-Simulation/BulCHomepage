@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +18,17 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
     Optional<LeadContact> findByUnsubscribeToken(UUID token);
 
     boolean existsByEmail(String email);
+
+    /**
+     * 안내성(운영성) 메일 발송 대상 컨택의 이메일 목록.
+     * 미해지(unsubscribedAt IS NULL) + 안내성 수신동의(optInTransactional=true).
+     */
+    @Query("""
+            SELECT lc.email FROM LeadContact lc
+             WHERE lc.unsubscribedAt IS NULL
+               AND lc.optInTransactional = true
+            """)
+    List<String> findActiveTransactionalEmails();
 
     /**
      * 검색 쿼리. 빈 필터는 '' (빈 문자열)로 전달해야 한다.
