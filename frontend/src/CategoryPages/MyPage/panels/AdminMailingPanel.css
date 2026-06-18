@@ -1,479 +1,75 @@
-.admin-mailing-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+/*
+ * 메일링 관리 패널.
+ * 섹션/검색/테이블/페이지네이션/모달/액션 버튼은 모두 MyPage.css 의 공용 관리자 클래스
+ * (info-card, admin-section-card, card-header, admin-search-bar, admin-table,
+ *  admin-pagination, action-btn, admin-modal-*) 를 그대로 사용해 다른 관리자 패널과 통일한다.
+ * 이 파일에는 메일링 패널 고유 요소(발송 결과·CSV 임포트 UI·동의 체크)만 정의한다.
+ */
 
-.amp-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.amp-section-header {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.amp-section-header--inline {
-  align-items: center;
-  flex-wrap: nowrap;
-}
-
-.amp-section-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.amp-search-inline {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.amp-search-inline input[type="text"] {
-  width: 150px;
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fff;
-}
-
-.amp-section-search {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.amp-section-search input[type="text"] {
-  width: 220px;
-  padding: 6px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fff;
-}
-
-.amp-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.amp-icon-btn:hover {
-  background: #f1f5f9;
-  color: var(--accent, #C4320A);
-  border-color: var(--accent, #C4320A);
-}
-
-.amp-section-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.amp-section-count {
-  font-size: 13px;
+/* 안내 문구 */
+.amp-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
   color: #64748b;
 }
 
-.amp-header h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
+/* "등록/발송" 제목 오른쪽에 인라인으로 붙는 안내 문구 */
+.amp-hint--inline {
+  margin: 0 0 0 12px;
+  flex: 1;
 }
 
-.amp-desc {
-  margin: 0;
-  font-size: 13px;
-  color: #64748b;
+/* 한 줄짜리 등록/발송 액션바 — 불필요한 상하 여백 제거 */
+.amp-actionbar {
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
-/* Filter */
-.amp-filter {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+.amp-actionbar .card-header {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 발송 대상/동의 체크박스 묶음 */
+.amp-checks {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.amp-filter-row {
+.amp-checks label {
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.amp-filter-row--single {
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.amp-filter-row--single .amp-filter-buttons {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.amp-filter-row input[type="text"],
-.amp-filter-row input[type="email"] {
-  flex: 0 0 auto;
-  width: 180px;
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
   font-size: 13px;
-  background: #fff;
-}
-
-.amp-filter-actions {
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.amp-filter-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.amp-checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #1a1a1a;
+  color: #333;
   cursor: pointer;
 }
 
-/* Actions row */
-.amp-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.amp-actions-left {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.amp-actions-right {
-  display: flex;
-  gap: 8px;
-}
-
-/* Buttons */
-.amp-btn {
-  padding: 8px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  background: #fff;
-  transition: all 0.15s;
-}
-
-.amp-btn:disabled {
-  opacity: 0.5;
+/* 발송 종류 라디오 중 비활성(준비 중) 항목 */
+.admin-modal-radio-group label.disabled {
+  color: #94a3b8;
   cursor: not-allowed;
 }
 
-.amp-btn--primary {
-  background: var(--accent, #C4320A);
-  color: #fff;
-  border-color: var(--accent, #C4320A);
-}
-
-.amp-btn--primary:hover:not(:disabled) {
-  background: #a32a08;
-}
-
-.amp-btn--secondary {
-  background: #fff;
-  color: #1a1a1a;
-  border-color: #cbd5e1;
-}
-
-.amp-btn--secondary:hover:not(:disabled) {
+/* 발송 결과 요약 */
+.amp-send-result {
+  margin-top: 10px;
+  padding: 10px 12px;
   background: #f1f5f9;
-}
-
-.amp-btn--small {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-
-.amp-btn--warn {
-  background: #f59e0b;
-  color: #fff;
-  border-color: #f59e0b;
-}
-
-.amp-btn--warn:hover:not(:disabled) {
-  background: #d97706;
-}
-
-.amp-btn--danger {
-  background: #fff;
-  color: #dc2626;
-  border-color: #fca5a5;
-}
-
-.amp-btn--danger:hover:not(:disabled) {
-  background: #fee2e2;
-}
-
-.amp-btn--page-active {
-  background: var(--accent, #C4320A);
-  color: #fff;
-  border-color: var(--accent, #C4320A);
-}
-
-/* Table */
-.amp-table-wrap {
-  overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-}
-
-/* 테이블 자체 스타일은 공통 .admin-table (MyPage.css) 사용.
-   아래는 셀 콘텐츠 전용 클래스(amp-email / amp-optin / amp-badge / amp-status / amp-btn 등)만 유지 */
-
-.amp-row--unsub {
-  background: #fafafa;
-  color: #94a3b8;
-}
-
-.amp-email {
-  color: #1a1a1a;
-}
-
-.amp-tags {
-  max-width: 200px;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.amp-optin {
-  white-space: nowrap;
-  text-align: right;
-}
-
-.amp-optin span {
-  display: inline-block;
-}
-
-.amp-optin span + span {
-  margin-left: 4px;
-}
-
-.amp-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.amp-badge--on {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-.amp-badge--off {
-  background: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-}
-
-.amp-status {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.amp-status--active {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-.amp-status--unsub {
-  background: rgba(148, 163, 184, 0.15);
-  color: #64748b;
-}
-
-.amp-row-actions {
-  white-space: nowrap;
-  text-align: right;
-}
-
-.amp-row-actions button {
-  display: inline-block;
-}
-
-.amp-row-actions button + button {
-  margin-left: 4px;
-}
-
-.amp-empty {
-  padding: 40px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-/* Pagination */
-.amp-pagination {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-}
-
-/* Modal */
-.amp-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
-
-.amp-modal {
-  background: #fff;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 680px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.amp-modal--small {
-  max-width: 420px;
-}
-
-.amp-modal--medium {
-  max-width: 540px;
-}
-
-.amp-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.amp-modal-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.amp-modal-close {
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  color: #94a3b8;
-  padding: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.amp-modal-close:hover {
-  color: #1a1a1a;
-}
-
-.amp-modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.amp-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 14px 20px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
-
-/* Form */
-.amp-form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.amp-form-row label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.amp-form-row input,
-.amp-form-row select,
-.amp-form-row textarea {
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 13px;
-  font-family: inherit;
+  color: #334155;
 }
 
-.amp-form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.amp-send-result strong {
+  color: #C4320A;
 }
 
-.amp-form-checks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-/* CSV */
+/* CSV 임포트 */
 .amp-csv-help {
-  margin: 0;
+  margin: 0 0 12px;
   padding-left: 18px;
   font-size: 12px;
   color: #64748b;
@@ -487,20 +83,13 @@
   font-size: 11px;
 }
 
-.amp-csv-file {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #475569;
-}
-
 .amp-csv-drop {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100px;
+  margin-top: 12px;
   padding: 20px;
   border: 2px dashed #cbd5e1;
   border-radius: 8px;
@@ -541,6 +130,7 @@
 }
 
 .amp-csv-result {
+  margin-top: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
@@ -557,11 +147,4 @@
   padding-left: 18px;
   max-height: 120px;
   overflow-y: auto;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .amp-form-grid {
-    grid-template-columns: 1fr;
-  }
 }

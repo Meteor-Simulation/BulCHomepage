@@ -39,8 +39,11 @@ public class AdminMailController {
      *   "subject": "[BulC] v1.2.0 업데이트 안내",
      *   "title": "BulC v1.2.0 출시",
      *   "contentHtml": "<p>새 기능 ... </p>",
-     *   "recipients": ["foo@bar.com", ...]   // 생략 또는 빈 배열이면 활성 사용자 전체
+     *   "includeMembers": true,              // 활성 회원(User) 전체 포함
+     *   "includeContacts": true,             // 미해지+안내성 동의 컨택(LeadContact) 포함
+     *   "recipients": ["foo@bar.com", ...]   // (선택) 직접 지정 이메일. 위 소스와 합쳐 중복 제거
      * }
+     * includeMembers / includeContacts / recipients 중 최소 하나는 대상이 있어야 한다.
      */
     @PostMapping("/operational")
     public ResponseEntity<?> sendOperational(@RequestBody Map<String, Object> body) {
@@ -90,12 +93,22 @@ public class AdminMailController {
             ));
         }
 
-        int count = operationalMailService.sendOperationalNotice(
-                title, contentHtml, subject, templateKey, recipients);
+        boolean includeMembers = Boolean.TRUE.equals(body.get("includeMembers"));
+        boolean includeContacts = Boolean.TRUE.equals(body.get("includeContacts"));
+        if (!includeMembers && !includeContacts && (recipients == null || recipients.isEmpty())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "발송 대상을 한 가지 이상 선택해야 합니다 (회원 / 직접등록 컨택 / 직접 지정)"
+            ));
+        }
+
+        OperationalMailService.MailSendResult result = operationalMailService.sendOperationalNotice(
+                title, contentHtml, subject, templateKey, includeMembers, includeContacts, recipients);
 
         return ResponseEntity.ok(Map.of(
                 "templateKey", templateKey,
-                "sentCount", count
+                "targetCount", result.targetCount(),
+                "sentCount", result.sentCount(),
+                "failedCount", result.failedCount()
         ));
     }
 
