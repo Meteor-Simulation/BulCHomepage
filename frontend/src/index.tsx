@@ -21,6 +21,7 @@ import MyPage from './CategoryPages/MyPage/MyPage';
 import DownloadPage from './CategoryPages/Download/Download';
 import OAuthCallback from './pages/OAuthCallback';
 import OAuthSetupPassword from './pages/OAuthSetupPassword';
+import Unsubscribe from './pages/Unsubscribe';
 import RefundPolicyPage from './CategoryPages/Policy/RefundPolicy';
 import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
@@ -84,6 +85,7 @@ const App: React.FC = () => {
             <Route path="/oauth/setup-password" element={<OAuthSetupPassword />} />
             <Route path="/download" element={<DownloadPage />} />
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/board" element={<BoardPage />} />
             <Route path="/board/write" element={<PostEditorPage />} />
             <Route path="/board/edit/:id" element={<PostEditorPage />} />

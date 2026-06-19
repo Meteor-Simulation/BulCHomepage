@@ -201,7 +201,8 @@ public class EmailService {
         String finalSubject = category.requiresMarketingConsent()
                 ? "(광고) " + subject
                 : subject;
-        String finalHtml = injectFooter(htmlContent, category, user);
+        String unsubscribeToken = user != null ? user.getUnsubscribeToken() : null;
+        String finalHtml = injectFooter(htmlContent, category, unsubscribeToken);
 
         // 3. 카테고리별 발신 메일박스 선택
         String fromAddr = resolveFromAddress(category);
@@ -218,10 +219,32 @@ public class EmailService {
     }
 
     /**
+     * 광고성 메일을 사전 동의 확인된 수신자에게 직접 발송 (MDP-608).
+     *
+     * 수신 동의(회원 marketing_agreed / 컨택 opt_in_marketing)는 호출측에서 이미 필터링했다고 가정한다.
+     * 회원이 아닌 컨택(LeadContact)에게도 보낼 수 있도록 unsubscribeToken 을 직접 받아 광고성 footer 의
+     * 수신거부 링크에 주입한다. (광고) 제목 prefix 자동 부착.
+     */
+    public void sendPromotionalPreapproved(String toEmail, String unsubscribeToken,
+                                           String templateKey, String subject, String htmlContent) {
+        String finalSubject = "(광고) " + subject;
+        String finalHtml = injectFooter(htmlContent, EmailCategory.PROMOTIONAL, unsubscribeToken);
+        String fromAddr = resolveFromAddress(EmailCategory.PROMOTIONAL);
+        try {
+            sendEmail(fromAddr, toEmail, finalSubject, finalHtml);
+            logEmail(toEmail, EmailCategory.PROMOTIONAL, templateKey, EmailLog.Status.SUCCESS, null, null);
+        } catch (RuntimeException e) {
+            logEmail(toEmail, EmailCategory.PROMOTIONAL, templateKey, EmailLog.Status.FAILED,
+                    null, truncate(e.getMessage(), 1000));
+            throw e;
+        }
+    }
+
+    /**
      * 템플릿 본문에 {{footer}} 플레이스홀더가 있으면 카테고리별 footer 로 치환.
      * 없으면 원본 그대로 반환 (기존 sendBillingEmail 같이 외부에서 만든 HTML 호환).
      */
-    private String injectFooter(String html, EmailCategory category, User user) {
+    private String injectFooter(String html, EmailCategory category, String unsubscribeToken) {
         if (html == null || !html.contains("{{footer}}")) {
             return html;
         }
@@ -237,9 +260,7 @@ public class EmailService {
         vars.put("company.contactEmail", companyContactEmail);
 
         if (category.requiresMarketingConsent()) {
-            String token = user != null && user.getUnsubscribeToken() != null
-                    ? user.getUnsubscribeToken()
-                    : "";
+            String token = unsubscribeToken != null ? unsubscribeToken : "";
             vars.put("unsubscribe_url", siteUrl + "/unsubscribe?token=" + token);
         }
 

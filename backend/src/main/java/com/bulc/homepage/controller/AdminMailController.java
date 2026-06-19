@@ -95,17 +95,33 @@ public class AdminMailController {
 
         boolean includeMembers = Boolean.TRUE.equals(body.get("includeMembers"));
         boolean includeContacts = Boolean.TRUE.equals(body.get("includeContacts"));
-        if (!includeMembers && !includeContacts && (recipients == null || recipients.isEmpty())) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "발송 대상을 한 가지 이상 선택해야 합니다 (회원 / 직접등록 컨택 / 직접 지정)"
-            ));
-        }
 
-        OperationalMailService.MailSendResult result = operationalMailService.sendOperationalNotice(
-                title, contentHtml, subject, templateKey, includeMembers, includeContacts, recipients);
+        // mailType: "operational"(기본, 안내성) | "promotional"(광고성)
+        boolean promotional = "promotional".equals(body.get("mailType"));
+
+        OperationalMailService.MailSendResult result;
+        if (promotional) {
+            // 광고성: 수신 동의자(회원 marketing_agreed / 컨택 opt_in_marketing)에게만. 그룹 선택 필수.
+            if (!includeMembers && !includeContacts) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "광고성 발송 대상을 한 가지 이상 선택해야 합니다 (회원 / 직접등록 컨택)"
+                ));
+            }
+            result = operationalMailService.sendPromotionalNotice(
+                    title, contentHtml, subject, templateKey, includeMembers, includeContacts);
+        } else {
+            if (!includeMembers && !includeContacts && (recipients == null || recipients.isEmpty())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "발송 대상을 한 가지 이상 선택해야 합니다 (회원 / 직접등록 컨택 / 직접 지정)"
+                ));
+            }
+            result = operationalMailService.sendOperationalNotice(
+                    title, contentHtml, subject, templateKey, includeMembers, includeContacts, recipients);
+        }
 
         return ResponseEntity.ok(Map.of(
                 "templateKey", templateKey,
+                "mailType", promotional ? "promotional" : "operational",
                 "targetCount", result.targetCount(),
                 "sentCount", result.sentCount(),
                 "failedCount", result.failedCount()
