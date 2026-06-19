@@ -102,6 +102,7 @@ const SEND_TEMPLATE_KEYS = [
 ];
 
 interface SendForm {
+  mailType: 'operational' | 'promotional';
   templateKey: string;
   subject: string;
   title: string;
@@ -111,6 +112,7 @@ interface SendForm {
 }
 
 const emptySendForm = (): SendForm => ({
+  mailType: 'operational',
   templateKey: 'program_update',
   subject: '',
   title: '',
@@ -408,11 +410,14 @@ const AdminMailingPanel: React.FC = () => {
       showAlert({ message: '발송 대상을 한 가지 이상 선택하세요', type: 'error' });
       return;
     }
+    const isPromo = sendForm.mailType === 'promotional';
     const targetLabel = [
       sendForm.includeMembers && '홈페이지 회원',
       sendForm.includeContacts && '직접 등록 컨택',
     ].filter(Boolean).join(', ');
-    if (!window.confirm(`안내성 메일을 발송하시겠습니까?\n발송 대상: ${targetLabel}`)) return;
+    const typeLabel = isPromo ? '광고성' : '안내성';
+    const promoNote = isPromo ? '\n수신 동의자에게만 발송되며 제목에 "(광고)"가 자동 표기됩니다.' : '';
+    if (!window.confirm(`${typeLabel} 메일을 발송하시겠습니까?\n발송 대상: ${targetLabel}${promoNote}`)) return;
 
     setIsSending(true);
     setSendResult(null);
@@ -422,6 +427,7 @@ const AdminMailingPanel: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          mailType: sendForm.mailType,
           templateKey: sendForm.templateKey,
           subject: sendForm.subject.trim(),
           title: sendForm.title.trim(),
@@ -561,7 +567,7 @@ const AdminMailingPanel: React.FC = () => {
       <div className="info-card admin-section-card wide amp-actionbar">
         <div className="card-header">
           <h2 className="card-title">등록/발송</h2>
-          <span className="amp-hint amp-hint--inline">홈페이지 회원과 직접 등록한 컨택에게 안내성 메일을 발송합니다. (광고성 발송은 준비 중)</span>
+          <span className="amp-hint amp-hint--inline">홈페이지 회원과 직접 등록한 컨택에게 안내성·광고성 메일을 발송합니다. (광고성은 수신 동의자에게만 발송)</span>
           <div className="action-btn-group" style={{ marginLeft: 'auto' }}>
             <button className="action-btn edit" onClick={openCsvModal}>파일 등록</button>
             <button className="action-btn edit" onClick={openCreateModal}>수동 등록</button>
@@ -636,8 +642,12 @@ const AdminMailingPanel: React.FC = () => {
               <div className="form-group">
                 <label>메일 종류</label>
                 <div className="admin-modal-radio-group">
-                  <label><input type="radio" name="amp-mailtype" checked readOnly /> 안내성 (수신동의 불필요)</label>
-                  <label className="disabled" title="회원 수신거부 기능 완료 후 활성화 예정"><input type="radio" name="amp-mailtype" disabled /> 광고성 (준비 중)</label>
+                  <label>
+                    <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'operational'} onChange={() => setSendForm({ ...sendForm, mailType: 'operational' })} /> 안내성 (수신동의 불필요)
+                  </label>
+                  <label>
+                    <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'promotional'} onChange={() => setSendForm({ ...sendForm, mailType: 'promotional' })} /> 광고성 (동의자 한정 · "(광고)" 표기)
+                  </label>
                 </div>
               </div>
               <div className="form-group">
@@ -649,8 +659,8 @@ const AdminMailingPanel: React.FC = () => {
               <div className="form-group">
                 <label>발송 대상 <span>*</span></label>
                 <div className="amp-checks">
-                  <label><input type="checkbox" checked={sendForm.includeMembers} onChange={e => setSendForm({ ...sendForm, includeMembers: e.target.checked })} /> 홈페이지 회원 (활성 회원 전체)</label>
-                  <label><input type="checkbox" checked={sendForm.includeContacts} onChange={e => setSendForm({ ...sendForm, includeContacts: e.target.checked })} /> 직접 등록 컨택 (안내성 동의 + 활성)</label>
+                  <label><input type="checkbox" checked={sendForm.includeMembers} onChange={e => setSendForm({ ...sendForm, includeMembers: e.target.checked })} /> 홈페이지 회원 {sendForm.mailType === 'promotional' ? '(광고 수신동의 회원)' : '(활성 회원 전체)'}</label>
+                  <label><input type="checkbox" checked={sendForm.includeContacts} onChange={e => setSendForm({ ...sendForm, includeContacts: e.target.checked })} /> 직접 등록 컨택 {sendForm.mailType === 'promotional' ? '(광고 동의 + 활성)' : '(안내성 동의 + 활성)'}</label>
                 </div>
               </div>
               <div className="form-group">

@@ -31,6 +31,17 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
     List<String> findActiveTransactionalEmails();
 
     /**
+     * 광고성 메일 발송 대상 컨택. 미해지 + 광고성 수신동의(optInMarketing=true).
+     * 수신거부 링크에 컨택별 토큰을 넣어야 하므로 엔티티로 반환한다.
+     */
+    @Query("""
+            SELECT lc FROM LeadContact lc
+             WHERE lc.unsubscribedAt IS NULL
+               AND lc.optInMarketing = true
+            """)
+    List<LeadContact> findActiveMarketingContacts();
+
+    /**
      * 검색 쿼리. 빈 필터는 '' (빈 문자열)로 전달해야 한다.
      * <p>null 파라미터를 :param IS NULL 로 비교하면 PostgreSQL JDBC가
      * 타입 추론에 실패해 bytea 로 바인딩 → LOWER(bytea) 미존재 에러 발생.

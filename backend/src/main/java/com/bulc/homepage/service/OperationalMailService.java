@@ -2,6 +2,7 @@ package com.bulc.homepage.service;
 
 import com.bulc.homepage.email.EmailCategory;
 import com.bulc.homepage.entity.EmailLog;
+import com.bulc.homepage.entity.LeadContact;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.EmailLogRepository;
 import com.bulc.homepage.repository.LeadContactRepository;
@@ -9,15 +10,19 @@ import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * MDP-496 운영성 메일 발송 서비스.
@@ -41,6 +46,69 @@ public class OperationalMailService {
 
     /** 발송 결과 요약 (대상 수 / 성공 / 실패). */
     public record MailSendResult(int targetCount, int sentCount, int failedCount) {}
+
+    /** 광고성 발송 대상 (이메일 + 수신거부 토큰). */
+    private record PromoTarget(String email, String token) {}
+
+    /**
+     * 광고성(PROMOTIONAL) 메일 발송 (MDP-608).
+     *
+     * <p>수신 동의자에게만 발송 — 회원은 marketing_agreed=true, 컨택은 opt_in_marketing=true(미해지).
+     * 각 수신자의 수신거부 토큰을 footer 의 수신거부 링크에 주입하며, 제목엔 "(광고)" prefix 가 자동 부착된다.
+     * 회원/컨택 이메일이 겹치면 회원을 우선해 한 번만 발송한다.
+     *
+     * @return 대상/성공/실패 건수
+     */
+    @Transactional
+    public MailSendResult sendPromotionalNotice(String title, String contentHtml, String subject,
+                                                String templateKey, boolean includeMembers,
+                                                boolean includeContacts) {
+        Map<String, String> vars = new HashMap<>();
+        vars.put("title", title);
+        vars.put("content", contentHtml);
+        String html = emailService.renderTemplate("operational_notice", vars);
+
+        List<PromoTarget> targets = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        if (includeMembers) {
+            for (User u : userRepository.findAllByIsActiveTrueAndMarketingAgreedTrue()) {
+                String email = u.getEmail();
+                if (email == null || email.isBlank() || !seen.add(email.trim().toLowerCase())) continue;
+                String token = u.getUnsubscribeToken();
+                if (token == null || token.isBlank()) {
+                    // 레거시 회원(토큰 없음) — 수신거부 링크가 동작하도록 토큰 발급
+                    token = UUID.randomUUID().toString();
+                    u.setUnsubscribeToken(token);
+                    userRepository.save(u);
+                }
+                targets.add(new PromoTarget(email.trim(), token));
+            }
+        }
+        if (includeContacts) {
+            for (LeadContact c : leadContactRepository.findActiveMarketingContacts()) {
+                String email = c.getEmail();
+                if (email == null || email.isBlank() || !seen.add(email.trim().toLowerCase())) continue;
+                UUID t = c.getUnsubscribeToken();
+                targets.add(new PromoTarget(email.trim(), t != null ? t.toString() : ""));
+            }
+        }
+
+        int sent = 0;
+        int failed = 0;
+        for (PromoTarget t : targets) {
+            try {
+                emailService.sendPromotionalPreapproved(t.email(), t.token(), templateKey, subject, html);
+                sent++;
+            } catch (Exception e) {
+                failed++;
+                log.warn("광고성 메일 발송 실패 - {} / {} / 사유: {}", templateKey, t.email(), e.getMessage());
+            }
+        }
+        log.info("광고성 메일 발송 완료: templateKey={}, 대상={}명, 성공={}건, 실패={}건",
+                templateKey, targets.size(), sent, failed);
+        return new MailSendResult(targets.size(), sent, failed);
+    }
 
     /**
      * 일반 운영 안내 발송 (프로그램 업데이트 / 약관 변경 / 보안 공지 공통 진입점).

@@ -17,4 +17,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     /** 활성 사용자 전체 조회 (운영성 메일 일괄 발송용). */
     List<User> findAllByIsActiveTrue();
+
+    /** 광고성 메일 발송 대상 — 활성 + 마케팅 수신동의 회원. */
+    List<User> findAllByIsActiveTrueAndMarketingAgreedTrue();
 }
