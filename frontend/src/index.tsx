@@ -30,6 +30,7 @@ import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
 import FaqPage from './CategoryPages/Docs/FaqPage';
 import DocsArticlePage from './CategoryPages/Docs/DocsArticlePage';
 import PopupRenderer from './components/PopupRenderer';
+import MarketingConsentModal from './components/MarketingConsentModal';
 import Seo from './components/Seo';
 
 // 404 페이지 래퍼 컴포넌트
@@ -97,6 +98,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <PopupRenderer />
+          <MarketingConsentModal />
         </BrowserRouter>
         </LanguageProvider>
       </AuthProvider>

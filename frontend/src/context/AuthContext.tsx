@@ -9,6 +9,7 @@ interface User {
   name?: string;
   rolesCode?: string; // 000: admin, 001: manager, 002: user
   language?: string;  // 사용자 언어 설정 (ko, en)
+  marketingAgreed?: boolean; // 광고성 메일 수신 동의 여부
 }
 
 interface LoginResult {
@@ -25,6 +26,7 @@ interface AuthContextType {
   loginWithToken: () => Promise<LoginResult>;
   logout: () => Promise<void>;
   sessionTimeLeft: number | null; // 남은 세션 시간 (초)
+  applyMarketingConsent: (agreed: boolean) => void; // 마케팅 수신동의 상태를 컨텍스트에 즉시 반영
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -143,6 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: result.data.name || result.data.email,
           rolesCode: result.data.rolesCode,
           language: result.data.language,
+          marketingAgreed: result.data.marketingAgreed,
         };
       }
       return null;
@@ -231,6 +234,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: userInfo.name || userInfo.email,
           rolesCode: userInfo.rolesCode,
           language: userInfo.language,
+          marketingAgreed: userInfo.marketingAgreed,
         };
 
         setUser(userData);
@@ -267,8 +271,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAdmin = user?.rolesCode === '000' || user?.rolesCode === '001';
 
+  // 마케팅 수신동의 상태를 컨텍스트에 즉시 반영 (동의 팝업/토글 처리 후)
+  const applyMarketingConsent = useCallback((agreed: boolean) => {
+    setUser(prev => (prev ? { ...prev, marketingAgreed: agreed } : prev));
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAuthReady, isAdmin, login, loginWithToken, logout, sessionTimeLeft }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAuthReady, isAdmin, login, loginWithToken, logout, sessionTimeLeft, applyMarketingConsent }}>
       {children}
     </AuthContext.Provider>
   );
