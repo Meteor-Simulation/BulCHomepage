@@ -20,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     /** 광고성 메일 발송 대상 — 활성 + 마케팅 수신동의 회원. */
     List<User> findAllByIsActiveTrueAndMarketingAgreedTrue();
+
+    /** 수신거부 토큰으로 회원 조회 (광고성 메일 수신거부 링크 처리용). */
+    Optional<User> findByUnsubscribeToken(String unsubscribeToken);
 }
