@@ -156,6 +156,7 @@ public class AuthService {
                         .name(user.getEmail())  // name 필드가 없으므로 email 사용
                         .rolesCode(user.getRolesCode())
                         .language(user.getLanguageCode())
+                        .marketingAgreed(user.getMarketingAgreed())
                         .build())
                 .build();
     }

@@ -233,9 +233,47 @@ public class AuthController {
                 .name(user.getName())
                 .rolesCode(user.getRolesCode())
                 .language(user.getLanguageCode())
+                .marketingAgreed(user.getMarketingAgreed())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("사용자 정보 조회 성공", userInfo));
+    }
+
+    /**
+     * 본인 마케팅(광고성 메일) 수신 동의 갱신 (MDP-609 로그인 동의 팝업 / 마이페이지 토글용).
+     * Body: { "agreed": true|false }
+     */
+    @PostMapping("/me/marketing-consent")
+    public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> updateMarketingConsent(
+            @RequestBody Map<String, Boolean> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+            "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(401).body(ApiResponse.error("인증되지 않은 사용자입니다."));
+        }
+
+        UUID userId = UUID.fromString(authentication.getName());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        boolean agreed = Boolean.TRUE.equals(body.get("agreed"));
+        user.setMarketingAgreed(agreed);
+        user.setMarketingAgreedAt(agreed ? java.time.LocalDateTime.now() : null);
+        // 동의 시 수신거부 토큰이 없으면 발급 (광고 메일 수신거부 링크 보장)
+        if (agreed && (user.getUnsubscribeToken() == null || user.getUnsubscribeToken().isBlank())) {
+            user.setUnsubscribeToken(java.util.UUID.randomUUID().toString());
+        }
+        userRepository.save(user);
+
+        AuthResponse.UserInfo userInfo = AuthResponse.UserInfo.builder()
+                .id(user.getId().toString())
+                .email(user.getEmail())
+                .name(user.getName())
+                .rolesCode(user.getRolesCode())
+                .language(user.getLanguageCode())
+                .marketingAgreed(user.getMarketingAgreed())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success("수신 동의가 갱신되었습니다.", userInfo));
     }
 
     /**

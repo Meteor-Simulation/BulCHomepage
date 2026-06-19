@@ -31,5 +31,6 @@ public class AuthResponse {
         private String name;
         private String rolesCode;
         private String language;  // 사용자 언어 설정 (ko, en)
+        private Boolean marketingAgreed;  // 광고성 메일 수신 동의 여부 (로그인 동의 팝업 노출 판단용)
     }
 }
