@@ -438,31 +438,62 @@
   border-top: 1px solid #f0f0f0;
 }
 
-.consent-toggle {
-  padding: 6px 14px;
-  border-radius: 6px;
+.consent-switch-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.consent-switch-label {
   font-size: 13px;
   font-weight: 600;
+}
+
+.consent-switch-label.on {
+  color: #C4320A;
+}
+
+.consent-switch-label.off {
+  color: #999;
+}
+
+/* 토글 스위치 (손잡이가 좌우로 슬라이딩) */
+.consent-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border: none;
+  border-radius: 14px;
+  background: #ccc;
   cursor: pointer;
-  border: 1px solid;
-  transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s;
 }
 
-.consent-toggle.on {
+.consent-switch.on {
   background: #C4320A;
-  border-color: #C4320A;
-  color: #fff;
 }
 
-.consent-toggle.off {
-  background: #fff;
-  border-color: #e0e0e0;
-  color: #888;
-}
-
-.consent-toggle:disabled {
+.consent-switch:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.consent-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.consent-switch.on .consent-switch-knob {
+  transform: translateX(24px);
 }
 
 .consent-help {

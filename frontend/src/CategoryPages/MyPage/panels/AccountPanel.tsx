@@ -197,14 +197,22 @@ const AccountPanel: React.FC<AccountPanelProps> = ({
         <div className="marketing-consent-section">
           <div className="info-row">
             <span className="info-label">광고성 정보 수신</span>
-            <button
-              type="button"
-              className={`consent-toggle ${marketingAgreed ? 'on' : 'off'}`}
-              disabled={savingConsent}
-              onClick={toggleMarketingConsent}
-            >
-              {savingConsent ? '저장 중...' : (marketingAgreed ? '수신 동의' : '수신 거부')}
-            </button>
+            <div className="consent-switch-wrap">
+              <span className={`consent-switch-label ${marketingAgreed ? 'on' : 'off'}`}>
+                {marketingAgreed ? '수신 동의' : '수신 거부'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={marketingAgreed}
+                aria-label="광고성 정보 수신 동의"
+                className={`consent-switch ${marketingAgreed ? 'on' : 'off'}`}
+                disabled={savingConsent}
+                onClick={toggleMarketingConsent}
+              >
+                <span className="consent-switch-knob" />
+              </button>
+            </div>
           </div>
           <p className="consent-help">
             동의 시 신규 기능·이벤트·할인 등 광고성 메일을 받습니다. 계정·결제·보안 등 필수 안내는 동의와 무관하게 발송됩니다.
