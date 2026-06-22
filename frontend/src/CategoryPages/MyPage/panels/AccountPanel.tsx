@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserInfo } from '../types';
+import { useAuth } from '../../../context/AuthContext';
+import { useAlert } from '../../../components/AlertProvider';
+import { getApiBaseUrl } from '../../../utils/api';
 
 interface AccountPanelProps {
   userInfo: UserInfo;
@@ -78,6 +81,34 @@ const AccountPanel: React.FC<AccountPanelProps> = ({
   onDeleteAccount,
 }) => {
   const { t } = useTranslation();
+  const { user, applyMarketingConsent } = useAuth();
+  const { showAlert } = useAlert();
+  const [savingConsent, setSavingConsent] = useState(false);
+  const marketingAgreed = user?.marketingAgreed === true;
+
+  // 광고성 정보 수신 동의 토글 (로그인 동의 팝업과 동일 API 사용)
+  const toggleMarketingConsent = async () => {
+    const next = !marketingAgreed;
+    setSavingConsent(true);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/me/marketing-consent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ agreed: next }),
+      });
+      if (res.ok) {
+        applyMarketingConsent(next);
+        showAlert({ message: next ? '광고성 정보 수신에 동의했습니다.' : '광고성 정보 수신을 거부했습니다.', type: 'success' });
+      } else {
+        showAlert({ message: '수신 동의 설정에 실패했습니다.', type: 'error' });
+      }
+    } catch {
+      showAlert({ message: '수신 동의 설정 중 오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setSavingConsent(false);
+    }
+  };
 
   return (
     <>
@@ -160,6 +191,24 @@ const AccountPanel: React.FC<AccountPanelProps> = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* 광고성 정보 수신 동의 */}
+        <div className="marketing-consent-section">
+          <div className="info-row">
+            <span className="info-label">광고성 정보 수신</span>
+            <button
+              type="button"
+              className={`consent-toggle ${marketingAgreed ? 'on' : 'off'}`}
+              disabled={savingConsent}
+              onClick={toggleMarketingConsent}
+            >
+              {savingConsent ? '저장 중...' : (marketingAgreed ? '수신 동의' : '수신 거부')}
+            </button>
+          </div>
+          <p className="consent-help">
+            동의 시 신규 기능·이벤트·할인 등 광고성 메일을 받습니다. 계정·결제·보안 등 필수 안내는 동의와 무관하게 발송됩니다.
+          </p>
         </div>
       </div>
 
