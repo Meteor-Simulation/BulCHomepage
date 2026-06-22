@@ -111,10 +111,10 @@ const MarketingConsentModal: React.FC = () => {
         </p>
         <div className="mkt-consent-actions">
           <button className="mkt-consent-btn decline" disabled={submitting} onClick={() => choose(false)}>
-            받지 않기
+            수신 거부
           </button>
           <button className="mkt-consent-btn agree" disabled={submitting} onClick={() => choose(true)}>
-            {submitting ? '처리 중...' : '동의하고 받기'}
+            {submitting ? '처리 중...' : '수신 동의'}
           </button>
         </div>
         <button className="mkt-consent-later" disabled={submitting} onClick={remindLater}>
