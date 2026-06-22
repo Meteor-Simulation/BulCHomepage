@@ -135,7 +135,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. 개인정보의 수집 및 이용 목적',
         bodies: [
           '주식회사 메테오시뮬레이션(이하 "회사")은 다음의 목적을 위하여 개인정보를 수집 및 이용합니다. 수집한 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경될 시에는 사전동의를 구할 예정입니다.',
-          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/>&nbsp;&nbsp;- 운영상 필수 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내) 이메일 발송 — 수신 거부와 무관하게 발송<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공 (이메일, SMS 등 전자적 방법으로 발송하며 언제든지 수신 거부 가능)',
+          '가. 서비스 제공<br/>&nbsp;&nbsp;- 콘텐츠 제공, 본인인증, 서비스 이용 및 결제<br/><br/>나. 회원 관리<br/>&nbsp;&nbsp;- 회원제 서비스 이용에 따른 본인확인, 개인식별, 불량회원의 부정 이용 방지와 비인가 사용 방지, 가입 의사 확인, 분쟁 조정을 위한 기록보존, 불만처리 등 민원처리, 고지사항 전달<br/>&nbsp;&nbsp;- 운영상 필수 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내) 이메일 발송 — 수신 거부와 무관하게 발송<br/><br/>다. 마케팅 및 광고에 활용 (선택 동의 시)<br/>&nbsp;&nbsp;- 신규 서비스 개발 및 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공<br/>&nbsp;&nbsp;- 광고성 정보는 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제50조에 따라 사전 수신동의한 회원에게만 이메일로 발송하며, 메일 제목에 (광고)를 표기합니다.<br/>&nbsp;&nbsp;- 수신동의는 메일 하단의 수신거부 링크 또는 마이페이지 &gt; 개인 정보 &gt; 광고성 정보 수신 설정에서 언제든지 철회할 수 있습니다.',
         ],
       },
       {
@@ -149,7 +149,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '3. 개인정보의 보유 및 이용기간',
         bodies: [
           '회사는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보 수집 시에 동의 받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.',
-          '가. 회원 정보: 회원 탈퇴 시까지 (단, 관계 법령에 의해 보존할 필요가 있는 경우 해당 기간까지 보존)<br/><br/>나. 전자상거래에서의 계약 또는 청약철회 등에 관한 기록: 5년<br/><br/>다. 대금결제 및 재화 등의 공급에 관한 기록: 5년<br/><br/>라. 소비자의 불만 또는 분쟁처리에 관한 기록: 3년<br/><br/>마. 접속에 관한 기록: 3개월',
+          '가. 회원 정보: 회원 탈퇴 시까지 (단, 관계 법령에 의해 보존할 필요가 있는 경우 해당 기간까지 보존)<br/><br/>나. 전자상거래에서의 계약 또는 청약철회 등에 관한 기록: 5년<br/><br/>다. 대금결제 및 재화 등의 공급에 관한 기록: 5년<br/><br/>라. 소비자의 불만 또는 분쟁처리에 관한 기록: 3년<br/><br/>마. 접속에 관한 기록: 3개월<br/><br/>바. 광고성 정보 수신동의 및 수신거부(철회)에 관한 기록: 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」에 따라 보관',
         ],
       },
       {
@@ -191,7 +191,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '9. 개인정보 보호책임자',
         bodies: [
           '회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.',
-          '▶ 개인정보 보호책임자<br/>&nbsp;&nbsp;- 성명: 관리자<br/>&nbsp;&nbsp;- 연락처: support@meteor-simulation.com',
+          '▶ 개인정보 보호책임자<br/>&nbsp;&nbsp;- 성명: 관리자<br/>&nbsp;&nbsp;- 연락처: simul@msimul.com',
         ],
       },
       {
@@ -206,7 +206,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '1. Purpose of Collection and Use of Personal Information',
         bodies: [
           'Meteor Simulation Co., Ltd. (the "Company") collects and uses personal information for the following purposes. Collected personal information will not be used for any purpose other than those listed below, and prior consent will be obtained if the purpose of use changes.',
-          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/>&nbsp;&nbsp;- Sending operational notices (informational notices such as changes to Terms, service maintenance, security announcements, software updates, and license expiration) by email — sent regardless of opt-out from marketing communications<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services, personalized service offerings, and provision of event and promotional information (sent by electronic methods such as email and SMS; users may opt out at any time)',
+          'a. Service provision<br/>&nbsp;&nbsp;- Content delivery, identity verification, service use, and payment<br/><br/>b. Member management<br/>&nbsp;&nbsp;- Identity verification, individual identification, prevention of fraudulent or unauthorized use, confirmation of intent to register, record retention for dispute resolution, complaint handling, and delivery of notices<br/>&nbsp;&nbsp;- Sending operational notices (informational notices such as changes to Terms, service maintenance, security announcements, software updates, and license expiration) by email — sent regardless of opt-out from marketing communications<br/><br/>c. Marketing and advertising use (with optional consent)<br/>&nbsp;&nbsp;- Development of new services and personalized offerings, and provision of event and promotional information<br/>&nbsp;&nbsp;- Promotional information is sent by email only to members who have given prior consent under Article 50 of the Network Act, with "(광고)" (Ad) indicated in the subject line.<br/>&nbsp;&nbsp;- Consent may be withdrawn at any time via the unsubscribe link at the bottom of the email or under My Page &gt; Account &gt; promotional email settings.',
         ],
       },
       {
@@ -220,7 +220,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '3. Retention and Use Period of Personal Information',
         bodies: [
           'The Company processes and retains personal information within the retention period required by law or the period consented to at the time of collection.',
-          'a. Member information: Until membership is terminated (if retention is required by law, until the relevant period ends)<br/><br/>b. Records of contracts or withdrawal of orders in e-commerce: 5 years<br/><br/>c. Records of payment and supply of goods: 5 years<br/><br/>d. Records of consumer complaints or dispute resolution: 3 years<br/><br/>e. Access logs: 3 months',
+          'a. Member information: Until membership is terminated (if retention is required by law, until the relevant period ends)<br/><br/>b. Records of contracts or withdrawal of orders in e-commerce: 5 years<br/><br/>c. Records of payment and supply of goods: 5 years<br/><br/>d. Records of consumer complaints or dispute resolution: 3 years<br/><br/>e. Access logs: 3 months<br/><br/>f. Records of consent to and withdrawal from promotional information: retained in accordance with the Network Act',
         ],
       },
       {
@@ -262,7 +262,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '9. Privacy Officer',
         bodies: [
           'The Company designates the following Privacy Officer to take overall responsibility for personal information processing and to handle complaints and damage relief related to personal information processing.',
-          '▶ Privacy Officer<br/>&nbsp;&nbsp;- Name: Administrator<br/>&nbsp;&nbsp;- Contact: support@meteor-simulation.com',
+          '▶ Privacy Officer<br/>&nbsp;&nbsp;- Name: Administrator<br/>&nbsp;&nbsp;- Contact: simul@msimul.com',
         ],
       },
       {
@@ -299,7 +299,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '제4조 (환불 절차)',
         bodies: [
           '환불을 요청하시는 경우 다음의 절차에 따라 처리됩니다.',
-          '1. <strong>환불 신청:</strong> 회사 고객지원 이메일(support@msimul.com)로 환불 사유, 결제 정보(주문번호, 결제일, 결제 수단)를 기재하여 신청합니다.<br/><br/>2. <strong>신청 접수 및 검토:</strong> 회사는 접수된 환불 요청을 확인하고, 환불 가능 여부를 검토합니다.<br/><br/>3. <strong>환불 처리:</strong> 검토 완료 후, 환불 승인 시 원래 결제 수단으로 환불이 진행됩니다.',
+          '1. <strong>환불 신청:</strong> 회사 고객지원 이메일(simul@msimul.com)로 환불 사유, 결제 정보(주문번호, 결제일, 결제 수단)를 기재하여 신청합니다.<br/><br/>2. <strong>신청 접수 및 검토:</strong> 회사는 접수된 환불 요청을 확인하고, 환불 가능 여부를 검토합니다.<br/><br/>3. <strong>환불 처리:</strong> 검토 완료 후, 환불 승인 시 원래 결제 수단으로 환불이 진행됩니다.',
         ],
       },
       {
@@ -358,7 +358,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: 'Article 4 (Refund Procedure)',
         bodies: [
           'If you request a refund, it will be processed according to the following procedure.',
-          '1. <strong>Refund request:</strong> Submit your request to the Company\'s customer support email (support@msimul.com) with the reason for refund and payment information (order number, payment date, payment method).<br/><br/>2. <strong>Receipt and review:</strong> The Company verifies the received refund request and reviews whether a refund is possible.<br/><br/>3. <strong>Refund processing:</strong> After review, if approved, the refund is processed to the original payment method.',
+          '1. <strong>Refund request:</strong> Submit your request to the Company\'s customer support email (simul@msimul.com) with the reason for refund and payment information (order number, payment date, payment method).<br/><br/>2. <strong>Receipt and review:</strong> The Company verifies the received refund request and reviews whether a refund is possible.<br/><br/>3. <strong>Refund processing:</strong> After review, if approved, the refund is processed to the original payment method.',
         ],
       },
       {
@@ -458,7 +458,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제11조 (분쟁 처리 및 관할)',
         bodies: [
-          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(support@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
+          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(simul@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
         ],
       },
       {
@@ -530,7 +530,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 11 (Dispute Resolution and Jurisdiction)',
         bodies: [
-          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (support@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea and shall be filed in the court having jurisdiction over the Company\'s head office.',
+          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (simul@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea and shall be filed in the court having jurisdiction over the Company\'s head office.',
         ],
       },
       {
