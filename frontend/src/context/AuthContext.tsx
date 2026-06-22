@@ -237,6 +237,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           marketingAgreed: userInfo.marketingAgreed,
         };
 
+        // 새 로그인 — 마케팅 동의 팝업의 "나중에" 세션 보류 해제 (다음 로그인 시 재노출)
+        sessionStorage.removeItem('mkt_consent_remind_later');
         setUser(userData);
 
         // 토큰 만료 시간 추적 (쿠키는 백엔드가 설정, 여기선 타이머용)
@@ -258,6 +260,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userData = await fetchCurrentUser();
       if (userData) {
+        // 새 로그인 — 마케팅 동의 팝업의 "나중에" 세션 보류 해제 (다음 로그인 시 재노출)
+        sessionStorage.removeItem('mkt_consent_remind_later');
         setUser(userData);
         tokenExpiresAtRef.current = Date.now() + ACCESS_TOKEN_LIFETIME_SEC * 1000;
         applyUserLanguage(userData.language);

@@ -11,9 +11,11 @@ import './MarketingConsentModal.css';
  * - 동의/미동의: /api/auth/me/marketing-consent 로 저장 후 다시 노출되지 않음
  * - 나중에: 일정 기간 노출을 보류
  */
-const DISMISS_KEY = 'mkt_consent_dismissed_until';
-const REMIND_LATER_DAYS = 7;     // "나중에" 시 보류 기간
-const DECLINE_DAYS = 90;         // "미동의" 시 재요청 보류 기간
+// "받지 않기"(명시적 미동의) — 장기 보류 (localStorage). 다음 로그인에도 바로 다시 묻지 않음.
+const DECLINE_KEY = 'mkt_consent_declined_until';
+const DECLINE_DAYS = 90;
+// "나중에" — 이번 로그인 세션에서만 보류 (sessionStorage). 다음 로그인 시 AuthContext가 제거 → 재노출.
+const REMIND_LATER_KEY = 'mkt_consent_remind_later';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const MarketingConsentModal: React.FC = () => {
@@ -36,9 +38,14 @@ const MarketingConsentModal: React.FC = () => {
       setVisible(false);
       return;
     }
-    // 보류 기간 내면 노출하지 않음
-    const until = Number(localStorage.getItem(DISMISS_KEY) || 0);
-    if (until && Date.now() < until) {
+    // "받지 않기" 장기 보류 기간 내면 노출하지 않음
+    const declinedUntil = Number(localStorage.getItem(DECLINE_KEY) || 0);
+    if (declinedUntil && Date.now() < declinedUntil) {
+      setVisible(false);
+      return;
+    }
+    // "나중에" — 이번 로그인 세션 동안만 보류 (다음 로그인 시 플래그 제거되어 재노출)
+    if (sessionStorage.getItem(REMIND_LATER_KEY)) {
       setVisible(false);
       return;
     }
@@ -59,27 +66,29 @@ const MarketingConsentModal: React.FC = () => {
       if (res.ok) {
         applyMarketingConsent(agreed);
         if (!agreed) {
-          // 미동의 — 한동안 다시 묻지 않음
-          localStorage.setItem(DISMISS_KEY, String(Date.now() + DECLINE_DAYS * DAY_MS));
+          // 받지 않기 — 장기 보류 (다음 로그인에도 바로 다시 묻지 않음)
+          localStorage.setItem(DECLINE_KEY, String(Date.now() + DECLINE_DAYS * DAY_MS));
         } else {
-          localStorage.removeItem(DISMISS_KEY);
+          localStorage.removeItem(DECLINE_KEY);
         }
+        sessionStorage.removeItem(REMIND_LATER_KEY);
         setVisible(false);
       } else {
-        // 실패 시 잠시 보류 후 닫기
-        localStorage.setItem(DISMISS_KEY, String(Date.now() + REMIND_LATER_DAYS * DAY_MS));
+        // 실패 — 이번 세션만 보류하고 다음 로그인에 다시 시도
+        sessionStorage.setItem(REMIND_LATER_KEY, '1');
         setVisible(false);
       }
     } catch {
-      localStorage.setItem(DISMISS_KEY, String(Date.now() + REMIND_LATER_DAYS * DAY_MS));
+      sessionStorage.setItem(REMIND_LATER_KEY, '1');
       setVisible(false);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // "나중에" — 이번 로그인 세션에서만 숨김. 다음 로그인 시 다시 노출된다.
   const remindLater = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now() + REMIND_LATER_DAYS * DAY_MS));
+    sessionStorage.setItem(REMIND_LATER_KEY, '1');
     setVisible(false);
   };
 
