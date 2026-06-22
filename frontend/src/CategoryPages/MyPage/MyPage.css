@@ -431,6 +431,47 @@
   color: #fff;
 }
 
+/* 광고성 정보 수신 동의 토글 */
+.marketing-consent-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.consent-toggle {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+.consent-toggle.on {
+  background: #C4320A;
+  border-color: #C4320A;
+  color: #fff;
+}
+
+.consent-toggle.off {
+  background: #fff;
+  border-color: #e0e0e0;
+  color: #888;
+}
+
+.consent-toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.consent-help {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
 /* 비밀번호 변경 섹션 */
 .password-section {
   margin-top: 16px;
