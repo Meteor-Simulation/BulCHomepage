@@ -93,6 +93,8 @@ public class SecurityConfig {
                         // 라이선스 관리 API (인증 필요)
                         .requestMatchers("/api/licenses/**").authenticated()
                         .requestMatchers("/api/me/licenses/**").authenticated()
+                        // 본인 결제 내역 조회는 인증 필요 (아래 permitAll 보다 먼저 매칭)
+                        .requestMatchers("/api/payments/me").authenticated()
                         // 결제 API (결제 완료 후 리다이렉트에서 호출)
                         .requestMatchers("/api/payments/**").permitAll()
                         // 상품/요금제 API (공개)

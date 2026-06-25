@@ -23,7 +23,7 @@
       "account": "Personal Info",
       "licenseInfo": "License",
       "subscription": "Subscription",
-      "payment": "Card Registration",
+      "payment": "Payment Info",
       "admin": "Admin",
       "adminGroupUsers": "Users",
       "adminGroupSales": "Products / Payments",
@@ -69,10 +69,10 @@
     "purchaseLicense": "Purchase License",
     "subscription": "Subscription",
     "noSubscription": "No active subscriptions.",
-    "paymentMethod": "Payment Methods",
+    "paymentMethod": "Registered Cards",
     "paymentCurrency": "Payment Country/Currency",
     "languageCurrency": "Language / Currency",
-    "noPaymentMethod": "No payment methods registered.",
+    "noPaymentMethod": "No cards registered.",
     "paymentMethodHelper": "Register a card during payment to use for auto-renewal.",
     "addCard": "Add card",
     "deleteAccount": "Delete Account",
@@ -86,6 +86,31 @@
       "EXPIRED_HARD": "Expired",
       "SUSPENDED": "Suspended",
       "REVOKED": "Revoked"
+    },
+    "paymentHistory": {
+      "title": "Payment Info",
+      "count": "{{count}}",
+      "loading": "Loading...",
+      "empty": "No payment history.",
+      "colOrder": "Order",
+      "colMethod": "Method",
+      "colAmount": "Amount",
+      "colStatus": "Status",
+      "colDate": "Date",
+      "refundedSuffix": "refunded {{amount}}",
+      "status": {
+        "COMPLETED": "Completed",
+        "PENDING": "Pending",
+        "FAILED": "Failed",
+        "REFUNDED": "Refunded"
+      },
+      "method": {
+        "CARD": "Card",
+        "VIRTUAL_ACCOUNT": "Virtual account",
+        "EASY_PAY": "Easy pay",
+        "TRANSFER": "Transfer",
+        "MOBILE": "Mobile"
+      }
     }
   },
   "common": {

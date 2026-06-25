@@ -19,11 +19,12 @@ import {
 } from './types';
 import { VALID_MENU_SECTIONS } from './constants';
 import {
-  ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, RedeemPanel,
+  ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, PaymentHistoryPanel, RedeemPanel,
   AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
   AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
   AdminMailingPanel,
 } from './panels';
+import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
@@ -56,6 +57,8 @@ const MyPage: React.FC = () => {
   // 등록된 카드 (빌링키)
   const [billingKeys, setBillingKeys] = useState<BillingKey[]>([]);
   const [isLoadingBillingKeys, setIsLoadingBillingKeys] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
+  const [isLoadingPaymentHistory, setIsLoadingPaymentHistory] = useState(false);
 
   // 프로필 수정 모드
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -270,6 +273,27 @@ const MyPage: React.FC = () => {
       }
     };
     if (isLoggedIn) fetchBillingKeys();
+  }, [isLoggedIn]);
+
+  // 결제 내역 로드
+  useEffect(() => {
+    const fetchPaymentHistory = async () => {
+      setIsLoadingPaymentHistory(true);
+      try {
+        const response = await fetch(`${API_URL}/api/payments/me`, {
+          credentials: 'include' as RequestCredentials,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPaymentHistory(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        // 결제 내역 로드 실패
+      } finally {
+        setIsLoadingPaymentHistory(false);
+      }
+    };
+    if (isLoggedIn) fetchPaymentHistory();
   }, [isLoggedIn]);
 
   // 관리자 메뉴 변경 시 데이터 로드
@@ -1071,13 +1095,19 @@ const MyPage: React.FC = () => {
               )}
 
               {activeMenu === 'payment' && (
-                <PaymentPanel
-                  isLoadingBillingKeys={isLoadingBillingKeys}
-                  billingKeys={billingKeys}
-                  onAddCard={handleAddCard}
-                  onSetDefaultCard={handleSetDefaultCard}
-                  onDeleteCard={handleDeleteCard}
-                />
+                <>
+                  <PaymentHistoryPanel
+                    isLoading={isLoadingPaymentHistory}
+                    payments={paymentHistory}
+                  />
+                  <PaymentPanel
+                    isLoadingBillingKeys={isLoadingBillingKeys}
+                    billingKeys={billingKeys}
+                    onAddCard={handleAddCard}
+                    onSetDefaultCard={handleSetDefaultCard}
+                    onDeleteCard={handleDeleteCard}
+                  />
+                </>
               )}
 
               {activeMenu === 'redeem' && (
