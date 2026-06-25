@@ -130,6 +130,20 @@ public class PaymentController {
     }
 
     /**
+     * 본인 결제 내역 조회 (MDP-576). 인증 필수 — SecurityContext의 userId 기준.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyPayments() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+        }
+        UUID userId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(paymentService.getMyPaymentHistory(userId));
+    }
+
+    /**
      * 결제 정보 조회 API
      */
     @GetMapping("/{orderId}")

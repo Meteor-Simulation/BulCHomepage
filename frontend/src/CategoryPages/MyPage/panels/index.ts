@@ -2,6 +2,7 @@ export { default as ProfilePanel } from './ProfilePanel';
 export { default as AccountPanel } from './AccountPanel';
 export { default as SubscriptionPanel } from './SubscriptionPanel';
 export { default as PaymentPanel } from './PaymentPanel';
+export { default as PaymentHistoryPanel } from './PaymentHistoryPanel';
 export { default as RedeemPanel } from './RedeemPanel';
 export { default as AdminUsersPanel } from './AdminUsersPanel';
 export { default as AdminPaymentsPanel } from './AdminPaymentsPanel';

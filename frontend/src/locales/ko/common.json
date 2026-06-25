@@ -23,7 +23,7 @@
       "account": "개인 정보",
       "licenseInfo": "라이선스",
       "subscription": "구독 정보",
-      "payment": "카드 등록",
+      "payment": "결제 정보",
       "admin": "관리자",
       "adminGroupUsers": "사용자",
       "adminGroupSales": "상품/결제",
@@ -69,10 +69,10 @@
     "purchaseLicense": "라이선스 구매하기",
     "subscription": "구독 관리",
     "noSubscription": "활성화된 구독이 없습니다.",
-    "paymentMethod": "결제 수단",
+    "paymentMethod": "등록 카드",
     "paymentCurrency": "결제 국가/통화",
     "languageCurrency": "언어/통화",
-    "noPaymentMethod": "등록된 결제 수단이 없습니다.",
+    "noPaymentMethod": "등록된 카드가 없습니다.",
     "paymentMethodHelper": "결제 시 카드를 등록하면 자동 갱신에 사용할 수 있습니다.",
     "addCard": "카드 추가",
     "deleteAccount": "계정 삭제",
@@ -86,6 +86,31 @@
       "EXPIRED_HARD": "만료됨",
       "SUSPENDED": "정지됨",
       "REVOKED": "취소됨"
+    },
+    "paymentHistory": {
+      "title": "결제 정보",
+      "count": "{{count}}건",
+      "loading": "불러오는 중...",
+      "empty": "결제 내역이 없습니다.",
+      "colOrder": "주문",
+      "colMethod": "결제수단",
+      "colAmount": "금액",
+      "colStatus": "상태",
+      "colDate": "결제일",
+      "refundedSuffix": "환불 {{amount}}",
+      "status": {
+        "COMPLETED": "완료",
+        "PENDING": "결제대기",
+        "FAILED": "실패",
+        "REFUNDED": "환불"
+      },
+      "method": {
+        "CARD": "카드",
+        "VIRTUAL_ACCOUNT": "가상계좌",
+        "EASY_PAY": "간편결제",
+        "TRANSFER": "계좌이체",
+        "MOBILE": "휴대폰"
+      }
     }
   },
   "common": {

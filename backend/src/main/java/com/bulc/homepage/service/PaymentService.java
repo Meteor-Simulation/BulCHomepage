@@ -3,6 +3,7 @@ package com.bulc.homepage.service;
 import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.dto.BillingPaymentRequest;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
+import com.bulc.homepage.dto.response.PaymentHistoryResponse;
 import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
 import com.bulc.homepage.entity.PricePlan;
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -51,6 +53,39 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final BillingKeyService billingKeyService;
+
+    /**
+     * 본인 결제 내역 조회 (MDP-576). 최신순. 민감 필드 제외 DTO로 변환.
+     */
+    @Transactional(readOnly = true)
+    public List<PaymentHistoryResponse> getMyPaymentHistory(UUID userId) {
+        return paymentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(p -> {
+                    PaymentDetail d = p.getPaymentDetail();
+                    String status = switch (p.getStatus() == null ? "" : p.getStatus()) {
+                        case "P" -> "PENDING";
+                        case "C" -> "COMPLETED";
+                        case "F" -> "FAILED";
+                        case "R" -> "REFUNDED";
+                        default -> p.getStatus();
+                    };
+                    return new PaymentHistoryResponse(
+                            d != null ? d.getOrderId() : null,
+                            p.getOrderName(),
+                            p.getAmount(),
+                            p.getCurrency(),
+                            status,
+                            d != null ? d.getPaymentMethod() : null,
+                            d != null ? d.getCardCompany() : null,
+                            d != null ? d.getCardNumber() : null,
+                            p.getPaidAt(),
+                            p.getCreatedAt(),
+                            p.getRefundedAt(),
+                            p.getRefundAmount()
+                    );
+                })
+                .toList();
+    }
 
     /**
      * 토스페이먼츠 결제 승인
