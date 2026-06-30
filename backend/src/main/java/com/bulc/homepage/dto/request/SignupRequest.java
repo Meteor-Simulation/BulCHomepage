@@ -1,6 +1,7 @@
 package com.bulc.homepage.dto.request;
 
 import com.bulc.homepage.validation.ValidPassword;
+import com.bulc.homepage.validation.ValidPhone;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class SignupRequest {
             message = "이름은 " + NAME_MIN_LENGTH + "자 이상 " + NAME_MAX_LENGTH + "자 이하여야 합니다")
     private String name;
 
+    @ValidPhone
     private String phoneNumber;
 
     @Builder.Default

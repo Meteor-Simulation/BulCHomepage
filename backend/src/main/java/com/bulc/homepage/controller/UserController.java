@@ -3,6 +3,8 @@ package com.bulc.homepage.controller;
 import com.bulc.homepage.config.ValidationConfig;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
+import com.bulc.homepage.validation.ValidPhone;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -52,7 +54,7 @@ public class UserController {
      * 사용자 정보 업데이트 (이름, 전화번호, 국가, 언어)
      */
     @PutMapping("/me")
-    public ResponseEntity<UserInfoResponse> updateCurrentUser(@RequestBody UpdateUserRequest request) {
+    public ResponseEntity<UserInfoResponse> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -189,7 +191,7 @@ public class UserController {
 
     // DTOs
     public record UserInfoResponse(String email, String name, String phone, String country, String language) {}
-    public record UpdateUserRequest(String name, String phone, String country, String language) {}
+    public record UpdateUserRequest(String name, @ValidPhone String phone, String country, String language) {}
     public record ChangePasswordRequest(String currentPassword, String newPassword) {}
     public record ApiResponse(boolean success, String message) {}
 }

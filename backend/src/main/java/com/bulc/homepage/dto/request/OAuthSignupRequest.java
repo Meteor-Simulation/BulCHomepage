@@ -1,5 +1,6 @@
 package com.bulc.homepage.dto.request;
 
+import com.bulc.homepage.validation.ValidPhone;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class OAuthSignupRequest {
     private String password;
 
     private String name;
+    @ValidPhone
     private String phone;
 
     // 회원가입 시점의 페이지 언어 (ko/en). null이면 DB 기본값(country=KR) 사용.

@@ -8,7 +8,7 @@ import Seo from '../../components/Seo';
 import LoginModal from '../../components/LoginModal';
 import { useAlert } from '../../components/AlertProvider';
 import BoothGiftBanner from '../../components/BoothGiftBanner';
-import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
+import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber, isValidPhone } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import {
@@ -417,6 +417,10 @@ const MyPage: React.FC = () => {
   // ========== 프로필 핸들러 ==========
 
   const handleSaveProfile = async () => {
+    if (!isValidPhone(editPhone)) {
+      showError('전화번호를 정확히 입력해주세요. (예: 010-1234-5678)');
+      return;
+    }
     try {
       const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
