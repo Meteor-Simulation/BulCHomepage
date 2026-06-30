@@ -15,6 +15,20 @@ export const cleanPhoneNumber = (phone: string | null | undefined): string => {
 };
 
 /**
+ * 전화번호 유효성 검사
+ * 전화번호는 선택 항목이므로 미입력(빈 값)은 유효로 처리하고,
+ * 값이 있을 때만 숫자 10~11자리(한국 휴대폰/유선)를 요구한다.
+ * 과거 "010"처럼 앞자리만 입력된 불완전 값을 막기 위함. (백엔드 @ValidPhone과 일치)
+ * @param phone 입력된 전화번호 (하이픈 포함 가능)
+ * @returns 유효하면 true
+ */
+export const isValidPhone = (phone: string | null | undefined): boolean => {
+  const cleaned = cleanPhoneNumber(phone);
+  if (!cleaned) return true; // 미입력 허용
+  return /^\d{10,11}$/.test(cleaned);
+};
+
+/**
  * 전화번호를 표시 형식으로 변환 (UI 표시용)
  * @param phone 전화번호 (숫자만 또는 하이픈 포함)
  * @returns 포맷된 전화번호 (예: "010-2366-6455")

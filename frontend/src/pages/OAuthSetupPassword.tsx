@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseUrl } from '../utils/api';
+import { isValidPhone } from '../utils/phoneUtils';
 import { useLanguage } from '../context/LanguageContext';
 import {
   BOOTH_GIFT_PATH,
@@ -63,6 +64,11 @@ const OAuthSetupPassword: React.FC = () => {
 
     if (password !== confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      setError('전화번호를 정확히 입력해주세요. (예: 010-1234-5678)');
       return;
     }
 
