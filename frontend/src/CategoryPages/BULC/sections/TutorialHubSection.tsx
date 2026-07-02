@@ -37,6 +37,9 @@ const YOUTUBE_URL = 'https://www.youtube.com/@SimulationMeteor';
 // 기술문서(테크니컬 가이드북) HTML 경로 — 새 창으로 열립니다. (frontend/public/tech-docs/)
 const TECH_GUIDE_HTML_URL = '/tech-docs/technical-doc.html';
 
+// 사용방법(피난 동역학 시뮬레이션 쇼케이스) — React 라우트로 이관됨. 새 창으로 열립니다.
+const USAGE_SHOWCASE_URL = '/evac-sim';
+
 // PDF 자료 경로 (파일이 준비되면 아래 경로를 채워주세요. 비어 있으면 '준비 중'으로 안내됩니다.)
 const TUTORIAL_PDF_URL = '';
 
@@ -54,7 +57,7 @@ interface GuideItem {
 const ITEMS: GuideItem[] = [
   { key: 'video', Icon: PlayCircle, status: 'active' },
   { key: 'tutorialDoc', Icon: FileText, status: 'active' },
-  { key: 'usage', Icon: BookOpen, status: 'wip' },
+  { key: 'usage', Icon: BookOpen, status: 'active', href: USAGE_SHOWCASE_URL },
   { key: 'techGuide', Icon: Cpu, status: 'active', href: TECH_GUIDE_HTML_URL },
 ];
 

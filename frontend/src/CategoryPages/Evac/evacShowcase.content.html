@@ -1,0 +1,243 @@
+<main id="top">
+  <!-- ===================================================== hero -->
+  <section class="section hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">EVACUATION DYNAMICS · 피난 동역학</p>
+          <h1 class="hero-title">
+            피난 시뮬레이션<br />
+            <span class="hl">Technical GuideBook</span>
+          </h1>
+          <p class="hero-sub">
+            보행자 동역학 모델을 브라우저에서 실시간으로 연산하는 피난 시뮬레이션이다.
+            공식 예제 시나리오<a class="ref-badge" href="#refs">R5</a>를 한글로 재구성했다.
+            최종 목표는 초대형 건축물 피난 해석 데스크탑 애플리케이션이다.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#gallery">예제 둘러보기 →</a>
+            <a class="btn btn-ghost" href="#roadmap">Electron 로드맵</a>
+          </div>
+          <div class="legend">
+            <span><i class="l-ped"></i> 보행자(Agent)</span>
+            <span><i class="l-safe"></i> 비상구 / 피난 경로</span>
+            <span><i class="l-fire"></i> 발화 지점</span>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stage-head">
+            <span><span class="dot"></span>EVAC-CTRL · 실시간 대피 해석</span>
+            <span class="rec mono">● REC&nbsp; 56×32m</span>
+          </div>
+          <div class="stage-canvas-wrap">
+            <canvas id="hero-canvas"></canvas>
+          </div>
+          <div class="hud">
+            <div class="hud-cell"><div class="k">대피 완료</div><div class="v safe" id="hud-evac">0 <small>/ 140</small></div></div>
+            <div class="hud-cell"><div class="k">잔류 인원</div><div class="v ember" id="hud-remain">140</div></div>
+            <div class="hud-cell"><div class="k">경과 시간</div><div class="v" id="hud-time">00:00</div></div>
+            <div class="hud-cell"><div class="k">평균 밀도 ped/m²</div><div class="v" id="hud-density">0.00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== stats -->
+  <section class="section" style="padding-top:0;">
+    <div class="wrap reveal">
+      <div class="stats">
+        <div class="stat"><div class="n">10</div><div class="l">예제 시나리오 <a class="ref-badge" href="#refs">R5</a></div></div>
+        <div class="stat"><div class="n">21</div><div class="l">형태 변형(variants)</div></div>
+        <div class="stat"><div class="n ember">4</div><div class="l">실시간 연산 모델 CFSM·SFM·AVM·BR</div></div>
+        <div class="stat"><div class="n safe">0</div><div class="l">외부 의존성 · 오프라인 OK</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== models -->
+  <section class="section section-alt section-divide" id="models">
+    <div class="wrap">
+      <div class="reveal">
+        <h2 class="section-title">모델별 시뮬레이션 정리 <a class="ref-badge" href="#refs">R6</a></h2>
+      </div>
+      <div class="models">
+        <div class="model-card reveal">
+          <span class="idx mono">CFSM</span>
+          <span class="tag">속도 기반 · 기본 모델</span>
+          <h3>Collision&#8209;Free Speed Model</h3>
+          <p>진행 방향 앞 최근접 보행자와의 간격으로 속도를 정하고, 지수형 이웃·벽 반발로 방향을 정한다. 가볍고 안정적이라 대규모 피난 해석에 쓴다. <a class="ref-badge" href="#refs">R1</a></p>
+        </div>
+        <div class="model-card reveal">
+          <span class="idx mono">SFM</span>
+          <span class="tag">힘 기반</span>
+          <h3>Social Force Model</h3>
+          <p>목표 추진력과 사람·벽 반발력(접촉 시 신체력·마찰)을 합쳐 가속도를 적분한다. 출구 앞 밀집 압력과 아치형 정체를 물리적으로 표현한다. <a class="ref-badge" href="#refs">R2</a></p>
+        </div>
+        <div class="model-card reveal">
+          <span class="idx mono">AVM</span>
+          <span class="tag">예측 기반</span>
+          <h3>Anticipation Velocity Model</h3>
+          <p>상대의 미래 위치를 예측해 미리 옆으로 비켜선다. 정면 교행과 코너에서 사람처럼 자연스러운 회피 동선을 만든다. <a class="ref-badge" href="#refs">R3</a></p>
+        </div>
+        <div class="model-card is-kr reveal">
+          <span class="idx mono">BR</span>
+          <span class="tag">화재·연기 확장 · 유홍선(중앙대) 그룹</span>
+          <h3>Bae&#8211;Ryou Model</h3>
+          <p>SFM에 ‘복사력’(불 회피)과 ‘연기력’(연기 회피·연기 안에서 바깥으로 밀침)을 더한 화재 피난 모델. 불을 보고 피해가고 연기에 밀려 나간다. <a class="ref-badge" href="#refs">R8</a><a class="ref-badge" href="#refs">R9</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== gallery -->
+  <section class="section section-divide" id="gallery">
+    <div class="wrap">
+      <div class="gallery-head">
+        <div class="reveal">
+          <p class="eyebrow">EXAMPLE GALLERY · 예제 10종 <a class="ref-badge" href="#refs">R5</a></p>
+          <h2 class="section-title">움직이는 예제 라이브러리</h2>
+          <p class="section-lead">공식 예제 시나리오를 한글로 옮기고 실제 모델 연산으로 재현했다. 카드를 <strong>클릭하면 상세 뷰</strong>에서 모델(CFSM·SFM·AVM)·형태 변형·파라미터를 직접 바꾸고, 그 모델의 수학식과 상세 해설을 볼 수 있다.</p>
+        </div>
+        <div class="filterbar reveal">
+          <button class="chip active" data-filter="all">전체</button>
+          <button class="chip" data-filter="evac">피난</button>
+          <button class="chip" data-filter="flow">흐름</button>
+          <button class="chip" data-filter="route">경로</button>
+          <button class="chip" data-filter="behav">행동</button>
+          <button class="chip" data-filter="model">모델</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <article class="card reveal" data-tags="evac route" data-scenario="routing">
+          <div class="card-canvas"><span class="badge evac">피난 · EVAC</span><span class="live"><i></i>LIVE</span><canvas data-scenario="routing"></canvas><span class="card-cta">클릭 → 상세 · 모델 · 파라미터</span></div>
+          <div class="card-body"><h3>경로 선택과 대피 시간</h3><p>일부는 최단 경로로, 일부는 우회로로 출구에 도달한다. 경로 분담 비율이 전체 대피 시간을 바꾼다.</p>
+            <div class="card-foot"><span class="key">2 routes</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/routing.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="evac flow" data-scenario="bottleneck">
+          <div class="card-canvas"><span class="badge evac">피난 · EVAC</span><span class="live"><i></i>LIVE</span><canvas data-scenario="bottleneck"></canvas><span class="card-cta">클릭 → 상세 · 모델 · 파라미터</span></div>
+          <div class="card-body"><h3>병목 통과</h3><p>좁은 통로를 지날 때의 정체와 유량. 출구 폭 설계가 피난 성능에 미치는 영향을 드러낸다.</p>
+            <div class="card-foot"><span class="key">single / double</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/double-bottleneck.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="flow" data-scenario="corner">
+          <div class="card-canvas"><span class="badge">흐름 · FLOW</span><span class="live"><i></i>LIVE</span><canvas data-scenario="corner"></canvas><span class="card-cta">클릭 → 상세 · 모델 · 파라미터</span></div>
+          <div class="card-body"><h3>코너 통과 동선</h3><p>모퉁이를 도는 보행자 동선. 안쪽으로 몰리는 쏠림과 곡선형 흐름이 형성된다.</p>
+            <div class="card-foot"><span class="key">90° / U-turn</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/corner.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="flow" data-scenario="lane">
+          <div class="card-canvas"><span class="badge">흐름 · FLOW</span><span class="live"><i></i>LIVE</span><canvas data-scenario="lane"></canvas><span class="card-cta">클릭 → 직선·ㄱ자·교차로</span></div>
+          <div class="card-body"><h3>양방향 흐름의 차선 형성</h3><p>반대로 향하는 두 무리가 마주칠 때 스스로 차선을 이루는 자기조직화. 직선·ㄱ자·십자에서 비교한다.</p>
+            <div class="card-foot"><span class="key">bi-directional</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/lane-formation.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="behav" data-scenario="queue">
+          <div class="card-canvas"><span class="badge">행동 · BEHAV</span><span class="live"><i></i>LIVE</span><canvas data-scenario="queue"></canvas><span class="card-cta">클릭 → 단일·2 창구</span></div>
+          <div class="card-body"><h3>대기열 행동</h3><p>창구로 모여 줄을 서는 과정. 창구 수와 인원에 따른 대기 양상을 본다.</p>
+            <div class="card-foot"><span class="key">single / two</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/queues_waiting.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="flow behav" data-scenario="singlefile">
+          <div class="card-canvas"><span class="badge">흐름 · FLOW</span><span class="live"><i></i>LIVE</span><canvas data-scenario="singlefile"></canvas><span class="card-cta">클릭 → 사각·원형 링</span></div>
+          <div class="card-body"><h3>단일 대열(Single&#8209;file) 이동</h3><p>한 줄로 이동하는 고전 실험. 앞사람과의 간격–속도 관계(기본 다이어그램)의 토대다.</p>
+            <div class="card-foot"><span class="key">ring corridor</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/single-file.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="route" data-scenario="journey">
+          <div class="card-canvas"><span class="badge">경로 · ROUTE</span><span class="live"><i></i>LIVE</span><canvas data-scenario="journey"></canvas><span class="card-cta">클릭 → 직렬·Y자 합류</span></div>
+          <div class="card-body"><h3>여정(Journey) 설계</h3><p>경유지·분기·합류를 가진 복합 경로. 여러 방을 거쳐 출구에 이르는 다단계 동선을 구성한다.</p>
+            <div class="card-foot"><span class="key">multi-stage</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/journey.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="evac behav" data-scenario="motivation">
+          <div class="card-canvas"><span class="badge evac">피난 · EVAC</span><span class="live"><i></i>LIVE</span><canvas data-scenario="motivation"></canvas><span class="card-cta">클릭 → 고긴급·저긴급</span></div>
+          <div class="card-body"><h3>동기(Motivation) 모델링</h3><p>긴급도(=희망속도 v0)가 높을수록 출구 앞 고밀집 아치형 정체가 심해진다.</p>
+            <div class="card-foot"><span class="key">urgency = v0</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/motivation.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="model" data-scenario="compare">
+          <div class="card-canvas"><span class="badge">모델 · MODEL</span><span class="live"><i></i>LIVE</span><canvas data-scenario="compare"></canvas><span class="card-cta">클릭 → 좁은·넓은 병목</span></div>
+          <div class="card-body"><h3>병목 폭과 흐름</h3><p>희망속도가 다른 두 무리를 좁은/넓은 병목에 통과시켜 흐름 차이를 나란히 비교한다.</p>
+            <div class="card-foot"><span class="key">v0 1.2 vs 1.6</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/model-comparison.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+
+        <article class="card reveal" data-tags="route behav" data-scenario="steering">
+          <div class="card-canvas"><span class="badge">경로 · ROUTE</span><span class="live"><i></i>LIVE</span><canvas data-scenario="steering"></canvas><span class="card-cta">클릭 → 사각·8자 경로</span></div>
+          <div class="card-body"><h3>리더-팔로워 직접 조향</h3><p>인솔자가 경로를 그리면 무리가 그 뒤를 따른다. 인솔에 의한 그룹 유도 동선을 본다.</p>
+            <div class="card-foot"><span class="key">leader-follower</span><a class="open" href="https://www.jupedsim.org/stable/notebooks/direct_steering.html" target="_blank" rel="noopener">원본 ↗</a></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== roadmap -->
+  <section class="section section-alt section-divide" id="roadmap">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">ROADMAP · → Electron</p>
+        <h2 class="section-title">쇼케이스에서 데스크탑 피난 앱까지</h2>
+        <p class="section-lead">이 페이지는 첫 단계다. 보행자 동역학 코어를 분해해 초대형 건축물 피난 해석 데스크탑 앱으로 키운다.</p>
+      </div>
+      <div class="road">
+        <div class="road-step now reveal"><span class="state wip">진행 중</span><h4>분석 &amp; 한글 쇼케이스</h4><p>공식 예제·모델을 분석하고, 실제 모델(CFSM·SFM·AVM)을 브라우저에서 실시간 연산하는 한글 시각화로 이식. (지금 이 페이지)</p></div>
+        <div class="road-step reveal"><span class="state plan">예정</span><h4>시뮬레이션 코어 래핑</h4><p>보행자 동역학 코어를 헤드리스로 패키징하고, 궤적 결과를 실시간 스트림으로 노출.</p></div>
+        <div class="road-step reveal"><span class="state plan">예정</span><h4>Electron 데스크탑 셸</h4><p>본 캔버스 렌더러를 UI로, 코어를 자식 프로세스로 구동하는 Electron 앱으로 통합.</p></div>
+        <div class="road-step reveal"><span class="state plan">목표</span><h4>대형 건축물 피난 앱</h4><p>CAD/IFC 평면도 임포트, 다층·수만 명 규모 해석, 화재 연동까지 — 메테오시뮬레이션 톤의 피난 관제.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== references -->
+  <section class="section section-divide" id="refs">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">REFERENCES · 참고 자료</p>
+        <h2 class="section-title">참고한 레퍼런스</h2>
+        <p class="section-lead">이 쇼케이스의 연산 모델·예제·디자인 톤이 참고한 출처다. 본문 곳곳의 <a class="ref-badge" href="#refs">R#</a> 배지가 아래 항목을 가리킨다.</p>
+      </div>
+      <ol class="ref-list reveal">
+        <li><span class="ref-no mono">R1</span><div class="ref-body"><h4>Collision-Free Speed Model — 원 논문</h4><p>A. Tordeux, M. Chraibi, A. Seyfried (2016), <span class="src">Collision-free speed model for pedestrian dynamics</span>. 본 쇼케이스 CFSM 수식·기본값의 출처.</p><a href="https://arxiv.org/abs/1512.05597" target="_blank" rel="noopener" class="ref-link">arXiv:1512.05597 ↗</a></div></li>
+        <li><span class="ref-no mono">R2</span><div class="ref-body"><h4>Social Force Model — 원 논문</h4><p>D. Helbing, I. Farkas, T. Vicsek (2000), <span class="src">Simulating dynamical features of escape panic</span>, Nature. SFM 힘·신체력·마찰 항의 출처.</p><a href="https://doi.org/10.1038/35035023" target="_blank" rel="noopener" class="ref-link">doi:10.1038/35035023 ↗</a></div></li>
+        <li><span class="ref-no mono">R3</span><div class="ref-body"><h4>Anticipation Velocity Model — 원 논문</h4><p>Q. Xu, M. Chraibi, A. Seyfried (2021), <span class="src">Anticipation in a velocity-based model for pedestrian dynamics</span>, Transportation Research Part C. AVM 예측·측면회피·반응시간의 출처.</p><a href="https://doi.org/10.1016/j.trc.2021.103464" target="_blank" rel="noopener" class="ref-link">doi:10.1016/j.trc.2021.103464 ↗</a></div></li>
+        <li><span class="ref-no mono">R4</span><div class="ref-body"><h4>보행자 동역학 모델 문서</h4><p>Pedestrian Dynamics. 각 모델의 직관적 해설과 파라미터 의미.</p><a href="https://pedestriandynamics.org/models/collision_free_speed_model/" target="_blank" rel="noopener" class="ref-link">pedestriandynamics.org ↗</a></div></li>
+        <li><span class="ref-no mono">R5</span><div class="ref-body"><h4>공식 예제 노트북 갤러리</h4><p>차선 형성·병목·경로 선택·여정 등 10종 예제 시나리오의 원본. 각 카드의 “원본 ↗”이 이곳을 가리킨다.</p><a href="https://www.jupedsim.org/stable/notebooks/index.html" target="_blank" rel="noopener" class="ref-link">stable/notebooks ↗</a></div></li>
+        <li><span class="ref-no mono">R6</span><div class="ref-body"><h4>보행자 동역학 오픈소스 라이브러리 (LGPL-3.0)</h4><p>PedestrianDynamics. 본 쇼케이스가 세 모델의 수식을 그대로 추출·포팅한 C++ 코어 소스(libsimulator).</p><a href="https://github.com/PedestrianDynamics/jupedsim" target="_blank" rel="noopener" class="ref-link">github.com/PedestrianDynamics ↗</a></div></li>
+        <li><span class="ref-no mono">R7</span><div class="ref-body"><h4>톤앤매너 — 메테오시뮬레이션 / BULC</h4><p>AI 화재 시뮬레이션 제품의 관제·디지털 트윈 무드. 흰 배경·주황 색계와 화면 톤의 참고.</p><a href="https://msimul.modoo.at/" target="_blank" rel="noopener" class="ref-link">msimul.modoo.at ↗</a></div></li>
+        <li><span class="ref-no mono">R8</span><div class="ref-body"><h4>BR-복사력 모델 — 원 논문</h4><p>S. Bae, H.S. Ryou (2016), <span class="src">A Mathematical Modeling of the Interaction Between Evacuees and Fire Through Radiation</span>, Fire Technology 52, 847–864. 복사열유속을 비등방성 복사 반발력으로 환산(불 회피)한 출처.</p><a href="https://doi.org/10.1007/s10694-015-0506-x" target="_blank" rel="noopener" class="ref-link">doi:10.1007/s10694-015-0506-x ↗</a></div></li>
+        <li><span class="ref-no mono">R9</span><div class="ref-body"><h4>BR-연기력 모델 — 원 논문</h4><p>S. Bae, H.S. Ryou (2015), <span class="src">Development of a smoke effect model for representing the psychological pressure from the smoke</span>, Safety Science 77, 57–65. 외부/내부 연기력(회피·밀침)의 출처.</p><a href="https://doi.org/10.1016/j.ssci.2015.03.011" target="_blank" rel="noopener" class="ref-link">Safety Science 77 ↗</a></div></li>
+        <li><span class="ref-no mono">R10</span><div class="ref-body"><h4>수정 BR-연기력 모델</h4><p>S. Bae, J.-H. Choi, H.S. Ryou (2020), <span class="src">Modification of Interaction Forces between Smoke and Evacuees</span>, Energies 13(16):4177. 내부 연기력을 연기밀도 변화율 dK_s/dt에 비례시킨 개정판(오픈 액세스).</p><a href="https://doi.org/10.3390/en13164177" target="_blank" rel="noopener" class="ref-link">doi:10.3390/en13164177 ↗</a></div></li>
+      </ol>
+    </div>
+  </section>
+  </main>
+
+<div class="detail" id="detail" aria-hidden="true">
+    <div class="detail-backdrop"></div>
+    <div class="detail-panel" role="dialog" aria-modal="true" aria-label="예제 상세">
+      <button class="detail-close" aria-label="닫기">✕</button>
+      <div class="detail-main">
+        <div class="detail-stage">
+          <div class="detail-models"></div>
+          <div class="detail-tabs"></div>
+          <div class="detail-canvas-wrap"><canvas class="detail-canvas"></canvas></div>
+          <div class="detail-readouts">
+            <div><span class="k">평균 속도</span><b id="rd-speed">0.00</b> <span class="u">m/s</span></div>
+            <div><span class="k">평균 밀도</span><b id="rd-density">0.00</b> <span class="u">ped/m²</span></div>
+            <div><span class="k">인원</span><b id="rd-n">0</b> <span class="u">명</span></div>
+          </div>
+          <div class="detail-sliders"></div>
+        </div>
+        <aside class="detail-side">
+          <p class="eyebrow">LIVE · 실시간 모델 연산</p>
+          <h3 class="detail-title">제목</h3>
+          <p class="detail-desc">설명</p>
+          <a class="detail-orig" href="#" target="_blank" rel="noopener">원본 예제 ↗</a>
+          <div class="detail-theory"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
