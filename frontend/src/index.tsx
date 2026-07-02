@@ -29,6 +29,7 @@ import PostEditorPage from './CategoryPages/Board/PostEditorPage';
 import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
 import FaqPage from './CategoryPages/Docs/FaqPage';
 import DocsArticlePage from './CategoryPages/Docs/DocsArticlePage';
+import EvacShowcase from './CategoryPages/Evac/EvacShowcase';
 import PopupRenderer from './components/PopupRenderer';
 import MarketingConsentModal from './components/MarketingConsentModal';
 import Seo from './components/Seo';
@@ -93,6 +94,7 @@ const App: React.FC = () => {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/docs/:slug" element={<DocsArticlePage />} />
             <Route path="/event/booth-gift" element={<BoothGiftPage />} />
+            <Route path="/evac-sim" element={<EvacShowcase />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
             <Route path="*" element={<NotFoundPage />} />
