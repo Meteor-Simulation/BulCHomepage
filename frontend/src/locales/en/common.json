@@ -413,11 +413,11 @@
           "desc": "A step-by-step tutorial you can follow along on screen."
         },
         "usage": {
-          "title": "User Guide",
+          "title": "Technical Docs (Evacuation)",
           "desc": "An interactive guide where you can run the evacuation-dynamics simulation right in your browser."
         },
         "techGuide": {
-          "title": "Technical Guidebook",
+          "title": "Technical Docs (Fire)",
           "desc": "Technical material on analysis theory and settings for advanced users."
         }
       }
