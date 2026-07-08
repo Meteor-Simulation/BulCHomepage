@@ -54,13 +54,13 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제8조 (면책조항)',
         bodies: [
-          '1. 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.<br/>2. 회사는 이용자의 귀책사유로 인한 서비스 이용의 장애에 대하여 책임을 지지 않습니다.<br/>3. 회사는 이용자가 서비스를 이용하여 기대하는 수익을 상실한 것에 대하여 책임을 지지 않습니다.',
+          '1. 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.<br/>2. 회사는 관련 법령이 허용하는 범위 내에서 이용자의 귀책사유로 인한 서비스 이용의 장애에 대하여 책임을 부담하지 않습니다.<br/>3. 회사는 관련 법령이 허용하는 범위 내에서 이용자가 서비스를 이용하여 기대하는 수익을 상실한 것에 대하여 책임을 부담하지 않습니다.',
         ],
       },
       {
         title: '제9조 (분쟁해결)',
         bodies: [
-          '1. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용합니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
+          '1. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용합니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송의 관할은 「민사소송법」 등 관련 법령이 정하는 바에 따릅니다.',
         ],
       },
       {
@@ -114,13 +114,13 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 8 (Disclaimer)',
         bodies: [
-          '1. The Company is exempt from liability for failure to provide the Service due to force majeure events such as natural disasters.<br/>2. The Company is not liable for service disruptions caused by reasons attributable to the user.<br/>3. The Company is not liable for any loss of profits the user expected to obtain by using the Service.',
+          '1. The Company is exempt from liability for failure to provide the Service due to force majeure events such as natural disasters.<br/>2. To the extent permitted by applicable law, the Company is not liable for service disruptions caused by reasons attributable to the user.<br/>3. To the extent permitted by applicable law, the Company is not liable for any loss of profits the user expected to obtain by using the Service.',
         ],
       },
       {
         title: 'Article 9 (Dispute Resolution)',
         bodies: [
-          '1. Disputes between the Company and users shall be governed by the laws of the Republic of Korea.<br/>2. Lawsuits related to such disputes shall be filed in the court having jurisdiction over the Company\'s head office.',
+          '1. Disputes between the Company and users shall be governed by the laws of the Republic of Korea.<br/>2. The jurisdiction over lawsuits related to such disputes shall be determined in accordance with the Civil Procedure Act and other applicable laws.',
         ],
       },
       {
@@ -142,7 +142,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '2. 수집하는 개인정보의 항목',
         bodies: [
           '회사는 회원가입, 서비스 이용 등을 위해 아래와 같은 개인정보를 수집하고 있습니다.',
-          '가. 필수항목<br/>&nbsp;&nbsp;- 이메일 주소, 비밀번호, 이름<br/><br/>나. 선택항목<br/>&nbsp;&nbsp;- 전화번호, 회사명, 부서, 직책<br/><br/>다. 서비스 이용 과정에서 자동으로 수집되는 정보<br/>&nbsp;&nbsp;- IP주소, 쿠키, 방문일시, 서비스 이용기록, 기기정보(OS, 브라우저 등)',
+          '가. 필수항목<br/>&nbsp;&nbsp;- 이메일 주소, 비밀번호, 이름<br/><br/>나. 선택항목<br/>&nbsp;&nbsp;- 전화번호, 회사명, 부서, 직책<br/><br/>다. 서비스 이용 과정에서 자동으로 수집되는 정보<br/>&nbsp;&nbsp;- IP주소, 쿠키, 접속 일시, 서비스 이용기록, 접속 로그, 오류 로그, 기기정보(OS·브라우저·기기 식별정보 등)',
         ],
       },
       {
@@ -162,40 +162,55 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '5. 개인정보처리의 위탁',
         bodies: [
-          '회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.',
-          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증, 운영 안내 및 광고성 정보 발송',
+          '회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있으며, 위탁계약 시 개인정보가 안전하게 관리되도록 필요한 사항을 규정하고 있습니다.',
+          '가. 결제처리<br/>&nbsp;&nbsp;- 위탁받는 자: 토스페이먼츠(주)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 결제 처리 및 결제 정보 관리<br/><br/>나. 이메일 발송<br/>&nbsp;&nbsp;- 위탁받는 자: Microsoft (Microsoft 365 / Graph API)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 이메일 인증, 운영 안내 및 광고성 정보 발송<br/><br/>다. 웹사이트 호스팅 및 트래픽 보안<br/>&nbsp;&nbsp;- 위탁받는 자: Cloudflare, Inc.<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 웹사이트 호스팅, 콘텐츠 전송(CDN), 트래픽 보안<br/><br/>라. 서버·데이터베이스 운영<br/>&nbsp;&nbsp;- 위탁받는 자: Oracle Corporation (Oracle Cloud, 대한민국 춘천 리전)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 서버 및 데이터베이스 운영(개인정보 저장·처리)<br/><br/>마. 소셜 로그인 인증<br/>&nbsp;&nbsp;- 위탁받는 자: Google LLC, (주)카카오, 네이버(주)<br/>&nbsp;&nbsp;- 위탁하는 업무의 내용: 소셜 로그인(간편가입·로그인) 인증',
         ],
       },
       {
-        title: '6. 정보주체의 권리·의무 및 행사방법',
+        title: '6. 개인정보의 국외 이전',
+        bodies: [
+          '회사는 서비스 제공을 위해 아래와 같이 개인정보를 국외로 이전(처리위탁·보관)하고 있으며, 「개인정보 보호법」 제28조의8에 따라 이를 고지합니다. 이용자는 개인정보 국외 이전을 거부할 수 있으나, 거부 시 서비스의 전부 또는 일부 이용이 제한될 수 있습니다.',
+          '가. Cloudflare, Inc.<br/>&nbsp;&nbsp;- 이전 국가: 전 세계 Edge 서버(주 관리주체: 미국)<br/>&nbsp;&nbsp;- 이전 항목: IP주소, 접속기록<br/>&nbsp;&nbsp;- 이전 목적: 웹사이트 호스팅·콘텐츠 전송(CDN)·트래픽 보안<br/>&nbsp;&nbsp;- 이전 일시 및 방법: 서비스 접속 시 정보통신망을 통해 전송<br/>&nbsp;&nbsp;- 보유·이용기간: 관계 법령에 따른 기간<br/><br/>나. Microsoft<br/>&nbsp;&nbsp;- 이전 국가: 미국 등<br/>&nbsp;&nbsp;- 이전 항목: 이메일 주소<br/>&nbsp;&nbsp;- 이전 목적: 이메일 인증·발송<br/>&nbsp;&nbsp;- 이전 일시 및 방법: 이메일 발송 시 정보통신망을 통해 전송<br/>&nbsp;&nbsp;- 보유·이용기간: 위탁계약 종료 시까지<br/><br/>다. Google LLC<br/>&nbsp;&nbsp;- 이전 국가: 미국<br/>&nbsp;&nbsp;- 이전 항목: 소셜 로그인 시 프로필(이름·프로필사진), 이메일<br/>&nbsp;&nbsp;- 이전 목적: 소셜 로그인 인증<br/>&nbsp;&nbsp;- 이전 일시 및 방법: 로그인 시 정보통신망을 통해 전송<br/>&nbsp;&nbsp;- 보유·이용기간: 연동 해지 시까지<br/><br/>※ Oracle Cloud는 대한민국(춘천) 리전을 사용하므로 국외 이전에 해당하지 않으며, 위 제5항 위탁에 포함됩니다. 카카오·네이버는 국내 사업자입니다.',
+        ],
+      },
+      {
+        title: '7. 쿠키(cookie)의 설치·운영 및 거부',
+        bodies: [
+          '1. 회사는 이용자에게 맞춤형 서비스를 제공하기 위해 쿠키(cookie)를 사용합니다. 쿠키는 웹사이트 운영에 이용되는 서버가 이용자의 브라우저에 전송하는 소량의 정보로, 이용자의 기기에 저장됩니다.',
+          '2. 사용 목적: 로그인 세션 유지, 보안(비정상 접속 탐지), 이용 환경 설정(언어 등).',
+          '3. 이용자는 브라우저 설정을 통해 쿠키 저장을 거부할 수 있습니다. 다만 쿠키 저장을 거부할 경우 로그인 등 일부 서비스 이용에 제한이 있을 수 있습니다.<br/>&nbsp;&nbsp;(설정 예: 브라우저 &gt; 설정 &gt; 개인정보/보안 &gt; 쿠키)',
+        ],
+      },
+      {
+        title: '8. 정보주체의 권리·의무 및 행사방법',
         bodies: [
           '이용자는 개인정보주체로서 다음과 같은 권리를 행사할 수 있습니다.',
           '가. 개인정보 열람 요구<br/>나. 오류 등이 있을 경우 정정 요구<br/>다. 삭제 요구<br/>라. 처리정지 요구',
         ],
       },
       {
-        title: '7. 개인정보의 파기',
+        title: '9. 개인정보의 파기',
         bodies: [
           '회사는 원칙적으로 개인정보 처리목적이 달성된 경우에는 지체없이 해당 개인정보를 파기합니다. 파기의 절차, 기한 및 방법은 다음과 같습니다.',
           '가. 파기절차: 이용자가 입력한 정보는 목적 달성 후 별도의 DB에 옮겨져 내부 방침 및 기타 관련 법령에 따라 일정기간 저장된 후 혹은 즉시 파기됩니다.<br/><br/>나. 파기방법: 전자적 파일 형태의 정보는 기록을 재생할 수 없는 기술적 방법을 사용합니다.',
         ],
       },
       {
-        title: '8. 개인정보의 안전성 확보 조치',
+        title: '10. 개인정보의 안전성 확보 조치',
         bodies: [
           '회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.',
           '가. 관리적 조치: 내부관리계획 수립·시행, 정기적 직원 교육<br/>나. 기술적 조치: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치, 고유식별정보 등의 암호화, 보안프로그램 설치<br/>다. 물리적 조치: 전산실, 자료보관실 등의 접근통제',
         ],
       },
       {
-        title: '9. 개인정보 보호책임자',
+        title: '11. 개인정보 보호책임자',
         bodies: [
           '회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.',
           '▶ 개인정보 보호책임자<br/>&nbsp;&nbsp;- 성명: 관리자<br/>&nbsp;&nbsp;- 연락처: simul@msimul.com',
         ],
       },
       {
-        title: '10. 개인정보처리방침 변경',
+        title: '12. 개인정보처리방침 변경',
         bodies: [
           '이 개인정보처리방침은 2024년 1월 1일부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.',
         ],
@@ -213,7 +228,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
         title: '2. Items of Personal Information Collected',
         bodies: [
           'The Company collects the following personal information for sign-up and service use.',
-          'a. Required items<br/>&nbsp;&nbsp;- Email address, password, name<br/><br/>b. Optional items<br/>&nbsp;&nbsp;- Phone number, company name, department, position<br/><br/>c. Information automatically collected during service use<br/>&nbsp;&nbsp;- IP address, cookies, visit time, service usage history, device information (OS, browser, etc.)',
+          'a. Required items<br/>&nbsp;&nbsp;- Email address, password, name<br/><br/>b. Optional items<br/>&nbsp;&nbsp;- Phone number, company name, department, position<br/><br/>c. Information automatically collected during service use<br/>&nbsp;&nbsp;- IP address, cookies, access time, service usage history, access logs, error logs, device information (OS, browser, device identifiers, etc.)',
         ],
       },
       {
@@ -233,40 +248,55 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '5. Outsourcing of Personal Information Processing',
         bodies: [
-          'The Company outsources personal information processing tasks as follows for the smooth handling of personal information.',
-          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments<br/>&nbsp;&nbsp;- Scope of outsourced work: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Microsoft 365 (Microsoft Graph API)<br/>&nbsp;&nbsp;- Scope of outsourced work: Email verification, operational notices, and promotional information delivery',
+          'The Company outsources personal information processing tasks as follows for the smooth handling of personal information, and stipulates necessary matters in the outsourcing contract to ensure personal information is managed safely.',
+          'a. Payment processing<br/>&nbsp;&nbsp;- Trustee: Toss Payments Co., Ltd.<br/>&nbsp;&nbsp;- Scope: Payment processing and payment information management<br/><br/>b. Email delivery<br/>&nbsp;&nbsp;- Trustee: Microsoft (Microsoft 365 / Graph API)<br/>&nbsp;&nbsp;- Scope: Email verification, operational notices, and promotional information delivery<br/><br/>c. Website hosting and traffic security<br/>&nbsp;&nbsp;- Trustee: Cloudflare, Inc.<br/>&nbsp;&nbsp;- Scope: Website hosting, content delivery (CDN), traffic security<br/><br/>d. Server and database operation<br/>&nbsp;&nbsp;- Trustee: Oracle Corporation (Oracle Cloud, Chuncheon region, Republic of Korea)<br/>&nbsp;&nbsp;- Scope: Operation of servers and databases (storage/processing of personal information)<br/><br/>e. Social login authentication<br/>&nbsp;&nbsp;- Trustee: Google LLC, Kakao Corp., NAVER Corp.<br/>&nbsp;&nbsp;- Scope: Social login (easy sign-up / login) authentication',
         ],
       },
       {
-        title: '6. Rights and Obligations of Data Subjects and How to Exercise Them',
+        title: '6. Cross-Border Transfer of Personal Information',
+        bodies: [
+          'The Company transfers personal information overseas (outsourced processing / storage) as follows, and discloses this in accordance with Article 28-8 of the Personal Information Protection Act. Users may refuse the cross-border transfer of personal information; however, refusal may restrict all or part of the service.',
+          'a. Cloudflare, Inc.<br/>&nbsp;&nbsp;- Country: Global edge servers (primary entity: USA)<br/>&nbsp;&nbsp;- Items: IP address, access logs<br/>&nbsp;&nbsp;- Purpose: Website hosting, content delivery (CDN), traffic security<br/>&nbsp;&nbsp;- Timing/method: Transmitted over the network upon access<br/>&nbsp;&nbsp;- Retention: Period required by applicable law<br/><br/>b. Microsoft<br/>&nbsp;&nbsp;- Country: USA, etc.<br/>&nbsp;&nbsp;- Items: Email address<br/>&nbsp;&nbsp;- Purpose: Email verification/delivery<br/>&nbsp;&nbsp;- Timing/method: Transmitted over the network when sending email<br/>&nbsp;&nbsp;- Retention: Until the outsourcing contract ends<br/><br/>c. Google LLC<br/>&nbsp;&nbsp;- Country: USA<br/>&nbsp;&nbsp;- Items: Profile (name, profile image) and email upon social login<br/>&nbsp;&nbsp;- Purpose: Social login authentication<br/>&nbsp;&nbsp;- Timing/method: Transmitted over the network upon login<br/>&nbsp;&nbsp;- Retention: Until the connection is terminated<br/><br/>* Oracle Cloud uses the Republic of Korea (Chuncheon) region and therefore does not constitute a cross-border transfer; it is included in the outsourcing under Item 5. Kakao and NAVER are domestic operators.',
+        ],
+      },
+      {
+        title: '7. Installation, Operation, and Refusal of Cookies',
+        bodies: [
+          '1. The Company uses cookies to provide personalized services. A cookie is a small piece of information sent by the server operating the website to the user\'s browser and stored on the user\'s device.',
+          '2. Purpose of use: maintaining login sessions, security (detecting abnormal access), and environment settings (language, etc.).',
+          '3. Users may refuse to store cookies through browser settings. However, refusing cookies may limit the use of some services such as login.<br/>&nbsp;&nbsp;(e.g., Browser &gt; Settings &gt; Privacy/Security &gt; Cookies)',
+        ],
+      },
+      {
+        title: '8. Rights and Obligations of Data Subjects and How to Exercise Them',
         bodies: [
           'As a data subject, the user may exercise the following rights.',
           'a. Request to access personal information<br/>b. Request to correct errors<br/>c. Request to delete<br/>d. Request to suspend processing',
         ],
       },
       {
-        title: '7. Destruction of Personal Information',
+        title: '9. Destruction of Personal Information',
         bodies: [
           'As a rule, the Company destroys personal information without delay once the purpose of processing has been achieved. The procedure, timing, and method of destruction are as follows.',
           'a. Destruction procedure: Information entered by the user is moved to a separate database after the purpose is achieved, retained for a period in accordance with internal policies and relevant laws, and then destroyed.<br/><br/>b. Destruction method: Electronic file information is destroyed using technical methods that prevent recovery.',
         ],
       },
       {
-        title: '8. Measures to Ensure the Security of Personal Information',
+        title: '10. Measures to Ensure the Security of Personal Information',
         bodies: [
           'The Company takes the following measures to ensure the security of personal information.',
           'a. Administrative measures: Establishment and implementation of internal management plans, regular employee training<br/>b. Technical measures: Access control for personal information processing systems, installation of access control systems, encryption of unique identifying information, installation of security programs<br/>c. Physical measures: Access control for computer rooms and storage facilities',
         ],
       },
       {
-        title: '9. Privacy Officer',
+        title: '11. Privacy Officer',
         bodies: [
           'The Company designates the following Privacy Officer to take overall responsibility for personal information processing and to handle complaints and damage relief related to personal information processing.',
           '▶ Privacy Officer<br/>&nbsp;&nbsp;- Name: Administrator<br/>&nbsp;&nbsp;- Contact: simul@msimul.com',
         ],
       },
       {
-        title: '10. Changes to This Privacy Policy',
+        title: '12. Changes to This Privacy Policy',
         bodies: [
           'This Privacy Policy takes effect on January 1, 2024. If changes are made due to laws or policies — including additions, deletions, or corrections — the Company will provide notice through announcements at least 7 days before the changes take effect.',
         ],
@@ -458,7 +488,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제11조 (분쟁 처리 및 관할)',
         bodies: [
-          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(simul@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 회사의 본사 소재지를 관할하는 법원을 관할법원으로 합니다.',
+          '1. 이용자는 전자금융거래와 관련하여 불만이 있는 경우 회사의 고객센터(simul@msimul.com)로 문의할 수 있습니다.<br/>2. 회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며, 소송의 관할은 「민사소송법」 등 관련 법령이 정하는 바에 따릅니다.',
         ],
       },
       {
@@ -530,7 +560,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 11 (Dispute Resolution and Jurisdiction)',
         bodies: [
-          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (simul@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea and shall be filed in the court having jurisdiction over the Company\'s head office.',
+          '1. If a user has any complaint regarding electronic financial transactions, the user may contact the Company\'s customer support (simul@msimul.com).<br/>2. Lawsuits related to disputes between the Company and users shall be governed by the laws of the Republic of Korea, and jurisdiction shall be determined in accordance with the Civil Procedure Act and other applicable laws.',
         ],
       },
       {
