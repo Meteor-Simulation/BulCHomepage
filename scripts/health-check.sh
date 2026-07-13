@@ -12,7 +12,7 @@ export TZ=Asia/Seoul
 #   1. 백엔드 (Spring Boot /api/health)
 #   2. DB (PostgreSQL pg_isready)
 #   3. 프론트엔드 (Cloudflare Pages)
-#   4. 디스크 사용량 (90% 초과 시 경고)
+#   4. 디스크 사용량 (80% 초과 시 빌드캐시 자동 정리 + 경고)
 #   5. 메모리 사용량 (Swap 80% 초과 시 경고)
 #
 # 이상 감지 시 백엔드 이메일 API로 알림 발송
@@ -45,8 +45,8 @@ if [ "$FRONTEND_STATUS" != "200" ]; then
   ISSUES="${ISSUES}[프론트엔드] 응답 없음 (HTTP $FRONTEND_STATUS)\n"
 fi
 
-# ---- 4. 디스크 체크 (90% 초과 시 빌드캐시 긴급 자동 정리) ----
-DISK_THRESHOLD=90
+# ---- 4. 디스크 체크 (80% 초과 시 빌드캐시 긴급 자동 정리) ----
+DISK_THRESHOLD=80
 CLEANUP_SCRIPT="/home/ubuntu/BulCHomepage/scripts/docker-cache-cleanup.sh"
 DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
 CLEANUP_NOTE=""
