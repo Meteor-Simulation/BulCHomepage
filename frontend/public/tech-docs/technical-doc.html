@@ -4,38 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FDS(GPU) Technical Documentation</title>
-<script>
-  window.MathJax = {
-    tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
-    svg: { fontCache: 'global' },
-    options: { enableMenu: false }
-  };
-  // MathJax 로더: 로컬 자체완결형 엔진(mathjax-tex-svg.js) 우선, 실패 시 CDN 폴백.
-  // 오프라인·방화벽·CSP 환경에서도 수식이 렌더되도록 외부 의존을 제거한다.
-  (function () {
-    function load(src, onerror) {
-      var s = document.createElement('script');
-      s.src = src; s.async = true; if (onerror) s.onerror = onerror;
-      document.head.appendChild(s);
-    }
-    load('mathjax-tex-svg.js', function () {
-      load('https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js');
-    });
-  })();
-</script>
+<!-- 수식 렌더: KaTeX (자체 호스팅, 게시판과 동일 엔진). 인라인 MathJax는 운영 CSP에 차단되어 폐기. -->
+<link rel="stylesheet" href="katex.min.css">
+<script defer src="katex.min.js"></script>
+<script defer src="katex-auto-render.min.js"></script>
+<script defer src="katex-init.js"></script>
 <style>
   :root {
-    --primary: #0d47a1;
-    --primary-light: #1565c0;
+    /* [색상 통일] 파란 계열 → 홈페이지 브랜드 빨강/주황(#C4320A) 계열 */
+    --primary: #C4320A;
+    --primary-light: #E14A16;
     --bg: #fafafa;
     --card: #ffffff;
     --text: #1a1a1a;
     --text-sec: #555;
     --border: #ddd;
     --code-bg: #f5f5f5;
-    --accent: #e3f2fd;
+    --accent: #FBECE6;
     --accent2: #fff3e0;
-    --kernel: #e8eaf6;
+    --kernel: #F6E3DC;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -46,7 +33,7 @@
     font-size: 15px;
   }
   header.hero {
-    background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+    background: linear-gradient(135deg, #8F2408 0%, #C4320A 50%, #E14A16 100%);
     color: white;
     padding: 48px 0 40px;
     text-align: center;
@@ -156,7 +143,7 @@
 
   .kernel-card {
     background: var(--kernel);
-    border: 1px solid #c5cae9;
+    border: 1px solid #F0CDBF;
     border-radius: 8px;
     padding: 18px 22px;
     margin: 14px 0;
@@ -197,7 +184,7 @@
   }
   .algo-flow .step-content {
     padding: 4px 0 16px 12px;
-    border-left: 2px solid #bbdefb;
+    border-left: 2px solid #F0CDBF;
     margin-left: 15px;
   }
   .algo-flow .step-content:last-child { border-left-color: transparent; }
@@ -379,8 +366,8 @@ $$\rho = \frac{\bar{p} \, W_{\text{mix}}}{R \, T}, \qquad W_{\text{mix}} = \left
 <div class="grid-fig">
 <svg width="480" height="320" viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg">
   <!-- Cell outline -->
-  <rect x="100" y="60" width="160" height="160" fill="none" stroke="#1565c0" stroke-width="2"/>
-  <rect x="260" y="60" width="160" height="160" fill="none" stroke="#1565c0" stroke-width="2" stroke-dasharray="6,4"/>
+  <rect x="100" y="60" width="160" height="160" fill="none" stroke="#C4320A" stroke-width="2"/>
+  <rect x="260" y="60" width="160" height="160" fill="none" stroke="#C4320A" stroke-width="2" stroke-dasharray="6,4"/>
 
   <!-- Cell center: p, T, rho -->
   <circle cx="180" cy="140" r="8" fill="#d32f2f"/>
