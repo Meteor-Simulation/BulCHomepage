@@ -116,7 +116,6 @@ const LeadSubscribePage: React.FC = () => {
             <img src="/logo_transparent.png" alt="" className="lead-subscribe-logo" />
             <span className="lead-subscribe-brand-text">BUL:C</span>
           </div>
-          <p>찾아주셔서 감사합니다.</p>
         </header>
 
         <label className="lead-subscribe-field">
