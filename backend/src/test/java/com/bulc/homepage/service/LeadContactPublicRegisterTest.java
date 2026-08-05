@@ -35,7 +35,7 @@ class LeadContactPublicRegisterTest {
     @InjectMocks
     private LeadContactService leadContactService;
 
-    private LeadContactPublicRequest request(String email, boolean marketing) {
+    private LeadContactPublicRequest request(String email) {
         LeadContactPublicRequest req = new LeadContactPublicRequest();
         req.setEmail(email);
         req.setContactName("홍길동");
@@ -43,7 +43,6 @@ class LeadContactPublicRegisterTest {
         req.setMobilePhone("010-1234-5678");
         req.setSourceEvent("2026 소방안전박람회");
         req.setAgreePrivacy(true);
-        req.setOptInMarketing(marketing);
         return req;
     }
 
@@ -63,39 +62,41 @@ class LeadContactPublicRegisterTest {
             given(leadContactRepository.findByEmail("hong@example.com")).willReturn(Optional.empty());
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("  Hong@Example.COM ", true), "1.2.3.4", "Mozilla/5.0");
+            leadContactService.registerPublic(request("  Hong@Example.COM "), "1.2.3.4", "Mozilla/5.0");
 
             LeadContact saved = captureSaved();
             assertThat(saved.getEmail()).isEqualTo("hong@example.com");
             assertThat(saved.getConsentMethod()).isEqualTo("web_form");
             assertThat(saved.getConsentDate()).isEqualTo(LocalDate.now());
-            assertThat(saved.getOptInMarketing()).isTrue();
+            // 광고성 수신 동의는 이 폼에서 받지 않는다. 코드 발송은 안내성으로 처리.
+            assertThat(saved.getOptInMarketing()).isFalse();
             assertThat(saved.getOptInTransactional()).isTrue();
             assertThat(saved.getSourceEvent()).isEqualTo("2026 소방안전박람회");
             assertThat(saved.getSourceDate()).isEqualTo(LocalDate.now());
         }
 
         @Test
-        @DisplayName("동의 증빙에 IP·UA·동의 여부를 남긴다")
+        @DisplayName("동의 증빙에 IP·UA·이용 목적을 남긴다")
         void recordsConsentEvidence() {
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.empty());
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("a@b.com", false), "203.0.113.7", "iPhone");
+            leadContactService.registerPublic(request("a@b.com"), "203.0.113.7", "iPhone");
 
             LeadContact saved = captureSaved();
             assertThat(saved.getConsentEvidence())
                     .contains("ip=203.0.113.7")
                     .contains("ua=iPhone")
                     .contains("privacy=agreed")
-                    .contains("marketing=declined");
+                    .contains("purpose=free_code_delivery")
+                    .doesNotContain("marketing=");
             assertThat(saved.getOptInMarketing()).isFalse();
         }
 
         @Test
         @DisplayName("행사명이 없으면 null 로 저장하고 이력은 날짜만 남긴다")
         void leavesEventNullWhenNotProvided() {
-            LeadContactPublicRequest req = request("c@d.com", true);
+            LeadContactPublicRequest req = request("c@d.com");
             req.setSourceEvent(null);
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.empty());
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
@@ -113,7 +114,7 @@ class LeadContactPublicRegisterTest {
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.empty());
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("e@f.com", true), "1.1.1.1", "ua");
+            leadContactService.registerPublic(request("e@f.com"), "1.1.1.1", "ua");
 
             assertThat(captureSaved().getNotes())
                     .isEqualTo("[" + LocalDate.now() + "] 2026 소방안전박람회 현장 등록");
@@ -144,7 +145,7 @@ class LeadContactPublicRegisterTest {
             given(leadContactRepository.findByEmail("dup@example.com")).willReturn(Optional.of(existing("dup@example.com")));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("dup@example.com", true), "1.1.1.1", "ua");
+            leadContactService.registerPublic(request("dup@example.com"), "1.1.1.1", "ua");
 
             LeadContact saved = captureSaved();
             assertThat(saved.getId()).isEqualTo(1L);
@@ -155,7 +156,7 @@ class LeadContactPublicRegisterTest {
         @Test
         @DisplayName("입력하지 않은 항목은 기존 값을 유지한다")
         void keepsExistingValuesWhenBlank() {
-            LeadContactPublicRequest req = request("dup@example.com", true);
+            LeadContactPublicRequest req = request("dup@example.com");
             req.setCompanyName("");
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(existing("dup@example.com")));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
@@ -172,7 +173,7 @@ class LeadContactPublicRegisterTest {
         void keepsExistingEventWhenNotProvided() {
             LeadContact contact = existing("dup@example.com");
             contact.setSourceEvent("이전 행사");
-            LeadContactPublicRequest req = request("dup@example.com", true);
+            LeadContactPublicRequest req = request("dup@example.com");
             req.setSourceEvent(null);
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
@@ -188,7 +189,7 @@ class LeadContactPublicRegisterTest {
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(existing("dup@example.com")));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("dup@example.com", true), "1.1.1.1", "ua");
+            leadContactService.registerPublic(request("dup@example.com"), "1.1.1.1", "ua");
 
             assertThat(captureSaved().getNotes())
                     .contains("[2026-01-01] 이전 행사 현장 등록")
@@ -196,47 +197,46 @@ class LeadContactPublicRegisterTest {
         }
 
         @Test
-        @DisplayName("수신 동의를 하지 않으면 기존 동의 상태를 끄지 않는다")
-        void doesNotRevokeExistingMarketingConsent() {
+        @DisplayName("기존 광고성 수신 동의 상태를 건드리지 않는다")
+        void doesNotTouchExistingMarketingConsent() {
             LeadContact contact = existing("dup@example.com");
             contact.setOptInMarketing(true);
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("dup@example.com", false), "1.1.1.1", "ua");
+            leadContactService.registerPublic(request("dup@example.com"), "1.1.1.1", "ua");
 
             assertThat(captureSaved().getOptInMarketing()).isTrue();
         }
 
         @Test
-        @DisplayName("과거 수신거부자가 다시 동의하면 재구독 처리한다")
-        void resubscribesWhenPreviouslyUnsubscribed() {
+        @DisplayName("광고성 미동의 컨택은 그대로 미동의로 남는다")
+        void keepsMarketingOptOut() {
             LeadContact contact = existing("dup@example.com");
-            contact.setUnsubscribedAt(LocalDateTime.now().minusDays(30));
+            contact.setOptInMarketing(false);
+            given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
+            given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
+
+            leadContactService.registerPublic(request("dup@example.com"), "1.1.1.1", "ua");
+
+            assertThat(captureSaved().getOptInMarketing()).isFalse();
+        }
+
+        @Test
+        @DisplayName("과거 수신거부자를 임의로 재구독시키지 않는다")
+        void neverResubscribesUnsubscribedContact() {
+            LeadContact contact = existing("dup@example.com");
+            LocalDateTime unsubscribedAt = LocalDateTime.now().minusDays(30);
+            contact.setUnsubscribedAt(unsubscribedAt);
             contact.setUnsubscribeReason("관심 없음");
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
             given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
 
-            leadContactService.registerPublic(request("dup@example.com", true), "1.1.1.1", "ua");
+            leadContactService.registerPublic(request("dup@example.com"), "1.1.1.1", "ua");
 
             LeadContact saved = captureSaved();
-            assertThat(saved.getUnsubscribedAt()).isNull();
-            assertThat(saved.getUnsubscribeReason()).isNull();
-            assertThat(saved.getOptInMarketing()).isTrue();
-        }
-
-        @Test
-        @DisplayName("수신거부자가 동의하지 않으면 해지 상태를 유지한다")
-        void keepsUnsubscribedWhenNotConsenting() {
-            LeadContact contact = existing("dup@example.com");
-            LocalDateTime unsubscribedAt = LocalDateTime.now().minusDays(30);
-            contact.setUnsubscribedAt(unsubscribedAt);
-            given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
-            given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
-
-            leadContactService.registerPublic(request("dup@example.com", false), "1.1.1.1", "ua");
-
-            assertThat(captureSaved().getUnsubscribedAt()).isEqualTo(unsubscribedAt);
+            assertThat(saved.getUnsubscribedAt()).isEqualTo(unsubscribedAt);
+            assertThat(saved.getUnsubscribeReason()).isEqualTo("관심 없음");
         }
     }
 }
