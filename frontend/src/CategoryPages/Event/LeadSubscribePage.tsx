@@ -110,14 +110,8 @@ const LeadSubscribePage: React.FC = () => {
 
       <form className="lead-subscribe-card" onSubmit={handleSubmit} noValidate>
         <header className="lead-subscribe-header">
-          <h1>제품 소식 받아보기</h1>
-          <p>
-            {sourceEvent
-              ? `${sourceEvent}에 방문해주셔서 감사합니다.`
-              : '메테오시뮬레이션을 찾아주셔서 감사합니다.'}
-            <br />
-            정보를 남겨주시면 BUL:C 관련 자료와 소식을 보내드립니다.
-          </p>
+          <img src="/logo_transparent.png" alt="BUL:C" className="lead-subscribe-logo" />
+          <p>찾아주셔서 감사합니다.</p>
         </header>
 
         <label className="lead-subscribe-field">

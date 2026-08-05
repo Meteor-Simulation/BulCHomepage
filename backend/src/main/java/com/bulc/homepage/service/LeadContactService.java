@@ -60,8 +60,6 @@ public class LeadContactService {
 
     private static final String COLLECTED_BY_SELF = "본인 직접 입력(QR)";
 
-    private static final String DEFAULT_SOURCE_EVENT = "전시회 현장 등록";
-
     /** 헤더 별칭 → 내부 정규 필드명 매핑 (소문자·공백제거 키 기준) */
     private static final Map<String, String> HEADER_ALIASES = new HashMap<>();
     static {
@@ -193,7 +191,10 @@ public class LeadContactService {
             if (hasText(req.getRole())) c.setRole(req.getRole().trim());
             if (hasText(req.getMobilePhone())) c.setMobilePhone(req.getMobilePhone().trim());
 
-            c.setSourceEvent(defaultEvent(req.getSourceEvent()));
+            // 행사명은 QR URL 의 ?e= 로 전달된 경우에만 기록한다 (미지정이면 기존 값 유지)
+            if (hasText(req.getSourceEvent())) {
+                c.setSourceEvent(req.getSourceEvent().trim());
+            }
             c.setSourceDate(today);
             c.setConsentMethod(CONSENT_METHOD_WEB_FORM);
             c.setConsentDate(today);
@@ -222,7 +223,7 @@ public class LeadContactService {
                 .department(trimToNull(req.getDepartment()))
                 .role(trimToNull(req.getRole()))
                 .mobilePhone(trimToNull(req.getMobilePhone()))
-                .sourceEvent(defaultEvent(req.getSourceEvent()))
+                .sourceEvent(trimToNull(req.getSourceEvent()))
                 .sourceDate(today)
                 .collectedBy(COLLECTED_BY_SELF)
                 .consentMethod(CONSENT_METHOD_WEB_FORM)
@@ -250,9 +251,11 @@ public class LeadContactService {
                 "ua=" + abbreviate(nullToEmpty(userAgent), 300));
     }
 
-    /** 참여 행사 이력을 notes 에 한 줄씩 누적한다. */
+    /** 참여 행사 이력을 notes 에 한 줄씩 누적한다. 행사명이 없으면 날짜만 남긴다. */
     private static String appendEventHistory(String existingNotes, String sourceEvent, LocalDate date) {
-        String line = "[" + date + "] " + defaultEvent(sourceEvent) + " 현장 등록";
+        String line = hasText(sourceEvent)
+                ? "[" + date + "] " + sourceEvent.trim() + " 현장 등록"
+                : "[" + date + "] 현장 등록";
         if (!hasText(existingNotes)) {
             return line;
         }
@@ -260,10 +263,6 @@ public class LeadContactService {
             return existingNotes; // 같은 날 같은 행사 중복 제출은 이력을 늘리지 않음
         }
         return existingNotes + "\n" + line;
-    }
-
-    private static String defaultEvent(String sourceEvent) {
-        return hasText(sourceEvent) ? sourceEvent.trim() : DEFAULT_SOURCE_EVENT;
     }
 
     private static boolean hasText(String s) {

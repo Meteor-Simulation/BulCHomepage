@@ -93,8 +93,8 @@ class LeadContactPublicRegisterTest {
         }
 
         @Test
-        @DisplayName("행사명이 없으면 기본값으로 저장한다")
-        void fallsBackToDefaultEvent() {
+        @DisplayName("행사명이 없으면 null 로 저장하고 이력은 날짜만 남긴다")
+        void leavesEventNullWhenNotProvided() {
             LeadContactPublicRequest req = request("c@d.com", true);
             req.setSourceEvent(null);
             given(leadContactRepository.findByEmail(any())).willReturn(Optional.empty());
@@ -102,7 +102,21 @@ class LeadContactPublicRegisterTest {
 
             leadContactService.registerPublic(req, "1.1.1.1", "ua");
 
-            assertThat(captureSaved().getSourceEvent()).isEqualTo("전시회 현장 등록");
+            LeadContact saved = captureSaved();
+            assertThat(saved.getSourceEvent()).isNull();
+            assertThat(saved.getNotes()).isEqualTo("[" + LocalDate.now() + "] 현장 등록");
+        }
+
+        @Test
+        @DisplayName("행사명이 있으면 이력에 행사명을 포함한다")
+        void includesEventInHistory() {
+            given(leadContactRepository.findByEmail(any())).willReturn(Optional.empty());
+            given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
+
+            leadContactService.registerPublic(request("e@f.com", true), "1.1.1.1", "ua");
+
+            assertThat(captureSaved().getNotes())
+                    .isEqualTo("[" + LocalDate.now() + "] 2026 소방안전박람회 현장 등록");
         }
     }
 
@@ -151,6 +165,21 @@ class LeadContactPublicRegisterTest {
             LeadContact saved = captureSaved();
             assertThat(saved.getCompanyName()).isEqualTo("기존회사");
             assertThat(saved.getDepartment()).isEqualTo("설계팀");
+        }
+
+        @Test
+        @DisplayName("행사명 미지정 재제출은 기존 행사명을 덮어쓰지 않는다")
+        void keepsExistingEventWhenNotProvided() {
+            LeadContact contact = existing("dup@example.com");
+            contact.setSourceEvent("이전 행사");
+            LeadContactPublicRequest req = request("dup@example.com", true);
+            req.setSourceEvent(null);
+            given(leadContactRepository.findByEmail(any())).willReturn(Optional.of(contact));
+            given(leadContactRepository.save(any(LeadContact.class))).willAnswer(inv -> inv.getArgument(0));
+
+            leadContactService.registerPublic(req, "1.1.1.1", "ua");
+
+            assertThat(captureSaved().getSourceEvent()).isEqualTo("이전 행사");
         }
 
         @Test
