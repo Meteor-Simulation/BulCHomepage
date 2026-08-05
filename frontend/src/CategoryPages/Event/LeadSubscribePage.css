@@ -23,40 +23,30 @@
 
 .lead-subscribe-header {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
+  justify-content: center;
+  padding: 4px 0 2px;
 }
 
-/* 헤더(.header-logo)와 동일한 로고+워드마크 조합 */
+/* 헤더(.header-logo)와 같은 로고+워드마크 조합. 폼 상단 단독 요소라 조금 크게 쓴다. */
 .lead-subscribe-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .lead-subscribe-logo {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
   object-fit: contain;
 }
 
 .lead-subscribe-brand-text {
-  font-size: 24px;
+  font-size: 34px;
   font-weight: 900;
   color: var(--text, #222);
   letter-spacing: -0.02em;
   white-space: nowrap;
-}
-
-.lead-subscribe-header p {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--text, #222);
 }
 
 /* ---- 입력 ---- */
