@@ -112,7 +112,10 @@ const LeadSubscribePage: React.FC = () => {
 
       <form className="lead-subscribe-card" onSubmit={handleSubmit} noValidate>
         <header className="lead-subscribe-header">
-          <img src="/logo_transparent.png" alt="BUL:C" className="lead-subscribe-logo" />
+          <div className="lead-subscribe-brand">
+            <img src="/logo_transparent.png" alt="" className="lead-subscribe-logo" />
+            <span className="lead-subscribe-brand-text">BUL:C</span>
+          </div>
           <p>찾아주셔서 감사합니다.</p>
         </header>
 

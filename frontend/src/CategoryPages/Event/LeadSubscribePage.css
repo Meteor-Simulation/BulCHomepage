@@ -29,9 +29,26 @@
   text-align: center;
 }
 
+/* 헤더(.header-logo)와 동일한 로고+워드마크 조합 */
+.lead-subscribe-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .lead-subscribe-logo {
-  height: 44px;
-  width: auto;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  object-fit: contain;
+}
+
+.lead-subscribe-brand-text {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text, #222);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .lead-subscribe-header p {
