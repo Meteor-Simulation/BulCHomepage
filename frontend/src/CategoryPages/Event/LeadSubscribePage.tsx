@@ -6,10 +6,14 @@ import PolicyModal from '../../components/PolicyModal';
 import './LeadSubscribePage.css';
 
 /**
- * MDP-707: 전시회·세미나 현장 메일링 등록 페이지.
+ * MDP-707: 전시회·세미나 현장 무료 배포 코드 신청 페이지.
  *
  * 부스에 비치한 QR(`/subscribe?e=<행사명>`)로 접속한 방문자가 직접 정보를 입력한다.
  * 대부분 모바일에서 열리므로 단일 컬럼·큰 터치 영역 기준으로 구성한다.
+ *
+ * <p>동의는 개인정보 수집·이용(필수) 하나만 받는다. 코드 발송은 방문자 본인이 요청한
+ * 것을 이행하는 안내성 발송이므로 광고성 정보 수신 동의를 별도로 받지 않는다.
+ * 이후 제품 소식·이벤트 등 광고성 발송이 필요하면 코드 안내 메일에서 별도 동의를 받는다.
  */
 
 interface FormState {
@@ -20,7 +24,6 @@ interface FormState {
   role: string;
   mobilePhone: string;
   agreePrivacy: boolean;
-  optInMarketing: boolean;
   website: string; // honeypot
 }
 
@@ -32,7 +35,6 @@ const INITIAL_FORM: FormState = {
   role: '',
   mobilePhone: '',
   agreePrivacy: false,
-  optInMarketing: false,
   website: '',
 };
 
@@ -87,14 +89,14 @@ const LeadSubscribePage: React.FC = () => {
   if (status === 'done') {
     return (
       <div className="lead-subscribe-page">
-        <Seo title="등록 완료 | BUL:C" noindex />
+        <Seo title="신청 완료 | BUL:C" noindex />
         <div className="lead-subscribe-card lead-subscribe-done">
           <div className="lead-subscribe-check" aria-hidden="true">✓</div>
-          <h1>등록이 완료되었습니다</h1>
+          <h1>신청이 완료되었습니다</h1>
           <p>
-            메테오시뮬레이션을 찾아주셔서 감사합니다.
+            찾아주셔서 감사합니다.
             <br />
-            입력해주신 이메일로 제품 소식을 보내드리겠습니다.
+            입력해주신 이메일로 무료 배포 코드를 보내드리겠습니다.
           </p>
           <a className="lead-subscribe-link" href="https://bulc.msimul.com">
             BUL:C 살펴보기
@@ -106,7 +108,7 @@ const LeadSubscribePage: React.FC = () => {
 
   return (
     <div className="lead-subscribe-page">
-      <Seo title="메일링 등록 | BUL:C" noindex />
+      <Seo title="무료 배포 코드 신청 | BUL:C" noindex />
 
       <form className="lead-subscribe-card" onSubmit={handleSubmit} noValidate>
         <header className="lead-subscribe-header">
@@ -209,36 +211,25 @@ const LeadSubscribePage: React.FC = () => {
               onChange={(e) => setField('agreePrivacy', e.target.checked)}
             />
             <span>
-              <strong>[필수]</strong> 개인정보 수집·이용에 동의합니다.
+              <strong>[필수]</strong> 무료 배포 코드 발송을 위한 개인정보 수집·이용에 동의합니다.
               <button type="button" className="lead-subscribe-more" onClick={() => setPolicyOpen(true)}>
                 자세히
               </button>
             </span>
           </label>
           <p className="lead-subscribe-consent-detail">
-            수집 항목: 이름, 이메일, 회사명, 부서, 직책, 연락처 / 이용 목적: 제품 자료 및 소식 안내 / 보유 기간:
-            수신거부 시까지
-          </p>
-
-          <label className="lead-subscribe-check-row">
-            <input
-              type="checkbox"
-              checked={form.optInMarketing}
-              onChange={(e) => setField('optInMarketing', e.target.checked)}
-            />
-            <span>
-              <strong>[선택]</strong> 광고성 정보 수신에 동의합니다. (제품 출시·이벤트 안내)
-            </span>
-          </label>
-          <p className="lead-subscribe-consent-detail">
-            동의하지 않아도 등록은 가능하며, 언제든지 메일 하단의 수신거부 링크로 철회할 수 있습니다.
+            수집 항목: 이름, 이메일, 회사명, 부서, 직책, 연락처
+            <br />
+            이용 목적: 무료 배포 코드 발송 및 관련 안내
+            <br />
+            보유 기간: 수신거부 시까지 (요청 시 즉시 파기)
           </p>
         </div>
 
         {errorMsg && <p className="lead-subscribe-error">{errorMsg}</p>}
 
         <button type="submit" className="lead-subscribe-submit" disabled={status === 'submitting'}>
-          {status === 'submitting' ? '등록 중...' : '등록하기'}
+          {status === 'submitting' ? '신청 중...' : '무료 배포 코드 신청'}
         </button>
       </form>
 

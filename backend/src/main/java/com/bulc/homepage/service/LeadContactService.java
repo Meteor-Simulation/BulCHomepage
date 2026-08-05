@@ -53,7 +53,10 @@ public class LeadContactService {
     private static final String CONSENT_METHOD_WEB_FORM = "web_form";
 
     /** 공개 폼 동의 문구 버전. 문구를 개정하면 함께 올려 증빙을 구분한다. */
-    private static final String CONSENT_VERSION = "2026-08-05";
+    private static final String CONSENT_VERSION = "2026-08-05-v2";
+
+    /** 공개 폼에서 고지한 개인정보 이용 목적. */
+    private static final String CONSENT_PURPOSE = "free_code_delivery";
 
     /** 공개 폼은 등록한 관리자가 없으므로 nil UUID 로 "본인 직접 등록"을 표시한다. */
     private static final UUID SELF_REGISTERED_CREATOR = new UUID(0L, 0L);
@@ -171,6 +174,11 @@ public class LeadContactService {
      * 현장에서 방문자에게 에러를 노출하지 않기 위해 기존 컨택에 이번 입력을 병합하고,
      * 참여 행사 이력을 {@code notes}에 누적한다.
      *
+     * <p>이 폼은 무료 배포 코드 발송을 목적으로 개인정보 수집·이용 동의만 받는다.
+     * 코드 발송은 본인이 요청한 것을 이행하는 안내성 발송이므로 {@code optInTransactional}
+     * 로 충분하며, 광고성 수신 동의({@code optInMarketing})는 여기서 받지도 변경하지도 않는다.
+     * 기존 컨택의 수신 동의·해지 상태는 그대로 보존한다.
+     *
      * @param clientIp  동의 증빙용 접속 IP
      * @param userAgent 동의 증빙용 User-Agent
      */
@@ -178,7 +186,6 @@ public class LeadContactService {
     public LeadContact registerPublic(LeadContactPublicRequest req, String clientIp, String userAgent) {
         String email = normalizeEmail(req.getEmail());
         LocalDate today = LocalDate.now();
-        boolean optInMarketing = Boolean.TRUE.equals(req.getOptInMarketing());
         String evidence = buildConsentEvidence(req, clientIp, userAgent);
 
         Optional<LeadContact> existing = leadContactRepository.findByEmail(email);
@@ -201,16 +208,8 @@ public class LeadContactService {
             c.setConsentEvidence(evidence);
             c.setNotes(appendEventHistory(c.getNotes(), req.getSourceEvent(), today));
 
-            // 본인이 폼에서 직접 동의한 경우에만 수신 동의를 켠다 (동의 해제는 하지 않음)
-            if (optInMarketing) {
-                c.setOptInMarketing(true);
-                if (c.getUnsubscribedAt() != null) {
-                    // 과거 수신거부자가 현장에서 다시 동의한 경우 → 재구독 처리
-                    c.setUnsubscribedAt(null);
-                    c.setUnsubscribeReason(null);
-                    log.info("공개 폼 재구독 처리 - email={}, event={}", email, req.getSourceEvent());
-                }
-            }
+            // optInMarketing / unsubscribedAt 은 건드리지 않는다.
+            // 이 폼에서 광고성 수신 동의를 받지 않으므로 기존 상태를 그대로 보존한다.
 
             log.info("공개 폼 기존 컨택 병합 - email={}, event={}", email, req.getSourceEvent());
             return leadContactRepository.save(c);
@@ -229,7 +228,8 @@ public class LeadContactService {
                 .consentMethod(CONSENT_METHOD_WEB_FORM)
                 .consentDate(today)
                 .consentEvidence(evidence)
-                .optInMarketing(optInMarketing)
+                // 광고성 수신 동의는 받지 않았으므로 false. 코드 발송은 안내성으로 처리한다.
+                .optInMarketing(false)
                 .optInTransactional(true)
                 .notes(appendEventHistory(null, req.getSourceEvent(), today))
                 .createdBy(SELF_REGISTERED_CREATOR)
@@ -245,7 +245,7 @@ public class LeadContactService {
                 "submittedAt=" + LocalDateTime.now(),
                 "event=" + nullToEmpty(req.getSourceEvent()),
                 "privacy=agreed",
-                "marketing=" + (Boolean.TRUE.equals(req.getOptInMarketing()) ? "agreed" : "declined"),
+                "purpose=" + CONSENT_PURPOSE,
                 "consentVersion=" + CONSENT_VERSION,
                 "ip=" + nullToEmpty(clientIp),
                 "ua=" + abbreviate(nullToEmpty(userAgent), 300));

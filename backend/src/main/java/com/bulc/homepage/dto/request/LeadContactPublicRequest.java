@@ -44,11 +44,14 @@ public class LeadContactPublicRequest {
     @Size(max = 200)
     private String sourceEvent;
 
-    /** 개인정보 수집·이용 동의 (필수) */
+    /**
+     * 개인정보 수집·이용 동의 (필수). 이용 목적은 무료 배포 코드 발송 및 관련 안내이다.
+     *
+     * <p>코드 발송은 방문자 본인이 요청한 것을 이행하는 안내성 발송이므로
+     * 광고성 정보 수신 동의는 이 폼에서 받지 않는다. 이후 제품 소식·이벤트 등
+     * 광고성 발송이 필요하면 코드 안내 메일에서 별도로 동의를 받는다.
+     */
     private Boolean agreePrivacy;
-
-    /** 광고성 정보 수신 동의 (선택) */
-    private Boolean optInMarketing;
 
     /**
      * 봇 차단용 honeypot. 사람에게는 보이지 않는 입력란이므로 값이 채워져 있으면 봇으로 간주한다.
