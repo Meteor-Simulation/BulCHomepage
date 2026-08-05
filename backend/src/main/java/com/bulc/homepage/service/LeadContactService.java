@@ -1,5 +1,6 @@
 package com.bulc.homepage.service;
 
+import com.bulc.homepage.dto.request.LeadContactPublicRequest;
 import com.bulc.homepage.dto.request.LeadContactRegisterRequest;
 import com.bulc.homepage.dto.request.LeadContactUpdateRequest;
 import com.bulc.homepage.dto.response.LeadContactImportResult;
@@ -25,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -46,6 +48,19 @@ import java.util.UUID;
 public class LeadContactService {
 
     private final LeadContactRepository leadContactRepository;
+
+    /** 공개 폼(MDP-707) 동의 방식. init.sql 의 consent_method 규약을 따른다. */
+    private static final String CONSENT_METHOD_WEB_FORM = "web_form";
+
+    /** 공개 폼 동의 문구 버전. 문구를 개정하면 함께 올려 증빙을 구분한다. */
+    private static final String CONSENT_VERSION = "2026-08-05";
+
+    /** 공개 폼은 등록한 관리자가 없으므로 nil UUID 로 "본인 직접 등록"을 표시한다. */
+    private static final UUID SELF_REGISTERED_CREATOR = new UUID(0L, 0L);
+
+    private static final String COLLECTED_BY_SELF = "본인 직접 입력(QR)";
+
+    private static final String DEFAULT_SOURCE_EVENT = "전시회 현장 등록";
 
     /** 헤더 별칭 → 내부 정규 필드명 매핑 (소문자·공백제거 키 기준) */
     private static final Map<String, String> HEADER_ALIASES = new HashMap<>();
@@ -149,6 +164,118 @@ public class LeadContactService {
                 .build();
 
         return leadContactRepository.save(contact);
+    }
+
+    /**
+     * MDP-707: 전시회 현장 공개 폼(QR)에서 방문자가 직접 등록한다.
+     *
+     * <p>관리자 {@link #register}와 달리 이미 등록된 이메일이어도 예외를 던지지 않는다.
+     * 현장에서 방문자에게 에러를 노출하지 않기 위해 기존 컨택에 이번 입력을 병합하고,
+     * 참여 행사 이력을 {@code notes}에 누적한다.
+     *
+     * @param clientIp  동의 증빙용 접속 IP
+     * @param userAgent 동의 증빙용 User-Agent
+     */
+    @Transactional
+    public LeadContact registerPublic(LeadContactPublicRequest req, String clientIp, String userAgent) {
+        String email = normalizeEmail(req.getEmail());
+        LocalDate today = LocalDate.now();
+        boolean optInMarketing = Boolean.TRUE.equals(req.getOptInMarketing());
+        String evidence = buildConsentEvidence(req, clientIp, userAgent);
+
+        Optional<LeadContact> existing = leadContactRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            LeadContact c = existing.get();
+            // 값이 들어온 항목만 갱신한다 (기존 정보를 빈 값으로 덮어쓰지 않음)
+            if (hasText(req.getContactName())) c.setContactName(req.getContactName().trim());
+            if (hasText(req.getCompanyName())) c.setCompanyName(req.getCompanyName().trim());
+            if (hasText(req.getDepartment())) c.setDepartment(req.getDepartment().trim());
+            if (hasText(req.getRole())) c.setRole(req.getRole().trim());
+            if (hasText(req.getMobilePhone())) c.setMobilePhone(req.getMobilePhone().trim());
+
+            c.setSourceEvent(defaultEvent(req.getSourceEvent()));
+            c.setSourceDate(today);
+            c.setConsentMethod(CONSENT_METHOD_WEB_FORM);
+            c.setConsentDate(today);
+            c.setConsentEvidence(evidence);
+            c.setNotes(appendEventHistory(c.getNotes(), req.getSourceEvent(), today));
+
+            // 본인이 폼에서 직접 동의한 경우에만 수신 동의를 켠다 (동의 해제는 하지 않음)
+            if (optInMarketing) {
+                c.setOptInMarketing(true);
+                if (c.getUnsubscribedAt() != null) {
+                    // 과거 수신거부자가 현장에서 다시 동의한 경우 → 재구독 처리
+                    c.setUnsubscribedAt(null);
+                    c.setUnsubscribeReason(null);
+                    log.info("공개 폼 재구독 처리 - email={}, event={}", email, req.getSourceEvent());
+                }
+            }
+
+            log.info("공개 폼 기존 컨택 병합 - email={}, event={}", email, req.getSourceEvent());
+            return leadContactRepository.save(c);
+        }
+
+        LeadContact contact = LeadContact.builder()
+                .email(email)
+                .contactName(trimToNull(req.getContactName()))
+                .companyName(trimToNull(req.getCompanyName()))
+                .department(trimToNull(req.getDepartment()))
+                .role(trimToNull(req.getRole()))
+                .mobilePhone(trimToNull(req.getMobilePhone()))
+                .sourceEvent(defaultEvent(req.getSourceEvent()))
+                .sourceDate(today)
+                .collectedBy(COLLECTED_BY_SELF)
+                .consentMethod(CONSENT_METHOD_WEB_FORM)
+                .consentDate(today)
+                .consentEvidence(evidence)
+                .optInMarketing(optInMarketing)
+                .optInTransactional(true)
+                .notes(appendEventHistory(null, req.getSourceEvent(), today))
+                .createdBy(SELF_REGISTERED_CREATOR)
+                .build();
+
+        log.info("공개 폼 신규 컨택 등록 - email={}, event={}", email, req.getSourceEvent());
+        return leadContactRepository.save(contact);
+    }
+
+    /** 동의 증빙 문자열. 분쟁 시 "언제·어디서·무엇에 동의했는지" 재현용. */
+    private static String buildConsentEvidence(LeadContactPublicRequest req, String clientIp, String userAgent) {
+        return String.join(" | ",
+                "submittedAt=" + LocalDateTime.now(),
+                "event=" + nullToEmpty(req.getSourceEvent()),
+                "privacy=agreed",
+                "marketing=" + (Boolean.TRUE.equals(req.getOptInMarketing()) ? "agreed" : "declined"),
+                "consentVersion=" + CONSENT_VERSION,
+                "ip=" + nullToEmpty(clientIp),
+                "ua=" + abbreviate(nullToEmpty(userAgent), 300));
+    }
+
+    /** 참여 행사 이력을 notes 에 한 줄씩 누적한다. */
+    private static String appendEventHistory(String existingNotes, String sourceEvent, LocalDate date) {
+        String line = "[" + date + "] " + defaultEvent(sourceEvent) + " 현장 등록";
+        if (!hasText(existingNotes)) {
+            return line;
+        }
+        if (existingNotes.contains(line)) {
+            return existingNotes; // 같은 날 같은 행사 중복 제출은 이력을 늘리지 않음
+        }
+        return existingNotes + "\n" + line;
+    }
+
+    private static String defaultEvent(String sourceEvent) {
+        return hasText(sourceEvent) ? sourceEvent.trim() : DEFAULT_SOURCE_EVENT;
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private static String trimToNull(String s) {
+        return hasText(s) ? s.trim() : null;
+    }
+
+    private static String abbreviate(String s, int max) {
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     @Transactional

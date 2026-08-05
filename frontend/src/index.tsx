@@ -27,6 +27,7 @@ import BoardPage from './CategoryPages/Board/BoardPage';
 import PostDetailPage from './CategoryPages/Board/PostDetailPage';
 import PostEditorPage from './CategoryPages/Board/PostEditorPage';
 import BoothGiftPage from './CategoryPages/Event/BoothGiftPage';
+import LeadSubscribePage from './CategoryPages/Event/LeadSubscribePage';
 import FaqPage from './CategoryPages/Docs/FaqPage';
 import DocsArticlePage from './CategoryPages/Docs/DocsArticlePage';
 import EvacShowcase from './CategoryPages/Evac/EvacShowcase';
@@ -94,6 +95,8 @@ const App: React.FC = () => {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/docs/:slug" element={<DocsArticlePage />} />
             <Route path="/event/booth-gift" element={<BoothGiftPage />} />
+            {/* 전시회 현장 메일링 등록 (QR 진입, MDP-707) */}
+            <Route path="/subscribe" element={<LeadSubscribePage />} />
             <Route path="/evac-sim" element={<EvacShowcase />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}

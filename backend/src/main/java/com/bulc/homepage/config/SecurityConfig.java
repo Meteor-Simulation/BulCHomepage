@@ -109,6 +109,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/contact").permitAll()
                         // 광고성 메일 수신거부 API (공개, 메일 링크 토큰으로 접근)
                         .requestMatchers("/api/unsubscribe").permitAll()
+                        // 전시회 현장 메일링 등록 API (공개, QR 로 접속한 방문자가 직접 제출)
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/lead-contacts/public").permitAll()
                         // 팝업 조회 API (공개, 비로그인 포함)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/popups").permitAll()
                         // 업로드 이미지 정적 서빙 (공개)

@@ -1,0 +1,218 @@
+/* MDP-707: 전시회 현장 메일링 등록 페이지 (모바일 우선) */
+
+.lead-subscribe-page {
+  min-height: 100vh;
+  background: #f6f6f7;
+  padding: 24px 16px 48px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.lead-subscribe-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg, #fff);
+  border-radius: 16px;
+  padding: 28px 22px 26px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lead-subscribe-header h1 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text, #222);
+  line-height: 1.35;
+}
+
+.lead-subscribe-header p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ---- 입력 ---- */
+
+.lead-subscribe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.lead-subscribe-field > span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.lead-subscribe-field em {
+  color: var(--accent, #c4320a);
+  font-style: normal;
+}
+
+.lead-subscribe-field input {
+  /* 16px 미만이면 iOS Safari 가 포커스 시 화면을 확대한다 */
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text, #222);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lead-subscribe-field input:focus {
+  outline: none;
+  border-color: var(--accent, #c4320a);
+  box-shadow: 0 0 0 3px rgba(196, 50, 10, 0.12);
+}
+
+.lead-subscribe-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* honeypot — 봇에게만 보이도록 화면 밖으로 밀어낸다 (display:none 은 일부 봇이 건너뜀) */
+.lead-subscribe-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ---- 동의 ---- */
+
+.lead-subscribe-consent {
+  border-top: 1px solid #ececec;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lead-subscribe-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.lead-subscribe-check-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--accent, #c4320a);
+  flex-shrink: 0;
+}
+
+.lead-subscribe-check-row strong {
+  font-weight: 700;
+  color: var(--accent, #c4320a);
+}
+
+.lead-subscribe-more {
+  background: none;
+  border: none;
+  padding: 0 0 0 6px;
+  font-size: 13px;
+  color: #777;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lead-subscribe-consent-detail {
+  margin: 0 0 10px 30px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #888;
+}
+
+/* ---- 제출 ---- */
+
+.lead-subscribe-error {
+  margin: 0;
+  padding: 10px 12px;
+  background: #fdecea;
+  border-radius: 8px;
+  color: #b3261e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lead-subscribe-submit {
+  margin-top: 4px;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent, #c4320a);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lead-subscribe-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---- 완료 ---- */
+
+.lead-subscribe-done {
+  text-align: center;
+  align-items: center;
+  padding: 44px 24px;
+}
+
+.lead-subscribe-check {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent, #c4320a);
+  color: #fff;
+  font-size: 32px;
+  line-height: 60px;
+}
+
+.lead-subscribe-done h1 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text, #222);
+}
+
+.lead-subscribe-done p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #666;
+}
+
+.lead-subscribe-link {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent, #c4320a);
+  text-decoration: none;
+}
+
+@media (min-width: 520px) {
+  .lead-subscribe-page {
+    padding-top: 48px;
+  }
+
+  .lead-subscribe-card {
+    padding: 34px 32px 30px;
+  }
+}
