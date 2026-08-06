@@ -1,5 +1,6 @@
 package com.bulc.homepage.oauth2;
 
+import com.bulc.homepage.config.ValidationConfig;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.repository.ActivityLogRepository;
@@ -145,11 +146,34 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = User.builder()
                 .email(email)
                 .name(name)
-                .phone(mobile)  // 전화번호 저장
+                .phone(sanitizePhone(mobile))
                 .rolesCode("002")  // 일반 사용자
                 .countryCode("KR")
                 .build();
         return userRepository.save(user);
+    }
+
+    /**
+     * 소셜 제공자가 내려준 mobile 값을 전화번호 컬럼에 넣기 전에 검증한다.
+     *
+     * <p>이 경로는 사용자 입력 폼을 거치지 않아 {@code @ValidPhone}(SignupRequest·
+     * OAuthSignupRequest·UpdateUserRequest)이 적용되지 않는다. 제공자 응답 형식이
+     * 바뀌거나 예상과 다른 값이 오면 그대로 저장되므로(실제로 phone 컬럼에 이메일이
+     * 저장된 사례가 있었다) 형식에 맞지 않으면 null 로 두고 경고만 남긴다.
+     * 전화번호는 선택 항목이라 저장하지 않아도 가입에는 지장이 없다.
+     */
+    private String sanitizePhone(String mobile) {
+        if (mobile == null || mobile.isBlank()) {
+            return null;
+        }
+        String value = mobile.trim();
+        if (!value.matches(ValidationConfig.PHONE_PATTERN)
+                || value.length() < ValidationConfig.PHONE_MIN_LENGTH
+                || value.length() > ValidationConfig.PHONE_MAX_LENGTH) {
+            log.warn("소셜 로그인 mobile 값이 전화번호 형식이 아니어서 저장하지 않음 (길이={})", value.length());
+            return null;
+        }
+        return value;
     }
 
     private void linkSocialAccount(User user, String provider, String providerId) {
