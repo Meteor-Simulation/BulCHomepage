@@ -145,12 +145,37 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User createNewUser(String email, String name, String mobile) {
         User user = User.builder()
                 .email(email)
-                .name(name)
+                .name(sanitizeName(name))
                 .phone(sanitizePhone(mobile))
                 .rolesCode("002")  // 일반 사용자
                 .countryCode("KR")
                 .build();
         return userRepository.save(user);
+    }
+
+    /**
+     * 소셜 제공자가 내려준 name 값을 이름 컬럼에 넣기 전에 검증한다.
+     *
+     * <p>{@link #sanitizePhone}과 같은 이유로 이 경로는 {@code @ValidName} 검증 밖에 있다.
+     * 이름은 선택 항목(현재 이름 없는 회원이 다수 존재)이므로, 길이 규격을 벗어나면
+     * 잘못된 값을 남기기보다 비워 두고 사용자가 마이페이지에서 입력하도록 한다.
+     * 다만 너무 길기만 한 경우는 앞부분이 실제 이름인 경우가 많아 잘라서 보존한다.
+     */
+    private String sanitizeName(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        String value = name.trim();
+        if (value.length() < ValidationConfig.NAME_MIN_LENGTH) {
+            log.warn("소셜 로그인 name 값이 너무 짧아 저장하지 않음 (길이={})", value.length());
+            return null;
+        }
+        if (value.length() > ValidationConfig.NAME_MAX_LENGTH) {
+            log.warn("소셜 로그인 name 값이 너무 길어 {}자로 절단 (원본 길이={})",
+                    ValidationConfig.NAME_MAX_LENGTH, value.length());
+            return value.substring(0, ValidationConfig.NAME_MAX_LENGTH);
+        }
+        return value;
     }
 
     /**

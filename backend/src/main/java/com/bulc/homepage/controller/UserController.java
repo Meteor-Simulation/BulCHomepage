@@ -3,6 +3,7 @@ package com.bulc.homepage.controller;
 import com.bulc.homepage.config.ValidationConfig;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
+import com.bulc.homepage.validation.ValidName;
 import com.bulc.homepage.validation.ValidPhone;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -69,14 +70,14 @@ public class UserController {
             return ResponseEntity.status(404).build();
         }
 
-        // 이름이 비어있지 않으면 업데이트
+        // 이름이 비어있지 않으면 업데이트 (검증이 trim 기준이므로 저장도 trim 후 저장)
         if (request.name() != null && !request.name().isBlank()) {
-            user.setName(request.name());
+            user.setName(request.name().trim());
         }
 
         // 전화번호가 비어있지 않으면 업데이트
         if (request.phone() != null && !request.phone().isBlank()) {
-            user.setPhone(request.phone());
+            user.setPhone(request.phone().trim());
         }
 
         // 국가가 비어있지 않으면 업데이트
@@ -191,7 +192,14 @@ public class UserController {
 
     // DTOs
     public record UserInfoResponse(String email, String name, String phone, String country, String language) {}
-    public record UpdateUserRequest(String name, @ValidPhone String phone, String country, String language) {}
+    /**
+     * 내 정보 수정 요청.
+     *
+     * <p>이름은 회원가입({@code SignupRequest})과 동일한 길이 규칙을 적용한다.
+     * 다만 미입력(null/공백)은 "변경하지 않음"을 의미하므로 {@link ValidName} 이 이를 허용한다.
+     */
+    public record UpdateUserRequest(@ValidName String name, @ValidPhone String phone,
+                                    String country, String language) {}
     public record ChangePasswordRequest(String currentPassword, String newPassword) {}
     public record ApiResponse(boolean success, String message) {}
 }
