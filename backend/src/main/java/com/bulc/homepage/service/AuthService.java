@@ -88,8 +88,9 @@ public class AuthService {
                 socialAccountRepository.deleteByUserId(existingUser.getId());
 
                 // 기존 사용자 정보 초기화 및 재활성화
-                existingUser.setName(null);
-                existingUser.setPhone(null);
+                // MDP-722: 이전 정보를 지우되, 이번 가입 요청 값으로 다시 채운다
+                existingUser.setName(trimToNull(request.getName()));
+                existingUser.setPhone(trimToNull(request.getPhoneNumber()));
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
                 existingUser.setEmailVerified(true);
                 existingUser.setEmailVerifiedAt(LocalDateTime.now());
@@ -112,6 +113,9 @@ public class AuthService {
             User.UserBuilder builder = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    // MDP-722: 빌더에 name/phone 이 빠져 있어 요청 값이 저장되지 않았다
+                    .name(trimToNull(request.getName()))
+                    .phone(trimToNull(request.getPhoneNumber()))
                     .emailVerified(true)
                     .emailVerifiedAt(LocalDateTime.now())
                     .rolesCode("002")  // 기본값: 일반 사용자
@@ -249,6 +253,16 @@ public class AuthService {
                     e.getMessage() + " - IP: " + ipAddress);
             throw e;
         }
+    }
+
+    /**
+     * 앞뒤 공백을 제거하고, 값이 없으면 null 로 정규화한다.
+     * 빈 문자열이 이름·전화번호 컬럼에 그대로 저장되는 것을 막는다.
+     */
+    private static String trimToNull(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**

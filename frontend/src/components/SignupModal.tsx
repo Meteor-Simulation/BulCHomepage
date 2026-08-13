@@ -25,6 +25,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   const isEnglish = i18n.language && i18n.language.startsWith('en');
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +64,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
   useEffect(() => {
     if (isOpen) {
       setEmail('');
+      setName('');
       setPassword('');
       setPasswordConfirm('');
       setShowPassword(false);
@@ -297,6 +299,18 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
       setError(t('signup.errors.emailVerifyRequired'));
       return;
     }
+    if (!name.trim()) {
+      setError(t('signup.errors.nameRequired'));
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError(t('signup.errors.nameTooShort'));
+      return;
+    }
+    if (name.trim().length > 50) {
+      setError(t('signup.errors.nameTooLong'));
+      return;
+    }
     if (!password) {
       setError(t('signup.errors.passwordRequired'));
       return;
@@ -346,6 +360,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         credentials: 'include',
         body: JSON.stringify({
           signupTicket,
+          name: name.trim(),
           password,
           marketingAgreed: agreeMarketing,
           language: i18n.language,
@@ -364,6 +379,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
         showAlert({ message: t('alerts.signupCompleted'), type: 'success' });
         // 입력 필드 초기화
         setEmail('');
+        setName('');
         setPassword('');
         setPasswordConfirm('');
         setEmailCheckStatus('idle');
@@ -487,6 +503,24 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSwitchToLo
             )}
             {verificationMessage && !isEmailVerified && (
               <p className="input-message error">{verificationMessage}</p>
+            )}
+          </div>
+
+          <div className="input-group">
+            <div className="input-wrapper">
+              <input
+                type="text"
+                className="modal-input"
+                placeholder={t('signup.namePlaceholder')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                maxLength={50}
+                disabled={isLoading}
+              />
+            </div>
+            {name.trim().length > 0 && name.trim().length < 2 && (
+              <p className="input-validation-error">{t('signup.validation.nameTooShort')}</p>
             )}
           </div>
 

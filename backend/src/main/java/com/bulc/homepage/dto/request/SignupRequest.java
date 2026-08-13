@@ -2,6 +2,7 @@ package com.bulc.homepage.dto.request;
 
 import com.bulc.homepage.validation.ValidPassword;
 import com.bulc.homepage.validation.ValidPhone;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,8 @@ public class SignupRequest {
     @ValidPassword
     private String password;
 
+    // @Size 는 null 을 통과시켜 이름 없이 가입되던 문제가 있었다(MDP-722). @NotBlank 로 필수화한다.
+    @NotBlank(message = "이름은 필수입니다")
     @Size(min = NAME_MIN_LENGTH, max = NAME_MAX_LENGTH,
             message = "이름은 " + NAME_MIN_LENGTH + "자 이상 " + NAME_MAX_LENGTH + "자 이하여야 합니다")
     private String name;

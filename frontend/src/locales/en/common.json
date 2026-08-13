@@ -194,11 +194,31 @@
       }
     },
     "spec": {
-      "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
-      "physics": { "label": "Physics", "value": "FDS Physics Engine", "desc": "Validated fire physics model" },
-      "standard": { "label": "Standard", "value": "NIST Verified", "desc": "Meets strict international safety standards" },
-      "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
-      "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
+      "solver": {
+        "label": "Solver",
+        "suffix": "Acceleration",
+        "desc": "Parallel processing on GPU cores"
+      },
+      "physics": {
+        "label": "Physics",
+        "value": "FDS Physics Engine",
+        "desc": "Validated fire physics model"
+      },
+      "standard": {
+        "label": "Standard",
+        "value": "NIST Verified",
+        "desc": "Meets strict international safety standards"
+      },
+      "analysis": {
+        "label": "Analysis",
+        "value": "Fire–Evacuation Linked",
+        "desc": "Integrated EVAC analysis"
+      },
+      "library": {
+        "label": "Library",
+        "value": "Fire Library",
+        "desc": "Preconfigured fire scenario library"
+      }
     },
     "coreValues": {
       "title": "",
@@ -326,16 +346,31 @@
         "department": "Department",
         "departmentPlaceholder": "Fire Safety Engineering, etc.",
         "role": "Role",
-        "roleOptions": ["Professor", "Researcher", "Student (Graduate)", "Student (Undergraduate)", "Other"],
+        "roleOptions": [
+          "Professor",
+          "Researcher",
+          "Student (Graduate)",
+          "Student (Undergraduate)",
+          "Other"
+        ],
         "country": "Country",
         "purpose": "Purpose",
-        "purposeOptions": ["Lecture / Course", "Research Project", "Thesis / Dissertation", "Other"],
+        "purposeOptions": [
+          "Lecture / Course",
+          "Research Project",
+          "Thesis / Dissertation",
+          "Other"
+        ],
         "courseProject": "Course / Project Name",
         "courseProjectPlaceholder": "e.g., Fire Safety Engineering Lab",
         "seatCount": "Expected Seats",
         "seatCountPlaceholder": "e.g., 30",
         "duration": "Preferred License Duration",
-        "durationOptions": ["180 days (6 months)", "365 days (1 year)", "Other"],
+        "durationOptions": [
+          "180 days (6 months)",
+          "365 days (1 year)",
+          "Other"
+        ],
         "durationCustomPlaceholder": "e.g., 90 days",
         "startDate": "Preferred Start Date",
         "message": "Additional Message (Optional)",
@@ -611,6 +646,7 @@
   "signup": {
     "title": "Sign Up",
     "emailPlaceholder": "Email (ID)",
+    "namePlaceholder": "Name",
     "passwordPlaceholder": "Password",
     "passwordConfirmPlaceholder": "Confirm Password",
     "emailVerify": "Verify Email",
@@ -630,7 +666,8 @@
     "validation": {
       "needsAllChars": "Include letters, numbers, and special characters.",
       "minLength": "Password must be 8 characters or longer.",
-      "passwordMismatch": "Please enter the same password as above."
+      "passwordMismatch": "Please enter the same password as above.",
+      "nameTooShort": "Name must be at least 2 characters"
     },
     "errors": {
       "emailRequired": "Please enter your email.",
@@ -651,7 +688,10 @@
       "signupFailed": "Sign-up failed.",
       "signupError": "An error occurred during sign-up.",
       "agreeTermsRequired": "Please agree to the Terms of Service.",
-      "agreePrivacyRequired": "Please agree to the Privacy Policy."
+      "agreePrivacyRequired": "Please agree to the Privacy Policy.",
+      "nameRequired": "Please enter your name",
+      "nameTooShort": "Name must be at least 2 characters",
+      "nameTooLong": "Name must be 50 characters or fewer"
     },
     "agreements": {
       "all": "Agree to all",

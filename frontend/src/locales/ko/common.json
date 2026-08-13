@@ -194,11 +194,31 @@
       }
     },
     "spec": {
-      "solver": { "label": "Solver", "suffix": "가속", "desc": "GPU 코어에서 병렬 처리" },
-      "physics": { "label": "Physics", "value": "FDS 물리엔진", "desc": "검증된 화재 물리 모델" },
-      "standard": { "label": "Standard", "value": "NIST 검증", "desc": "엄격한 국제 안전 기준 충족" },
-      "analysis": { "label": "Analysis", "value": "화재-피난 연동", "desc": "EVAC 연계 통합 해석" },
-      "library": { "label": "Library", "value": "화재 라이브러리", "desc": "미리설정된 화재 시나리오 라이브러리" }
+      "solver": {
+        "label": "Solver",
+        "suffix": "가속",
+        "desc": "GPU 코어에서 병렬 처리"
+      },
+      "physics": {
+        "label": "Physics",
+        "value": "FDS 물리엔진",
+        "desc": "검증된 화재 물리 모델"
+      },
+      "standard": {
+        "label": "Standard",
+        "value": "NIST 검증",
+        "desc": "엄격한 국제 안전 기준 충족"
+      },
+      "analysis": {
+        "label": "Analysis",
+        "value": "화재-피난 연동",
+        "desc": "EVAC 연계 통합 해석"
+      },
+      "library": {
+        "label": "Library",
+        "value": "화재 라이브러리",
+        "desc": "미리설정된 화재 시나리오 라이브러리"
+      }
     },
     "coreValues": {
       "title": "",
@@ -326,16 +346,31 @@
         "department": "학과/부서",
         "departmentPlaceholder": "소방방재학과, 안전공학과 등",
         "role": "직책/직급",
-        "roleOptions": ["교수", "연구원", "학생(대학원)", "학생(학부)", "기타"],
+        "roleOptions": [
+          "교수",
+          "연구원",
+          "학생(대학원)",
+          "학생(학부)",
+          "기타"
+        ],
         "country": "국가",
         "purpose": "사용 목적",
-        "purposeOptions": ["강의/수업", "연구 프로젝트", "졸업논문/학위논문", "기타"],
+        "purposeOptions": [
+          "강의/수업",
+          "연구 프로젝트",
+          "졸업논문/학위논문",
+          "기타"
+        ],
         "courseProject": "강의명/프로젝트명",
         "courseProjectPlaceholder": "예: 화재안전공학 실습, 피난 시뮬레이션 연구",
         "seatCount": "예상 사용 인원 (seat)",
         "seatCountPlaceholder": "예: 30",
         "duration": "희망 라이선스 기간",
-        "durationOptions": ["180일 (6개월)", "365일 (1년)", "기타"],
+        "durationOptions": [
+          "180일 (6개월)",
+          "365일 (1년)",
+          "기타"
+        ],
         "durationCustomPlaceholder": "예: 90일",
         "startDate": "희망 시작일",
         "message": "추가 메시지 (선택)",
@@ -611,6 +646,7 @@
   "signup": {
     "title": "회원가입",
     "emailPlaceholder": "아이디(이메일)",
+    "namePlaceholder": "이름",
     "passwordPlaceholder": "비밀번호",
     "passwordConfirmPlaceholder": "비밀번호 확인",
     "emailVerify": "이메일 인증",
@@ -630,7 +666,8 @@
     "validation": {
       "needsAllChars": "영문, 숫자, 특수문자를 포함해주세요.",
       "minLength": "비밀번호를 8자 이상으로 만들어주세요.",
-      "passwordMismatch": "위 비밀번호와 동일하게 입력해주세요."
+      "passwordMismatch": "위 비밀번호와 동일하게 입력해주세요.",
+      "nameTooShort": "이름은 2자 이상이어야 합니다"
     },
     "errors": {
       "emailRequired": "이메일을 입력해주세요.",
@@ -651,7 +688,10 @@
       "signupFailed": "회원가입에 실패했습니다.",
       "signupError": "회원가입 중 오류가 발생했습니다.",
       "agreeTermsRequired": "이용약관에 동의해주세요.",
-      "agreePrivacyRequired": "개인정보처리방침에 동의해주세요."
+      "agreePrivacyRequired": "개인정보처리방침에 동의해주세요.",
+      "nameRequired": "이름을 입력해주세요",
+      "nameTooShort": "이름은 2자 이상이어야 합니다",
+      "nameTooLong": "이름은 50자 이하여야 합니다"
     },
     "agreements": {
       "all": "전체 동의",
