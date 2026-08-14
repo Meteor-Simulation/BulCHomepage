@@ -47,6 +47,12 @@
     "emailNotEditable": "Email cannot be changed.",
     "name": "Name",
     "namePlaceholder": "Enter name",
+    "namePrompt": {
+      "title": "Your name is not registered",
+      "description": "It is used for payments, tax invoices, and customer support. Please take a moment to add it.",
+      "cta": "Add name",
+      "dismiss": "Later"
+    },
     "phone": "Phone",
     "language": "Language",
     "password": "Password",

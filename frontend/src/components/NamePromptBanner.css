@@ -1,0 +1,103 @@
+/* 이벤트 배너(BoothGiftBanner)와 나란히 놓일 수 있으므로 강조는 한 단계 낮춘다 */
+.name-prompt-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: #f7f8fa;
+  border: 1px solid #e2e5ea;
+  border-left: 3px solid var(--accent, #C4320A);
+  border-radius: 12px;
+}
+
+.name-prompt-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name-prompt-banner__icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  color: var(--accent, #C4320A);
+}
+
+.name-prompt-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name-prompt-banner__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.name-prompt-banner__desc {
+  font-size: 0.85rem;
+  color: #5f6673;
+  line-height: 1.45;
+}
+
+.name-prompt-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.name-prompt-banner__cta {
+  padding: 9px 16px;
+  background: var(--accent, #C4320A);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.name-prompt-banner__cta:hover {
+  background: #a8290a;
+}
+
+.name-prompt-banner__cta:active {
+  transform: scale(0.97);
+}
+
+.name-prompt-banner__dismiss {
+  padding: 9px 12px;
+  background: transparent;
+  color: #7a828f;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.name-prompt-banner__dismiss:hover {
+  color: #3a3f48;
+  background: #eceef2;
+}
+
+@media (max-width: 600px) {
+  .name-prompt-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .name-prompt-banner__actions {
+    justify-content: flex-end;
+  }
+  .name-prompt-banner__cta {
+    flex: 1;
+  }
+}

@@ -77,6 +77,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({
           <div className="form-group">
             <label>{t('myPage.name')}</label>
             <input
+              id="mypage-name-input"
               type="text"
               value={editName}
               onChange={(e) => onEditNameChange(e.target.value)}

@@ -8,6 +8,7 @@ import Seo from '../../components/Seo';
 import LoginModal from '../../components/LoginModal';
 import { useAlert } from '../../components/AlertProvider';
 import BoothGiftBanner from '../../components/BoothGiftBanner';
+import NamePromptBanner from '../../components/NamePromptBanner';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber, isValidPhone } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
@@ -98,6 +99,12 @@ const MyPage: React.FC = () => {
 
   // 로그인 모달
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // 이름 입력 유도 배너 (MDP-722 이전 가입자는 이름이 비어 있다)
+  // 세션 단위로만 숨긴다 — 영구히 숨기면 이름을 영영 못 받는다
+  const [nameBannerDismissed, setNameBannerDismissed] = useState(
+    () => sessionStorage.getItem('namePromptDismissed') === '1'
+  );
 
   // URL query parameter로 초기 탭 설정
   const [searchParams, setSearchParams] = useSearchParams();
@@ -440,6 +447,22 @@ const MyPage: React.FC = () => {
     setEditName(userInfo.name || '');
     setEditPhone(formatPhoneNumber(userInfo.phone) || '');
     setIsEditingProfile(false);
+  };
+
+  // 이름 입력 유도 배너 → 프로필 수정 모드로 보내고 이름 칸에 커서를 둔다
+  const handleFixName = () => {
+    setActiveMenu('profile');
+    setIsEditingProfile(true);
+    requestAnimationFrame(() => {
+      const input = document.getElementById('mypage-name-input') as HTMLInputElement | null;
+      input?.focus();
+      input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  const handleDismissNameBanner = () => {
+    sessionStorage.setItem('namePromptDismissed', '1');
+    setNameBannerDismissed(true);
   };
 
   // ========== 설정 핸들러 ==========
@@ -1018,6 +1041,10 @@ const MyPage: React.FC = () => {
             {errorMessage && <div className="message error">{errorMessage}</div>}
 
             <BoothGiftBanner />
+
+            {!isLoading && !nameBannerDismissed && !(userInfo.name || '').trim() && (
+              <NamePromptBanner onFix={handleFixName} onDismiss={handleDismissNameBanner} />
+            )}
 
             <div className="mypage-grid">
               {activeMenu === 'profile' && (

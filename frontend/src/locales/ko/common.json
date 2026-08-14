@@ -47,6 +47,12 @@
     "emailNotEditable": "이메일은 변경할 수 없습니다.",
     "name": "이름",
     "namePlaceholder": "이름 입력",
+    "namePrompt": {
+      "title": "이름이 등록되어 있지 않습니다",
+      "description": "결제와 세금계산서 발급, 고객 응대에 사용됩니다. 잠시만 시간을 내어 입력해주세요.",
+      "cta": "이름 입력하기",
+      "dismiss": "나중에"
+    },
     "phone": "전화번호",
     "language": "언어",
     "password": "비밀번호",
