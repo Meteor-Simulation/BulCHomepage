@@ -1,10 +1,10 @@
 package com.bulc.homepage.controller;
 
-import com.bulc.homepage.entity.Subscription;
-import com.bulc.homepage.entity.SubscriptionPayment;
-import com.bulc.homepage.repository.SubscriptionPaymentRepository;
-import com.bulc.homepage.repository.SubscriptionRepository;
-import com.bulc.homepage.service.SubscriptionBillingService;
+import com.bulc.homepage.payment.domain.Subscription;
+import com.bulc.homepage.payment.domain.SubscriptionPayment;
+import com.bulc.homepage.payment.repository.SubscriptionPaymentRepository;
+import com.bulc.homepage.payment.repository.SubscriptionRepository;
+import com.bulc.homepage.payment.service.SubscriptionBillingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

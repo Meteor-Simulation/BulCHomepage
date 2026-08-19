@@ -1,9 +1,9 @@
 package com.bulc.homepage.controller;
 
-import com.bulc.homepage.entity.PricePlan;
+import com.bulc.homepage.payment.domain.PricePlan;
 import com.bulc.homepage.entity.Product;
 import com.bulc.homepage.licensing.repository.ProductRepository;
-import com.bulc.homepage.repository.PricePlanRepository;
+import com.bulc.homepage.payment.repository.PricePlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
