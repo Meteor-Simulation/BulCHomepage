@@ -291,14 +291,13 @@
         ]
       },
       "quote": {
-        "name": "License\n(+ Workstation)",
-        "desc": "+ 9,900,000 KRW",
+        "name": "License\n(+ Compute Hardware)",
         "price": "9,900,000 KRW",
         "period": "",
         "button": "Request a Quote",
         "features": [
-          "Year 1: License + workstation combined, then auto-renew at 6,000,000 KRW/year",
-          "Dedicated workstation included"
+          "Year 1: License + compute hardware combined, then auto-renew at 6,000,000 KRW/year",
+          "Dedicated compute hardware included"
         ]
       },
       "education": {

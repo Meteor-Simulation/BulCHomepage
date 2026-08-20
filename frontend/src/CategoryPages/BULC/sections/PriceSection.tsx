@@ -200,7 +200,6 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                     {t('payment.subscription')}
                   </span>
                 </div>
-                <p className="bulc-price__card-desc">{t('bulc.price.quote.desc')}</p>
               </div>
               <div className="bulc-price__card-price">
                 <span className="bulc-price__card-amount">{t('bulc.price.quote.price')}</span>
