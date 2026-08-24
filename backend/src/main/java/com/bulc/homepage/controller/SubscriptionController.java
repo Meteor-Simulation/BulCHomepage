@@ -1,6 +1,7 @@
 package com.bulc.homepage.controller;
 
 import com.bulc.homepage.dto.request.BillingKeyIssueRequest;
+import com.bulc.homepage.dto.request.CardDirectRegisterRequest;
 import com.bulc.homepage.dto.response.ApiResponse;
 import com.bulc.homepage.dto.response.BillingKeyResponse;
 import com.bulc.homepage.dto.response.SubscriptionResponse;
@@ -143,6 +144,27 @@ public class SubscriptionController {
             return ResponseEntity.ok(ApiResponse.success("카드가 등록되었습니다.", response));
         } catch (Exception e) {
             log.error("빌링키 발급 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 자체 카드 입력 폼으로 카드 등록 (MDP-758).
+     *
+     * <p>토스 인증창 대신 우리 화면에서 받은 카드 정보로 빌링키를 직접 발급한다.
+     * 카드 정보는 토스 전달에만 쓰고 저장하지 않으며, 실패 로그에도 남기지 않는다.
+     */
+    @PostMapping("/billing-keys/card")
+    public ResponseEntity<ApiResponse<BillingKeyResponse>> registerCardDirect(
+            @Valid @RequestBody CardDirectRegisterRequest request) {
+        UUID userId = getCurrentUserId();
+
+        try {
+            BillingKeyResponse response = billingKeyService.registerCardDirect(request, userId);
+            return ResponseEntity.ok(ApiResponse.success("카드가 등록되었습니다.", response));
+        } catch (Exception e) {
+            // e.getMessage() 는 토스가 돌려준 사유 문자열이며 카드 정보를 포함하지 않는다
+            log.error("카드 직접 등록 실패: userId={}, reason={}", userId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }

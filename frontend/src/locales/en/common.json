@@ -194,11 +194,31 @@
       }
     },
     "spec": {
-      "solver": { "label": "Solver", "suffix": "Acceleration", "desc": "Parallel processing on GPU cores" },
-      "physics": { "label": "Physics", "value": "FDS Physics Engine", "desc": "Validated fire physics model" },
-      "standard": { "label": "Standard", "value": "NIST Verified", "desc": "Meets strict international safety standards" },
-      "analysis": { "label": "Analysis", "value": "Fire–Evacuation Linked", "desc": "Integrated EVAC analysis" },
-      "library": { "label": "Library", "value": "Fire Library", "desc": "Preconfigured fire scenario library" }
+      "solver": {
+        "label": "Solver",
+        "suffix": "Acceleration",
+        "desc": "Parallel processing on GPU cores"
+      },
+      "physics": {
+        "label": "Physics",
+        "value": "FDS Physics Engine",
+        "desc": "Validated fire physics model"
+      },
+      "standard": {
+        "label": "Standard",
+        "value": "NIST Verified",
+        "desc": "Meets strict international safety standards"
+      },
+      "analysis": {
+        "label": "Analysis",
+        "value": "Fire–Evacuation Linked",
+        "desc": "Integrated EVAC analysis"
+      },
+      "library": {
+        "label": "Library",
+        "value": "Fire Library",
+        "desc": "Preconfigured fire scenario library"
+      }
     },
     "coreValues": {
       "title": "",
@@ -325,16 +345,31 @@
         "department": "Department",
         "departmentPlaceholder": "Fire Safety Engineering, etc.",
         "role": "Role",
-        "roleOptions": ["Professor", "Researcher", "Student (Graduate)", "Student (Undergraduate)", "Other"],
+        "roleOptions": [
+          "Professor",
+          "Researcher",
+          "Student (Graduate)",
+          "Student (Undergraduate)",
+          "Other"
+        ],
         "country": "Country",
         "purpose": "Purpose",
-        "purposeOptions": ["Lecture / Course", "Research Project", "Thesis / Dissertation", "Other"],
+        "purposeOptions": [
+          "Lecture / Course",
+          "Research Project",
+          "Thesis / Dissertation",
+          "Other"
+        ],
         "courseProject": "Course / Project Name",
         "courseProjectPlaceholder": "e.g., Fire Safety Engineering Lab",
         "seatCount": "Expected Seats",
         "seatCountPlaceholder": "e.g., 30",
         "duration": "Preferred License Duration",
-        "durationOptions": ["180 days (6 months)", "365 days (1 year)", "Other"],
+        "durationOptions": [
+          "180 days (6 months)",
+          "365 days (1 year)",
+          "Other"
+        ],
         "durationCustomPlaceholder": "e.g., 90 days",
         "startDate": "Preferred Start Date",
         "message": "Additional Message (Optional)",
@@ -484,6 +519,27 @@
     "evacIncluded": "Evac (Evacuation Simulation) included",
     "subscription": "Subscription",
     "permanent": "Permanent License",
+    "cardForm": {
+      "title": "Add Card",
+      "cardNumber": "Card number",
+      "expiry": "Expiry",
+      "password": "Card PIN",
+      "passwordHint": "First 2 digits",
+      "identity": "Date of birth / Business no.",
+      "identityPlaceholder": "6-digit DOB or 10-digit business no.",
+      "identityHint": "Personal cards: 6-digit date of birth (YYMMDD). Corporate cards: 10-digit business registration number.",
+      "setDefault": "Set as default payment method",
+      "submit": "Add card",
+      "submitting": "Adding...",
+      "notice": "Your card details are sent to our payment provider (Toss Payments) and are not stored on our servers.",
+      "errors": {
+        "cardNumber": "Please enter a valid card number.",
+        "expiry": "Please enter the expiry as MM/YY.",
+        "identity": "Enter a 6-digit date of birth or 10-digit business number.",
+        "password": "Enter the first 2 digits of your card PIN.",
+        "failed": "Could not add the card. Please check your details."
+      }
+    },
     "cards": {
       "selectLabel": "Select a card to pay with",
       "loading": "Loading cards...",

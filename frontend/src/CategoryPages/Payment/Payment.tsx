@@ -11,6 +11,7 @@ import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
 import Header from '../../components/Header';
+import CardRegisterModal from '../../components/CardRegisterModal';
 import './Payment.css';
 
 // 토스페이먼츠 클라이언트 키
@@ -116,6 +117,9 @@ const PaymentPage: React.FC = () => {
   const [billingCards, setBillingCards] = useState<Array<{ id: number; cardCompany: string | null; cardNumber: string; isDefault: boolean }>>([]);
   const [selectedBillingKeyId, setSelectedBillingKeyId] = useState<number | null>(null);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
+
+  // 자체 카드 등록 모달 (MDP-758)
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
   // 새로고침 방지 - 상품이 선택되었거나 결제 정보가 입력되었을 때
   const hasPaymentProgress = selectedProduct !== null ||
@@ -376,52 +380,24 @@ const PaymentPage: React.FC = () => {
     return () => { active = false; };
   }, [selectedPaymentType, isLoggedIn]);
 
-  // 카드 등록 직전, 현재 결제 진행 상태를 저장 (등록 성공 후 복귀 시 복원용)
-  const persistCheckoutState = () => {
-    try {
-      sessionStorage.setItem(CHECKOUT_STATE_KEY, JSON.stringify({
-        product: selectedProduct,
-        plan: selectedPlan,
-        paymentType: selectedPaymentType,
-        coupon: appliedCoupon,
-        paymentInfo,
-        agreeTermsOfService,
-        agreePrivacy,
-      }));
-    } catch {
-      // 저장 실패 시 무시 — 복원만 안 될 뿐 등록 흐름은 정상 진행
-    }
-  };
+  // 카드 등록 — 자체 카드 입력 모달을 띄운다 (MDP-758).
+  // 토스 인증창으로 넘기지 않으므로 페이지 이탈도, 상태 저장/복원도 필요 없다.
+  const handleAddCard = () => setIsCardModalOpen(true);
 
-  // 카드 등록 — 페이지 이동 없이 결제 페이지 위에 토스 빌링 인증 모달(iframe)을 띄운다.
-  const handleAddCard = async () => {
+  // 카드 등록 성공 → 목록을 다시 불러와 방금 등록한 카드를 선택 상태로 만든다
+  const handleCardRegistered = async () => {
+    setIsCardModalOpen(false);
     try {
-      // 1) 백엔드와 동일한 customerKey 확보 (빌링 인증 ↔ 빌링키 발급 키 일치 보장)
-      const ckRes = await fetch(`${API_URL}/api/subscriptions/billing-keys/customer-key`, {
+      const res = await fetch(`${API_URL}/api/subscriptions/billing-keys`, {
         credentials: 'include' as RequestCredentials,
       });
-      if (!ckRes.ok) { showAlert({ message: t('payment.cards.registerFailed'), type: 'error' }); return; }
-      const ckData = await ckRes.json();
-      const customerKey = ckData?.data?.customerKey;
-      if (!customerKey) { showAlert({ message: t('payment.cards.registerFailed'), type: 'error' }); return; }
-
-      // 2) 등록 성공 시 토스가 successUrl로 리다이렉트하므로, 복귀 후 복원을 위해 현재 상태 저장
-      persistCheckoutState();
-
-      // 3) 토스 빌링 인증창을 iframe(모달)로 호출 → 결제 페이지를 떠나지 않고 카드 등록.
-      //    성공 시 ?returnTo=payment 를 붙여 결제 페이지로 되돌아온다.
-      const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
-      await tossPayments.requestBillingAuth('카드', {
-        customerKey,
-        successUrl: `${window.location.origin}/billing/success?returnTo=payment`,
-        failUrl: `${window.location.origin}/billing/fail?returnTo=payment`,
-        windowTarget: 'iframe',
-      });
-    } catch (err: any) {
-      // 사용자가 모달을 닫은 경우(USER_CANCEL)는 조용히 무시하고, 저장해 둔 상태도 정리
-      sessionStorage.removeItem(CHECKOUT_STATE_KEY);
-      if (err?.code === 'USER_CANCEL') return;
-      showAlert({ message: t('payment.cards.registerFailed'), type: 'error' });
+      const d = res.ok ? await res.json() : { data: [] };
+      const cards = d.data || [];
+      setBillingCards(cards);
+      const def = cards.find((c: any) => c.isDefault) || cards[cards.length - 1];
+      if (def) setSelectedBillingKeyId(def.id);
+    } catch {
+      // 목록 갱신 실패 — 등록 자체는 성공했으므로 새로고침하면 보인다
     }
   };
 
@@ -1069,6 +1045,14 @@ const PaymentPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 자체 카드 등록 모달 (MDP-758) */}
+      {isCardModalOpen && (
+        <CardRegisterModal
+          onClose={() => setIsCardModalOpen(false)}
+          onSuccess={handleCardRegistered}
+        />
+      )}
 
       {/* 이용약관 모달 */}
       <TermsModal
