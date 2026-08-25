@@ -31,11 +31,25 @@ const Clock: React.FC<{ className?: string }> = ({ className }) => (
 const ExternalLink: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
 );
+// 비교 보고서 — 막대 그래프 형태
+const BarChart: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="13" y="8" width="3" height="10" /><rect x="19" y="5" width="0.01" height="0.01" /><path d="M18 14h3v4h-3z" /></svg>
+);
+// 공인시험 — 인증 배지 형태
+const Award: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>
+);
 
 const YOUTUBE_URL = 'https://www.youtube.com/@SimulationMeteor';
 
 // 기술문서(테크니컬 가이드북) HTML 경로 — 새 창으로 열립니다. (frontend/public/tech-docs/)
 const TECH_GUIDE_HTML_URL = '/tech-docs/technical-doc.html';
+
+// 기술문서(보고서) — ISO 9705 실 화재 CPU/GPU 비교
+const TECH_REPORT_HTML_URL = '/tech-docs/technical-doc-report.html';
+
+// 기술문서(공인시험) — 공동주택 4실 침실화재 CPU/GPU 비교
+const TECH_CERTIFIED_HTML_URL = '/tech-docs/technical-doc-certified-test.html';
 
 // 사용방법(피난 동역학 시뮬레이션 쇼케이스) — React 라우트로 이관됨. 새 창으로 열립니다.
 const USAGE_SHOWCASE_URL = '/evac-sim';
@@ -43,7 +57,7 @@ const USAGE_SHOWCASE_URL = '/evac-sim';
 // PDF 자료 경로 (파일이 준비되면 아래 경로를 채워주세요. 비어 있으면 '준비 중'으로 안내됩니다.)
 const TUTORIAL_PDF_URL = '';
 
-type GuideView = 'hub' | 'video' | 'tutorialDoc' | 'usage' | 'techGuide';
+type GuideView = 'hub' | 'video' | 'tutorialDoc' | 'usage' | 'techGuide' | 'techReport' | 'techCertified';
 
 interface GuideItem {
   key: Exclude<GuideView, 'hub'>;
@@ -59,6 +73,8 @@ const ITEMS: GuideItem[] = [
   { key: 'tutorialDoc', Icon: FileText, status: 'active' },
   { key: 'usage', Icon: BookOpen, status: 'active', href: USAGE_SHOWCASE_URL },
   { key: 'techGuide', Icon: Cpu, status: 'active', href: TECH_GUIDE_HTML_URL },
+  { key: 'techReport', Icon: BarChart, status: 'active', href: TECH_REPORT_HTML_URL },
+  { key: 'techCertified', Icon: Award, status: 'active', href: TECH_CERTIFIED_HTML_URL },
 ];
 
 const TutorialHubSection: React.FC = () => {
