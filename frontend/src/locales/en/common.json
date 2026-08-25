@@ -453,6 +453,14 @@
         "techGuide": {
           "title": "Technical Docs (Fire)",
           "desc": "Technical material on analysis theory and settings for advanced users."
+        },
+        "techReport": {
+          "title": "Technical Docs (Report)",
+          "desc": "A validation report comparing CPU and GPU results for the ISO 9705 room fire scenario."
+        },
+        "techCertified": {
+          "title": "Technical Docs (Certified Test)",
+          "desc": "CPU vs GPU results under the certified test conditions for a 4-room apartment bedroom fire."
         }
       }
     }
