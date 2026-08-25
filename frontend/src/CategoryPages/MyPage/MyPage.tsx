@@ -6,11 +6,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import Header from '../../components/Header';
 import Seo from '../../components/Seo';
 import LoginModal from '../../components/LoginModal';
+import CardRegisterModal from '../../components/CardRegisterModal';
 import { useAlert } from '../../components/AlertProvider';
 import BoothGiftBanner from '../../components/BoothGiftBanner';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber, isValidPhone } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
-import { loadTossPayments } from '@tosspayments/payment-sdk';
 import {
   MenuSection,
   UserInfo, License, Activation, Subscription, BillingKey,
@@ -28,7 +28,6 @@ import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -56,6 +55,8 @@ const MyPage: React.FC = () => {
 
   // 등록된 카드 (빌링키)
   const [billingKeys, setBillingKeys] = useState<BillingKey[]>([]);
+  // 자체 카드 등록 모달 (MDP-758)
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isLoadingBillingKeys, setIsLoadingBillingKeys] = useState(false);
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
   const [isLoadingPaymentHistory, setIsLoadingPaymentHistory] = useState(false);
@@ -576,29 +577,22 @@ const MyPage: React.FC = () => {
     } catch { showError('자동 갱신 설정 중 오류가 발생했습니다.'); }
   };
 
-  const handleAddCard = async () => {
+  // 카드 등록 — 자체 카드 입력 모달을 띄운다 (MDP-758).
+  // 토스 인증창으로 넘기지 않으므로 마이페이지를 떠나지 않는다.
+  const handleAddCard = () => setIsCardModalOpen(true);
+
+  // 카드 등록 성공 → 등록 카드 목록 갱신
+  const handleCardRegistered = async () => {
+    setIsCardModalOpen(false);
     try {
-      // 1) 백엔드와 동일한 customerKey 확보 (빌링 인증 ↔ 빌링키 발급 키 일치 보장)
-      const ckRes = await fetch(`${API_URL}/api/subscriptions/billing-keys/customer-key`, {
+      const res = await fetch(`${API_URL}/api/subscriptions/billing-keys`, {
         credentials: 'include' as RequestCredentials,
       });
-      if (!ckRes.ok) { showError('카드 등록 준비에 실패했습니다. 잠시 후 다시 시도해주세요.'); return; }
-      const ckData = await ckRes.json();
-      const customerKey = ckData?.data?.customerKey;
-      if (!customerKey) { showError('카드 등록 준비에 실패했습니다. 잠시 후 다시 시도해주세요.'); return; }
-
-      // 2) 토스 빌링 인증창 호출 (결제 아님 - 카드 등록/토큰화). 성공 시 successUrl로 리다이렉트됨.
-      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
-      await tossPayments.requestBillingAuth('카드', {
-        customerKey,
-        successUrl: `${window.location.origin}/billing/success`,
-        failUrl: `${window.location.origin}/billing/fail`,
-      });
-      // 리다이렉트되므로 이 아래는 실행되지 않음
-    } catch (err: any) {
-      // 사용자가 인증창을 닫은 경우(USER_CANCEL)는 조용히 무시
-      if (err?.code === 'USER_CANCEL') return;
-      showError('카드 등록 중 오류가 발생했습니다.');
+      const d = res.ok ? await res.json() : { data: [] };
+      setBillingKeys(d.data || []);
+      showSuccess('카드가 등록되었습니다.');
+    } catch {
+      // 목록 갱신 실패 — 등록 자체는 성공했으므로 새로고침하면 보인다
     }
   };
 
@@ -1234,6 +1228,14 @@ const MyPage: React.FC = () => {
           </main>
         </div>
       </div>
+
+      {/* 자체 카드 등록 모달 (MDP-758) */}
+      {isCardModalOpen && (
+        <CardRegisterModal
+          onClose={() => setIsCardModalOpen(false)}
+          onSuccess={handleCardRegistered}
+        />
+      )}
 
       {/* 로그인 모달 - 전역 */}
       <LoginModal

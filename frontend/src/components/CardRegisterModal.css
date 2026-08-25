@@ -1,0 +1,189 @@
+/* 자체 카드 등록 모달 (MDP-758) */
+.card-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 17, 21, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.card-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.card-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 0;
+}
+
+.card-modal__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.card-modal__close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 26px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.card-modal__close:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.card-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 24px;
+}
+
+.card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.card-field input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.card-field input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #C4320A;
+}
+
+.card-field input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.card-field__hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.card-field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.card-default-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.card-default-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #C4320A;
+  cursor: pointer;
+}
+
+.card-modal__error {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.card-modal__notice {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+.card-modal__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.card-modal__btn {
+  flex: 1;
+  padding: 13px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.card-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card-modal__btn--ghost {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.card-modal__btn--ghost:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.card-modal__btn--primary {
+  background: #C4320A;
+  color: #ffffff;
+}
+
+.card-modal__btn--primary:hover:not(:disabled) {
+  background: #a8290a;
+}
+
+.card-modal__btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@media (max-width: 480px) {
+  .card-field-row {
+    flex-direction: column;
+  }
+}
