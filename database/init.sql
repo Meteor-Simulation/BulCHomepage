@@ -95,7 +95,7 @@ CREATE TABLE users (
     email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
     email_verified_at   TIMESTAMP NULL,
     marketing_agreed    BOOLEAN NOT NULL DEFAULT FALSE,
-    marketing_consent   CHAR(1) NOT NULL DEFAULT 'P',
+    marketing_consent   VARCHAR(1) NOT NULL DEFAULT 'P',
     marketing_agreed_at TIMESTAMP NULL,
     unsubscribe_token   VARCHAR(36) NULL UNIQUE,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
