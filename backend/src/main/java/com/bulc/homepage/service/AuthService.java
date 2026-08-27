@@ -8,6 +8,7 @@ import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.RefreshToken;
 import com.bulc.homepage.entity.SignupTicket;
+import com.bulc.homepage.entity.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.exception.DeactivatedAccountException;
@@ -116,6 +117,7 @@ public class AuthService {
                     .emailVerifiedAt(LocalDateTime.now())
                     .rolesCode("002")  // 기본값: 일반 사용자
                     .marketingAgreed(marketing)
+                    .marketingConsent(marketing ? MarketingConsent.AGREED : MarketingConsent.PENDING)
                     .marketingAgreedAt(marketing ? LocalDateTime.now() : null)
                     .unsubscribeToken(UUID.randomUUID().toString());
             if (normalizedLang != null) {

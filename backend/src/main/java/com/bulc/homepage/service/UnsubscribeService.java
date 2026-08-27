@@ -1,5 +1,6 @@
 package com.bulc.homepage.service;
 
+import com.bulc.homepage.entity.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,9 @@ public class UnsubscribeService {
             User user = userOpt.get();
             if (Boolean.TRUE.equals(user.getMarketingAgreed())) {
                 user.setMarketingAgreed(false);
-                user.setMarketingAgreedAt(null);
+                // 수신거부도 "답한 상태"다 — 이렇게 해야 로그인 시 동의 팝업이 다시 뜨지 않는다 (MDP-772)
+                user.setMarketingConsent(MarketingConsent.DECLINED);
+                user.setMarketingAgreedAt(java.time.LocalDateTime.now());
                 userRepository.save(user);
                 log.info("[수신거부] 회원 광고성 수신동의 해제: {}", user.getEmail());
             }

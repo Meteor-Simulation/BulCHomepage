@@ -3,6 +3,7 @@ package com.bulc.homepage.service;
 import com.bulc.homepage.email.EmailCategory;
 import com.bulc.homepage.entity.EmailLog;
 import com.bulc.homepage.entity.LeadContact;
+import com.bulc.homepage.entity.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.EmailLogRepository;
 import com.bulc.homepage.repository.LeadContactRepository;
@@ -72,7 +73,7 @@ public class OperationalMailService {
         Set<String> seen = new HashSet<>();
 
         if (includeMembers) {
-            for (User u : userRepository.findAllByIsActiveTrueAndMarketingAgreedTrue()) {
+            for (User u : userRepository.findAllByIsActiveTrueAndMarketingConsent(MarketingConsent.AGREED)) {
                 String email = u.getEmail();
                 if (email == null || email.isBlank() || !seen.add(email.trim().toLowerCase())) continue;
                 String token = u.getUnsubscribeToken();

@@ -10,6 +10,7 @@ interface User {
   rolesCode?: string; // 000: admin, 001: manager, 002: user
   language?: string;  // 사용자 언어 설정 (ko, en)
   marketingAgreed?: boolean; // 광고성 메일 수신 동의 여부
+  marketingConsent?: string; // 수신 상태 Y:동의 N:거절 P:미선택 (MDP-772)
 }
 
 interface LoginResult {
@@ -146,6 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           rolesCode: result.data.rolesCode,
           language: result.data.language,
           marketingAgreed: result.data.marketingAgreed,
+          marketingConsent: result.data.marketingConsent,
         };
       }
       return null;
@@ -235,6 +237,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           rolesCode: userInfo.rolesCode,
           language: userInfo.language,
           marketingAgreed: userInfo.marketingAgreed,
+          marketingConsent: userInfo.marketingConsent,
         };
 
         // 새 로그인 — 마케팅 동의 팝업의 "나중에" 세션 보류 해제 (다음 로그인 시 재노출)
@@ -277,7 +280,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 마케팅 수신동의 상태를 컨텍스트에 즉시 반영 (동의 팝업/토글 처리 후)
   const applyMarketingConsent = useCallback((agreed: boolean) => {
-    setUser(prev => (prev ? { ...prev, marketingAgreed: agreed } : prev));
+    // 거절도 "답한 상태"(N)로 기록해야 팝업이 다시 뜨지 않는다 (MDP-772)
+    setUser(prev => (prev ? { ...prev, marketingAgreed: agreed, marketingConsent: agreed ? 'Y' : 'N' } : prev));
   }, []);
 
   return (

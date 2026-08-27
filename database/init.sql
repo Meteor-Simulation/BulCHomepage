@@ -95,6 +95,7 @@ CREATE TABLE users (
     email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
     email_verified_at   TIMESTAMP NULL,
     marketing_agreed    BOOLEAN NOT NULL DEFAULT FALSE,
+    marketing_consent   CHAR(1) NOT NULL DEFAULT 'P',
     marketing_agreed_at TIMESTAMP NULL,
     unsubscribe_token   VARCHAR(36) NULL UNIQUE,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -118,8 +119,9 @@ COMMENT ON COLUMN users.name IS '이름 (결제 시 입력)';
 COMMENT ON COLUMN users.phone IS '전화번호 (결제 시 입력)';
 COMMENT ON COLUMN users.country_code IS '국가 코드 (FK → countries.code)';
 COMMENT ON COLUMN users.language_code IS '언어 코드 (ko/en, NULL이면 IP 감지 사용)';
-COMMENT ON COLUMN users.marketing_agreed IS '광고성 정보 수신 동의 여부';
-COMMENT ON COLUMN users.marketing_agreed_at IS '광고성 정보 수신 동의 시점';
+COMMENT ON COLUMN users.marketing_agreed IS '광고성 정보 수신 동의 여부 (marketing_consent 로 대체 예정, 롤백 대비 유지)';
+COMMENT ON COLUMN users.marketing_consent IS '광고성 수신 상태 — Y:동의, N:거절, P:미선택';
+COMMENT ON COLUMN users.marketing_agreed_at IS '광고성 수신 상태가 마지막으로 바뀐 시점 (동의·철회 기록)';
 COMMENT ON COLUMN users.unsubscribe_token IS '1-click unsubscribe 토큰 (UUID, 광고성 메일 footer 링크에 사용)';
 COMMENT ON COLUMN users.is_active IS '계정 활성화 상태 (기본: true)';
 COMMENT ON COLUMN users.deactivated_at IS '계정 비활성화 시점';

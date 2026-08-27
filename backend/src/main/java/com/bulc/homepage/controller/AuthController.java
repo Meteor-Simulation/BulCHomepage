@@ -9,6 +9,7 @@ import com.bulc.homepage.dto.request.EmailVerificationRequest;
 import com.bulc.homepage.dto.request.VerifyCodeRequest;
 import com.bulc.homepage.dto.response.ApiResponse;
 import com.bulc.homepage.dto.response.AuthResponse;
+import com.bulc.homepage.entity.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.repository.UserRepository;
@@ -234,6 +235,7 @@ public class AuthController {
                 .rolesCode(user.getRolesCode())
                 .language(user.getLanguageCode())
                 .marketingAgreed(user.getMarketingAgreed())
+                .marketingConsent(user.getMarketingConsent())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("사용자 정보 조회 성공", userInfo));
@@ -258,7 +260,10 @@ public class AuthController {
 
         boolean agreed = Boolean.TRUE.equals(body.get("agreed"));
         user.setMarketingAgreed(agreed);
-        user.setMarketingAgreedAt(agreed ? java.time.LocalDateTime.now() : null);
+        // 거절도 "답한 상태"로 남긴다 — 그래야 다음 로그인에 팝업이 다시 뜨지 않는다 (MDP-772)
+        user.setMarketingConsent(MarketingConsent.from(agreed));
+        // 동의·철회 시점 기록이므로 거절 시각도 남긴다 (정보통신망법 대응)
+        user.setMarketingAgreedAt(java.time.LocalDateTime.now());
         // 동의 시 수신거부 토큰이 없으면 발급 (광고 메일 수신거부 링크 보장)
         if (agreed && (user.getUnsubscribeToken() == null || user.getUnsubscribeToken().isBlank())) {
             user.setUnsubscribeToken(java.util.UUID.randomUUID().toString());
@@ -272,6 +277,7 @@ public class AuthController {
                 .rolesCode(user.getRolesCode())
                 .language(user.getLanguageCode())
                 .marketingAgreed(user.getMarketingAgreed())
+                .marketingConsent(user.getMarketingConsent())
                 .build();
         return ResponseEntity.ok(ApiResponse.success("수신 동의가 갱신되었습니다.", userInfo));
     }

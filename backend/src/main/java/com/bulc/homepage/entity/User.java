@@ -56,6 +56,20 @@ public class User {
     @Builder.Default
     private Boolean marketingAgreed = false;
 
+    /**
+     * 광고성 수신 상태 — Y:동의, N:거절, P:미선택 (MDP-772).
+     *
+     * <p>boolean 하나로는 "거절함"과 "아직 안 물어봄"이 구분되지 않아
+     * 거절한 사용자에게 동의 팝업이 계속 노출되던 문제가 있었다.
+     *
+     * <p>{@link #marketingAgreed} 는 롤백 대비로 남겨두고 함께 갱신하지만,
+     * 판단 기준은 이 컬럼이다.
+     */
+    @Column(name = "marketing_consent", nullable = false, length = 1)
+    @Builder.Default
+    private String marketingConsent = MarketingConsent.PENDING;
+
+    /** 마지막으로 수신 상태가 바뀐 시각 (동의·철회 시점 기록). */
     @Column(name = "marketing_agreed_at")
     private LocalDateTime marketingAgreedAt;
 
