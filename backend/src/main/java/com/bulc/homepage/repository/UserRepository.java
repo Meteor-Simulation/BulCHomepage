@@ -18,8 +18,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     /** 활성 사용자 전체 조회 (운영성 메일 일괄 발송용). */
     List<User> findAllByIsActiveTrue();
 
-    /** 광고성 메일 발송 대상 — 활성 + 마케팅 수신동의 회원. */
-    List<User> findAllByIsActiveTrueAndMarketingAgreedTrue();
+    /**
+     * 광고성 메일 발송 대상 — 활성 + 수신 동의(Y) 회원 (MDP-772).
+     * 거절(N)·미선택(P)은 제외된다. 호출부에서 {@code MarketingConsent.AGREED} 를 넘긴다.
+     */
+    List<User> findAllByIsActiveTrueAndMarketingConsent(String marketingConsent);
 
     /** 수신거부 토큰으로 회원 조회 (광고성 메일 수신거부 링크 처리용). */
     Optional<User> findByUnsubscribeToken(String unsubscribeToken);

@@ -6,17 +6,16 @@ import './MarketingConsentModal.css';
 /**
  * 로그인 후 마케팅(광고성 메일) 수신 동의 팝업 (MDP-609).
  *
- * 기존 가입자(특히 소셜 가입자는 marketingAgreed 가 항상 false) 중 아직 동의/미동의를
- * 결정하지 않은 사용자에게 로그인 직후 노출한다.
- * - 동의/미동의: /api/auth/me/marketing-consent 로 저장 후 다시 노출되지 않음
- * - 나중에: 일정 기간 노출을 보류
+ * 아직 답하지 않은 사용자(marketingConsent = 'P')에게만 로그인 직후 노출한다.
+ * - 동의(Y)/거절(N): 서버에 상태가 남아 다시 노출되지 않음 (기기·브라우저 무관)
+ * - 나중에(P 유지): 이번 로그인 세션에서만 숨김
+ *
+ * MDP-772 이전에는 거절도 marketing_agreed=false 로만 저장돼 "미선택"과 구분되지 않았고,
+ * localStorage 90일 표식으로 버티느라 브라우저 데이터 삭제·다른 기기에서 다시 떴다.
  */
-// "받지 않기"(명시적 미동의) — 장기 보류 (localStorage). 다음 로그인에도 바로 다시 묻지 않음.
-const DECLINE_KEY = 'mkt_consent_declined_until';
-const DECLINE_DAYS = 90;
 // "나중에" — 이번 로그인 세션에서만 보류 (sessionStorage). 다음 로그인 시 AuthContext가 제거 → 재노출.
+// 동의/거절은 서버 상태(marketingConsent)로 남으므로 브라우저 저장에 의존하지 않는다 (MDP-772).
 const REMIND_LATER_KEY = 'mkt_consent_remind_later';
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const MarketingConsentModal: React.FC = () => {
   const { user, isLoggedIn, isAuthReady, applyMarketingConsent } = useAuth();
@@ -28,19 +27,14 @@ const MarketingConsentModal: React.FC = () => {
       setVisible(false);
       return;
     }
-    // 이미 동의한 사용자는 노출하지 않음
-    if (user.marketingAgreed === true) {
+    // 상태 값을 아직 못 받았으면 판단 보류
+    if (user.marketingConsent === undefined) {
       setVisible(false);
       return;
     }
-    // marketingAgreed 값을 아직 못 받았으면(undefined) 판단 보류
-    if (user.marketingAgreed === undefined) {
-      setVisible(false);
-      return;
-    }
-    // "받지 않기" 장기 보류 기간 내면 노출하지 않음
-    const declinedUntil = Number(localStorage.getItem(DECLINE_KEY) || 0);
-    if (declinedUntil && Date.now() < declinedUntil) {
+    // 이미 답한 사용자(동의 Y / 거절 N)는 다시 묻지 않는다.
+    // 기기·브라우저와 무관하게 서버 상태로 판단하므로 재노출되지 않는다.
+    if (user.marketingConsent !== 'P') {
       setVisible(false);
       return;
     }
@@ -64,13 +58,8 @@ const MarketingConsentModal: React.FC = () => {
         body: JSON.stringify({ agreed }),
       });
       if (res.ok) {
+        // 서버에 Y/N 이 기록되므로 브라우저 표식이 필요 없다
         applyMarketingConsent(agreed);
-        if (!agreed) {
-          // 받지 않기 — 장기 보류 (다음 로그인에도 바로 다시 묻지 않음)
-          localStorage.setItem(DECLINE_KEY, String(Date.now() + DECLINE_DAYS * DAY_MS));
-        } else {
-          localStorage.removeItem(DECLINE_KEY);
-        }
         sessionStorage.removeItem(REMIND_LATER_KEY);
         setVisible(false);
       } else {
