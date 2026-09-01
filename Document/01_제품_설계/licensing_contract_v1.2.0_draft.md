@@ -21,7 +21,7 @@
 2. **경로·에러코드 변경은 버전 경계에서만 가능하다.** `DELETE …/activations/{deviceFingerprint}` 의 경로 파라미터 교체, `SESSION_DEACTIVATED` 정본화가 여기에 해당한다.
 3. **스키마 폭 확장은 마이그레이션 창이 아니면 영구 고착된다.** `products.code` 가 `VARCHAR(3)` 이고 외래키가 3곳에 걸려 있다.
 
-> ⚠️ **이 drift 는 이미 사고를 냈다.** Unity 클라이언트(MDP-754)는 스펙 문서의 `aud: "BULC_EVAC"` 예시를 따라 `"bulc-meteor-pro"` 를 기대하도록 구현되었으나, 서버 실제값은 `products.code` = `"001"` 이다. 게다가 내장 공개키를 SDK 리포의 스텁에서 가져와 운영 키와 다른 값이 박혔다. 실 서버 왕복 단언이 없어 GRADUATE 까지 검출되지 않았다. → MDP-799
+> ⚠️ **이 drift 는 이미 사고를 냈다.** Unity 클라이언트(MDP-754)는 스펙 문서의 `aud: "BULC_EVAC"` 예시를 따라 `"bulc-meteor-pro"` 를 기대하도록 구현되었으나, 서버 실제값은 `products.code` = `"001"` 이다. 게다가 내장 공개키를 SDK 리포의 스텁 — *서명 검증 없이 `true` 를 반환하는 코드* 옆의 상수 — 에서 가져왔다. 실 서버 왕복 단언이 없어 GRADUATE 까지 검출되지 않았다. → MDP-799
 
 ---
 
@@ -93,7 +93,28 @@ if (existing != null) { existing.reactivate(...); return existing; }
 
 > **설계 의도**: JWKS 를 그냥 신뢰하면 신뢰 근거가 TLS 하나로 축소된다. 응답 자체를 *이미 신뢰하는 키*로 서명해야 오프라인 검증 모델과 정합한다. 1단만으로도 당면 회전 요구는 충족되므로 2단은 후속으로 분리 가능하다.
 
-→ MDP-788
+### 선행 작업 — 현재 `kid` 는 정보를 담고 있지 않다
+
+```java
+// DefaultSigningKeyProvider.java:142-144
+public String keyId() {
+    return PROD_KEY_ID;      // "bulc-prod-v1" — 실제 로드된 키와 무관한 상수
+}
+```
+
+어떤 키를 로드했든 `kid` 는 항상 같은 문자열이다. javadoc 은 "prod와 test 키를 구분"한다고 적었으나 이 구현에서는 구분되지 않는다. **1단 설계가 이 상태로는 성립하지 않는다** — 모든 토큰의 `kid` 가 동일하면 클라이언트가 키를 선택할 수 없다. 서버가 실제 키에서 `kid` 를 도출하도록(JWK thumbprint(RFC 7638) 또는 키별 설정 id) 바꾸는 것이 선행이다.
+
+### 운영 키의 정체는 아직 측정되지 않았다
+
+운영 개인키는 `LIC_PRIVATE_KEY_BASE64` / `LIC_PRIVATE_KEY_PATH` 로 주입되며 **어느 리포에도 없다**. prod 프로필은 키 부재 시 부팅이 실패하므로(`handleMissingKey` → `IllegalStateException`) 배포 성공은 "키가 설정돼 있다"만 말해줄 뿐 그 값을 말해주지 않는다.
+
+유통 중인 값은 **3종**이고 그중 어느 것도 운영 대조로 검증된 적이 없다. `c3 d2 ef 16`(Rust·Electron 공통)이 운영 키라는 정황은 강하나 — 두 클라이언트 모두 서명 불일치 시 경성 실패하고 출하 중이다 — 정황이지 측정이 아니다.
+
+**검증 공백**: CI 의 게이트 스텝은 *음성* 경로만 본다(라이선스 없음 → `exit 3`). 운영 토큰이 내장 키로 통과하는지 보는 `real_token_signature_e2e` 는 `#[ignore]` 라 자동 실행된 적이 없다. "CI green" 도 "배포 성공" 도 키 정합에 대해 아무 말을 하지 않는다.
+
+**확정 방법**: `cd GPU_code && BULC_TEST_TOKEN=<운영 JWT> cargo test real_token_signature_e2e -- --ignored --nocapture` — 하네스는 이미 있다. 다만 그 하네스가 FDS_GPU 리포에 있어 다른 클라이언트가 재사용할 수 없다. 공통 적합성 검사로의 이관은 별도 이슈로 등재한다.
+
+→ MDP-788 (키 배포·`kid` 도출) · MDP-801 (검증 하네스 이관 — 등재만)
 
 ---
 
@@ -211,8 +232,9 @@ GUI 와 CLI 는 **같은 `activationId` 를 공유**하여 한 좌석을 쓴다.
 | MDP-797 | 스토리 | CLI heartbeat 수명주기 + 만료 정책 + `license` 서브커맨드 | FDS_GPU | 3~5 |
 | MDP-798 | 스토리 | EVAC 엔진 라이선스 게이트 배선 | FDS_GPU | 1~2 |
 | MDP-799 | 버그 | Unity 라이선스 클라이언트 실서버 정합 — 운영 공개키 · `aud` · `act` | UnityFDSEditor | 1~2 |
+| MDP-801 | 작업 | 키 정합 검증 하네스 SDK 이관 — 양성 경로 회귀 + 공통 적합성 검사 **(등재만 · 미착수)** | sdk | — |
 
-합계 **33~52 인일**. KETI CLI 납품 최단 경로는 MDP-792 · 794(부분) · 795 · 796 · 797 로 약 **15~25 인일**이며, MDP-788(키 배포)은 CLI 배포 *이전*에 끝나야 한다 — 배포 후에는 공개키가 박힌 바이너리가 현장에 풀린다.
+합계 **33~52 인일** (MDP-801 제외). KETI CLI 납품 최단 경로는 MDP-792 · 794(부분) · 795 · 796 · 797 로 약 **15~25 인일**이며, MDP-788(키 배포)은 CLI 배포 *이전*에 끝나야 한다 — 배포 후에는 공개키가 박힌 바이너리가 현장에 풀린다.
 
 ---
 
