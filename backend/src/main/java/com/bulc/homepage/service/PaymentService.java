@@ -9,12 +9,9 @@ import com.bulc.homepage.entity.PaymentDetail;
 import com.bulc.homepage.entity.PricePlan;
 import com.bulc.homepage.entity.Subscription;
 import com.bulc.homepage.entity.User;
-import com.bulc.homepage.licensing.domain.OwnerType;
-import com.bulc.homepage.licensing.domain.UsageCategory;
-import com.bulc.homepage.licensing.dto.LicenseIssueResult;
-import com.bulc.homepage.licensing.exception.LicenseException;
-import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
-import com.bulc.homepage.licensing.service.LicenseService;
+import com.bulc.homepage.payment.port.IssuedLicense;
+import com.bulc.homepage.payment.port.LicenseAlreadyOwnedException;
+import com.bulc.homepage.payment.port.LicenseIssuePort;
 import com.bulc.homepage.repository.PaymentRepository;
 import com.bulc.homepage.repository.PricePlanRepository;
 import com.bulc.homepage.repository.SubscriptionRepository;
@@ -48,7 +45,7 @@ public class PaymentService {
     private final PricePlanRepository pricePlanRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
-    private final LicenseService licenseService;
+    private final LicenseIssuePort licenseIssuePort;
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -140,14 +137,11 @@ public class PaymentService {
         // 동일 product에 ACTIVE/PENDING 유상 라이선스가 이미 있으면 결제 차단 (토스 API 호출 전)
         if (pricePlan.getLicensePlanId() != null) {
             try {
-                licenseService.requireUserCanPurchasePlan(user.getId(), pricePlan.getLicensePlanId());
-            } catch (LicenseException e) {
-                if (e.getErrorCode() == ErrorCode.LICENSE_ALREADY_EXISTS) {
-                    log.warn("[결제] 중복 구매 차단 - userId={}, pricePlanId={}, orderId={}",
-                            user.getId(), pricePlan.getId(), request.getOrderId());
-                    throw new RuntimeException("이미 해당 제품의 라이선스를 보유하고 있습니다.");
-                }
-                throw e;
+                licenseIssuePort.requirePurchasable(user.getId(), pricePlan.getLicensePlanId());
+            } catch (LicenseAlreadyOwnedException e) {
+                log.warn("[결제] 중복 구매 차단 - userId={}, pricePlanId={}, orderId={}",
+                        user.getId(), pricePlan.getId(), request.getOrderId());
+                throw new RuntimeException(e.getMessage());
             }
         }
 
@@ -223,33 +217,8 @@ public class PaymentService {
 
                     // 라이선스 발급
                     if (pricePlan.getLicensePlanId() != null) {
-                        try {
-                            UUID orderId = UUID.nameUUIDFromBytes(request.getOrderId().getBytes(StandardCharsets.UTF_8));
-
-                            LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
-                                    OwnerType.USER,
-                                    user.getId(),
-                                    pricePlan.getLicensePlanId(),
-                                    orderId,
-                                    UsageCategory.COMMERCIAL
-                            );
-
-                            result.put("licenseKey", licenseResult.licenseKey());
-                            result.put("licenseId", licenseResult.id().toString());
-                            if (licenseResult.validUntil() != null) {
-                                result.put("licenseValidUntil", licenseResult.validUntil().toString());
-                            }
-
-                            log.info("[결제] STEP 5/5 라이선스 발급 성공 - orderId={}, licenseKey={}, validUntil={}",
-                                    request.getOrderId(), licenseResult.licenseKey(), licenseResult.validUntil());
-                        } catch (Exception e) {
-                            log.error("[결제] 라이선스 발급 실패 (결제는 완료) - orderId={}, error={}",
-                                    request.getOrderId(), e.getMessage(), e);
-                            // 실패 사유 DB 기록
-                            payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
-                            paymentRepository.save(payment);
-                            result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
-                        }
+                        issueLicenseIntoResult("[결제] STEP 5/5", request.getOrderId(), user.getId(),
+                                pricePlan.getLicensePlanId(), payment, result);
                     } else {
                         log.warn("[결제] 라이선스 플랜 미연결 - orderId={}, pricePlanId={}", request.getOrderId(), pricePlan.getId());
                     }
@@ -414,15 +383,9 @@ public class PaymentService {
                             .orElseThrow(() -> new RuntimeException("[웹훅] 사용자 정보를 찾을 수 없습니다: " + payment.getUserEmail()));
                     UUID orderUuid = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
 
-                    LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
-                            OwnerType.USER,
-                            userId,
-                            pricePlan.getLicensePlanId(),
-                            orderUuid,
-                            UsageCategory.COMMERCIAL
-                    );
+                    IssuedLicense license = licenseIssuePort.issue(userId, pricePlan.getLicensePlanId(), orderUuid);
 
-                    log.info("[웹훅] 라이선스 발급 성공 - orderId={}, licenseKey={}", orderId, licenseResult.licenseKey());
+                    log.info("[웹훅] 라이선스 발급 성공 - orderId={}, licenseKey={}", orderId, license.licenseKey());
                 } catch (Exception e) {
                     log.error("[웹훅] 라이선스 발급 실패 - orderId={}, error={}", orderId, e.getMessage(), e);
                     payment.setFailReason("웹훅 라이선스 발급 실패: " + e.getMessage());
@@ -463,12 +426,9 @@ public class PaymentService {
         // 동일 product 중복 구매 차단 (청구 전)
         if (pricePlan.getLicensePlanId() != null) {
             try {
-                licenseService.requireUserCanPurchasePlan(userId, pricePlan.getLicensePlanId());
-            } catch (LicenseException e) {
-                if (e.getErrorCode() == ErrorCode.LICENSE_ALREADY_EXISTS) {
-                    throw new RuntimeException("이미 해당 제품의 라이선스를 보유하고 있습니다.");
-                }
-                throw e;
+                licenseIssuePort.requirePurchasable(userId, pricePlan.getLicensePlanId());
+            } catch (LicenseAlreadyOwnedException e) {
+                throw new RuntimeException(e.getMessage());
             }
         }
 
@@ -521,21 +481,8 @@ public class PaymentService {
 
         // 라이선스 발급
         if (pricePlan.getLicensePlanId() != null) {
-            try {
-                UUID sourceOrderId = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
-                LicenseIssueResult licenseResult = licenseService.issueLicenseWithPlanForBilling(
-                        OwnerType.USER, userId, pricePlan.getLicensePlanId(), sourceOrderId, UsageCategory.COMMERCIAL);
-                result.put("licenseKey", licenseResult.licenseKey());
-                result.put("licenseId", licenseResult.id().toString());
-                if (licenseResult.validUntil() != null) {
-                    result.put("licenseValidUntil", licenseResult.validUntil().toString());
-                }
-            } catch (Exception e) {
-                log.error("[빌링결제] 라이선스 발급 실패 (결제는 완료) - orderId={}, error={}", orderId, e.getMessage(), e);
-                payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
-                paymentRepository.save(payment);
-                result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
-            }
+            issueLicenseIntoResult("[빌링결제]", orderId, userId,
+                    pricePlan.getLicensePlanId(), payment, result);
         }
 
         // 구독형이면 자동갱신 활성화 (연 1회 — 스케줄러가 빌링키로 재청구 + 라이선스 연장)
@@ -857,5 +804,39 @@ public class PaymentService {
             case "07" -> "Sh수협은행";
             default -> bankCode;
         };
+    }
+
+    /**
+     * 결제 완료 후 라이선스를 발급하고 응답 맵에 결과를 담는다.
+     *
+     * <p>발급 실패는 이미 성공한 결제를 되돌리지 않는다. 실패 사유를 payment에 기록하고
+     * 응답에 안내 문구를 넣는 것이 전부이며, 자동 재시도는 없다 (MDP-832에서 다룸).
+     *
+     * @param logTag  로그 접두사 (예: {@code "[빌링결제]"})
+     * @param orderId 주문 ID. 멱등 키 생성에 사용된다.
+     */
+    private void issueLicenseIntoResult(String logTag, String orderId, UUID userId,
+                                        UUID licensePlanId, Payment payment,
+                                        Map<String, Object> result) {
+        try {
+            UUID sourceOrderId = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
+            IssuedLicense license = licenseIssuePort.issue(userId, licensePlanId, sourceOrderId);
+
+            result.put("licenseKey", license.licenseKey());
+            result.put("licenseId", license.id().toString());
+            if (license.validUntil() != null) {
+                result.put("licenseValidUntil", license.validUntil().toString());
+            }
+
+            log.info("{} 라이선스 발급 성공 - orderId={}, licenseKey={}, validUntil={}",
+                    logTag, orderId, license.licenseKey(), license.validUntil());
+        } catch (Exception e) {
+            log.error("{} 라이선스 발급 실패 (결제는 완료) - orderId={}, error={}",
+                    logTag, orderId, e.getMessage(), e);
+            // 실패 사유 DB 기록
+            payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
+            paymentRepository.save(payment);
+            result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
+        }
     }
 }

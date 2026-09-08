@@ -3,9 +3,7 @@ package com.bulc.homepage.service;
 import com.bulc.homepage.entity.BillingKey;
 import com.bulc.homepage.entity.Subscription;
 import com.bulc.homepage.entity.SubscriptionPayment;
-import com.bulc.homepage.licensing.domain.OwnerType;
-import com.bulc.homepage.licensing.domain.UsageCategory;
-import com.bulc.homepage.licensing.service.LicenseService;
+import com.bulc.homepage.payment.port.LicenseIssuePort;
 import com.bulc.homepage.repository.BillingKeyRepository;
 import com.bulc.homepage.repository.SubscriptionPaymentRepository;
 import com.bulc.homepage.repository.SubscriptionRepository;
@@ -33,7 +31,7 @@ public class SubscriptionBillingService {
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final BillingKeyRepository billingKeyRepository;
     private final BillingKeyService billingKeyService;
-    private final LicenseService licenseService;
+    private final LicenseIssuePort licenseIssuePort;
 
     private static final int MAX_RETRY_COUNT = 3;
 
@@ -312,12 +310,10 @@ public class SubscriptionBillingService {
             // 구독 종료일(LocalDateTime, 서버 로컬)을 라이선스 만료 Instant로 변환
             Instant newValidUntil = subscription.getEndDate().atZone(ZoneId.systemDefault()).toInstant();
 
-            licenseService.renewSubscriptionLicense(
-                    OwnerType.USER,
+            licenseIssuePort.renew(
                     subscription.getUserId(),
                     licensePlanId,
                     sourceOrderId,
-                    UsageCategory.COMMERCIAL,
                     newValidUntil
             );
 
