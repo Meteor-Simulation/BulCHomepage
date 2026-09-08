@@ -1160,6 +1160,40 @@ COMMENT ON COLUMN lead_contacts.unsubscribed_at IS 'NULL=구독 중, NOT NULL=�
 COMMENT ON COLUMN lead_contacts.created_by IS '등록한 관리자 user.id';
 
 -- =========================================================
+-- license_issue_retries (라이선스 발급 실패 재시도 큐)
+--
+-- ⚠️ 동기화 주의: V20260908__create_license_issue_retries_table.sql 과 동일 내용.
+-- =========================================================
+CREATE TABLE license_issue_retries (
+    id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id             UUID NOT NULL,
+    license_plan_id     UUID NOT NULL,
+    source_order_id     UUID NOT NULL,
+    operation           VARCHAR(10) NOT NULL,
+    valid_until         TIMESTAMP NULL,
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    retry_count         INT NOT NULL DEFAULT 0,
+    last_error          TEXT NULL,
+    last_attempted_at   TIMESTAMP NULL,
+    resolved_at         TIMESTAMP NULL,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_license_issue_retries_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE UNIQUE INDEX uq_license_issue_retries_source_order
+    ON license_issue_retries(source_order_id, operation);
+CREATE INDEX idx_license_issue_retries_status_retry
+    ON license_issue_retries(status, retry_count);
+
+COMMENT ON TABLE license_issue_retries IS '결제 성공 후 라이선스 발급/연장 실패 건의 재시도 큐 (MDP-832)';
+COMMENT ON COLUMN license_issue_retries.operation IS 'ISSUE: 신규 발급, RENEW: 구독 갱신 연장';
+COMMENT ON COLUMN license_issue_retries.source_order_id IS '발급 멱등 키. 동일 값 재호출 시 중복 발급되지 않는다';
+COMMENT ON COLUMN license_issue_retries.valid_until IS 'RENEW 전용 — 연장 후 만료 시각. ISSUE 는 NULL';
+COMMENT ON COLUMN license_issue_retries.status IS 'PENDING: 재시도 대기, SUCCESS: 복구 완료, EXHAUSTED: 재시도 소진(운영 개입 필요)';
+
+-- =========================================================
 -- 마지막 단계: price_plans ↔ license_plans 연결
 -- (테이블 생성 순서 때문에 맨 마지막에 실행)
 --
