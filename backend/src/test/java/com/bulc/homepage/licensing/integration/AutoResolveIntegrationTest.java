@@ -309,6 +309,7 @@ class AutoResolveIntegrationTest {
             ForceValidateRequest forceRequest = new ForceValidateRequest(
                     license.id(),
                     "new-device",
+                    null,  // v1.2.0 (MDP-787): activationId 미보유 (부트스트랩)
                     List.of(activationIdToKick),
                     "1.0.0", "macOS", "New MacBook"
             );
@@ -317,10 +318,41 @@ class AutoResolveIntegrationTest {
             // then - 성공
             assertThat(forceResponse.valid()).isTrue();
             assertThat(forceResponse.licenseId()).isEqualTo(license.id());
+            assertThat(forceResponse.activationId()).isNotNull();  // v1.2.0 (MDP-787): 성공 응답 최상위 제공
 
             // 기존 세션은 비활성화됨
             Activation kicked = activationRepository.findById(activationIdToKick).orElseThrow();
             assertThat(kicked.getStatus()).isEqualTo(ActivationStatus.DEACTIVATED);
+        }
+
+        @Test
+        @DisplayName("v1.2.0 (MDP-787): fingerprint 가 어긋나도 activationId 로 자기 세션 인정 (하이브리드 self 판정)")
+        void shouldRecognizeSelfSessionByActivationIdDespiteFingerprintDrift() {
+            // given - 동시 1 세션 라이선스에서 device-A 활성화, 응답의 activationId 를 클라이언트가 저장했다고 가정
+            LicenseResponse license = issueLicenseWithLimits(3, 1);
+            ValidateRequest activate = new ValidateRequest(
+                    null, license.productId(), null,
+                    "device-A", "1.0.0", "Windows", null, null
+            );
+            ValidationResponse first = licenseService.validateAndActivateByUser(USER_ID, activate);
+            assertThat(first.valid()).isTrue();
+            UUID selfActivationId = first.activationId();
+            assertThat(selfActivationId).isNotNull();
+
+            // when - 같은 기기의 fingerprint 산출값이 어긋난 상태(가상 어댑터 등)로 자기 activationId 와 함께 force 요청.
+            // 자기 세션이 유일한 활성 세션이므로 종전 fingerprint 비교라면 자기를 못 알아보고 ALL_LICENSES_FULL 이 된다.
+            ForceValidateRequest force = new ForceValidateRequest(
+                    license.id(),
+                    "device-A-drifted",
+                    selfActivationId,
+                    List.of(UUID.randomUUID()),  // 존재하지 않는 대상 - 비활성화 no-op
+                    "1.0.0", "Windows", null
+            );
+            ValidationResponse response = licenseService.forceValidateByUser(USER_ID, force);
+
+            // then - activationId 직접 비교로 자기 세션이 인정되어 활성화 성공
+            assertThat(response.valid()).isTrue();
+            assertThat(response.activationId()).isNotNull();
         }
     }
 

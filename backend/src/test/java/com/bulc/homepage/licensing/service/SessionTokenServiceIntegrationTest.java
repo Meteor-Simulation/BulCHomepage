@@ -31,13 +31,14 @@ class SessionTokenServiceIntegrationTest {
     void testSessionTokenGeneration() {
         // Given
         UUID licenseId = UUID.randomUUID();
+        UUID activationId = UUID.randomUUID();
         String productCode = "BULC_EVAC";
         String deviceFingerprint = "test-device-123";
         String[] entitlements = {"FEATURE_A", "FEATURE_B"};
 
         // When
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                licenseId, productCode, deviceFingerprint, Arrays.asList(entitlements)
+                licenseId, activationId, productCode, deviceFingerprint, Arrays.asList(entitlements)
         );
 
         // Then
@@ -73,13 +74,14 @@ class SessionTokenServiceIntegrationTest {
     void testSessionTokenDecoding() {
         // Given
         UUID licenseId = UUID.randomUUID();
+        UUID activationId = UUID.randomUUID();
         String productCode = "BULC_EVAC";
         String deviceFingerprint = "test-device-456";
         String[] entitlements = {"FEATURE_X", "FEATURE_Y", "FEATURE_Z"};
 
         // When
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                licenseId, productCode, deviceFingerprint, Arrays.asList(entitlements)
+                licenseId, activationId, productCode, deviceFingerprint, Arrays.asList(entitlements)
         );
 
         // Then
@@ -104,6 +106,8 @@ class SessionTokenServiceIntegrationTest {
         assertThat(payload).contains("\"iss\":\"bulc-license-server\"");
         assertThat(payload).contains("\"aud\":[\"BULC_EVAC\"]");
         assertThat(payload).contains("\"sub\":\"" + licenseId.toString() + "\"");
+        // v1.2.0 (MDP-787): act 클레임 - 정체성 전환의 주 식별자
+        assertThat(payload).contains("\"act\":\"" + activationId.toString() + "\"");
         assertThat(payload).contains("\"dfp\":\"test-device-456\"");
         assertThat(payload).contains("\"ent\":[\"FEATURE_X\",\"FEATURE_Y\",\"FEATURE_Z\"]");
         assertThat(payload).contains("\"iat\":");

@@ -53,12 +53,13 @@ public class SessionTokenService {
      * sessionToken 생성.
      *
      * @param licenseId 라이선스 ID (sub 클레임)
-     * @param productCode 제품 코드 (aud 클레임, 예: BULC_EVAC)
-     * @param deviceFingerprint 기기 fingerprint (dfp 클레임 - 기기 바인딩)
+     * @param activationId 이 기기의 activation ID (act 클레임 - v1.2.0 MDP-787 정체성 전환)
+     * @param productCode 제품 코드 (aud 클레임 - 실제값 = products.code, 시드 "001")
+     * @param deviceFingerprint 기기 fingerprint (dfp 클레임 - v1.2 deprecated, 보조 바인딩으로 유지)
      * @param entitlements 권한 목록 (ent 클레임)
      * @return SessionToken 객체 (토큰 문자열) 또는 키 미설정 시 null 반환
      */
-    public SessionToken generateSessionToken(UUID licenseId, String productCode,
+    public SessionToken generateSessionToken(UUID licenseId, UUID activationId, String productCode,
                                               String deviceFingerprint, List<String> entitlements) {
         if (!keyProvider.isEnabled()) {
             log.warn("SessionTokenService: RS256 키가 없어 sessionToken을 발급할 수 없습니다.");
@@ -78,6 +79,7 @@ public class SessionTokenService {
                 .issuer(issuer)
                 .audience().add(productCode).and()
                 .subject(licenseId.toString())
+                .claim("act", activationId != null ? activationId.toString() : null)
                 .claim("dfp", deviceFingerprint)
                 .claim("ent", entitlements)
                 .issuedAt(Date.from(now))

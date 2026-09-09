@@ -58,14 +58,15 @@ public class OfflineTokenService {
      * offlineToken 생성.
      *
      * @param licenseId 라이선스 ID (sub 클레임)
+     * @param activationId 이 기기의 activation ID (act 클레임 - v1.2.0 MDP-787 정체성 전환)
      * @param productCode 제품 코드 (aud 클레임)
-     * @param deviceFingerprint 기기 fingerprint (dfp 클레임)
+     * @param deviceFingerprint 기기 fingerprint (dfp 클레임 - v1.2 deprecated, 보조 바인딩으로 유지)
      * @param entitlements 권한 목록 (ent 클레임)
      * @param allowOfflineDays 오프라인 허용 일수
      * @param licenseValidUntil 라이선스 만료일 (absolute cap 적용)
      * @return OfflineToken 객체 또는 키 미설정 시 null
      */
-    public OfflineToken generateOfflineToken(UUID licenseId, String productCode,
+    public OfflineToken generateOfflineToken(UUID licenseId, UUID activationId, String productCode,
                                               String deviceFingerprint, List<String> entitlements,
                                               int allowOfflineDays, Instant licenseValidUntil) {
         if (!keyProvider.isEnabled()) {
@@ -96,6 +97,7 @@ public class OfflineTokenService {
                 .audience().add(productCode).and()
                 .subject(licenseId.toString())
                 .claim("typ", "offline")  // 토큰 타입 구분
+                .claim("act", activationId != null ? activationId.toString() : null)
                 .claim("dfp", deviceFingerprint)
                 .claim("ent", entitlements)
                 .issuedAt(Date.from(now))

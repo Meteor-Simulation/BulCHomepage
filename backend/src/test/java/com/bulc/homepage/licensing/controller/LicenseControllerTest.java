@@ -86,6 +86,7 @@ class LicenseControllerTest {
 
     private static final String LICENSE_KEY = "TEST-1234-5678-ABCD";
     private static final UUID LICENSE_ID = UUID.randomUUID();
+    private static final UUID ACTIVATION_ID = UUID.randomUUID();
     private static final UUID PRODUCT_ID = UUID.randomUUID();
     private static final String TEST_USER_ID_STRING = "550e8400-e29b-41d4-a716-446655440000";
     private static final UUID TEST_USER_ID = UUID.fromString(TEST_USER_ID_STRING);
@@ -115,6 +116,7 @@ class LicenseControllerTest {
             // given
             ValidationResponse response = ValidationResponse.success(
                     LICENSE_ID,
+                    ACTIVATION_ID,  // v1.2.0 (MDP-787): 성공 응답 최상위 activationId
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),
@@ -144,6 +146,7 @@ class LicenseControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.valid").value(true))
+                    .andExpect(jsonPath("$.activationId").value(ACTIVATION_ID.toString()))  // v1.2.0 (MDP-787)
                     .andExpect(jsonPath("$.status").value("ACTIVE"))
                     .andExpect(jsonPath("$.entitlements[0]").value("core-simulation"))
                     .andExpect(jsonPath("$.offlineToken").isNotEmpty());
@@ -397,6 +400,7 @@ String invalidRequest = """
             // given
             ValidationResponse response = ValidationResponse.success(
                     LICENSE_ID,
+                    ACTIVATION_ID,  // v1.2.0 (MDP-787): 성공 응답 최상위 activationId
                     LicenseStatus.ACTIVE,
                     Instant.now().plus(30, ChronoUnit.DAYS),
                     List.of("core-simulation"),

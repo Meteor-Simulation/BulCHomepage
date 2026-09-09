@@ -146,6 +146,7 @@ class LicenseSecurityTest {
             ForceValidateRequest forceRequest = new ForceValidateRequest(
                     licenseId,
                     "device-B",
+                    null,  // v1.2.0 (MDP-787): activationId 미보유 (부트스트랩)
                     List.of(activationA.getId()),
                     "1.0", "macOS", "Device B"
             );

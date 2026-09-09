@@ -22,9 +22,12 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Activation {
 
+    // v1.2.0 (MDP-787): 애플리케이션 할당 UUID.
+    // activationId 가 정체성 전환의 주 식별자가 되면서, 발급 응답·act 클레임이
+    // 세션/오프라인 토큰 생성 시점(= flush 이전)에 id 를 필요로 한다.
+    // 종전 @GeneratedValue(UUID) 는 flush 시점에만 id 를 부여해 그 시점에 null 이었다.
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "license_id", nullable = false)
