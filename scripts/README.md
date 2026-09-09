@@ -30,6 +30,56 @@ bash scripts/db-migrate.sh --baseline   # 최초 1회만: 기존 파일을 '적�
 
 ---
 
+## log-cleanup.sh — systemd journal 월 단위 정리
+
+`/var/log` 1.9GB 중 1.8GB(95%)가 systemd journal 이었습니다. `journald.conf` 가
+전 항목 기본값이라 상한이 없어 6개월치가 그대로 쌓였고, 내용의 91%는 SSH 무차별 대입 시도
+기록입니다(7일 기준 sshd 36,256건 중 공격 12,421줄).
+
+**정책**: 한 달치만 남기고, 매달 1일에 그보다 오래된 journal 파일을 제거합니다.
+
+```bash
+bash scripts/log-cleanup.sh              # 1개월 보존으로 정리
+bash scripts/log-cleanup.sh --dry-run    # 삭제 없이 파일 목록·크기만 확인
+bash scripts/log-cleanup.sh --keep 2month
+```
+
+### 전제 — journald.conf
+
+```
+[Journal]
+MaxFileSec=1day     # 날짜별로 파일을 끊는다
+SystemMaxUse=4G     # 안전망 (월 단위 정리를 방해하지 않는 상한)
+```
+
+`MaxFileSec=1day` 가 **월 단위 정리의 전제조건**입니다. journal vacuum 은 개별 로그 항목이
+아니라 **파일 단위**로 삭제하므로, 파일 하나가 여러 주에 걸치면 그 파일의 마지막 항목이
+늙을 때까지 지워지지 않습니다.
+
+### 서버에 설치
+
+```bash
+# 1. journald 설정
+sudo tee -a /etc/systemd/journald.conf >/dev/null <<'EOF'
+MaxFileSec=1day
+SystemMaxUse=4G
+EOF
+sudo systemctl restart systemd-journald
+
+# 2. cron 등록 (매달 1일 05:00)
+crontab -e
+0 5 1 * * /bin/bash /home/ubuntu/BulCHomepage/scripts/log-cleanup.sh
+```
+
+실행 기록은 `~/log-cleanup.log` 에 남습니다.
+
+### 건드리지 않는 것
+
+nginx 로그(logrotate daily·14일·gzip), `auth.log`(rsyslog), `btmp`(monthly·rotate 1)는
+각자 이미 관리되고 있어 이 스크립트의 대상이 아닙니다.
+
+---
+
 ## health-check.sh — 헬스 체크 + 이메일 알림
 
 매 시간 서버 상태를 확인하고, 이상 시 이메일 알림을 발송합니다.
