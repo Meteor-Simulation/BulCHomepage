@@ -26,6 +26,15 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  # MDP-793: Redis 연결 (bulc.oauth.code-store=redis 일 때만 사용).
+  # 기본(memory)에서는 연결하지 않는다 — Lettuce 는 lazy, RedisAuthorizationCodeStore 는 조건부 빈.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
   # OAuth2 소셜 로그인 설정
   security:
     oauth2:
@@ -139,6 +148,11 @@ bulc:
   # 등록된 client_id와 redirect_uri만 허용됩니다.
   # 포트 와일드카드: http://localhost:*/path → 모든 포트 허용
   oauth:
+    # MDP-793: Authorization Code 저장소 구현 선택.
+    #   memory (기본) = 인메모리 ConcurrentHashMap (단일 인스턴스·개발/테스트)
+    #   redis         = Redis (다중 인스턴스·재기동 내성). 아래 spring.data.redis 설정 필요.
+    # 머지가 인프라를 강제하지 않도록 기본은 memory 다 — 운영 다중 인스턴스에서만 redis 로.
+    code-store: ${OAUTH_CODE_STORE:memory}
     clients:
       meteor-app:
         display-name: "BUL-C Fire Simulator"

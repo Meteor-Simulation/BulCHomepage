@@ -18,7 +18,8 @@ class AuthorizationCodeStoreTest {
 
     @BeforeEach
     void setUp() {
-        codeStore = new AuthorizationCodeStore();
+        // MDP-793: AuthorizationCodeStore 가 인터페이스화되어 인메모리 구현을 직접 사용
+        codeStore = new InMemoryAuthorizationCodeStore();
     }
 
     @Nested

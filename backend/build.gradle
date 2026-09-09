@@ -32,6 +32,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // MDP-793: OAuth Authorization Code 저장소 Redis 이관 (프로필 게이트 — bulc.oauth.code-store=redis 일 때만 사용).
+    // 의존성만 추가해도 연결을 강제하지 않는다 (Lettuce lazy init + RedisAuthorizationCodeStore 는 조건부 빈).
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
