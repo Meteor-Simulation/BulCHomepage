@@ -185,6 +185,39 @@ class OAuthIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.action").value("login_required"));
         }
+
+        @Test
+        @DisplayName("CLI 클라이언트(bulc-cli)는 127.0.0.1 루프백 동적 포트 허용 (MDP-792)")
+        void shouldAllowCliClientWithLoopbackRedirectUri() throws Exception {
+            // given - CLI 루프백 리스너는 127.0.0.1:0 바인딩으로 임의 포트를 얻는다
+            String codeChallenge = PkceUtils.generateCodeChallenge(PkceUtils.generateCodeVerifier());
+
+            // when & then
+            mockMvc.perform(get("/oauth/authorize")
+                            .param("client_id", "bulc-cli")
+                            .param("redirect_uri", "http://127.0.0.1:53682/oauth/callback")
+                            .param("response_type", "code")
+                            .param("code_challenge", codeChallenge))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.action").value("login_required"));
+        }
+
+        @Test
+        @DisplayName("CLI 클라이언트(bulc-cli)에 custom scheme redirect_uri는 거부 (미등록)")
+        void shouldRejectCustomSchemeForCliClient() throws Exception {
+            // given - bulc-cli 는 루프백만 등록되어 있고 custom scheme 은 의도적으로 미등록
+            String codeChallenge = PkceUtils.generateCodeChallenge(PkceUtils.generateCodeVerifier());
+
+            // when & then
+            mockMvc.perform(get("/oauth/authorize")
+                            .param("client_id", "bulc-cli")
+                            .param("redirect_uri", "bulc://oauth/callback")
+                            .param("response_type", "code")
+                            .param("code_challenge", codeChallenge))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("invalid_request"))
+                    .andExpect(jsonPath("$.error_description").value(containsString("redirect_uri")));
+        }
     }
 
     // ==========================================

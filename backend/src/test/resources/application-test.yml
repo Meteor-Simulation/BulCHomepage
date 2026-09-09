@@ -62,3 +62,9 @@ bulc:
         display-name: "Test Client"
         allowed-redirect-uris:
           - http://localhost:*/test/callback
+      # CLI 전용 public client (MDP-792) — 운영 등록과 동일 구성 (루프백만, custom scheme 없음)
+      bulc-cli:
+        display-name: "BulC CLI"
+        allowed-redirect-uris:
+          - http://localhost:*/oauth/callback
+          - http://127.0.0.1:*/oauth/callback
