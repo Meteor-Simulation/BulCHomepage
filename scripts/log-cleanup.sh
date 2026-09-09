@@ -49,9 +49,26 @@ say() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"
 }
 
+# journal 파일 삭제에는 root 권한이 필요하다.
+# /var/log/journal 은 root:systemd-journal 소유이고 cron 은 ubuntu 로 실행되므로 sudo 를 경유한다.
+#
+# 주의: ubuntu 권한으로 `journalctl --vacuum-time` 을 실행하면 삭제하지 못하면서도
+#       "Vacuuming done, freed 0B" 를 출력하고 exit 0 으로 끝난다. 실패가 드러나지 않으므로
+#       권한을 먼저 확인하고, 없으면 명시적으로 실패시킨다.
+if [ "$(id -u)" -eq 0 ]; then
+  JCTL=(journalctl)
+else
+  JCTL=(sudo -n journalctl)
+  if ! sudo -n true 2>/dev/null; then
+    say "ERROR: root 가 아니고 무암호 sudo 도 불가합니다. journal 파일을 삭제할 수 없습니다."
+    say "       root 크론으로 옮기거나 ubuntu 에 NOPASSWD sudo 를 부여하세요."
+    exit 1
+  fi
+fi
+
 say "===== journal 정리 시작 (보존=$KEEP, dry-run=$DRY_RUN) ====="
 
-BEFORE=$(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMG]' | tail -1)
+BEFORE=$("${JCTL[@]}" --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMG]' | tail -1)
 FILES_BEFORE=$(find /var/log/journal -name '*.journal' 2>/dev/null | wc -l)
 say "정리 전: ${BEFORE:-?} / 파일 ${FILES_BEFORE}개"
 
@@ -66,12 +83,12 @@ if [ "$DRY_RUN" -eq 1 ]; then
   exit 0
 fi
 
-if ! journalctl --vacuum-time="$KEEP" >>"$LOG" 2>&1; then
+if ! "${JCTL[@]}" --vacuum-time="$KEEP" >>"$LOG" 2>&1; then
   say "ERROR: journalctl --vacuum-time 실패. 위 로그를 확인하세요."
   exit 1
 fi
 
-AFTER=$(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMG]' | tail -1)
+AFTER=$("${JCTL[@]}" --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMG]' | tail -1)
 FILES_AFTER=$(find /var/log/journal -name '*.journal' 2>/dev/null | wc -l)
 say "정리 후: ${AFTER:-?} / 파일 ${FILES_AFTER}개 (파일 $((FILES_BEFORE - FILES_AFTER))개 제거)"
 
