@@ -38,9 +38,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/prerender.mjs",
-    "build:spa": "tsc --noEmit && vite build",
+    "build": "node scripts/check-csp.mjs && tsc --noEmit && vite build && node scripts/prerender.mjs",
+    "build:spa": "node scripts/check-csp.mjs && tsc --noEmit && vite build",
     "prerender": "node scripts/prerender.mjs",
+    "check:csp": "node scripts/check-csp.mjs",
+    "tech-docs:import": "node scripts/tech-docs-import.mjs",
     "preview": "vite preview --port 3000"
   },
   "browserslist": {
