@@ -46,11 +46,26 @@ public record ValidateRequest(
         @Size(max = 100, message = "기기 표시 이름은 100자를 초과할 수 없습니다")
         String deviceDisplayName,
 
+        // v1.2.0 (MDP-790 B5): 활성화 클라이언트 종류 (gui|cli, 선택).
+        // GUI·CLI 좌석 공유 시 관측용. 미전송/미상 값은 관대 수용(null 저장).
+        String clientKind,
+
         // v1.1.3: 다중 라이선스 선택 전략
         // v0.3.0: deprecated - 서버가 항상 자동 선택 (이 필드는 무시됨)
         @Deprecated
         LicenseSelectionStrategy strategy
 ) {
+    /**
+     * v1.2.0 이전 8-인자 하위호환 생성자 (clientKind=null).
+     * 기존 호출부·테스트를 깨지 않기 위해 유지한다.
+     */
+    public ValidateRequest(String productCode, UUID productId, UUID licenseId,
+                           String deviceFingerprint, String clientVersion, String clientOs,
+                           String deviceDisplayName, LicenseSelectionStrategy strategy) {
+        this(productCode, productId, licenseId, deviceFingerprint, clientVersion, clientOs,
+                deviceDisplayName, null, strategy);
+    }
+
     /**
      * 제품 식별자가 유효한지 검증.
      */

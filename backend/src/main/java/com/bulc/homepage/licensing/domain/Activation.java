@@ -205,6 +205,17 @@ public class Activation {
     }
 
     /**
+     * v1.2.0 (MDP-790 B5): 활성화 클라이언트 종류 기록.
+     * null 이면 변경하지 않는다 (구버전 클라이언트 미전송 시 기존 값 보존).
+     */
+    public void applyClientKind(ClientKind clientKind) {
+        if (clientKind != null) {
+            this.clientKind = clientKind;
+            this.updatedAt = Instant.now();
+        }
+    }
+
+    /**
      * 오프라인 토큰 발급.
      */
     public void issueOfflineToken(String token, Instant expiresAt) {

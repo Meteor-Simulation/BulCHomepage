@@ -138,17 +138,21 @@ public class LicenseController {
     }
 
     /**
-     * 기기 비활성화 (v0.2.0 소유자 검증).
-     * 본인 소유의 라이선스의 기기만 비활성화 가능합니다.
+     * 기기(세션) 비활성화 (v1.2.0 · 계약 §3 B1 · 소유자 검증).
+     * 본인 소유 라이선스의 activation 만 비활성화 가능합니다.
      *
-     * DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint}
+     * <p>DELETE /api/v1/licenses/{licenseId}/activations/{activationId}</p>
+     *
+     * <p>v1.2.0: 경로 파라미터를 deviceFingerprint → activationId (UUID) 로 교체 (정체성 전환).
+     * D-3 자가 반납 배선 — 클라이언트가 저장한 자기 activationId 로 직접 반납한다.
+     * 파괴적 변경이나 현재 이 경로를 호출하는 클라이언트가 없어 실질 파괴는 없다.</p>
      */
-    @DeleteMapping("/{licenseId}/activations/{deviceFingerprint}")
+    @DeleteMapping("/{licenseId}/activations/{activationId}")
     public ResponseEntity<Void> deactivate(
             @PathVariable UUID licenseId,
-            @PathVariable String deviceFingerprint) {
+            @PathVariable UUID activationId) {
         UUID userId = getCurrentUserId();
-        licenseService.deactivateWithOwnerCheck(userId, licenseId, deviceFingerprint);
+        licenseService.deactivateByActivationIdWithOwnerCheck(userId, licenseId, activationId);
         return ResponseEntity.noContent().build();
     }
 

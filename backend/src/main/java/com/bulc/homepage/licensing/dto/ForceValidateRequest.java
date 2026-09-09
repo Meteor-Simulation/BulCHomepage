@@ -33,5 +33,8 @@ public record ForceValidateRequest(
         String clientOs,
 
         // 기기 표시 이름 (선택) - UX용
-        String deviceDisplayName
+        String deviceDisplayName,
+
+        // v1.2.0 (MDP-790 B5): 활성화 클라이언트 종류 (gui|cli, 선택)
+        String clientKind
 ) {}

@@ -148,7 +148,7 @@ class LicenseSecurityTest {
                     "device-B",
                     null,  // v1.2.0 (MDP-787): activationId 미보유 (부트스트랩)
                     List.of(activationA.getId()),
-                    "1.0", "macOS", "Device B"
+                    "1.0", "macOS", "Device B", null
             );
             licenseService.forceValidateByUser(userId, forceRequest);
 

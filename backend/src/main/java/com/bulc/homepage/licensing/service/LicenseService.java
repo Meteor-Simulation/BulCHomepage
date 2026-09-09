@@ -481,7 +481,9 @@ public class LicenseService {
                 Instant staleThreshold = now.minusSeconds(staleThresholdMinutes * 60L);
                 List<GlobalSessionInfo> sessions = buildGlobalSessionInfoList(
                         List.of(license), sessionThreshold, staleThreshold);
-                return ValidationResponse.allLicensesFull(sessions);
+                // B3: 단일 라이선스 컨텍스트 — licenseId·maxConcurrentSessions 채움
+                return ValidationResponse.allLicensesFull(
+                        license.getId(), license.getMaxConcurrentSessions(), sessions);
             }
             return ValidationResponse.failure(
                     ErrorCode.ACTIVATION_LIMIT_EXCEEDED.name(),
@@ -605,7 +607,8 @@ public class LicenseService {
             }
 
             return performValidationWithAutoResolve(license, request.deviceFingerprint(),
-                    request.clientVersion(), request.clientOs(), request.deviceDisplayName());
+                    request.clientVersion(), request.clientOs(), request.deviceDisplayName(),
+                    request.clientKind());
         }
 
         // licenseId 미지정: 후보 검색
@@ -626,14 +629,16 @@ public class LicenseService {
 
         // v0.3.0: Two-Pass Algorithm으로 Auto-Resolve
         return autoResolveValidation(candidates, request.deviceFingerprint(),
-                request.clientVersion(), request.clientOs(), request.deviceDisplayName());
+                request.clientVersion(), request.clientOs(), request.deviceDisplayName(),
+                request.clientKind());
     }
 
     /**
      * v0.3.0: Two-Pass Algorithm으로 라이선스 자동 선택 및 활성화.
      */
     private ValidationResponse autoResolveValidation(List<License> candidates, String deviceFingerprint,
-                                                      String clientVersion, String clientOs, String deviceDisplayName) {
+                                                      String clientVersion, String clientOs, String deviceDisplayName,
+                                                      String clientKind) {
         Instant now = Instant.now();
         int sessionTtlMinutes = candidates.get(0).getSessionTtlMinutes(); // 모든 라이선스가 동일하다고 가정
         Instant sessionThreshold = now.minusSeconds(sessionTtlMinutes * 60L);
@@ -657,7 +662,7 @@ public class LicenseService {
             if (existingSession.isPresent()) {
                 log.debug("Auto-Resolve: Device affinity - 기존 세션 발견, licenseId={}", license.getId());
                 return performValidationWithAutoResolve(license, deviceFingerprint,
-                        clientVersion, clientOs, deviceDisplayName);
+                        clientVersion, clientOs, deviceDisplayName, clientKind);
             }
         }
 
@@ -670,7 +675,7 @@ public class LicenseService {
                 log.debug("Auto-Resolve: 빈 슬롯 발견, licenseId={}, active={}/{}",
                         license.getId(), activeSessionCount, maxConcurrentSessions);
                 return performValidationWithAutoResolve(license, deviceFingerprint,
-                        clientVersion, clientOs, deviceDisplayName);
+                        clientVersion, clientOs, deviceDisplayName, clientKind);
             }
         }
 
@@ -695,7 +700,7 @@ public class LicenseService {
 
                 // 새 세션 활성화
                 ValidationResponse response = performValidationWithAutoResolve(license, deviceFingerprint,
-                        clientVersion, clientOs, deviceDisplayName);
+                        clientVersion, clientOs, deviceDisplayName, clientKind);
 
                 // AUTO_RECOVERED 응답으로 변환
                 if (response.valid()) {
@@ -729,6 +734,13 @@ public class LicenseService {
         // 모든 후보 라이선스의 세션을 GlobalSessionInfo로 통합
         List<GlobalSessionInfo> allSessions = buildGlobalSessionInfoList(sortedCandidates, sessionThreshold, staleThreshold);
 
+        // B3: 후보가 하나면 단일 라이선스 컨텍스트이므로 licenseId·maxConcurrentSessions 채움.
+        // 다중 후보는 licenseId 가 하나로 정해지지 않으므로 activeSessions[].licenseId 로 식별.
+        if (sortedCandidates.size() == 1) {
+            License only = sortedCandidates.get(0);
+            return ValidationResponse.allLicensesFull(
+                    only.getId(), only.getMaxConcurrentSessions(), allSessions);
+        }
         return ValidationResponse.allLicensesFull(allSessions);
     }
 
@@ -815,7 +827,7 @@ public class LicenseService {
      */
     private ValidationResponse performValidationWithAutoResolve(License license, String deviceFingerprint,
                                                                   String clientVersion, String clientOs,
-                                                                  String deviceDisplayName) {
+                                                                  String deviceDisplayName, String clientKind) {
         Instant now = Instant.now();
         LicenseStatus effectiveStatus = license.calculateEffectiveStatus(now);
 
@@ -859,6 +871,8 @@ public class LicenseService {
         // 활성화 추가/갱신
         Activation activation = license.addActivation(deviceFingerprint, clientVersion,
                                                        clientOs, null, deviceDisplayName);
+        // v1.2.0 (MDP-790 B5): 클라이언트 종류 기록 (gui|cli)
+        activation.applyClientKind(ClientKind.fromWire(clientKind));
 
         // 오프라인 토큰 발급 (갱신 임계값 정책 적용)
         if (shouldRenewOfflineToken(activation, license)) {
@@ -1130,7 +1144,9 @@ public class LicenseService {
             List<GlobalSessionInfo> sessionInfoList = buildGlobalSessionInfoList(
                     List.of(license), sessionThreshold, staleThreshold);
 
-            return ValidationResponse.allLicensesFull(sessionInfoList);
+            // B3: 단일 라이선스 컨텍스트 — licenseId·maxConcurrentSessions 채움
+            return ValidationResponse.allLicensesFull(
+                    license.getId(), license.getMaxConcurrentSessions(), sessionInfoList);
         }
 
         // 세션 활성화
@@ -1150,6 +1166,8 @@ public class LicenseService {
                     request.deviceDisplayName()
             );
         }
+        // v1.2.0 (MDP-790 B5): 클라이언트 종류 기록 (gui|cli) — 재바인딩/신규 모두 적용
+        newActivation.applyClientKind(ClientKind.fromWire(request.clientKind()));
 
         // 오프라인 토큰 발급 (갱신 임계값 정책 적용)
         if (shouldRenewOfflineToken(newActivation, license)) {
@@ -1197,6 +1215,32 @@ public class LicenseService {
         Activation activation = activationRepository
                 .findByLicenseIdAndDeviceFingerprint(licenseId, deviceFingerprint)
                 .orElseThrow(() -> new LicenseException(ErrorCode.ACTIVATION_NOT_FOUND));
+
+        activation.deactivate();
+        activationRepository.save(activation);
+    }
+
+    /**
+     * v1.2.0 (MDP-790 B1): activationId 기반 기기(세션) 비활성화 (소유자 검증 포함).
+     *
+     * 정체성 전환으로 DELETE 경로가 deviceFingerprint → activationId 로 바뀌면서 추가.
+     * 대상 activation 이 경로의 라이선스 소유인지 검증한다 (D-3 자가 반납 배선).
+     */
+    @Transactional
+    public void deactivateByActivationIdWithOwnerCheck(UUID userId, UUID licenseId, UUID activationId) {
+        License license = findLicenseOrThrow(licenseId);
+
+        if (!license.isOwnedBy(userId)) {
+            throw new LicenseException(ErrorCode.ACCESS_DENIED);
+        }
+
+        Activation activation = activationRepository.findById(activationId)
+                .orElseThrow(() -> new LicenseException(ErrorCode.ACTIVATION_NOT_FOUND));
+
+        if (!activation.getLicense().getId().equals(licenseId)) {
+            throw new LicenseException(ErrorCode.INVALID_ACTIVATION_OWNERSHIP,
+                    "activation " + activationId + " 은(는) 라이선스 " + licenseId + " 에 속하지 않습니다");
+        }
 
         activation.deactivate();
         activationRepository.save(activation);
@@ -1315,7 +1359,9 @@ public class LicenseService {
             List<GlobalSessionInfo> sessionInfoList = buildGlobalSessionInfoList(
                     List.of(license), sessionThreshold, staleThreshold);
 
-            return ValidationResponse.allLicensesFull(sessionInfoList);
+            // B3: 단일 라이선스 컨텍스트 — licenseId·maxConcurrentSessions 채움
+            return ValidationResponse.allLicensesFull(
+                    license.getId(), maxConcurrentSessions, sessionInfoList);
         }
 
         // 총 기기 활성화 수 확인 (ACTIVE + STALE 상태)

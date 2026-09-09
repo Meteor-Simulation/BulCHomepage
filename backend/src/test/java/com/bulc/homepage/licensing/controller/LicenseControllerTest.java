@@ -514,19 +514,22 @@ String invalidRequest = """
     // ==========================================
 
     @Nested
-    @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint}")
+    @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{activationId}")
     class DeactivateEndpoint {
+
+        // v1.2.0 (MDP-790 B1): 경로 파라미터가 deviceFingerprint → activationId(UUID) 로 교체됨
 
         @Test
         @WithMockUser(username = TEST_USER_ID_STRING)
-        @DisplayName("정상 비활성화 시 204 No Content 반환")
+        @DisplayName("정상 비활성화 시 204 No Content 반환 (activationId 경로)")
         void shouldReturn204OnSuccessfulDeactivation() throws Exception {
             // given
-            doNothing().when(licenseService).deactivateWithOwnerCheck(TEST_USER_ID, LICENSE_ID, "device-123");
+            doNothing().when(licenseService)
+                    .deactivateByActivationIdWithOwnerCheck(eq(TEST_USER_ID), eq(LICENSE_ID), eq(ACTIVATION_ID));
 
             // when & then
-            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
-                            LICENSE_ID, "device-123")
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            LICENSE_ID, ACTIVATION_ID)
                             .with(csrf()))
                     .andExpect(status().isNoContent());
         }
@@ -537,11 +540,12 @@ String invalidRequest = """
         void shouldReturn4xxWhenActivationNotFound() throws Exception {
             // given
             doThrow(new LicenseException(ErrorCode.ACTIVATION_NOT_FOUND))
-                    .when(licenseService).deactivateWithOwnerCheck(eq(TEST_USER_ID), any(UUID.class), eq("device-123"));
+                    .when(licenseService)
+                    .deactivateByActivationIdWithOwnerCheck(eq(TEST_USER_ID), any(UUID.class), any(UUID.class));
 
             // when & then
-            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
-                            UUID.randomUUID(), "device-123")
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            UUID.randomUUID(), UUID.randomUUID())
                             .with(csrf()))
                     .andExpect(status().is4xxClientError());
         }
@@ -552,13 +556,24 @@ String invalidRequest = """
         void shouldReturn403WhenAccessDenied() throws Exception {
             // given
             doThrow(new LicenseException(ErrorCode.ACCESS_DENIED))
-                    .when(licenseService).deactivateWithOwnerCheck(eq(TEST_USER_ID), any(UUID.class), eq("device-123"));
+                    .when(licenseService)
+                    .deactivateByActivationIdWithOwnerCheck(eq(TEST_USER_ID), any(UUID.class), any(UUID.class));
 
             // when & then
-            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
-                            UUID.randomUUID(), "device-123")
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            UUID.randomUUID(), UUID.randomUUID())
                             .with(csrf()))
                     .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_USER_ID_STRING)
+        @DisplayName("activationId 경로가 UUID 형식이 아니면 400")
+        void shouldReturn400WhenActivationIdNotUuid() throws Exception {
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            LICENSE_ID, "not-a-uuid")
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -672,10 +687,10 @@ String invalidRequest = """
         }
 
         @Test
-        @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{deviceFingerprint} - 인증 없이 호출 시 401 반환")
+        @DisplayName("DELETE /api/v1/licenses/{licenseId}/activations/{activationId} - 인증 없이 호출 시 401 반환")
         void deactivateShouldReturn401WhenNoAuth() throws Exception {
-            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{deviceFingerprint}",
-                            LICENSE_ID, "device-123")
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            LICENSE_ID, ACTIVATION_ID)
                             .with(csrf()))
                     .andExpect(status().isUnauthorized());
         }

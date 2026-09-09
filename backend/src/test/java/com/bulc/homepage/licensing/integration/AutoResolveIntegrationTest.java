@@ -311,7 +311,7 @@ class AutoResolveIntegrationTest {
                     "new-device",
                     null,  // v1.2.0 (MDP-787): activationId 미보유 (부트스트랩)
                     List.of(activationIdToKick),
-                    "1.0.0", "macOS", "New MacBook"
+                    "1.0.0", "macOS", "New MacBook", null
             );
             ValidationResponse forceResponse = licenseService.forceValidateByUser(USER_ID, forceRequest);
 

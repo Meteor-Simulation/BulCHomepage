@@ -12,5 +12,20 @@ package com.bulc.homepage.licensing.domain;
  */
 public enum ClientKind {
     GUI,
-    CLI
+    CLI;
+
+    /**
+     * 와이어 값(gui|cli, 대소문자 무관)을 ClientKind 로 변환.
+     * 미상/null 은 null 반환 — 구버전 클라이언트 미전송을 관대하게 수용한다(검증 실패 아님).
+     */
+    public static ClientKind fromWire(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return ClientKind.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }
