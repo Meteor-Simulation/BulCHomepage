@@ -33,10 +33,12 @@ public interface SigningKeyProvider {
     /**
      * 키 식별자 (JWT kid 클레임용).
      *
-     * prod와 test 키를 구분하는 데 사용됩니다.
-     * prod에서는 "test"로 시작하는 keyId를 거부해야 합니다.
+     * MDP-788: 프로덕션 구현은 실제 로드된 키의 RFC 7638 JWK thumbprint 를 반환한다.
+     * 키가 다르면 kid 가 달라지므로 클라이언트의 kid→key 다중키 선택이 성립한다.
+     * 테스트 구현은 "test-" 프리픽스 id 를 사용하며, prod 에서는
+     * "test"로 시작하는 keyId를 거부해야 합니다.
      *
-     * @return 키 식별자 문자열
+     * @return 키 식별자 문자열, 키 미로드 시 null
      */
     String keyId();
 
