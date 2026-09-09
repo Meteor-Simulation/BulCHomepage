@@ -265,7 +265,7 @@ COMMENT ON COLUMN password_reset_tokens.expires_at IS '코드 만료 시간 (기
 -- =========================================================
 CREATE TABLE products (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    code            VARCHAR(3) NOT NULL UNIQUE,
+    code            VARCHAR(32) NOT NULL UNIQUE,   -- v1.2.0 (MDP-791): VARCHAR(3)→32, 기존 '001' 값 불변
     name            VARCHAR(255) NOT NULL,
     description     TEXT NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -275,7 +275,7 @@ CREATE TABLE products (
 
 COMMENT ON TABLE products IS '상품 종류 테이블 - 판매 상품 정의';
 COMMENT ON COLUMN products.id IS 'UUID 기본키';
-COMMENT ON COLUMN products.code IS '상품 코드 (000~999), UNIQUE';
+COMMENT ON COLUMN products.code IS '상품 코드 (기존 000~999 → v1.2.0 VARCHAR(32), 기존 값 불변), UNIQUE';
 
 -- 기본 상품 데이터 (deterministic UUID for compatibility)
 INSERT INTO products (id, code, name, description) VALUES
@@ -286,7 +286,7 @@ INSERT INTO products (id, code, name, description) VALUES
 -- =========================================================
 CREATE TABLE price_plans (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    product_code    VARCHAR(3) NOT NULL,
+    product_code    VARCHAR(32) NOT NULL,   -- v1.2.0 (MDP-791): products.code 폭 확장에 맞춤
     name            VARCHAR(100) NOT NULL,
     description     VARCHAR(100) NULL,
     price           DECIMAL(18,2) NOT NULL,
@@ -322,7 +322,7 @@ CREATE TABLE promotions (
     name            VARCHAR(100) NOT NULL,
     discount_type   INTEGER NOT NULL,
     discount_value  DECIMAL(18,2) NOT NULL,
-    product_code    VARCHAR(3) NULL,
+    product_code    VARCHAR(32) NULL,   -- v1.2.0 (MDP-791): products.code 폭 확장에 맞춤
     usage_limit     INTEGER NULL,
     usage_count     INTEGER NOT NULL DEFAULT 0,
     valid_from      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -348,7 +348,7 @@ COMMENT ON COLUMN promotions.usage_count IS '현재까지 사용된 횟수';
 CREATE TABLE subscriptions (
     id                  BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_id             UUID NULL,
-    product_code        VARCHAR(3) NOT NULL,
+    product_code        VARCHAR(32) NOT NULL,   -- v1.2.0 (MDP-791): products.code 폭 확장에 맞춤
     price_plan_id       BIGINT NOT NULL,
     status              VARCHAR(1) NOT NULL DEFAULT 'A',
     start_date          TIMESTAMP NOT NULL,
@@ -638,6 +638,7 @@ CREATE TABLE license_plans (
     license_type            VARCHAR(32) NOT NULL,
     duration_days           INT NOT NULL,
     grace_days              INT NOT NULL DEFAULT 0,
+    grace_period_features   VARCHAR(32) NOT NULL DEFAULT 'full',   -- v1.2.0 (MDP-791): 유예기간 기능 범위
     max_activations         INT NOT NULL DEFAULT 1,
     max_concurrent_sessions INT NOT NULL DEFAULT 1,
     allow_offline_days      INT NOT NULL DEFAULT 0,
@@ -736,6 +737,7 @@ CREATE TABLE license_activations (
     client_os               VARCHAR(100) NULL,
     last_ip                 VARCHAR(45) NULL,
     device_display_name     VARCHAR(100) NULL,
+    client_kind             VARCHAR(8) NULL,   -- v1.2.0 (MDP-791 컬럼 / MDP-790 B5): gui|cli
     deactivated_at          TIMESTAMP NULL,
     deactivated_reason      VARCHAR(50) NULL,
     offline_token           VARCHAR(2000) NULL,

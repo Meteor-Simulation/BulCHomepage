@@ -30,7 +30,8 @@ public class Promotion {
     @Column(name = "discount_value", nullable = false, precision = 18, scale = 2)
     private BigDecimal discountValue;
 
-    @Column(name = "product_code", length = 3)
+    // v1.2.0 (MDP-791): products.code 폭 확장(3→32)에 맞춰 FK 컬럼 동시 확장.
+    @Column(name = "product_code", length = 32)
     private String productCode;
 
     @ManyToOne(fetch = FetchType.LAZY)

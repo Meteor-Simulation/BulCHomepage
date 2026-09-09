@@ -41,6 +41,9 @@ public record LicensePlanRequest(
         @Min(value = 0, message = "오프라인 허용 일수는 0일 이상이어야 합니다")
         int allowOfflineDays,
 
-        List<String> entitlements
+        List<String> entitlements,
+
+        // v1.2.0 (MDP-791): 유예기간 중 기능 범위 (null → 기본 "full")
+        String gracePeriodFeatures
 ) {
 }

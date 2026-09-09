@@ -1,6 +1,7 @@
 package com.bulc.homepage.licensing.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
 
@@ -41,6 +42,8 @@ public record ValidateRequest(
         String clientOs,
 
         // v1.1.1: 기기 표시 이름 (선택) - UX용
+        // v1.2.0 (MDP-791): DB 컬럼(device_display_name VARCHAR 100) 방어 - DTO 검증 추가
+        @Size(max = 100, message = "기기 표시 이름은 100자를 초과할 수 없습니다")
         String deviceDisplayName,
 
         // v1.1.3: 다중 라이선스 선택 전략

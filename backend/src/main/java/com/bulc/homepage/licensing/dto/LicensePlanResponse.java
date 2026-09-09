@@ -26,6 +26,7 @@ public record LicensePlanResponse(
         boolean active,
         boolean deleted,
         List<String> entitlements,
+        String gracePeriodFeatures,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -48,6 +49,7 @@ public record LicensePlanResponse(
                 plan.isActive(),
                 plan.isDeleted(),
                 new ArrayList<>(plan.getEntitlementKeys()),
+                plan.getGracePeriodFeatures(),
                 plan.getCreatedAt(),
                 plan.getUpdatedAt()
         );
