@@ -10,11 +10,14 @@ import com.bulc.homepage.repository.LeadContactRepository;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,8 +40,13 @@ import java.util.UUID;
 public class OperationalMailService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private static final String LICENSE_EXPIRY_TEMPLATE = "license_expiry";
+    private static final String LICENSE_ISSUED_TEMPLATE = "license_issued";
+
+    @Value("${mail.site-url:https://bulc.msimul.com}")
+    private String siteUrl;
 
     private final EmailService emailService;
     private final UserRepository userRepository;
@@ -184,6 +192,34 @@ public class OperationalMailService {
         String subject = String.format("[BulC] 라이선스 만료 D-%d 안내", daysRemaining);
         emailService.sendByTemplate(EmailCategory.OPERATIONAL, toEmail,
                 LICENSE_EXPIRY_TEMPLATE, subject, vars);
+    }
+
+    /**
+     * 라이선스 발급 완료 통지 (MDP-833).
+     *
+     * <p>화면 없는 비동기 경로(가상계좌 입금 웹훅, 재시도 큐 복구)에서는 이 메일이
+     * 사용자가 라이선스 키를 받는 유일한 경로다.
+     *
+     * <p>중복 발송을 별도로 막지 않는 이유: 발급 호출부가 모두 멱등하다.
+     * 웹훅은 {@code payment.status == "C"} 로 조기 반환하고, 결제창 확인은 토스가
+     * 동일 paymentKey 재승인을 거절하며, 재시도 큐 적재는 발급 실패 시에만 일어난다.
+     *
+     * @param recovered 재시도 큐로 뒤늦게 복구된 발급인지 여부 (안내 문구가 달라진다)
+     */
+    public void sendLicenseIssuedNotice(String toEmail, String licenseKey,
+                                        Instant validUntil, boolean recovered) {
+        Map<String, String> vars = new HashMap<>();
+        vars.put("license_key", licenseKey != null ? licenseKey : "-");
+        vars.put("valid_until", validUntil != null
+                ? validUntil.atZone(KST).toLocalDate().format(DATE_FMT)
+                : "-");
+        vars.put("mypage_url", siteUrl + "/mypage");
+        vars.put("intro", recovered
+                ? "결제 직후 발급이 지연되었던 라이선스가 정상 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다."
+                : "결제가 완료되어 라이선스가 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다.");
+
+        emailService.sendByTemplate(EmailCategory.OPERATIONAL, toEmail,
+                LICENSE_ISSUED_TEMPLATE, "[BulC] 라이선스 발급 완료 안내", vars);
     }
 
     /**

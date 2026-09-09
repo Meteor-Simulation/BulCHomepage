@@ -1,8 +1,11 @@
 package com.bulc.homepage.payment.recovery;
 
+import com.bulc.homepage.payment.notification.LicenseIssuedEvent;
+import com.bulc.homepage.payment.port.IssuedLicense;
 import com.bulc.homepage.payment.port.LicenseIssuePort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +24,15 @@ public class LicenseIssueRecoveryService {
     /** 재시도는 데코레이터를 거치지 않고 실제 발급자에게 직접 간다 (중첩 적재 방지). */
     private final LicenseIssuePort delegate;
     private final LicenseIssueRetryRepository retryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public LicenseIssueRecoveryService(
             @Qualifier("paymentLicenseIssueAdapter") LicenseIssuePort delegate,
-            LicenseIssueRetryRepository retryRepository) {
+            LicenseIssueRetryRepository retryRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.delegate = delegate;
         this.retryRepository = retryRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -98,8 +104,15 @@ public class LicenseIssueRecoveryService {
             if (retry.getOperation() == LicenseIssueRetry.Operation.RENEW) {
                 delegate.renew(retry.getUserId(), retry.getLicensePlanId(),
                         retry.getSourceOrderId(), retry.getValidUntil());
+                // 갱신 통지는 발송 여부가 법적검토 대상이라 보류 상태다 (MDP-843).
             } else {
-                delegate.issue(retry.getUserId(), retry.getLicensePlanId(), retry.getSourceOrderId());
+                IssuedLicense license = delegate.issue(
+                        retry.getUserId(), retry.getLicensePlanId(), retry.getSourceOrderId());
+                // 복구 발급 통지 (MDP-833). 결제는 됐는데 발급이 늦어진 건이라
+                // 사용자가 키를 받을 다른 경로가 없다 — 통지가 가장 필요한 경우다.
+                eventPublisher.publishEvent(new LicenseIssuedEvent(
+                        retry.getUserId(), license.id(), license.licenseKey(), license.validUntil(),
+                        retry.getSourceOrderId(), true));
             }
 
             retry.markResolved();
