@@ -184,40 +184,51 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ---
 
-## ⚠️ 병행 개발 조정 — 라이선싱 v1.2.0 × payment 모듈 리팩터 (2026-09-03 기준)
+## ⚠️ 병행 개발 조정 — 라이선싱 v1.2.0 × 웹 payment 트랙 (2026-09-09 갱신)
 
-두 트랙이 본 리포에서 **단독 병행 개발 + PR 리뷰 최종 게이트** 방식으로 진행 중이다 (2026-09-02 합의). 본 절은 그 조정 정본이며, 트랙 상태가 바뀌면 이 절을 갱신한다.
+두 트랙이 본 리포에서 **단독 병행 개발 + PR 리뷰 최종 게이트** 방식으로 진행 중이다 (2026-09-02 합의). 본 절은 그 조정 정본이며, 트랙 상태가 바뀌면 이 절을 갱신한다. 이력 = Jira Epic **MDP-332** 코멘트.
 
-### 트랙 현황
+### 기준선 — main (웹 확인 2026-09-09)
 
-| 트랙 | 브랜치 / 이슈 | 상태 |
+결제→라이선스 **의존성 분리가 main 에 안착**했고, 이후 개발은 main 을 기준으로 한다:
+
+| 커밋 | 내용 |
+|---|---|
+| `b00101a` MDP-831 (#236) | **`LicenseIssuePort` 도입** — `payment/port/` 에 소비자 포트 정의, `licensing/adapter/PaymentLicenseIssueAdapter` 가 `LicenseService` 를 감싸 구현. `PaymentService`·`SubscriptionBillingService` 의 licensing 직접 import **제거** (실측) |
+| `af0e51f` MDP-832 (#238) | 라이선스 발급 실패 자동 복구 — `payment/recovery/` 재시도 큐 + 마이그레이션 `V20260908__create_license_issue_retries_table.sql` |
+
+> ⚠️ `refactor/payment-module`(수직 슬라이스 분리, `66dd77b`)는 **미머지이며 기준이 아니다** — main 의 `PaymentService` 재작성과 충돌하는 stale 상태. 부활 시 웹 트랙이 main 위로 rebase 한다.
+
+### 인터럽트 맵 — 현행
+
+| 이슈 | 상태 | 비고 |
 |---|---|---|
-| 웹 — payment 수직 슬라이스 분리 | `refactor/payment-module` | **PR 미제출** · Payment·PricePlan·Promotion·Subscription 등 38파일을 `payment/` 패키지로 이동 + 테스트 13건 |
-| 라이선싱 — 계약 v1.2.0 | Jira **MDP-787~793** (Epic MDP-332) · 계약 정본 = PR #234 `Document/01_제품_설계/licensing_contract_v1.2.0_draft.md` | 서버 구현 착수 전 |
+| **MDP-791** (`products.code` 폭 + FK 3곳) | ✅ **차단 해제** (2026-09-09) | 종전 편집 vs 이동 충돌은 수직 슬라이스 *브랜치* 기준이었다. main 기준으로 `entity/PricePlan`·`Promotion`·`Subscription` 이 제자리에 있어 `@Column` 편집 가능 |
+| **MDP-793** (OAuth code store Redis) | 조건부 진행 (유지) | **프로필 게이트 + Redis 미설정 시 인메모리 fallback** 필수 — 머지가 인프라 변경을 강제하면 안 된다 |
+| MDP-787 · 788 · 789 · 790 · 792 | ✅ 자유 진행 | `licensing/`·`oauth/`·설정 국소 |
 
-### 현재 인터럽트 지점 — 어디가 왜 막혀 있나
+### 공유 접점 — 변경 시 상호 PR 리뷰 명시
 
-| 이슈 | 상태 | 사유 |
-|---|---|---|
-| **MDP-791** (`products.code` VARCHAR(3)→32 + FK 3곳 폭 확장) | 개발 가능 · **머지 보류** | `PricePlan`·`Promotion`·`Subscription` 엔티티가 `refactor/payment-module` 에서 `payment/domain/` 으로 **이동**했는데, 791 은 같은 파일들의 `@Column(length)` 를 **편집**해야 한다 — 편집 vs 이동 충돌 유형(git rename 감지에 의존, 조용히 깨질 수 있음). **`refactor/payment-module` 머지 후 rebase 하여 PR 제출** |
-| **MDP-793** (OAuth AuthorizationCodeStore Redis 이관) | 조건부 진행 | Redis 는 PR diff 에 보이지 않는 **배포 시점 런타임 의존**. 반드시 **프로필 게이트 + Redis 미설정 시 기존 인메모리 fallback** 으로 구현한다 — 머지가 인프라 변경을 강제하면 안 된다. Redis 를 어느 서비스 인프라에 둘지는 이관 설계 미결 (아래 판단 대기) |
-| MDP-787 · 788 · 789 · 790 · 792 | ✅ **자유 진행** | `licensing/`·`oauth/`·설정 국소 — `refactor/payment-module` 와 파일 교집합 0 |
+- **`licensing/adapter/PaymentLicenseIssueAdapter.java`** — 웹 트랙(MDP-831)이 licensing 패키지 안에 둔 결제↔라이선스 결합 1점. 라이선싱 v1.2.0 이슈(MDP-787~793)는 발급 경로 무접촉이나, 이 파일을 고치는 PR 은 상대 트랙 리뷰를 받는다.
+- 공유 컨트롤러: `AdminController`·`ProductController` (licensing import 보유).
+- DB 마이그레이션: `V{yyyyMMdd}__*.sql` — 제출 전 동일 날짜 충돌 확인. **최신 = `V20260908__`** (웹).
 
-### 병행 안전 규약 4항
+### 병행 안전 규약 (갱신)
 
-1. **경계**: 라이선싱 축 PR 은 `backend/…/licensing/`·`oauth/`·`resources/application*.yml`·`database/migrations/` 밖을 건드리지 않는다. 특히 리팩터가 손댄 공유 3파일 — `AdminController`·`ProductController`·`TestController` — 회피.
-2. **DB 마이그레이션 파일명**: `database/migrations/V{yyyyMMdd}__*.sql` — 제출 전 상대 트랙과 동일 날짜 충돌 확인.
-3. **PR 제출 전 교집합 검사** (출력이 **비어야** 안전 — 비어 있지 않으면 rebase 순서 협의):
+1. **경계**: 라이선싱 축 PR 은 `backend/…/licensing/`·`oauth/`·`resources/application*.yml`·`database/migrations/` 한정. 위 공유 접점 파일은 상호 리뷰 조건으로만.
+2. **마이그레이션 파일명**: 동일 날짜 충돌 확인 (위).
+3. **교집합 검사**: 상대 트랙의 **활성 브랜치가 존재할 때** 그 브랜치를 대상으로 수행 — 현재 웹 활성 브랜치 없음(main 직전 fetch 확인으로 갈음):
    ```bash
    git fetch origin && comm -12 \
      <(git diff --name-only origin/main...HEAD | sort) \
-     <(git diff --name-only origin/main...origin/refactor/payment-module | sort)
+     <(git diff --name-only origin/main...origin/<상대-트랙-브랜치> | sort)
    ```
-4. **MDP-791 만 순서 고정**: payment 리팩터 머지 → rebase → 제출. 나머지는 머지 순서 무관.
+4. ~~MDP-791 순서 고정~~ — **해제** (2026-09-09).
 
-### 웹 개발자 판단 대기 2건
+### 웹 개발자 판단 대기
 
-- **`products`(카탈로그) 소유권** — 이관 후 licensing 서비스 소유인가 payment/카탈로그 서비스 소유인가. MDP-791 마이그레이션과 `licensing/repository/ProductRepository` 의 거취가 여기 걸린다. (`Product` 엔티티는 현재 `entity/` 공유 커널로 잔류)
+- **`products`(카탈로그) 소유권** — 이관 후 licensing vs payment/카탈로그 서비스. (`Product` 는 `entity/` 공유 커널 잔류)
 - **Redis 배치** — 계정(홈페이지) 서비스 소유 vs 공용 인프라.
+- (관찰) `PaymentLicenseIssueAdapter` 의 거처 — 현재 licensing 패키지가 `payment/port` 타입에 의존하는 형태라, 서비스 분리 시 이 파일은 payment 측 또는 조립 계층으로 이동이 필요하다.
 
-> **갱신 규칙**: `refactor/payment-module` 이 main 에 머지되면 MDP-791 행을 해제하고 규약 3·4항의 대상 브랜치를 갱신(또는 본 절 축소)할 것. 조정 이력·문의 좌표 = Jira Epic **MDP-332** 코멘트.
+> **갱신 규칙**: 트랙 기준선·차단 상태가 바뀌면 본 절을 갱신하고 MDP-332 에 코멘트를 남길 것.
