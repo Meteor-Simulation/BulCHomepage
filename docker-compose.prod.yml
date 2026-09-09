@@ -69,6 +69,11 @@ services:
     volumes:
       - ./secrets/session_token_private_key.pem:/run/secrets/session_token_private_key.pem:ro
       - ./secrets/session_token_public_key.pem:/run/secrets/session_token_public_key.pem:ro
+      # 업로드 파일 영속화 (MDP-697)
+      # 업로드 경로는 상대경로(uploads/posts · uploads/popups)이고 WORKDIR 이 /app 이라
+      # 이 한 지점만 마운트하면 게시글 이미지·팝업 이미지가 모두 커버된다.
+      # 마운트가 없으면 컨테이너 레이어에 쌓여 재배포 때마다 소실된다.
+      - backend_uploads_prod:/app/uploads
     depends_on:
       database:
         condition: service_healthy
@@ -77,6 +82,8 @@ services:
 
 volumes:
   postgres_data_prod:
+    driver: local
+  backend_uploads_prod:
     driver: local
 
 networks:
