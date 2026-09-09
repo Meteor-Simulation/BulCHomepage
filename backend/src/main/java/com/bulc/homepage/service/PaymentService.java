@@ -809,8 +809,10 @@ public class PaymentService {
     /**
      * 결제 완료 후 라이선스를 발급하고 응답 맵에 결과를 담는다.
      *
-     * <p>발급 실패는 이미 성공한 결제를 되돌리지 않는다. 실패 사유를 payment에 기록하고
-     * 응답에 안내 문구를 넣는 것이 전부이며, 자동 재시도는 없다 (MDP-832에서 다룸).
+     * <p>발급 실패는 이미 성공한 결제를 되돌리지 않는다. 다만 MDP-832 이후로는
+     * 포트 단(RecoverableLicenseIssuePort)에서 즉시 재시도 후 재시도 큐에 적재되므로,
+     * 여기까지 예외가 올라온 시점에도 복구는 이미 예약된 상태다.
+     * 그래서 사용자에게는 "처리 중"으로 안내한다.
      *
      * @param logTag  로그 접두사 (예: {@code "[빌링결제]"})
      * @param orderId 주문 ID. 멱등 키 생성에 사용된다.
@@ -836,7 +838,7 @@ public class PaymentService {
             // 실패 사유 DB 기록
             payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
             paymentRepository.save(payment);
-            result.put("licenseError", "라이선스 발급 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
+            result.put("licenseError", "라이선스 발급이 지연되고 있습니다. 자동으로 재시도되며 잠시 후 마이페이지에서 확인하실 수 있습니다.");
         }
     }
 }

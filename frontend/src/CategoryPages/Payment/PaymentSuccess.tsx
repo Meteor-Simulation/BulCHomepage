@@ -13,6 +13,8 @@ interface PaymentResult {
   orderName?: string;
   licenseKey?: string;
   licenseValidUntil?: string;
+  // 결제는 완료됐으나 라이선스 발급이 지연된 경우 (MDP-832)
+  licenseError?: string;
   // 가상계좌 정보
   isVirtualAccount?: boolean;
   bankName?: string;
@@ -119,6 +121,7 @@ const PaymentSuccess: React.FC = () => {
           orderName: result.orderName,
           licenseKey: result.licenseKey,
           licenseValidUntil: result.licenseValidUntil,
+          licenseError: result.licenseError,
           // 가상계좌 정보
           isVirtualAccount: result.isVirtualAccount,
           bankName: result.bankName,
@@ -287,6 +290,16 @@ const PaymentSuccess: React.FC = () => {
                 <div className="detail-row">
                   <span className="label">유효기간</span>
                   <span className="value">{new Date(paymentResult.licenseValidUntil).toLocaleDateString('ko-KR')}</span>
+                </div>
+              )}
+              {!paymentResult.licenseKey && !paymentResult.isVirtualAccount && (
+                <div className="detail-row license-pending">
+                  <span className="label">라이선스</span>
+                  <span className="value">
+                    발급 처리 중입니다. 잠시 후 마이페이지에서 자동으로 확인하실 수 있습니다.
+                    <br />
+                    결제는 정상 완료되었으니 다시 결제하지 마세요.
+                  </span>
                 </div>
               )}
             </div>
