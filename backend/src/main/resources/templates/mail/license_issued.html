@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI','Noto Sans KR',Arial,sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#ffffff;">
+        <tr><td style="padding:40px 16px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                <tr><td style="background:linear-gradient(135deg,#C4320A 0%,#E85D04 50%,#F5A623 100%);height:6px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+                <tr><td style="padding:32px 40px 0;text-align:center;">
+                    <p style="margin:0;font-size:22px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">BUL:C</p>
+                </td></tr>
+
+                <tr><td style="padding:24px 40px 0;text-align:center;">
+                    <h1 style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;">라이선스 발급 완료</h1>
+                </td></tr>
+
+                <tr><td style="padding:18px 40px 0;text-align:center;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
+                        {{intro}}
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding:24px 40px 0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f8f9fa;border-radius:10px;border:1px solid #e5e7eb;">
+                        <tr><td style="padding:18px 20px;text-align:center;">
+                            <p style="margin:0 0 8px;font-size:12px;color:#6b7280;letter-spacing:0.5px;">라이선스 키</p>
+                            <p style="margin:0;font-size:16px;font-weight:700;color:#1a1a1a;font-family:'Consolas','Menlo',monospace;word-break:break-all;line-height:1.6;">
+                                {{license_key}}
+                            </p>
+                        </td></tr>
+                    </table>
+                </td></tr>
+
+                <tr><td style="padding:16px 40px 0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#fef3cd;border-radius:10px;">
+                        <tr><td style="padding:14px 20px;">
+                            <p style="margin:0;font-size:13px;color:#92400e;line-height:1.7;">
+                                <strong>유효기간:</strong> {{valid_until}} 까지
+                            </p>
+                        </td></tr>
+                    </table>
+                </td></tr>
+
+                <tr><td style="padding:24px 40px;text-align:center;">
+                    <a href="{{mypage_url}}" style="display:inline-block;background:#C4320A;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+                        마이페이지에서 확인
+                    </a>
+                    <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;line-height:1.7;">
+                        라이선스 키는 마이페이지에서도 언제든 확인하실 수 있습니다.<br>
+                        본 메일은 타인에게 전달하지 마세요.
+                    </p>
+                </td></tr>
+
+                {{footer}}
+
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

@@ -1,10 +1,12 @@
 package com.bulc.homepage.payment.recovery;
 
+import com.bulc.homepage.payment.notification.LicenseIssuedEvent;
 import com.bulc.homepage.payment.port.IssuedLicense;
 import com.bulc.homepage.payment.port.LicenseIssueFailedException;
 import com.bulc.homepage.payment.port.LicenseIssuePort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -40,11 +42,14 @@ public class RecoverableLicenseIssuePort implements LicenseIssuePort {
 
     private final LicenseIssuePort delegate;
     private final LicenseIssueRecoveryService recoveryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RecoverableLicenseIssuePort(@Qualifier("paymentLicenseIssueAdapter") LicenseIssuePort delegate,
-                                       LicenseIssueRecoveryService recoveryService) {
+                                       LicenseIssueRecoveryService recoveryService,
+                                       ApplicationEventPublisher eventPublisher) {
         this.delegate = delegate;
         this.recoveryService = recoveryService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -65,6 +70,13 @@ public class RecoverableLicenseIssuePort implements LicenseIssuePort {
                 if (attempt > 1) {
                     log.info("[발급복구] 즉시 재시도 성공 - sourceOrderId={}, attempt={}", sourceOrderId, attempt);
                 }
+                // 발급 완료 통지 (MDP-833). 이 데코레이터가 @Primary 라 발급 4개 경로가 모두 지나가므로
+                // 여기 한 곳에서 발행하면 호출부 수정 없이 전 경로가 커버된다.
+                // 재시도 큐를 통한 복구 발급은 이 데코레이터를 우회하므로
+                // LicenseIssueRecoveryService.retryOne 에서 따로 발행한다.
+                eventPublisher.publishEvent(new LicenseIssuedEvent(
+                        userId, license.id(), license.licenseKey(), license.validUntil(),
+                        sourceOrderId, false));
                 return license;
             } catch (RuntimeException e) {
                 lastFailure = e;
