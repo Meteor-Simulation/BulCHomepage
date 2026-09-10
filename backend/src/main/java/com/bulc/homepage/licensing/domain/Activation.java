@@ -133,6 +133,22 @@ public class Activation {
     }
 
     /**
+     * v1.2.0 (MDP-787): 좌석 재바인딩 — 같은 activation(seat)을 새 deviceFingerprint 로 이어받는다.
+     *
+     * fingerprint drift(가상 어댑터 등으로 산출값이 바뀐 동일 기기)를 흡수하기 위해,
+     * 새 activation 행을 만드는 대신 기존 seat 의 fingerprint 를 갱신하고 활성 상태로 되살린다.
+     * 이렇게 해야 동시 세션 상한(seat) 1:1 불변식이 보존된다.
+     */
+    public void rebind(String deviceFingerprint, String clientVersion, String clientOs) {
+        this.deviceFingerprint = deviceFingerprint;
+        this.status = ActivationStatus.ACTIVE;
+        this.lastSeenAt = Instant.now();
+        this.clientVersion = clientVersion;
+        this.clientOs = clientOs;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * 재활성화 (기존 비활성화된 기기를 다시 활성화).
      */
     public void reactivate(String clientVersion, String clientOs, String lastIp) {

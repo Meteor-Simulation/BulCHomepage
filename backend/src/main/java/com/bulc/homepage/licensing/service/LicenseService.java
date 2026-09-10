@@ -1117,10 +1117,12 @@ public class LicenseService {
         // 본인이 이미 활성 세션이 있는 경우 제외
         // v1.2.0 (MDP-787): activationId 직접 비교가 주 - fingerprint 는 부트스트랩(id 미보유) 폴백.
         // fingerprint 완전 일치는 가상 어댑터 등으로 GUI/CLI 간 산출값이 어긋나면 자기 세션을 놓친다.
-        boolean hasSelfActiveSession = license.getActivations().stream()
-                .anyMatch(a -> isSelfActivation(a, request.activationId(), request.deviceFingerprint())
+        Activation selfActive = license.getActivations().stream()
+                .filter(a -> isSelfActivation(a, request.activationId(), request.deviceFingerprint())
                         && a.getStatus() == ActivationStatus.ACTIVE
-                        && !a.getLastSeenAt().isBefore(sessionThreshold));
+                        && !a.getLastSeenAt().isBefore(sessionThreshold))
+                .findFirst().orElse(null);
+        boolean hasSelfActiveSession = selfActive != null;
 
         if (!hasSelfActiveSession && remainingActiveCount >= license.getMaxConcurrentSessions()) {
             // Race condition 발생: 다른 기기가 먼저 활성화됨
@@ -1131,14 +1133,23 @@ public class LicenseService {
             return ValidationResponse.allLicensesFull(sessionInfoList);
         }
 
-        // 새 세션 활성화
-        Activation newActivation = license.addActivation(
-                request.deviceFingerprint(),
-                request.clientVersion(),
-                request.clientOs(),
-                null,
-                request.deviceDisplayName()
-        );
+        // 세션 활성화
+        // v1.2.0 (MDP-787): self 가 activationId 로 인정되면 그 좌석을 «재바인딩»(fingerprint 갱신)해
+        // 재사용한다 — 새 activation 을 추가하면 fingerprint drift 시 1-seat 라이선스에 활성 세션이
+        // 2개가 되어 동시 세션 상한을 우회한다(seat 인플레이션). 매칭된 seat 1:1 보존이 정본.
+        Activation newActivation;
+        if (selfActive != null) {
+            selfActive.rebind(request.deviceFingerprint(), request.clientVersion(), request.clientOs());
+            newActivation = selfActive;
+        } else {
+            newActivation = license.addActivation(
+                    request.deviceFingerprint(),
+                    request.clientVersion(),
+                    request.clientOs(),
+                    null,
+                    request.deviceDisplayName()
+            );
+        }
 
         // 오프라인 토큰 발급 (갱신 임계값 정책 적용)
         if (shouldRenewOfflineToken(newActivation, license)) {

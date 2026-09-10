@@ -353,6 +353,18 @@ class AutoResolveIntegrationTest {
             // then - activationId 직접 비교로 자기 세션이 인정되어 활성화 성공
             assertThat(response.valid()).isTrue();
             assertThat(response.activationId()).isNotNull();
+
+            // v1.2.0 (MDP-787): seat 1:1 보존 — 재바인딩이라 같은 activationId 를 재사용하고
+            // 새 행을 만들지 않는다. 동시 세션 상한(1)을 넘지 않아야 한다(seat 인플레이션 방지).
+            assertThat(response.activationId()).isEqualTo(selfActivationId);
+            Instant nowThreshold = Instant.now().minusSeconds(
+                    licenseRepository.findById(license.id()).orElseThrow().getSessionTtlMinutes() * 60L);
+            long activeCount = activationRepository.countActiveSessions(license.id(), nowThreshold);
+            assertThat(activeCount).isLessThanOrEqualTo(1);
+            // 재바인딩된 seat 의 fingerprint 가 새 값으로 갱신됨
+            Activation rebound = activationRepository.findById(selfActivationId).orElseThrow();
+            assertThat(rebound.getDeviceFingerprint()).isEqualTo("device-A-drifted");
+            assertThat(rebound.getStatus()).isEqualTo(ActivationStatus.ACTIVE);
         }
     }
 
