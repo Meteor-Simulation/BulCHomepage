@@ -575,6 +575,22 @@ String invalidRequest = """
                             .with(csrf()))
                     .andExpect(status().isBadRequest());
         }
+
+        @Test
+        @WithMockUser(username = TEST_USER_ID_STRING)
+        @DisplayName("activation 이 경로 라이선스에 속하지 않으면 400 (INVALID_ACTIVATION_OWNERSHIP)")
+        void shouldReturn400WhenActivationOwnershipMismatch() throws Exception {
+            // given
+            doThrow(new LicenseException(ErrorCode.INVALID_ACTIVATION_OWNERSHIP))
+                    .when(licenseService)
+                    .deactivateByActivationIdWithOwnerCheck(eq(TEST_USER_ID), any(UUID.class), any(UUID.class));
+
+            // when & then
+            mockMvc.perform(delete("/api/v1/licenses/{licenseId}/activations/{activationId}",
+                            LICENSE_ID, ACTIVATION_ID)
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
     // ==========================================

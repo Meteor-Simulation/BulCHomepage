@@ -6,6 +6,7 @@ import com.bulc.homepage.licensing.domain.ActivationStatus;
 import com.bulc.homepage.licensing.domain.ClientKind;
 import com.bulc.homepage.licensing.domain.LicenseType;
 import com.bulc.homepage.licensing.domain.OwnerType;
+import com.bulc.homepage.licensing.dto.ForceValidateRequest;
 import com.bulc.homepage.licensing.dto.LicenseIssueRequest;
 import com.bulc.homepage.licensing.dto.LicenseResponse;
 import com.bulc.homepage.licensing.dto.ValidateRequest;
@@ -148,6 +149,49 @@ class SessionContractIntegrationTest {
             assertThat(full.valid()).isFalse();
             assertThat(full.errorCode()).isEqualTo("ALL_LICENSES_FULL");
             // B3: 종전엔 null 이던 값들 (단일 후보이므로 채워짐)
+            assertThat(full.licenseId()).isEqualTo(license.id());
+            assertThat(full.maxConcurrentSessions()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("다중 후보 모두 full 시 licenseId·maxConcurrentSessions 는 null 유지 (activeSessions[].licenseId 로 식별)")
+        void shouldKeepFieldsNullOnMultiCandidateFull() {
+            // 서로 다른 제품의 라이선스 2개, 각 1-seat, 모두 활성화로 채움
+            LicenseResponse l1 = issueLicense(UUID.randomUUID(), 3, 1);
+            LicenseResponse l2 = issueLicense(UUID.randomUUID(), 3, 1);
+            licenseService.validateAndActivateByUser(USER_ID, new ValidateRequest(
+                    null, l1.productId(), null, "dev-1", "1.0", "Windows", null, null));
+            licenseService.validateAndActivateByUser(USER_ID, new ValidateRequest(
+                    null, l2.productId(), null, "dev-2", "1.0", "Windows", null, null));
+
+            // productId 미지정 → 두 라이선스가 모두 후보 → 다중 후보 full
+            ValidationResponse full = licenseService.validateAndActivateByUser(USER_ID, new ValidateRequest(
+                    null, null, null, "dev-3", "1.0", "macOS", null, null));
+
+            assertThat(full.errorCode()).isEqualTo("ALL_LICENSES_FULL");
+            // 다중 후보이므로 단일 licenseId 로 정해지지 않음 → null 유지
+            assertThat(full.licenseId()).isNull();
+            assertThat(full.maxConcurrentSessions()).isNull();
+            // 대신 activeSessions[].licenseId 로 식별 가능
+            assertThat(full.activeSessions()).extracting(ValidationResponse.GlobalSessionInfo::licenseId)
+                    .containsExactlyInAnyOrder(l1.id(), l2.id());
+        }
+
+        @Test
+        @DisplayName("force-race 409(kick 후에도 여전히 full) 시 licenseId·maxConcurrentSessions 채워짐")
+        void shouldFillFieldsOnForceRaceFull() {
+            LicenseResponse license = issueLicense(3, 1);
+            licenseService.validateAndActivateByUser(USER_ID, new ValidateRequest(
+                    null, license.productId(), license.id(), "device-A", "1.0", "Windows", null, null));
+
+            // 존재하지 않는 activationId 만 kick 대상으로 → 실제로 아무것도 종료 못 함 →
+            // 요청자(device-B)는 self 아님 + 잔여 세션 1 >= max 1 → force-race 409
+            ForceValidateRequest force = new ForceValidateRequest(
+                    license.id(), "device-B",
+                    List.of(UUID.randomUUID()), "1.0", "macOS", null, null);
+            ValidationResponse full = licenseService.forceValidateByUser(USER_ID, force);
+
+            assertThat(full.errorCode()).isEqualTo("ALL_LICENSES_FULL");
             assertThat(full.licenseId()).isEqualTo(license.id());
             assertThat(full.maxConcurrentSessions()).isEqualTo(1);
         }

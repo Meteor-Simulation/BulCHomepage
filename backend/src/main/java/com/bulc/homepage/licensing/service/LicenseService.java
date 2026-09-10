@@ -1263,6 +1263,10 @@ public class LicenseService {
 
     /**
      * 검증 로직 공통 메서드.
+     *
+     * ⚠️ 현재 미사용(dead code): 계정 기반 흐름은 performValidationWithAutoResolve /
+     * performHeartbeat 로 대체되어 이 메서드를 호출하는 곳이 없다. 사전 존재 코드이며
+     * 별도 정리 이슈로 제거 예정 — 본 PR(MDP-790) 범위에서는 남겨 둔다.
      */
     private ValidationResponse performValidation(License license, String deviceFingerprint,
                                                   String clientVersion, String clientOs, String clientIp,
@@ -1359,9 +1363,8 @@ public class LicenseService {
             List<GlobalSessionInfo> sessionInfoList = buildGlobalSessionInfoList(
                     List.of(license), sessionThreshold, staleThreshold);
 
-            // B3: 단일 라이선스 컨텍스트 — licenseId·maxConcurrentSessions 채움
-            return ValidationResponse.allLicensesFull(
-                    license.getId(), maxConcurrentSessions, sessionInfoList);
+            // (dead code — 위 메서드 주석 참조) B3 채움은 실효 경로가 아니므로 원형 유지
+            return ValidationResponse.allLicensesFull(sessionInfoList);
         }
 
         // 총 기기 활성화 수 확인 (ACTIVE + STALE 상태)
