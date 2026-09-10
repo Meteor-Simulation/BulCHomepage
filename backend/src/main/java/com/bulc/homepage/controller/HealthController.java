@@ -1,7 +1,7 @@
 package com.bulc.homepage.controller;
 
-import com.bulc.homepage.email.EmailCategory;
-import com.bulc.homepage.service.EmailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HealthController {
 
-    private final EmailService emailService;
+    private final MailPort mailPort;
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -61,7 +61,7 @@ public class HealthController {
         for (String toEmail : toEmails) {
             try {
                 // OPERATIONAL — email_log 기록
-                emailService.send(EmailCategory.OPERATIONAL, toEmail, "health_alert", subject, html);
+                mailPort.send(EmailCategory.OPERATIONAL, toEmail, "health_alert", subject, html);
                 sent++;
             } catch (Exception e) {
                 failed++;
@@ -87,7 +87,7 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> emailHealth() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "UP");
-        response.put("email", emailService.getDiagnostics());
+        response.put("email", mailPort.getDiagnostics());
         return ResponseEntity.ok(response);
     }
 }

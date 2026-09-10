@@ -1,6 +1,6 @@
-package com.bulc.homepage.entity;
+package com.bulc.homepage.mail.domain;
 
-import com.bulc.homepage.email.EmailCategory;
+import com.bulc.homepage.mail.api.EmailCategory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

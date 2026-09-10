@@ -2,7 +2,7 @@ package com.bulc.homepage.payment.notification;
 
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.OperationalMailService;
+import com.bulc.homepage.mail.service.OperationalMailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

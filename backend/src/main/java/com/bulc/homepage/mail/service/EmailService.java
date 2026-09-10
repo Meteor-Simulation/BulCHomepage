@@ -1,11 +1,12 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.mail.service;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
-import com.bulc.homepage.email.EmailCategory;
-import com.bulc.homepage.entity.EmailLog;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
+import com.bulc.homepage.mail.domain.EmailLog;
 import com.bulc.homepage.entity.User;
-import com.bulc.homepage.repository.EmailLogRepository;
+import com.bulc.homepage.mail.repository.EmailLogRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.microsoft.graph.models.BodyType;
 import com.microsoft.graph.models.EmailAddress;
@@ -34,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EmailService {
+public class EmailService implements MailPort {
 
     private final UserRepository userRepository;
     private final EmailLogRepository emailLogRepository;
@@ -121,6 +122,7 @@ public class EmailService {
     /**
      * 이메일 서비스 진단 정보 반환
      */
+    @Override
     public Map<String, Object> getDiagnostics() {
         Map<String, Object> info = new LinkedHashMap<>();
         info.put("configured", isConfigured);
@@ -165,6 +167,7 @@ public class EmailService {
      * 카테고리 + 템플릿 키 + 변수로 발송 (외부 호출 진입점).
      * MDP-496 운영성 메일 발송 및 후속 광고성 발송에서 사용.
      */
+    @Override
     public void sendByTemplate(EmailCategory category, String toEmail, String templateKey,
                                String subject, Map<String, String> vars) {
         String html = renderTemplate(templateKey, vars);
@@ -176,6 +179,7 @@ public class EmailService {
      * - PROMOTIONAL 카테고리는 marketing_agreed=true 인 사용자에게만 발송.
      * - 모든 시도(SUCCESS / SKIPPED / FAILED)를 email_log 에 기록.
      */
+    @Override
     public void send(EmailCategory category, String toEmail, String templateKey,
                      String subject, String htmlContent) {
         // 1. 광고성 메일은 marketing_agreed 체크
@@ -272,6 +276,7 @@ public class EmailService {
      * classpath:templates/mail/<key>.html 로드 + {{var}} 치환.
      * 첫 호출 시 캐시 적재 후 재사용.
      */
+    @Override
     public String renderTemplate(String templateKey, Map<String, String> vars) {
         String tpl = templateCache.computeIfAbsent(templateKey, key -> {
             String path = "templates/mail/" + key + ".html";

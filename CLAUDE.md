@@ -184,6 +184,37 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ---
 
+## 모듈 경계 (2026-09-10)
+
+목표는 모듈형 구조다 — 서버 이전·분할이 자유롭고, 침해 시 폭발 반경이 모듈 안에서 끝나는 형태.
+백엔드 244개 파일 중 아직 **116개(entity 27·dto 27·repository 22·controller 22·service 18)가 평면 계층**에 남아 있다.
+
+### 현황
+
+| 모듈 | 상태 | 나가는 참조 | 들어오는 결합 |
+|---|---|---|---|
+| `licensing/` (77) | 완료 | `UserRepository` 4 · `Product` 4 | 5개 파일 |
+| `mail/` (7) | **1단계 완료** (MDP-848) | `UserRepository` 3 · `User` 2 · `LeadContact*` 2 · `MarketingConsent` 1 | 6개 파일 (2개는 `api` 만) |
+| `payment/` (11) | 경계만 그음 | — | 실제 로직은 아직 평면 계층 |
+
+### 규약
+
+1. **다른 모듈은 구현이 아니라 공개 계약에만 의존한다.** 계약은 두 방향이 있고 목적이 다르다.
+   - `mail/api/MailPort` — **제공자**가 공개. 소비자가 여럿일 때 (메일은 7곳)
+   - `payment/port/LicenseIssuePort` — **소비자**가 요구. 소비자가 특정될 때
+2. **도메인 전용 통지 메서드를 메일 모듈에 두지 않는다.** 문구와 시점은 각 도메인의 관심사다. 소유 모듈이 템플릿과 함께 들고, 발송만 `MailPort` 에 위임한다. (현재 `sendVerificationEmail`·`sendPasswordResetEmail`·`sendLicenseExpiryNotice`·`sendLicenseIssuedNotice` 가 위반 중 — Phase 2)
+3. **파일 이동 PR 은 상대 트랙 활성 브랜치와 교집합 검사를 먼저 한다.** rename 이 겹치면 상대 PR 이 통째로 깨진다.
+
+### 다음 순서 (2026-09-10 결합도 실측 기준)
+
+`콘텐츠` → `리드/컨택` → `카탈로그` → `결제 완성` → `감사/운영` → `회원/인증`
+
+- **카탈로그는 지금 착수 금지** — MDP-790·791 이 `entity/Product`·`PricePlan`·`Promotion`·`Subscription` 을 동시 수정 중이다. `Product` 소유권 결정도 선행 필요
+- **회원/인증이 마지막인 이유** — `User` 36개 파일·`UserRepository` 27개 파일이 참조한다. 떼어내는 대상이 아니라, 나머지가 `userId`(UUID)와 포트로만 접근하게 바꾼 뒤 **마지막에 남는 것**이다. `licensing/` 이 이미 그 형태다
+- **경계 강제 장치(ArchUnit)가 없다.** 지금 경계가 유지되는 건 규율이지 강제가 아니다. 다만 MDP-844(로컬 테스트 실행 불가) 해결 전에는 넣어도 무의미하다
+
+---
+
 ## ⚠️ 병행 개발 조정 — 라이선싱 v1.2.0 × 웹 payment 트랙 (2026-09-09 갱신)
 
 두 트랙이 본 리포에서 **단독 병행 개발 + PR 리뷰 최종 게이트** 방식으로 진행 중이다 (2026-09-02 합의). 본 절은 그 조정 정본이며, 트랙 상태가 바뀌면 이 절을 갱신한다. 이력 = Jira Epic **MDP-332** 코멘트.
