@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import com.bulc.homepage.mail.service.EmailService;
 
 @Slf4j
 @Service

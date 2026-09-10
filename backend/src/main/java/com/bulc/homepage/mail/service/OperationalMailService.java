@@ -1,11 +1,11 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.mail.service;
 
-import com.bulc.homepage.email.EmailCategory;
-import com.bulc.homepage.entity.EmailLog;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.domain.EmailLog;
 import com.bulc.homepage.entity.LeadContact;
 import com.bulc.homepage.entity.MarketingConsent;
 import com.bulc.homepage.entity.User;
-import com.bulc.homepage.repository.EmailLogRepository;
+import com.bulc.homepage.mail.repository.EmailLogRepository;
 import com.bulc.homepage.repository.LeadContactRepository;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

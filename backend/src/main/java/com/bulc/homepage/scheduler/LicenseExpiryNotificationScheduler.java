@@ -6,7 +6,7 @@ import com.bulc.homepage.licensing.domain.LicensePlan;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.OperationalMailService;
+import com.bulc.homepage.mail.service.OperationalMailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
