@@ -218,6 +218,21 @@ class OAuthIntegrationTest {
                     .andExpect(jsonPath("$.error").value("invalid_request"))
                     .andExpect(jsonPath("$.error_description").value(containsString("redirect_uri")));
         }
+
+        @Test
+        @DisplayName("CLI 클라이언트(bulc-cli) PKCE 강제 — 너무 짧은 code_challenge 는 400 invalid_request (public client 회귀 가드, MDP-792 리뷰)")
+        void shouldRejectShortPkceChallengeForCliClient() throws Exception {
+            // public client 는 PKCE 필수. code_challenge 가 43자 미만이면 서버가 명시적으로 거부한다.
+            // (PKCE 우회 시도 — 유효하지 않은 challenge 로 우회 불가함을 bulc-cli 에 대해 회귀 고정)
+            mockMvc.perform(get("/oauth/authorize")
+                            .param("client_id", "bulc-cli")
+                            .param("redirect_uri", "http://127.0.0.1:53682/oauth/callback")
+                            .param("response_type", "code")
+                            .param("code_challenge", "too-short"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("invalid_request"))
+                    .andExpect(jsonPath("$.error_description").value(containsString("43")));
+        }
     }
 
     // ==========================================
