@@ -50,6 +50,17 @@ curl -s https://api.msimul.com/api/v1/licensing/public-key | jq -r '.n'
 
 ## 4. 무중단 회전 runbook (1회 회전)
 
+> ⚠️ **본 배포(동일 키 kid rename)는 회전과 별개다 (리뷰 #242 반영)**: 본 변경은 서명 키를
+> 그대로 두고 발행 토큰의 `header.kid` 값만 `"bulc-prod-v1"` → thumbprint 로 바꾼다.
+> 이는 아래 R1~R5 회전이 아니라 **kid 문자열 재명명**이므로 R3 대기 게이트로 방어되지 않는다.
+> **무손상 전제 = 현장 4종 클라이언트가 `header.kid` 를 검증에 쓰지 않고 무시**한다는 것.
+> 실측(2026-09-10): Rust `fds_gpu` · Unity BULC · Java SDK 는 kid 미검사 확인. Electron BULC-AI
+> 는 확인 필요 — 하나라도 kid 문자열을 assert/화이트리스트하면 그 클라이언트 릴리즈를 서버 배포
+> **이전에** 선행해야 한다.
+> (참고: "prod 에서 `test-` 로 시작하는 kid 거부"는 코드 강제가 아니라 CI 대조(㉮)에만 의존한다.)
+
+### 4-1. 신규 키 회전 (키 쌍 교체 — 본 배포와 무관)
+
 | 단계 | 행위 | 검증 |
 |---|---|---|
 | R1 | 신규 키 쌍 생성 (openssl, PKCS#8) — 개인키는 배포 시크릿 저장소에만 | 신규 kid 사전 산출 (RFC 7638, 공개키만으로 가능) |

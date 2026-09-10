@@ -43,6 +43,20 @@ class JwkThumbprintTest {
         assertThat(JwkThumbprint.base64UrlUInt(BigInteger.valueOf(0x80))).isEqualTo("gA");
     }
 
+    @Test
+    @DisplayName("Base64urlUInt 경계 (리뷰 #242): 0, 0x7F(부호바이트 없음), 2048비트 modulus 는 256바이트로 축약")
+    void shouldEncodeBoundaryValues() {
+        // 0 → 단일 0x00 바이트 (toByteArray 는 최소 1바이트)
+        assertThat(JwkThumbprint.base64UrlUInt(BigInteger.ZERO)).isEqualTo("AA");
+        // 0x7F → 최상위 비트 0 이라 선행 0x00 미부착 → 1바이트 그대로
+        assertThat(JwkThumbprint.base64UrlUInt(BigInteger.valueOf(0x7F))).isEqualTo("fw");
+        // 2048비트 modulus: toByteArray 는 부호 때문에 257바이트가 될 수 있으나 선행 0x00 제거로 256바이트
+        BigInteger modulus2048 = BigInteger.ONE.shiftLeft(2047).or(BigInteger.ONE); // 최상위 비트 set
+        String encoded = JwkThumbprint.base64UrlUInt(modulus2048);
+        int decodedLen = Base64.getUrlDecoder().decode(encoded).length;
+        assertThat(decodedLen).isEqualTo(256);
+    }
+
     private RSAPublicKey rsaPublicKey(String nB64Url, String eB64Url) throws Exception {
         BigInteger n = new BigInteger(1, Base64.getUrlDecoder().decode(nB64Url));
         BigInteger e = new BigInteger(1, Base64.getUrlDecoder().decode(eB64Url));
