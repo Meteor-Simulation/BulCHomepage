@@ -108,4 +108,20 @@ class RedisAuthorizationCodeStoreTest {
         assertThat(store.findValidCode("nope")).isEmpty();
         assertThat(store.consumeCode("nope")).isEmpty();
     }
+
+    @Test
+    @DisplayName("이미 소비된 code 재소비는 empty (getAndDelete 1회성 계약)")
+    void shouldNotConsumeTwice() {
+        store.createAndStore("user@x.com", "bulc-cli", "http://127.0.0.1:5000/oauth/callback",
+                "challenge", "S256");
+        ArgumentCaptor<String> valCap = ArgumentCaptor.forClass(String.class);
+        verify(valueOps).set(anyString(), valCap.capture(), any(Duration.class));
+        String storedJson = valCap.getValue();
+
+        // getAndDelete 는 첫 호출에만 값을 돌려주고(=삭제), 이후는 null (Redis GETDEL 시맨틱)
+        given(valueOps.getAndDelete(anyString())).willReturn(storedJson, (String) null);
+
+        assertThat(store.consumeCode("some-code")).isPresent();
+        assertThat(store.consumeCode("some-code")).isEmpty();
+    }
 }

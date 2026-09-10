@@ -2,9 +2,7 @@ package com.bulc.homepage.oauth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -15,16 +13,14 @@ import java.util.Optional;
 /**
  * Redis 기반 Authorization Code 저장소 (MDP-793 · 계약 v1.2.0 §4).
  *
- * <p>{@code bulc.oauth.code-store=redis} 일 때만 활성화된다 (프로필 게이트).
- * 미설정 시 {@link InMemoryAuthorizationCodeStore} 가 기본이므로, 본 구현을 추가해도
- * Redis 인프라가 강제되지 않는다 — 운영 다중 인스턴스에서만 명시적으로 켠다.</p>
+ * <p>{@code bulc.oauth.code-store=redis} 일 때만 {@link AuthorizationCodeStoreConfig} 가 선택한다
+ * (프로필 게이트). 그 외 값은 {@link InMemoryAuthorizationCodeStore} 로 폴백하므로, 본 구현을
+ * 추가해도 Redis 인프라가 강제되지 않는다 — 운영 다중 인스턴스에서만 명시적으로 켠다.</p>
  *
  * <p>code 는 네이티브 TTL(10분)로 자동 만료되며, 소비는 {@code getAndDelete} 로
- * 원자적으로 1회만 성공한다 (다중 인스턴스 안전).</p>
+ * 원자적으로 1회만 성공한다 (다중 인스턴스 안전, Redis 6.2+ GETDEL 전제).</p>
  */
 @Slf4j
-@Component
-@ConditionalOnProperty(name = "bulc.oauth.code-store", havingValue = "redis")
 public class RedisAuthorizationCodeStore implements AuthorizationCodeStore {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();

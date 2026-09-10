@@ -1,9 +1,7 @@
 package com.bulc.homepage.oauth;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -15,13 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 인메모리 Authorization Code 저장소 (MDP-793 기본 구현).
  *
- * <p>{@code bulc.oauth.code-store} 가 미설정이거나 {@code memory} 일 때 활성화된다 — 기본값.
+ * <p>{@code bulc.oauth.code-store} 가 미설정이거나 {@code memory}(또는 알 수 없는 값)일 때
+ * {@link AuthorizationCodeStoreConfig} 가 이 구현을 안전 폴백으로 선택한다 — 기본값.
  * 단일 인스턴스·개발/테스트용. 서버 재기동·다중 인스턴스에서는 code 가 유실되므로
- * 운영 다중 인스턴스는 {@code redis} 로 전환한다.</p>
+ * 운영 다중 인스턴스는 {@code redis} 로 전환한다. ({@code @Scheduled} 정리를 위해 스프링 빈으로 등록됨.)</p>
  */
 @Slf4j
-@Component
-@ConditionalOnProperty(name = "bulc.oauth.code-store", havingValue = "memory", matchIfMissing = true)
 public class InMemoryAuthorizationCodeStore implements AuthorizationCodeStore {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
