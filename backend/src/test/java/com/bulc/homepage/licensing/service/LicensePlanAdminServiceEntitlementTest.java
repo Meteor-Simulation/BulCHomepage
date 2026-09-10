@@ -60,11 +60,25 @@ class LicensePlanAdminServiceEntitlementTest {
     }
 
     private LicensePlanRequest requestWith(List<String> entitlements) {
+        return requestWith(PRODUCT_ID, entitlements);
+    }
+
+    private LicensePlanRequest requestWith(UUID productId, List<String> entitlements) {
         return new LicensePlanRequest(
-                PRODUCT_ID, "PLAN-A", "Plan A", "desc",
+                productId, "PLAN-A", "Plan A", "desc",
                 LicenseType.SUBSCRIPTION, 365, 7, 3, 1, 30,
                 entitlements
         );
+    }
+
+    private LicensePlan existingPlanUnderProduct() {
+        return LicensePlan.builder()
+                .productId(PRODUCT_ID)
+                .code("PLAN-A").name("Plan A").description("desc")
+                .licenseType(LicenseType.SUBSCRIPTION)
+                .durationDays(365).graceDays(7)
+                .maxActivations(3).maxConcurrentSessions(1).allowOfflineDays(30)
+                .build();
     }
 
     @Test
@@ -102,6 +116,36 @@ class LicensePlanAdminServiceEntitlementTest {
     @DisplayName("entitlements 가 비어도 생성 성공")
     void shouldCreatePlanWithNoEntitlements() {
         assertThatCode(() -> service.createPlan(requestWith(List.of())))
+                .doesNotThrowAnyException();
+    }
+
+    // --- updatePlan 스코프 (리뷰 #244 회귀 커버) ---
+
+    @Test
+    @DisplayName("updatePlan: 저장된 plan 의 productId 스코프로 미등록 키 거부")
+    void shouldRejectUnregisteredEntitlementOnUpdate() {
+        UUID planId = UUID.randomUUID();
+        lenient().when(planRepository.findByIdAndDeletedFalse(planId))
+                .thenReturn(Optional.of(existingPlanUnderProduct()));
+
+        assertThatThrownBy(() -> service.updatePlan(planId,
+                requestWith(List.of("core-simulation", "core-sim"))))
+                .isInstanceOf(LicenseException.class)
+                .hasFieldOrPropertyWithValue("errorCode", LicenseException.ErrorCode.INVALID_ENTITLEMENT_KEY);
+    }
+
+    @Test
+    @DisplayName("updatePlan: 요청 body 의 productId 를 다른 값으로 보내도 검증은 저장된 plan 의 productId(001) 기준")
+    void shouldValidateAgainstStoredProductIdNotRequestBody() {
+        UUID planId = UUID.randomUUID();
+        UUID otherProductId = UUID.randomUUID();  // 미등록 제품 — 요청 body 로 스코프를 바꾸려는 시도
+        lenient().when(planRepository.findByIdAndDeletedFalse(planId))
+                .thenReturn(Optional.of(existingPlanUnderProduct()));
+
+        // 요청 productId 는 otherProductId 이나, 검증은 저장된 plan 의 001 스코프로 수행되므로
+        // 001 정본 키(core-simulation)는 통과해야 한다(스코프 불변 계약).
+        assertThatCode(() -> service.updatePlan(planId,
+                requestWith(otherProductId, List.of("core-simulation"))))
                 .doesNotThrowAnyException();
     }
 }
