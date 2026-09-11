@@ -57,6 +57,12 @@ public class Activation {
     @Column(name = "device_display_name", length = 100)
     private String deviceDisplayName;
 
+    // v1.2.0 (MDP-791 컬럼 / MDP-790 B5 배선): 활성화 클라이언트 종류 (gui|cli).
+    // GUI·CLI 좌석 공유 시 어느 쪽이 실행 중인지 관측. nullable — 구버전 클라이언트 미전송.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "client_kind", length = 8)
+    private ClientKind clientKind;
+
     @Column(name = "deactivated_at")
     private Instant deactivatedAt;
 

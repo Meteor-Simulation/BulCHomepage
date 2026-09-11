@@ -4,6 +4,7 @@ import com.bulc.homepage.licensing.domain.LicenseType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +42,11 @@ public record LicensePlanRequest(
         @Min(value = 0, message = "오프라인 허용 일수는 0일 이상이어야 합니다")
         int allowOfflineDays,
 
-        List<String> entitlements
+        List<String> entitlements,
+
+        // v1.2.0 (MDP-791): 유예기간 중 기능 범위 (null → 기본 "full")
+        // DB 컬럼 VARCHAR(32) 방어 — deviceDisplayName @Size 와 동일 논리 (리뷰 #246 반영)
+        @Size(max = 32, message = "gracePeriodFeatures는 32자를 초과할 수 없습니다")
+        String gracePeriodFeatures
 ) {
 }

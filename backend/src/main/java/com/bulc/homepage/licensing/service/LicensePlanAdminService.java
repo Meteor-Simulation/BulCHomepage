@@ -91,6 +91,7 @@ public class LicensePlanAdminService {
                 .maxActivations(request.maxActivations())
                 .maxConcurrentSessions(request.maxConcurrentSessions())
                 .allowOfflineDays(request.allowOfflineDays())
+                .gracePeriodFeatures(request.gracePeriodFeatures())
                 .build();
 
         plan.setEntitlements(request.entitlements() != null ? request.entitlements() : List.of());
@@ -126,7 +127,8 @@ public class LicensePlanAdminService {
                 request.graceDays(),
                 request.maxActivations(),
                 request.maxConcurrentSessions(),
-                request.allowOfflineDays()
+                request.allowOfflineDays(),
+                request.gracePeriodFeatures()
         );
 
         plan.setEntitlements(request.entitlements() != null ? request.entitlements() : List.of());

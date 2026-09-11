@@ -25,7 +25,8 @@ public class Subscription {
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
-    @Column(name = "product_code", nullable = false, length = 3)
+    // v1.2.0 (MDP-791): products.code 폭 확장(3→32)에 맞춰 FK 컬럼 동시 확장.
+    @Column(name = "product_code", nullable = false, length = 32)
     private String productCode;
 
     @ManyToOne(fetch = FetchType.LAZY)

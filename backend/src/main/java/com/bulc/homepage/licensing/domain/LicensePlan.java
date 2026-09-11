@@ -46,6 +46,12 @@ public class LicensePlan {
     @Column(name = "grace_days", nullable = false)
     private int graceDays;
 
+    // v1.2.0 (MDP-791): 유예기간(EXPIRED_GRACE) 중 제공되는 기능 범위.
+    // 종전 스펙 문서(licensing_domain_v1.md)에만 있고 서버 컬럼이 없어 클라이언트 가정으로만 살아 있었다.
+    // v1 기본값 "full" (유예기간 중 전 기능 제공). 다른 값("limited" 등)은 후속 정의.
+    @Column(name = "grace_period_features", nullable = false, length = 32)
+    private String gracePeriodFeatures = "full";
+
     @Column(name = "max_activations", nullable = false)
     private int maxActivations;
 
@@ -73,7 +79,8 @@ public class LicensePlan {
     @Builder
     private LicensePlan(UUID productId, String code, String name, String description,
                         LicenseType licenseType, int durationDays, int graceDays,
-                        int maxActivations, int maxConcurrentSessions, int allowOfflineDays) {
+                        int maxActivations, int maxConcurrentSessions, int allowOfflineDays,
+                        String gracePeriodFeatures) {
         this.productId = productId;
         this.code = code;
         this.name = name;
@@ -84,6 +91,8 @@ public class LicensePlan {
         this.maxActivations = maxActivations;
         this.maxConcurrentSessions = maxConcurrentSessions;
         this.allowOfflineDays = allowOfflineDays;
+        // v1.2.0 (MDP-791): null 이면 v1 기본값 "full"
+        this.gracePeriodFeatures = gracePeriodFeatures != null ? gracePeriodFeatures : "full";
         this.active = true;
         this.deleted = false;
         this.createdAt = Instant.now();
@@ -97,7 +106,8 @@ public class LicensePlan {
      */
     public void update(String code, String name, String description,
                        LicenseType licenseType, int durationDays, int graceDays,
-                       int maxActivations, int maxConcurrentSessions, int allowOfflineDays) {
+                       int maxActivations, int maxConcurrentSessions, int allowOfflineDays,
+                       String gracePeriodFeatures) {
         this.code = code;
         this.name = name;
         this.description = description;
@@ -107,6 +117,10 @@ public class LicensePlan {
         this.maxActivations = maxActivations;
         this.maxConcurrentSessions = maxConcurrentSessions;
         this.allowOfflineDays = allowOfflineDays;
+        // v1.2.0 (MDP-791): null 이면 기존 값 유지
+        if (gracePeriodFeatures != null) {
+            this.gracePeriodFeatures = gracePeriodFeatures;
+        }
         this.updatedAt = Instant.now();
     }
 
