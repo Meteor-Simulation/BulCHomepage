@@ -150,11 +150,23 @@ public record ValidationResponse(
      * 클라이언트는 이 응답을 받으면 비활성화할 세션을 선택하여 /validate/force 호출.
      */
     public static ValidationResponse allLicensesFull(List<GlobalSessionInfo> activeSessions) {
+        return allLicensesFull(null, null, activeSessions);
+    }
+
+    /**
+     * v1.2.0 (MDP-790 B3): licenseId·maxConcurrentSessions 를 채운 409 응답.
+     * 단일 라이선스 컨텍스트(명시 licenseId 또는 단일 후보)에서 사용한다 —
+     * takeover 구현자가 force 요청을 구성할 때 필요한 값이 종전엔 null 이었다.
+     * 다중 후보 full 은 licenseId 가 하나로 정해지지 않으므로 activeSessions[].licenseId 로 식별한다.
+     */
+    public static ValidationResponse allLicensesFull(UUID licenseId, Integer maxConcurrentSessions,
+                                                     List<GlobalSessionInfo> activeSessions) {
         return new ValidationResponse(false, "USER_ACTION_REQUIRED", "KICK_REQUIRED", null, null,
-                null, null, null, null, null, null, null, null,
+                // licenseId(790 B3 채움) · activationId(787, 여기선 null) · status~offlineTokenExpiresAt(6 null)
+                licenseId, null, null, null, null, null, null, null,
                 Instant.now(), "ALL_LICENSES_FULL",
                 "사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요",
-                null, activeSessions, null);
+                null, activeSessions, maxConcurrentSessions);
     }
 
     /**

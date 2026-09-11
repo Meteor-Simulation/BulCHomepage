@@ -311,7 +311,7 @@ class AutoResolveIntegrationTest {
                     "new-device",
                     null,  // v1.2.0 (MDP-787): activationId 미보유 (부트스트랩)
                     List.of(activationIdToKick),
-                    "1.0.0", "macOS", "New MacBook"
+                    "1.0.0", "macOS", "New MacBook", null
             );
             ValidationResponse forceResponse = licenseService.forceValidateByUser(USER_ID, forceRequest);
 
@@ -346,7 +346,7 @@ class AutoResolveIntegrationTest {
                     "device-A-drifted",
                     selfActivationId,
                     List.of(UUID.randomUUID()),  // 존재하지 않는 대상 - 비활성화 no-op
-                    "1.0.0", "Windows", null
+                    "1.0.0", "Windows", null, null  // deviceDisplayName, clientKind(MDP-790)
             );
             ValidationResponse response = licenseService.forceValidateByUser(USER_ID, force);
 
