@@ -22,9 +22,12 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Activation {
 
+    // v1.2.0 (MDP-787): 애플리케이션 할당 UUID.
+    // activationId 가 정체성 전환의 주 식별자가 되면서, 발급 응답·act 클레임이
+    // 세션/오프라인 토큰 생성 시점(= flush 이전)에 id 를 필요로 한다.
+    // 종전 @GeneratedValue(UUID) 는 flush 시점에만 id 를 부여해 그 시점에 null 이었다.
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "license_id", nullable = false)
@@ -127,6 +130,22 @@ public class Activation {
         if (deviceDisplayName != null) {
             this.deviceDisplayName = deviceDisplayName;
         }
+    }
+
+    /**
+     * v1.2.0 (MDP-787): 좌석 재바인딩 — 같은 activation(seat)을 새 deviceFingerprint 로 이어받는다.
+     *
+     * fingerprint drift(가상 어댑터 등으로 산출값이 바뀐 동일 기기)를 흡수하기 위해,
+     * 새 activation 행을 만드는 대신 기존 seat 의 fingerprint 를 갱신하고 활성 상태로 되살린다.
+     * 이렇게 해야 동시 세션 상한(seat) 1:1 불변식이 보존된다.
+     */
+    public void rebind(String deviceFingerprint, String clientVersion, String clientOs) {
+        this.deviceFingerprint = deviceFingerprint;
+        this.status = ActivationStatus.ACTIVE;
+        this.lastSeenAt = Instant.now();
+        this.clientVersion = clientVersion;
+        this.clientOs = clientOs;
+        this.updatedAt = Instant.now();
     }
 
     /**

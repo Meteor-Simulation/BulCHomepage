@@ -513,10 +513,11 @@ public class LicenseService {
         // v1.1.2: sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
         String productCode = resolveProductCode(license.getProductId());
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                license.getId(), productCode, request.deviceFingerprint(), entitlements);
+                license.getId(), activation.getId(), productCode, request.deviceFingerprint(), entitlements);
 
         return ValidationResponse.success(
                 license.getId(),
+                activation.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
@@ -704,6 +705,7 @@ public class LicenseService {
                     );
                     return ValidationResponse.successWithRecovery(
                             response.licenseId(),
+                            response.activationId(),
                             response.status(),
                             response.validUntil(),
                             response.entitlements(),
@@ -873,10 +875,11 @@ public class LicenseService {
         // sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
         String productCode = resolveProductCode(license.getProductId());
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                license.getId(), productCode, deviceFingerprint, entitlements);
+                license.getId(), activation.getId(), productCode, deviceFingerprint, entitlements);
 
         return ValidationResponse.success(
                 license.getId(),
+                activation.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
@@ -1037,10 +1040,11 @@ public class LicenseService {
         // sessionToken 생성
         String productCode = resolveProductCode(license.getProductId());
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                license.getId(), productCode, deviceFingerprint, entitlements);
+                license.getId(), activation.getId(), productCode, deviceFingerprint, entitlements);
 
         return ValidationResponse.success(
                 license.getId(),
+                activation.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
@@ -1111,10 +1115,14 @@ public class LicenseService {
         long remainingActiveCount = activationRepository.countActiveSessions(license.getId(), sessionThreshold);
 
         // 본인이 이미 활성 세션이 있는 경우 제외
-        boolean hasSelfActiveSession = license.getActivations().stream()
-                .anyMatch(a -> a.getDeviceFingerprint().equals(request.deviceFingerprint())
+        // v1.2.0 (MDP-787): activationId 직접 비교가 주 - fingerprint 는 부트스트랩(id 미보유) 폴백.
+        // fingerprint 완전 일치는 가상 어댑터 등으로 GUI/CLI 간 산출값이 어긋나면 자기 세션을 놓친다.
+        Activation selfActive = license.getActivations().stream()
+                .filter(a -> isSelfActivation(a, request.activationId(), request.deviceFingerprint())
                         && a.getStatus() == ActivationStatus.ACTIVE
-                        && !a.getLastSeenAt().isBefore(sessionThreshold));
+                        && !a.getLastSeenAt().isBefore(sessionThreshold))
+                .findFirst().orElse(null);
+        boolean hasSelfActiveSession = selfActive != null;
 
         if (!hasSelfActiveSession && remainingActiveCount >= license.getMaxConcurrentSessions()) {
             // Race condition 발생: 다른 기기가 먼저 활성화됨
@@ -1125,14 +1133,23 @@ public class LicenseService {
             return ValidationResponse.allLicensesFull(sessionInfoList);
         }
 
-        // 새 세션 활성화
-        Activation newActivation = license.addActivation(
-                request.deviceFingerprint(),
-                request.clientVersion(),
-                request.clientOs(),
-                null,
-                request.deviceDisplayName()
-        );
+        // 세션 활성화
+        // v1.2.0 (MDP-787): self 가 activationId 로 인정되면 그 좌석을 «재바인딩»(fingerprint 갱신)해
+        // 재사용한다 — 새 activation 을 추가하면 fingerprint drift 시 1-seat 라이선스에 활성 세션이
+        // 2개가 되어 동시 세션 상한을 우회한다(seat 인플레이션). 매칭된 seat 1:1 보존이 정본.
+        Activation newActivation;
+        if (selfActive != null) {
+            selfActive.rebind(request.deviceFingerprint(), request.clientVersion(), request.clientOs());
+            newActivation = selfActive;
+        } else {
+            newActivation = license.addActivation(
+                    request.deviceFingerprint(),
+                    request.clientVersion(),
+                    request.clientOs(),
+                    null,
+                    request.deviceDisplayName()
+            );
+        }
 
         // 오프라인 토큰 발급 (갱신 임계값 정책 적용)
         if (shouldRenewOfflineToken(newActivation, license)) {
@@ -1150,10 +1167,11 @@ public class LicenseService {
         // sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
         String productCode = resolveProductCode(license.getProductId());
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                license.getId(), productCode, request.deviceFingerprint(), entitlements);
+                license.getId(), newActivation.getId(), productCode, request.deviceFingerprint(), entitlements);
 
         return ValidationResponse.success(
                 license.getId(),
+                newActivation.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
@@ -1327,10 +1345,11 @@ public class LicenseService {
         // v1.1.2: sessionToken 생성 (RS256 전용, null 가능 - dev에서 키 미설정 시)
         String productCode = resolveProductCode(license.getProductId());
         SessionTokenService.SessionToken sessionToken = sessionTokenService.generateSessionToken(
-                license.getId(), productCode, deviceFingerprint, entitlements);
+                license.getId(), activation.getId(), productCode, deviceFingerprint, entitlements);
 
         return ValidationResponse.success(
                 license.getId(),
+                activation.getId(),
                 effectiveStatus,
                 license.getValidUntil(),
                 entitlements,
@@ -1338,6 +1357,19 @@ public class LicenseService {
                 activation.getOfflineToken(),
                 activation.getOfflineTokenExpiresAt()
         );
+    }
+
+    /**
+     * v1.2.0 (MDP-787): 자기 activation 판정 - activationId 주 · fingerprint 보조.
+     *
+     * 클라이언트가 activationId 를 보유(저장소 존재)하면 그 값의 직접 비교가 정본이고,
+     * 미보유(최초 기동·저장 소실 부트스트랩)면 fingerprint 일치로 폴백한다.
+     */
+    private boolean isSelfActivation(Activation activation, UUID requestActivationId, String deviceFingerprint) {
+        if (requestActivationId != null) {
+            return activation.getId().equals(requestActivationId);
+        }
+        return activation.getDeviceFingerprint().equals(deviceFingerprint);
     }
 
     /**
@@ -1665,6 +1697,7 @@ public class LicenseService {
 
         return offlineTokenService.generateOfflineToken(
                 license.getId(),
+                activation.getId(),
                 productCode,
                 activation.getDeviceFingerprint(),
                 entitlements,

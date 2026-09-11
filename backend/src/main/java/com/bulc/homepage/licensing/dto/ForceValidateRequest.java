@@ -21,6 +21,9 @@ public record ForceValidateRequest(
         @NotBlank(message = "기기 fingerprint는 필수입니다")
         String deviceFingerprint,
 
+        // v1.2.0 (MDP-787): 자기 세션 식별자 (선택) - 보유 시 self 판정이 fingerprint 대신 이 값으로 수행됨
+        UUID activationId,
+
         @NotNull(message = "비활성화할 세션 목록은 필수입니다")
         @Size(min = 1, message = "최소 1개 이상의 세션을 비활성화해야 합니다")
         List<UUID> deactivateActivationIds,

@@ -15,8 +15,12 @@ import java.util.UUID;
  * - AUTO_RECOVERED: stale 세션 자동 종료 후 활성화 (recoveryAction/terminatedSession 포함)
  * - USER_ACTION_REQUIRED: 모든 라이선스 full, 사용자가 세션 선택하여 kick 필요
  *
- * 성공 시: valid=true, resolution=OK/AUTO_RECOVERED, licenseId/status/validUntil/entitlements/sessionToken 제공
+ * 성공 시: valid=true, resolution=OK/AUTO_RECOVERED, licenseId/activationId/status/validUntil/entitlements/sessionToken 제공
  * 실패 시: valid=false, resolution=USER_ACTION_REQUIRED, errorCode/errorMessage/activeSessions 제공
+ *
+ * v1.2.0 (MDP-787): activationId 를 성공 응답 최상위에 제공 - 정체성 전환의 성립 조건.
+ * 종전에는 activeSessions[](409 경로)에만 존재해 클라이언트가 자기 activationId 를 알 수 없었다.
+ * 클라이언트는 이 값을 저장(device-activation.json)하고 이후 자기 세션 식별에 사용한다.
  *
  * v1.1.2: sessionToken (JWS RS256 서명) 필수 추가 - CLI 바꿔치기/session.json 조작 방어
  *
@@ -37,6 +41,7 @@ public record ValidationResponse(
         TerminatedSessionInfo terminatedSession,  // AUTO_RECOVERED 시: 종료된 세션 정보
 
         UUID licenseId,
+        UUID activationId,           // v1.2.0 (MDP-787): 이 기기의 activation 식별자 - 성공 시 필수 제공
         LicenseStatus status,
         Instant validUntil,
         List<String> entitlements,
@@ -109,11 +114,12 @@ public record ValidationResponse(
     /**
      * v0.3.0: 성공 응답 (resolution: OK).
      */
-    public static ValidationResponse success(UUID licenseId, LicenseStatus status, Instant validUntil,
+    public static ValidationResponse success(UUID licenseId, UUID activationId, LicenseStatus status,
+                                              Instant validUntil,
                                               List<String> entitlements, String sessionToken,
                                               String offlineToken, Instant offlineTokenExpiresAt) {
         return new ValidationResponse(true, "OK", null, null, null,
-                licenseId, status, validUntil, entitlements,
+                licenseId, activationId, status, validUntil, entitlements,
                 sessionToken, offlineToken, offlineTokenExpiresAt,
                 Instant.now(), null, null, null, null, null);
     }
@@ -122,19 +128,20 @@ public record ValidationResponse(
      * v0.3.0: 성공 응답 (resolution: AUTO_RECOVERED).
      * stale 세션 자동 종료 후 활성화 성공.
      */
-    public static ValidationResponse successWithRecovery(UUID licenseId, LicenseStatus status, Instant validUntil,
+    public static ValidationResponse successWithRecovery(UUID licenseId, UUID activationId, LicenseStatus status,
+                                                          Instant validUntil,
                                                           List<String> entitlements, String sessionToken,
                                                           String offlineToken, Instant offlineTokenExpiresAt,
                                                           TerminatedSessionInfo terminatedSession) {
         return new ValidationResponse(true, "AUTO_RECOVERED", null, "STALE_SESSION_TERMINATED", terminatedSession,
-                licenseId, status, validUntil, entitlements,
+                licenseId, activationId, status, validUntil, entitlements,
                 sessionToken, offlineToken, offlineTokenExpiresAt,
                 Instant.now(), null, null, null, null, null);
     }
 
     public static ValidationResponse failure(String errorCode, String errorMessage) {
         return new ValidationResponse(false, null, null, null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 Instant.now(), errorCode, errorMessage, null, null, null);
     }
 
@@ -144,7 +151,7 @@ public record ValidationResponse(
      */
     public static ValidationResponse allLicensesFull(List<GlobalSessionInfo> activeSessions) {
         return new ValidationResponse(false, "USER_ACTION_REQUIRED", "KICK_REQUIRED", null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 Instant.now(), "ALL_LICENSES_FULL",
                 "사용 가능한 라이선스가 없습니다. 접속을 위해 종료할 세션을 선택해주세요",
                 null, activeSessions, null);
@@ -157,7 +164,7 @@ public record ValidationResponse(
     @Deprecated
     public static ValidationResponse selectionRequired(List<LicenseCandidate> candidates) {
         return new ValidationResponse(false, "USER_ACTION_REQUIRED", null, null, null,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 Instant.now(), "LICENSE_SELECTION_REQUIRED",
                 "복수의 라이선스가 존재합니다. licenseId를 지정해주세요", candidates, null, null);
     }
@@ -178,7 +185,7 @@ public record ValidationResponse(
                 .toList();
 
         return new ValidationResponse(false, "USER_ACTION_REQUIRED", "KICK_REQUIRED", null, null,
-                licenseId, null, null, null, null, null, null,
+                licenseId, null, null, null, null, null, null, null,
                 Instant.now(), "CONCURRENT_SESSION_LIMIT_EXCEEDED",
                 "동시 세션 수를 초과했습니다. 기존 세션을 비활성화하거나 다른 기기를 사용해주세요",
                 null, globalSessions, maxConcurrentSessions);

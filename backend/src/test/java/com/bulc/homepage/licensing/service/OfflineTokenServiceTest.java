@@ -62,7 +62,7 @@ class OfflineTokenServiceTest {
 
             // when
             OfflineTokenService.OfflineToken token = offlineTokenService.generateOfflineToken(
-                    licenseId, productCode, deviceFingerprint, entitlements,
+                    licenseId, UUID.randomUUID(), productCode, deviceFingerprint, entitlements,
                     allowOfflineDays, licenseValidUntil
             );
 
@@ -85,7 +85,7 @@ class OfflineTokenServiceTest {
 
             // when
             OfflineTokenService.OfflineToken token = offlineTokenService.generateOfflineToken(
-                    licenseId, productCode, deviceFingerprint, entitlements,
+                    licenseId, UUID.randomUUID(), productCode, deviceFingerprint, entitlements,
                     allowOfflineDays, licenseValidUntil
             );
 
@@ -109,7 +109,7 @@ class OfflineTokenServiceTest {
 
             // when
             OfflineTokenService.OfflineToken token = offlineTokenService.generateOfflineToken(
-                    licenseId, productCode, deviceFingerprint, entitlements,
+                    licenseId, UUID.randomUUID(), productCode, deviceFingerprint, entitlements,
                     allowOfflineDays, licenseValidUntil
             );
 
@@ -130,7 +130,7 @@ class OfflineTokenServiceTest {
 
             // when
             OfflineTokenService.OfflineToken token = offlineTokenService.generateOfflineToken(
-                    licenseId, productCode, deviceFingerprint, entitlements,
+                    licenseId, UUID.randomUUID(), productCode, deviceFingerprint, entitlements,
                     allowOfflineDays, null  // PERPETUAL
             );
 
@@ -204,12 +204,13 @@ class OfflineTokenServiceTest {
             String productCode = "BULC_EVAC";
             String deviceFingerprint = "device-123";
             List<String> entitlements = List.of("core-simulation");
+            UUID activationId = UUID.randomUUID();
             int allowOfflineDays = 30;
             Instant licenseValidUntil = Instant.now().plus(365, ChronoUnit.DAYS);
 
             // when
             OfflineTokenService.OfflineToken token = offlineTokenService.generateOfflineToken(
-                    licenseId, productCode, deviceFingerprint, entitlements,
+                    licenseId, activationId, productCode, deviceFingerprint, entitlements,
                     allowOfflineDays, licenseValidUntil
             );
 
@@ -218,6 +219,10 @@ class OfflineTokenServiceTest {
             assertThat(token.token()).isNotNull();
             String[] parts = token.token().split("\\.");
             assertThat(parts).hasSize(3);
+
+            // v1.2.0 (MDP-787): act 클레임에 activationId 포함
+            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+            assertThat(payload).contains("\"act\":\"" + activationId + "\"");
         }
 
         @Test
@@ -254,7 +259,7 @@ class OfflineTokenServiceTest {
 
             // when
             OfflineTokenService.OfflineToken token = disabledService.generateOfflineToken(
-                    UUID.randomUUID(), "BULC_EVAC", "device-123",
+                    UUID.randomUUID(), UUID.randomUUID(), "BULC_EVAC", "device-123",
                     List.of("core"), 30, Instant.now().plus(30, ChronoUnit.DAYS)
             );
 
