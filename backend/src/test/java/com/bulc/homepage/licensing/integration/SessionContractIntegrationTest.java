@@ -187,7 +187,7 @@ class SessionContractIntegrationTest {
             // 존재하지 않는 activationId 만 kick 대상으로 → 실제로 아무것도 종료 못 함 →
             // 요청자(device-B)는 self 아님 + 잔여 세션 1 >= max 1 → force-race 409
             ForceValidateRequest force = new ForceValidateRequest(
-                    license.id(), "device-B",
+                    license.id(), "device-B", null,  // activationId(MDP-787) 미보유
                     List.of(UUID.randomUUID()), "1.0", "macOS", null, null);
             ValidationResponse full = licenseService.forceValidateByUser(USER_ID, force);
 

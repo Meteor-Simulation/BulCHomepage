@@ -346,7 +346,7 @@ class AutoResolveIntegrationTest {
                     "device-A-drifted",
                     selfActivationId,
                     List.of(UUID.randomUUID()),  // 존재하지 않는 대상 - 비활성화 no-op
-                    "1.0.0", "Windows", null
+                    "1.0.0", "Windows", null, null  // deviceDisplayName, clientKind(MDP-790)
             );
             ValidationResponse response = licenseService.forceValidateByUser(USER_ID, force);
 
