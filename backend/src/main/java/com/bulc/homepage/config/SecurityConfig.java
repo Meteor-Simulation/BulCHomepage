@@ -90,6 +90,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/licenses/*/validate").permitAll()
                         .requestMatchers("/api/licenses/*/heartbeat").permitAll()
                         .requestMatchers("/api/licenses/key/*").permitAll()
+                        // 진단·CI 대조용 공개키 (MDP-788 ㉮ — 공개키는 비밀 아님)
+                        .requestMatchers("/api/v1/licensing/public-key").permitAll()
                         // 라이선스 관리 API (인증 필요)
                         .requestMatchers("/api/licenses/**").authenticated()
                         .requestMatchers("/api/me/licenses/**").authenticated()

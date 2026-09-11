@@ -12,6 +12,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
@@ -33,14 +34,13 @@ import java.util.Base64;
 @Component
 public class DefaultSigningKeyProvider implements SigningKeyProvider {
 
-    private static final String PROD_KEY_ID = "bulc-prod-v1";
-
     private final String privateKeyBase64;
     private final String privateKeyPath;
     private final String activeProfile;
 
     private PrivateKey rsaPrivateKey;
     private PublicKey rsaPublicKey;
+    private String keyId;
 
     public DefaultSigningKeyProvider(
             @Value("${bulc.licensing.private-key-base64:}") String privateKeyBase64,
@@ -76,6 +76,9 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
 
             this.rsaPrivateKey = loadPrivateKey(pemContent);
             this.rsaPublicKey = derivePublicKey(this.rsaPrivateKey);
+            // MDP-788: kid = 실제 로드된 키의 RFC 7638 JWK thumbprint.
+            // 회전 시 신구 키가 서로 다른 kid 를 가져 클라이언트의 kid→key 선택이 성립한다.
+            this.keyId = JwkThumbprint.of((RSAPublicKey) this.rsaPublicKey);
             log.info("SigningKeyProvider: RS256 키 로드 성공 (keyId: {}, source: {})", keyId(), source);
         } catch (IOException e) {
             String errorMsg = String.format("키 파일을 읽을 수 없습니다: %s", privateKeyPath);
@@ -104,6 +107,7 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
             log.warn("========================================");
             this.rsaPrivateKey = null;
             this.rsaPublicKey = null;
+            this.keyId = null;
         }
     }
 
@@ -114,6 +118,7 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
             log.error("SigningKeyProvider: {}. 토큰 발급이 비활성화됩니다.", errorMsg, e);
             this.rsaPrivateKey = null;
             this.rsaPublicKey = null;
+            this.keyId = null;
         }
     }
 
@@ -140,7 +145,7 @@ public class DefaultSigningKeyProvider implements SigningKeyProvider {
 
     @Override
     public String keyId() {
-        return PROD_KEY_ID;
+        return keyId;
     }
 
     @Override
