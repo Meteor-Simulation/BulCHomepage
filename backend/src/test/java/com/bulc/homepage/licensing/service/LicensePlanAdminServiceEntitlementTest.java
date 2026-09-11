@@ -67,7 +67,7 @@ class LicensePlanAdminServiceEntitlementTest {
         return new LicensePlanRequest(
                 productId, "PLAN-A", "Plan A", "desc",
                 LicenseType.SUBSCRIPTION, 365, 7, 3, 1, 30,
-                entitlements
+                entitlements, null  // v1.2.0 (MDP-791): gracePeriodFeatures (null → 기본 full)
         );
     }
 
