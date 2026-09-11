@@ -157,6 +157,13 @@ bulc:
           - bulc://oauth/callback
           - http://localhost:*/oauth/callback
           - http://127.0.0.1:*/oauth/callback
+      # CLI 전용 public client (MDP-792) — PKCE 필수, client_secret 없음.
+      # 루프백 리스너(동적 포트)만 사용하므로 custom scheme 은 의도적으로 미등록.
+      bulc-cli:
+        display-name: "BulC CLI"
+        allowed-redirect-uris:
+          - http://localhost:*/oauth/callback
+          - http://127.0.0.1:*/oauth/callback
 
 # Toss Payments Configuration
 toss:
