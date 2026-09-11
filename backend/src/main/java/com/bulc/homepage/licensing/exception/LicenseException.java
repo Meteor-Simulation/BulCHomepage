@@ -35,6 +35,9 @@ public class LicenseException extends RuntimeException {
         PLAN_CODE_DUPLICATE("플랜 코드가 중복됩니다"),
         PLAN_NOT_AVAILABLE("사용할 수 없는 플랜입니다"),
 
+        // v1.2.0 (MDP-789): entitlement 어휘 레지스트리
+        INVALID_ENTITLEMENT_KEY("등록되지 않은 entitlement 키입니다"),
+
         // v1.1 추가
         ACCESS_DENIED("접근 권한이 없습니다"),
         LICENSE_NOT_FOUND_FOR_PRODUCT("해당 제품의 라이선스가 없습니다"),
