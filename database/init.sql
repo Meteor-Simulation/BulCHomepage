@@ -275,7 +275,7 @@ CREATE TABLE products (
 
 COMMENT ON TABLE products IS '상품 종류 테이블 - 판매 상품 정의';
 COMMENT ON COLUMN products.id IS 'UUID 기본키';
-COMMENT ON COLUMN products.code IS '상품 코드 (기존 000~999 → v1.2.0 VARCHAR(32), 기존 값 불변), UNIQUE';
+COMMENT ON COLUMN products.code IS '상품 코드 (기존 000~999 고정폭 → v1.2.0 에서 VARCHAR(32), 기존 값 불변), UNIQUE';
 
 -- 기본 상품 데이터 (deterministic UUID for compatibility)
 INSERT INTO products (id, code, name, description) VALUES
@@ -654,6 +654,7 @@ COMMENT ON TABLE license_plans IS '라이선스 플랜/정책 템플릿 (Admin U
 COMMENT ON COLUMN license_plans.code IS '사람이 읽기 쉬운 식별자, Admin UI에서 선택/표시할 값';
 COMMENT ON COLUMN license_plans.duration_days IS '기본 유효기간 (일 단위)';
 COMMENT ON COLUMN license_plans.grace_days IS 'EXPIRED_GRACE 상태로 전환 후 유예기간';
+COMMENT ON COLUMN license_plans.grace_period_features IS '유예기간(EXPIRED_GRACE) 중 기능 범위 (v1 기본 full)';
 COMMENT ON COLUMN license_plans.allow_offline_days IS '오프라인 허용 일수 (0이면 항상 온라인 필요)';
 
 -- =========================================================
@@ -751,6 +752,7 @@ CREATE TABLE license_activations (
 COMMENT ON TABLE license_activations IS '기기 활성화 정보 (라이선스별 기기 슬롯)';
 COMMENT ON COLUMN license_activations.device_fingerprint IS 'HW ID, OS 등을 조합한 기기 식별 해시';
 COMMENT ON COLUMN license_activations.offline_token IS '오프라인 환경용 서명된 토큰';
+COMMENT ON COLUMN license_activations.client_kind IS '활성화 클라이언트 종류 (gui|cli, nullable — 구버전 미전송)';
 
 -- =========================================================
 -- 16. revoked_offline_tokens (무효화된 오프라인 토큰 테이블)
