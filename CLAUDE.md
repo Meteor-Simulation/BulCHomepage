@@ -211,7 +211,9 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 - **`licensing/adapter/PaymentLicenseIssueAdapter.java`** — 웹 트랙(MDP-831)이 licensing 패키지 안에 둔 결제↔라이선스 결합 1점. 라이선싱 v1.2.0 이슈(MDP-787~793)는 발급 경로 무접촉이나, 이 파일을 고치는 PR 은 상대 트랙 리뷰를 받는다.
 - 공유 컨트롤러: `AdminController`·`ProductController` (licensing import 보유).
-- DB 마이그레이션: `V{yyyyMMdd}__*.sql` — 제출 전 동일 날짜 충돌 확인. **최신 = `V20260908__`** (웹).
+- DB 마이그레이션: `V{yyyyMMdd}[_{순번}]__{설명}.sql` — 제출 전 동일 날짜 충돌 확인. **최신 = `V20260909__`** (라이선싱 v1.2.0).
+  - **되돌리기 스크립트는 파일명을 `_rollback.sql` 로 끝낼 것** (MDP-856). `deploy.sh` [4/9] 의 `scripts/db-migrate.sh` 가 이 디렉터리를 읽어 적용하며, 규칙에 맞지 않는 `.sql` 이 있으면 **적용하지 않고 배포를 중단**한다(fail-closed).
+  - MDP-791 의 롤백 스크립트가 정렬상 원본 바로 뒤에 와서 **스키마 적용 직후 되돌릴** 상태였다. 배포 전 발견해 피해는 없었다.
 
 ### 병행 안전 규약 (갱신)
 
