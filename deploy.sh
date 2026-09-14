@@ -19,6 +19,10 @@ REMOTE_DIR="~/BulCHomepage"
 LOCAL_BACKEND="backend"
 COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.prebuilt.yml"
 
+# 헬스 체크 예산 — 5초 간격 × 횟수. 기동이 3분을 넘는 경우가 있어 여유를 둔다.
+# 정상 기동인데 롤백이 발동하는 것이 더 나쁜 실패다.
+HEALTH_TRIES="${BULC_HEALTH_TRIES:-72}"   # 72 × 5초 = 6분
+
 SKIP_MIGRATIONS=0
 if [ "${1:-}" = "--skip-migrations" ]; then
   SKIP_MIGRATIONS=1
@@ -49,8 +53,16 @@ restore_dockerignore() {
 }
 
 health_check() {
-  # $1 = 최대 시도 횟수. 이 서버는 기동에 약 95초(19회) 걸리는 것이 정상 범위다.
-  local tries="$1"
+  # $1 = 최대 시도 횟수(미지정 시 HEALTH_TRIES).
+  #
+  # 기동 시간 실측 — 편차가 크다. 메모리 264MB 서버에서 스왑을 쓰며 기동하기 때문이다.
+  #   2026-09-09  95초 (19/30)
+  #   2026-09-14 176초 — 종전 예산 150초를 이미 초과
+  # 여기에 MDP-793 의 spring-boot-starter-data-redis 가 클래스패스에 들어오면서
+  # Spring Data Redis 가 전체 JPA 리포지토리를 스캔하는 단계(Found 0 Redis repository)가
+  # 추가돼 더 늘었고, 2026-09-14 배포가 정상 기동 중에 예산 초과로 롤백됐다.
+  # 로그에 ERROR 는 0건이었다 — 코드 문제가 아니라 예산 문제였다.
+  local tries="${1:-$HEALTH_TRIES}"
   for i in $(seq 1 "$tries"); do
     if ssh_run "curl -sf http://localhost:8080/api/health" > /dev/null 2>&1; then
       return 0
@@ -136,7 +148,7 @@ echo "  OK — 컨테이너 시작됨"
 # ---- Step 8: 헬스 체크 ----
 echo ""
 echo "[8/9] 헬스 체크 대기..."
-if health_check 30; then
+if health_check; then
   restore_dockerignore
   echo "  OK — 서버 정상 가동!"
   echo ""
@@ -164,7 +176,7 @@ ssh_run "cd $REMOTE_DIR/backend && rm -f build/libs/*.jar && cp .deploy-backup/*
 ssh_run "cd $REMOTE_DIR && $COMPOSE down backend && $COMPOSE up -d --build backend"
 
 echo "  롤백 후 헬스 체크..."
-if health_check 30; then
+if health_check; then
   restore_dockerignore
   echo ""
   echo "=========================================="
