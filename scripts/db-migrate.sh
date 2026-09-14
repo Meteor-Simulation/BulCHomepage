@@ -11,6 +11,11 @@
 #   bash scripts/db-migrate.sh --baseline   # 최초 1회: 기존 파일을 '적용됨'으로 등록만 (SQL 실행 안 함)
 #   bash scripts/db-migrate.sh              # 미적용분 적용
 #
+# 파일명 규칙 (MDP-856 — 어긋나면 적용하지 않고 중단한다):
+#   적용 대상  V<YYYYMMDD>[_<순번>]__<설명>.sql
+#   건너뜀     *_rollback.sql   — 비상용 되돌리기 스크립트
+#   그 외      중단             — 무엇을 해야 할 파일인지 판단할 수 없으므로
+#
 # 주의:
 #   - 서버의 database/migrations 를 읽으므로 `git pull` 이 선행되어야 한다.
 #   - deploy.sh 가 [4/9] 단계에서 이 스크립트를 자동 호출한다. 단독 실행은 점검·복구용.
@@ -82,7 +87,53 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 LEDGER_COUNT=$(psqlq -c "SELECT count(*) FROM schema_migrations;")
 
-FILES=$(ls -1 "$MIG_DIR"/V*.sql 2>/dev/null | LC_ALL=C sort || true)
+# ---- 파일 분류 (MDP-856) ----
+# 디렉터리에 있는 .sql 을 세 갈래로 나눈다.
+#
+#   적용 대상  V<YYYYMMDD>[_<seq>]__<설명>.sql
+#   건너뜀     *_rollback.sql  — 비상용 되돌리기 스크립트. 평소 실행하면 안 된다
+#   미상       그 외           — 적용하지 않고 중단한다
+#
+# fail-closed 인 이유: 종전 구현은 V*.sql 을 전부 적용해서, MDP-791 이 같은 디렉터리에
+# 넣은 롤백 스크립트를 원본 직후에 실행할 상태였다(정렬상 바로 뒤에 온다). 운영 DB 를
+# 변경하는 도구의 기본값이 "모르면 실행"이면 안 된다. 모르면 멈춘다.
+MIG_RE='^V[0-9]{8}(_[0-9]+)?__[A-Za-z0-9_.-]+\.sql$'
+
+FILES=""
+SKIPPED=()
+UNKNOWN=()
+while IFS= read -r path; do
+  [ -n "$path" ] || continue
+  name=$(basename "$path")
+  case "$name" in
+    *_rollback.sql)
+      SKIPPED+=("$name")
+      ;;
+    *)
+      if printf '%s' "$name" | grep -Eq "$MIG_RE"; then
+        FILES="${FILES}${path}"$'\n'
+      else
+        UNKNOWN+=("$name")
+      fi
+      ;;
+  esac
+done <<< "$(ls -1 "$MIG_DIR"/*.sql 2>/dev/null | LC_ALL=C sort || true)"
+FILES=$(printf '%s' "$FILES")
+
+if [ "${#SKIPPED[@]}" -gt 0 ]; then
+  echo "  건너뜀(롤백 스크립트) ${#SKIPPED[@]}건:"
+  for s in "${SKIPPED[@]}"; do echo "    - $s"; done
+fi
+
+if [ "${#UNKNOWN[@]}" -gt 0 ]; then
+  echo "  ERROR: 마이그레이션 파일명 규칙에 맞지 않는 .sql 이 있습니다 (${#UNKNOWN[@]}건)."
+  for u in "${UNKNOWN[@]}"; do echo "    - $u"; done
+  echo "         규칙: V<YYYYMMDD>[_<순번>]__<설명>.sql"
+  echo "         되돌리기 스크립트라면 파일명을 *_rollback.sql 로 끝내세요."
+  echo "         무엇을 해야 할 파일인지 판단할 수 없어 중단합니다."
+  exit 1
+fi
+
 if [ -z "$FILES" ]; then
   echo "  마이그레이션 파일 없음: $MIG_DIR"
   exit 0
