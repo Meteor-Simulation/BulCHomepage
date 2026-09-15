@@ -2,7 +2,7 @@ package com.bulc.homepage.payment.notification;
 
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.OperationalMailService;
+import com.bulc.homepage.mail.service.OperationalMailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.mail.repository;
 
-import com.bulc.homepage.entity.EmailLog;
+import com.bulc.homepage.mail.domain.EmailLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

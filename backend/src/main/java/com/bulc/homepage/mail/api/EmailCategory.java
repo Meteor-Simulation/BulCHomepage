@@ -1,4 +1,4 @@
-package com.bulc.homepage.email;
+package com.bulc.homepage.mail.api;
 
 public enum EmailCategory {
     ACCOUNT,

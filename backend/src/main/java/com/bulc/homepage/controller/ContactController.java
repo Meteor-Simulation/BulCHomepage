@@ -1,7 +1,7 @@
 package com.bulc.homepage.controller;
 
-import com.bulc.homepage.email.EmailCategory;
-import com.bulc.homepage.service.EmailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ContactController {
 
-    private final EmailService emailService;
+    private final MailPort mailPort;
 
     @Value("${mail.from.accounts:support@msimul.com}")
     private String supportEmail;
@@ -59,7 +59,7 @@ public class ContactController {
                     : "METEOR";
 
             // 문의 이메일 발송 (OPERATIONAL — email_log 기록)
-            emailService.send(
+            mailPort.send(
                     EmailCategory.OPERATIONAL,
                     replyToEmail,  // 관리자에게 발송
                     "contact_form",

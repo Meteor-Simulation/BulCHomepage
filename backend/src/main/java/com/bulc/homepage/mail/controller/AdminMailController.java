@@ -1,7 +1,7 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.mail.controller;
 
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.OperationalMailService;
+import com.bulc.homepage.mail.service.OperationalMailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
