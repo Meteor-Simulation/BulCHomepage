@@ -52,6 +52,36 @@ restore_dockerignore() {
     fi" || true
 }
 
+# 배포 실패 원인을 남긴다.
+#
+# 종전에는 `docker logs --tail 40` 만 찍었는데, backend 는 restart: always 라
+# 기동 실패 시 이미 재시작된 뒤였다. 그래서 실패 로그가 아니라 **다음 시도의 앞부분**이
+# 잡혔고, ERROR 가 없어 보여 "기동이 느린 것"으로 오진했다.
+# 실제 원인은 설정 오류(MDP-869)였고, 그 오진으로 배포를 두 번 헛돌렸다.
+#
+# 그래서 두 가지를 먼저 본다.
+#   RestartCount > 0  → 죽고 다시 뜨는 중. 아래 오류가 진짜 원인이다
+#   RestartCount = 0  → 아직 기동 중. 예산(BULC_HEALTH_TRIES) 부족일 수 있다
+capture_failure_diagnostics() {
+  echo "  ── 컨테이너 상태 ──"
+  ssh_run "docker inspect bulc-backend-prod \
+    --format 'RestartCount={{.RestartCount}}  Status={{.State.Status}}  ExitCode={{.State.ExitCode}}  OOMKilled={{.State.OOMKilled}}'" \
+    2>&1 | sed 's/^/    /' || true
+
+  echo "  ── 기동 실패 원인 ──"
+  # --tail 이 아니라 전체 로그를 훑는다. 재시작 전 로그도 같은 컨테이너 로그에 남아 있다.
+  #
+  # 패턴을 '기동 실패'로 좁힌다. 단순 ERROR 를 다 긁으면 JWT 만료 같은 정상 운영 로그가
+  # 섞여 진짜 원인이 묻힌다. 아래는 Spring 이 컨텍스트 기동에 실패할 때만 나오는 문구다.
+  ssh_run "docker logs bulc-backend-prod 2>&1 \
+    | grep -E 'FATAL|Application run failed|APPLICATION FAILED TO START|BeanCreationException|BeanInstantiationException|UnsatisfiedDependency|SchemaManagementException|Caused by:' \
+    | tail -20" 2>&1 | sed 's/^/    /' || true
+  echo "    (위가 비어 있으면 기동 실패가 아니라 기동 지연일 수 있다 — RestartCount 를 보라)"
+
+  echo "  ── 최근 로그 20줄 ──"
+  ssh_run "docker logs bulc-backend-prod --tail 20" 2>&1 | sed 's/^/    /' || true
+}
+
 health_check() {
   # $1 = 최대 시도 횟수(미지정 시 HEALTH_TRIES).
   #
@@ -161,7 +191,7 @@ fi
 # ---- Step 9: 롤백 ----
 echo ""
 echo "[9/9] 헬스 체크 실패 — 이전 JAR 로 롤백합니다."
-ssh_run "cd $REMOTE_DIR && docker logs bulc-backend-prod --tail 40" 2>&1 | sed 's/^/    /' || true
+capture_failure_diagnostics
 
 PREV=$(ssh_run "ls -1 $REMOTE_DIR/backend/.deploy-backup/*.jar 2>/dev/null | head -1" || true)
 if [ -z "$PREV" ]; then
