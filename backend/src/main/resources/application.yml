@@ -140,20 +140,24 @@ bulc:
     # 이 시간 이상 heartbeat 없으면 stale로 간주하여 자동 종료 대상
     stale-threshold-minutes: ${LIC_STALE_THRESHOLD_MINUTES:30}
 
+    # entitlement 어휘 레지스트리 (MDP-789 · 계약 v1.2.0 §2)
+    # 제품 코드(products.code)별 허용 정본 entitlement 키. 정본 = 서버 어휘.
+    # 플랜 생성/수정 시 등록되지 않은 키는 거부된다.
+    #
+    # ⚠ 반드시 bulc.licensing 아래여야 한다 — EntitlementRegistry 의
+    #   @ConfigurationProperties(prefix = "bulc.licensing.entitlements") 와 맞춰야 하며,
+    #   한 단계 밖(bulc.entitlements)에 두면 prod 에서 기동이 거부된다 (MDP-861).
+    entitlements:
+      by-product:
+        # "001" = BUL:C (VARCHAR(3), 시드 1행). CLI(FDS_GPU)도 core-simulation 재사용.
+        "001":
+          - core-simulation
+          - export-csv
+          - advanced-visualization
+
   # Redeem 코드 설정
   redeem:
     code-pepper: ${REDEEM_CODE_PEPPER:dev-redeem-pepper-2024}
-
-  # entitlement 어휘 레지스트리 (MDP-789 · 계약 v1.2.0 §2)
-  # 제품 코드(products.code)별 허용 정본 entitlement 키. 정본 = 서버 어휘.
-  # 플랜 생성/수정 시 등록되지 않은 키는 거부된다 (by-product 비어 있으면 검증 생략).
-  entitlements:
-    by-product:
-      # "001" = BUL:C (VARCHAR(3), 시드 1행). CLI(FDS_GPU)도 core-simulation 재사용.
-      "001":
-        - core-simulation
-        - export-csv
-        - advanced-visualization
 
   # OAuth 2.0 클라이언트 설정
   # 등록된 client_id와 redirect_uri만 허용됩니다.
