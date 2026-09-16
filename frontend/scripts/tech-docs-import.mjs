@@ -34,6 +34,28 @@ const SHARED_LIBS = [
 const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi;
 
 /**
+ * CDN 스크립트도 CSP 에 걸린다 (script-src 'self' + 토스만 허용).
+ *
+ * MathJax 는 이미 자체호스팅 KaTeX 로 대체한 선례가 있다(MDP-664). tech-docs/ 에
+ * katex.min.js · katex-auto-render.min.js · katex-init.js · katex.min.css 가 있고,
+ * katex-init.js 가 $...$ / $$...$$ 를 그대로 처리하므로 MathJax 설정과 구분자가 같다.
+ *
+ * MathJax 설정 블록(window.MathJax = {...})은 KaTeX 에 불필요하므로 함께 제거한다.
+ * 남겨두면 INLINE_SCRIPT 가 쓸모없는 .inline.js 파일로 뽑아낸다.
+ *
+ * 여기서 다루지 않는 CDN 은 그대로 남겨 check-csp.mjs 가 잡도록 한다
+ * — 자동으로 치환할 근거가 없는 것을 조용히 바꾸면 더 위험하다.
+ */
+const CDN_MATHJAX = /<script[^>]*\bsrc="https?:\/\/[^"]*mathjax[^"]*"[^>]*>\s*<\/script>/gi;
+const MATHJAX_CONFIG = /<script(?![^>]*\bsrc=)[^>]*>\s*window\.MathJax\s*=[\s\S]*?<\/script>/gi;
+const KATEX_TAGS = [
+  '<link rel="stylesheet" href="katex.min.css">',
+  '<script defer src="katex.min.js"></script>',
+  '<script defer src="katex-auto-render.min.js"></script>',
+  '<script defer src="katex-init.js"></script>',
+].join('\n');
+
+/**
  * 인라인 이벤트 핸들러도 CSP 에 걸린다. 스크립트만 빼내면 버튼·슬라이더가 죽는다.
  *
  * 다행히 이 문서들의 핸들러는 규칙적이다.
@@ -81,12 +103,28 @@ function main() {
   const written = [];
   let inlineCount = 0;
 
+  // 0) CDN MathJax → 자체호스팅 KaTeX. 설정 블록도 같이 걷어낸다.
+  //    인라인 스크립트 추출(2단계)보다 먼저 해야 설정 블록이 .inline.js 로 뽑히지 않는다.
+  let mathjaxReplaced = 0;
+  let pre = raw.replace(CDN_MATHJAX, () => {
+    mathjaxReplaced += 1;
+    return KATEX_TAGS;
+  });
+  if (mathjaxReplaced) {
+    const before = pre;
+    pre = pre.replace(MATHJAX_CONFIG, '');
+    console.log(
+      `  ↻ CDN MathJax ${mathjaxReplaced}건 → 자체호스팅 KaTeX` +
+        (before === pre ? '' : ' (MathJax 설정 블록 제거)')
+    );
+  }
+
   // 1) 인라인 이벤트 핸들러 제거. 대체 바인딩으로 재현 가능한 형태만 건드린다.
   //    모르는 핸들러는 남겨서 check-csp.mjs 가 잡도록 한다 (조용히 깨뜨리지 않기 위함).
   let handlersStripped = 0;
   let unknownHandlers = 0;
   let boundHere = null;
-  const html = raw.replace(INLINE_HANDLER, (full, evt, code) => {
+  const html = pre.replace(INLINE_HANDLER, (full, evt, code) => {
     const known =
       /^\s*togglePlay\(\s*'[^']+'\s*\)\s*;?\s*$/.test(code) ||
       /^\s*setFrame\(\s*'[^']+'\s*,\s*this\.value\s*\)\s*;?\s*$/.test(code);
