@@ -1,3 +1,44 @@
+# 스크립트
+
+## run-tests.sh — 백엔드 테스트 실행 (한글 경로 우회)
+
+저장소 경로에 한글이 있으면(`C:\강주원\...`) Gradle 테스트 워커가 테스트 클래스를
+찾지 못해 **단 한 건도 실행되지 않습니다**(`ClassNotFoundException`, MDP-844).
+컴파일은 성공하고 `.class` 도 생성되며 `javap` 로는 로드되는데 워커만 실패합니다.
+
+```bash
+bash scripts/run-tests.sh                              # 전체
+bash scripts/run-tests.sh --tests "*MailListener*"     # gradle 인자 그대로 전달
+BULC_TEST_DIR=D:/work/bulc-test bash scripts/run-tests.sh
+```
+
+소스를 ASCII 경로(`C:\bulc-test`, `BULC_TEST_DIR` 로 변경 가능)로 동기화한 뒤 거기서
+실행합니다. **커밋하지 않은 변경도 그대로 반영**되며(git 이 아니라 파일 동기화),
+파일 삭제도 `robocopy /MIR` 로 동기화됩니다.
+
+### 근거 (2026-09-17 실측)
+
+같은 커밋·같은 명령인데 경로만 다르면 결과가 갈립니다.
+
+| 경로 | 결과 |
+|---|---|
+| `C:\강주원\20.Project\...` | BUILD FAILED — 0개 실행 |
+| `C:\tmp-mdp844\repo` | BUILD SUCCESSFUL — 402개 전부 통과 |
+
+**심볼릭 링크(정션)로는 해결되지 않습니다.** Gradle 이 실제 경로로 되돌려 해석하는
+것을 실측으로 확인했습니다. 그래서 복사 방식을 씁니다.
+
+### 주의
+
+`build/` · `.gradle/` 은 동기화에서 제외합니다. 한글 경로에서 만들어진 산출물에는
+절대경로가 섞여 있어 가져오면 캐시가 어긋납니다.
+
+`gradle-wrapper.jar` 은 `.gitignore` 의 `*.jar` 에 걸려 저장소에서 빠져 있었고,
+MDP-844 에서 예외 규칙(`!backend/gradle/wrapper/gradle-wrapper.jar`)을 추가해
+추적하도록 바꿨습니다. 없으면 새로 clone 한 환경에서 `gradlew` 가 즉시 실패합니다.
+
+---
+
 # 서버 스크립트
 
 ## db-migrate.sh — DB 마이그레이션 러너
