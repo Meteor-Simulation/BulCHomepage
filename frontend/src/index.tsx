@@ -31,6 +31,8 @@ import LeadSubscribePage from './CategoryPages/Event/LeadSubscribePage';
 import FaqPage from './CategoryPages/Docs/FaqPage';
 import DocsArticlePage from './CategoryPages/Docs/DocsArticlePage';
 import EvacShowcase from './CategoryPages/Evac/EvacShowcase';
+import ValidationPage from './CategoryPages/Validation/ValidationPage';
+import ValidationVersionPage from './CategoryPages/Validation/ValidationVersionPage';
 import PopupRenderer from './components/PopupRenderer';
 import MarketingConsentModal from './components/MarketingConsentModal';
 import Seo from './components/Seo';
@@ -98,6 +100,9 @@ const App: React.FC = () => {
             {/* 전시회 현장 메일링 등록 (QR 진입, MDP-707) */}
             <Route path="/subscribe" element={<LeadSubscribePage />} />
             <Route path="/evac-sim" element={<EvacShowcase />} />
+            {/* BULC V&V 게시 (MDP-819, BULC-VV Sprint 6 초기 게시) */}
+            <Route path="/validation" element={<ValidationPage />} />
+            <Route path="/validation/:version" element={<ValidationVersionPage />} />
             <Route path="/error" element={<ErrorPage />} />
             {/* 404 - 매칭되지 않는 모든 경로 */}
             <Route path="*" element={<NotFoundPage />} />

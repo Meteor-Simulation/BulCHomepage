@@ -149,7 +149,8 @@
       "report": "Report",
       "price": "Price",
       "getStarted": "Get Started",
-      "tutorial": "Tutorial"
+      "tutorial": "Tutorial",
+      "validation": "Validation"
     },
     "loginNotice": "Please log in to download the program",
     "loginPromo": "Free 14-day license on sign-up (no card required)",
@@ -866,5 +867,115 @@
     "faq": "FAQ",
     "techDocs": "Tech Docs",
     "downloadLink": "Download"
+  },
+  "validation": {
+    "title": "V&V (Verification & Validation)",
+    "lead": "Per-version verification (against FDS 6.10.1) and validation (against experiments) results of the BUL:C GPU solver, published together with the audit data: which inputs, solver commit and datasets produced every number (provenance).",
+    "preliminary": "preliminary",
+    "preliminaryNotice": "Preliminary release. The labels (PASS/NOTE/WARNING/FAIL) are statistical: how large the GPU–FDS difference is relative to run-to-run scatter (envelope) and the FDS Validation Guide model uncertainty (σ̃_M). They are not a fitness-for-purpose verdict. In the experimental comparison (Phase 2) the GPU solver is closer to the experiment than FDS at some points.",
+    "loading": "Loading…",
+    "empty": "No published results yet.",
+    "notFound": "No results for version {{version}}.",
+    "cases": "cases",
+    "phase1Short": "Phase 1 FDS↔GPU",
+    "phase2Short": "Phase 2 experiments",
+    "phase1Cases": "Phase 1 cases",
+    "phase2Points": "Phase 2 points",
+    "versionLead": "Comparison against FDS {{fds}} (Phase 1) and against FDS Validation Guide {{guide}} experiments (Phase 2). Four blocks below: Summary · Case Result · Spatial/Statistical · Audit Information.",
+    "previousNone": "Previous version: none (first release)",
+    "privateExcluded": "{{n}} in-house case(s) excluded",
+    "generatedAt": "generated",
+    "labelDefinitions": "Label definitions",
+    "knownIssues": "Known issues",
+    "ki": {
+      "status": "status",
+      "since": "first seen",
+      "summary": "summary",
+      "cases": "cases"
+    },
+    "blocks": {
+      "summary": "1. Summary",
+      "caseResult": "2. Case Result",
+      "spatial": "3. Spatial / Statistical",
+      "audit": "4. Audit Information"
+    },
+    "phase1Title": "Phase 1 — FDS 6.10.1 ↔ GPU benchmarks",
+    "phase1Desc": "The same input deck is run with CPU FDS and the GPU solver and ~300 metrics (3D fields, features, conservation) are compared. status is the worst label over the gate cells (quasi-steady window × ROI). Click a row for details.",
+    "phase2Title": "Phase 2 — experiments (Exp · FDS · GPU 3-way)",
+    "phase2Desc": "Measurement points, comparison windows and metrics are taken verbatim from the FDS Validation Guide. ±2σ̃ is the combined experimental + model uncertainty band; red values are outside it. Quadrants: both match / both off / GPU only off / GPU closer / undetermined.",
+    "categories": "Per-category δ · σ̃_M (Guide eq. 4.18–4.21)",
+    "spatialDesc": "Vertical temperature section of the Reduced Field (time-mean, 2× block-averaged) — FDS | GPU | difference. Raw arrays are in the Audit Package.",
+    "table": {
+      "case": "case",
+      "window": "window",
+      "status": "status",
+      "gateCells": "gate cells",
+      "counts": "metric labels",
+      "ensemble": "ensemble N",
+      "knownIssues": "issue tags",
+      "quantity": "quantity",
+      "point": "point",
+      "quadrant": "quadrant",
+      "category": "category",
+      "value": "error"
+    },
+    "quadrant": {
+      "both_match": {
+        "label": "both match",
+        "desc": "FDS and GPU both inside the 2σ̃ band of the experiment"
+      },
+      "both_off": {
+        "label": "both off",
+        "desc": "both outside the band while FDS↔GPU agree — common model limitation"
+      },
+      "x_only_off": {
+        "label": "GPU only off",
+        "desc": "FDS inside, GPU outside — known-issue candidate"
+      },
+      "x_closer": {
+        "label": "GPU closer",
+        "desc": "FDS↔GPU differ but GPU is closer to the experiment — not treated as an error"
+      },
+      "undetermined": {
+        "label": "undetermined",
+        "desc": "missing value (extinction, garbage value, …)"
+      }
+    },
+    "audit": {
+      "solverCommit": "Solver commit",
+      "reference": "Reference",
+      "analysisVersion": "Analysis version",
+      "hardware": "Hardware",
+      "package": "Audit Package",
+      "packagePending": "upload pending",
+      "excluded": "excluded",
+      "commit": "commit",
+      "mesh": "mesh IJK",
+      "parameters": "parameters",
+      "deck": "deck sha256",
+      "rawHash": "raw dataset hash",
+      "provenance": "provenance",
+      "retention": "raw retention",
+      "verified": "verified",
+      "deleted": "deleted",
+      "expires": "expires",
+      "note": "Raw dataset hash = combined sha256 of every field/CSV file the run produced. Raw 4D fields are discarded after the retention period (90 days); before deletion the derived statistics are recomputed and checked to be identical to the stored ones (verified ✓). provenance.json and all derived statistics are in the Audit Package."
+    },
+    "about": {
+      "title": "About this page",
+      "p1": "Verification: the same input is run with CPU FDS (the reference implementation) and the GPU solver, and the numerical agreement is measured. Run-to-run non-determinism (envelope) is quantified first with 5 repeats and perturbation ensembles; only differences beyond it count as DISTINCT.",
+      "p2": "Validation: experimental data, measurement points and metrics of the FDS Validation Guide are applied verbatim so that Experiment ↔ FDS ↔ GPU appear in one table. Points where only the GPU deviates go to the known-issue register for the engine team.",
+      "p3": "Auditability: every published number ships with its provenance (input deck, mesh, solver commit, binary hash, raw dataset hash, analysis code version) as an Audit Package that anyone can re-verify."
+    },
+    "section": {
+      "title": "Verification & Validation",
+      "subtitle": "Per-version verification against FDS and validation against experiments of the GPU solver.",
+      "more": "See all results"
+    },
+    "seo": {
+      "listTitle": "V&V results | BUL:C fire simulation",
+      "listDescription": "Per-version verification (vs FDS) and validation (vs experiments) results of the BUL:C GPU fire simulation solver, with audit data.",
+      "versionDescription": "BUL:C GPU solver {{version}}: verification against FDS 6.10.1, FDS Validation Guide experimental comparison and audit information."
+    }
   }
 }

@@ -1,0 +1,24 @@
+{
+ "schema": 1,
+ "versions": [
+  {
+   "version": "0.78.0rc",
+   "engine": "fds_gpu",
+   "generated_at": "2026-09-20T21:44:22",
+   "preliminary": true,
+   "counts": {
+    "cases": 14,
+    "FAIL": 14,
+    "private_excluded": 1
+   },
+   "phase2_counts": {
+    "both_match": 8,
+    "both_off": 1,
+    "x_only_off": 2,
+    "x_closer": 2,
+    "undetermined": 4
+   },
+   "path": "/validation/0.78.0rc/summary.json"
+  }
+ ]
+}

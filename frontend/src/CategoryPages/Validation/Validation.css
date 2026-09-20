@@ -1,0 +1,94 @@
+/* BULC V&V 게시 페이지 (/validation, /validation/:version) */
+
+.vv-container h2 { font-size: 1.35rem; margin: 40px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent, #c4320a); }
+.vv-container h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+.vv-container h4 { font-size: 1rem; margin: 18px 0 8px; }
+.vv-wide { max-width: 1180px; }
+.vv-muted { color: var(--text-secondary, #666); }
+.vv-small { font-size: 0.85rem; }
+.vv-wrap { white-space: normal; min-width: 260px; max-width: 560px; }
+.vv-breadcrumb { font-size: 0.9rem; margin-bottom: 8px; }
+.vv-breadcrumb a { color: var(--accent, #c4320a); }
+
+.vv-notice {
+  border-left: 4px solid #f9a825; background: #fff8e1; padding: 10px 14px; border-radius: 6px;
+  font-size: 0.9rem; line-height: 1.6; margin: 0 0 24px;
+}
+.vv-tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  background: #f9a825; color: #222; border-radius: 4px; padding: 2px 6px; vertical-align: middle; margin-left: 8px;
+}
+
+/* 버전 목록 */
+.vv-version-list { display: grid; gap: 14px; margin-bottom: 40px; }
+.vv-version-card {
+  display: block; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 16px 18px; background: #fff;
+  color: inherit; text-decoration: none; transition: box-shadow 0.15s ease;
+}
+.vv-version-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.vv-version-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.vv-version-name { font-weight: 700; font-size: 1.05rem; }
+.vv-date { margin-left: auto; font-size: 0.85rem; }
+.vv-version-counts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.85rem; }
+.vv-about p { line-height: 1.7; color: var(--text-secondary, #444); }
+
+/* KPI */
+.vv-kpis { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+.vv-kpi { min-width: 96px; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 10px 14px; background: #fff; text-align: center; }
+.vv-kpi-wide { flex: 1 1 260px; text-align: left; }
+.vv-kpi-num { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.vv-kpi-label { font-size: 0.8rem; color: var(--text-secondary, #666); margin-top: 4px; }
+
+/* 배지 */
+.vv-cells { display: flex; gap: 4px; }
+.vv-cell { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; color: #fff; background: #9e9e9e; }
+.vv-badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; color: #fff; background: #9e9e9e; white-space: nowrap; }
+.vv-status-pass { background: #2e7d32; }
+.vv-status-note { background: #1565c0; }
+.vv-status-warning { background: #f9a825; color: #222; }
+.vv-status-fail { background: #c62828; }
+.vv-status-incomparable, .vv-status-na { background: #6a1b9a; }
+.vv-status-engine_fail { background: #4e342e; }
+.vv-status-deck_unavailable, .vv-status-not_run { background: #9e9e9e; }
+.vv-ki-open { background: #c62828; }
+.vv-ki-candidate { background: #f9a825; color: #222; }
+.vv-q-both_match { background: #2e7d32; }
+.vv-q-both_off { background: #607d8b; }
+.vv-q-x_only_off { background: #c62828; }
+.vv-q-x_closer { background: #1565c0; }
+.vv-q-undetermined { background: #9e9e9e; }
+
+.vv-qbar { display: inline-flex; width: 100%; max-width: 420px; height: 20px; border-radius: 6px; overflow: hidden; font-size: 0.72rem; font-weight: 700; color: #fff; }
+.vv-qbar-compact { max-width: 180px; height: 16px; }
+.vv-qseg { display: flex; align-items: center; justify-content: center; padding: 0 4px; white-space: nowrap; overflow: hidden; }
+
+/* 표 */
+.vv-scroll { overflow-x: auto; margin-bottom: 8px; }
+.vv-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: #fff; }
+.vv-table th, .vv-table td { border-bottom: 1px solid rgba(0,0,0,0.08); padding: 6px 8px; text-align: left; vertical-align: top; white-space: nowrap; }
+.vv-table th { background: #f6f6f6; font-weight: 600; }
+.vv-table tbody tr:hover { background: #fafafa; }
+.vv-table.vv-table-wrap th, .vv-table.vv-table-wrap td { white-space: normal; }  /* known issues: 요약 줄바꿈 */
+.vv-row-active { background: #fff3e0 !important; }
+.vv-kv th { width: 180px; white-space: nowrap; }
+.vv-kv td { white-space: normal; }
+.vv-linkbtn { background: none; border: none; padding: 0; color: var(--accent, #c4320a); cursor: pointer; font: inherit; text-decoration: underline; }
+.vv-off { color: #c62828; font-weight: 600; }
+.vv-sha { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; background: #f3f3f3; padding: 1px 4px; border-radius: 3px; margin-right: 4px; }
+.vv-details { margin: 8px 0 16px; }
+.vv-details summary { cursor: pointer; color: var(--accent, #c4320a); font-size: 0.9rem; }
+
+/* 케이스 상세 */
+.vv-case { border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px 16px; margin: 12px 0 24px; background: #fff; }
+.vv-case-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
+.vv-case-grid > div { min-width: 0; }
+.vv-figcol { display: grid; gap: 10px; }
+.vv-fig { margin: 0; }
+.vv-fig img { width: 100%; height: auto; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; background: #fff; }
+.vv-fig figcaption { font-size: 0.78rem; color: var(--text-secondary, #666); margin-top: 2px; }
+.vv-figgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+
+@media (max-width: 800px) {
+  .vv-case-grid { grid-template-columns: 1fr; }
+  .vv-kv th { width: 120px; }
+}
