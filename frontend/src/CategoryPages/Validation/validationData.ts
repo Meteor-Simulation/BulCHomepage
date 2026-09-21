@@ -96,6 +96,24 @@ export interface AuditCase {
   fds?: { version: string | null; binary_sha256: string | null; run_id: string | null; provenance_sha256: string | null; deck_sha256: string | null };
 }
 
+export interface PreviousDelta {
+  case: string; metric: string; delta: number; envelope: number | null; prev: number; cur: number;
+  prev_status: string | null; cur_status: string | null; multiple: number | null;
+}
+
+export interface PreviousBlock {
+  version: string | null;
+  engine_commit: string | null;
+  status_changes: { case: string; from: string; to: string; direction: 'regressed' | 'improved' | 'other' }[];
+  regressed: PreviousDelta[];
+  improved: PreviousDelta[];
+  always_report: PreviousDelta[];
+  cases_compared: string[];
+  cases_new: string[];
+  cases_dropped: string[];
+  counts: { regressed: number; improved: number; status_changes: number; cases_compared: number };
+}
+
 export interface ValidationSummary {
   schema: number;
   generated_at: string;
@@ -105,7 +123,7 @@ export interface ValidationSummary {
   hardware: { gpu: string | null; driver: string | null; cuda: string | null; os: string | null };
   counts: Record<string, number>;
   label_definitions: Record<string, string>;
-  previous: null | Record<string, unknown>;
+  previous: null | PreviousBlock;
   known_issues: KnownIssue[];
   phase1: { benchmarks: Benchmark[] };
   phase2: {

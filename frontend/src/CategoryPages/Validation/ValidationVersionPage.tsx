@@ -10,7 +10,7 @@ import {
   Benchmark, fetchValidationSummary, figureUrl, fmtBytes, fmtNum, fmtPct, Phase2Point, STATUS_ORDER,
   ValidationSummary,
 } from './validationData';
-import { QuadrantBadge, QuadrantBar, Sha, StatusBadge } from './ValidationWidgets';
+import { PreviousBlockView, QuadrantBadge, QuadrantBar, Sha, StatusBadge } from './ValidationWidgets';
 
 /** /validation/:version — 로드맵 Phase 5 의 버전 페이지 4 블록: Summary · Case Result · Spatial/Statistical · Audit Information. */
 const ValidationVersionPage: React.FC = () => {
@@ -69,8 +69,9 @@ const ValidationVersionPage: React.FC = () => {
                   )}
                 </div>
                 <p className="vv-muted vv-small">
-                  {t('validation.previousNone')} · {t('validation.privateExcluded', { n: data.counts.private_excluded ?? 0 })} · {t('validation.generatedAt')} {data.generated_at.slice(0, 16).replace('T', ' ')}
+                  {data.previous ? t('validation.previousVs', { version: data.previous.version ?? '?' }) : t('validation.previousNone')} · {t('validation.privateExcluded', { n: data.counts.private_excluded ?? 0 })} · {t('validation.generatedAt')} {data.generated_at.slice(0, 16).replace('T', ' ')}
                 </p>
+                {data.previous && <PreviousBlockView prev={data.previous} />}
                 <details className="vv-details">
                   <summary>{t('validation.labelDefinitions')}</summary>
                   <table className="vv-table vv-small"><tbody>

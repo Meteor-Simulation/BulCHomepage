@@ -976,6 +976,27 @@
       "listTitle": "V&V 검증 결과 | BUL:C 화재 시뮬레이션",
       "listDescription": "BUL:C GPU 화재 시뮬레이션 솔버의 버전별 검증(FDS 대비)·타당성 확인(실험 대비) 결과와 감사용 데이터.",
       "versionDescription": "BUL:C GPU 솔버 {{version}} 의 FDS 6.10.1 대비 검증과 FDS Validation Guide 실험 대조 결과, 감사 정보."
+    },
+    "previousVs": "이전 버전 비교: {{version}}",
+    "prev": {
+      "title": "이전 버전({{version}}) 대비",
+      "lead": "비교 케이스 {{n}} · 회귀 {{r}} · 개선 {{i}} · status 변화 {{s}} (Δ = 현재 − 이전, ×envelope = Δ 를 현재 버전 envelope 으로 나눈 배수; 규칙 config/regression.yaml)",
+      "casesNew": "새 케이스",
+      "casesDropped": "빠진 케이스",
+      "from": "이전",
+      "to": "현재",
+      "direction": "방향",
+      "dir": {
+        "regressed": "회귀",
+        "improved": "개선",
+        "other": "변화"
+      },
+      "alwaysReport": "항상 보고 metric (T.mean_err · mass.balance_err · energy.closure_err · gradT.iou_p95)",
+      "regressed": "회귀 (envelope 배수 초과)",
+      "improved": "개선 (envelope 배수 초과)",
+      "prevCol": "이전",
+      "curCol": "현재",
+      "more": "{{n}}건 더"
     }
   }
 }
