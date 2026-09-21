@@ -39,7 +39,7 @@ const ValidationVersionPage: React.FC = () => {
 
   return (
     <div className="app">
-      <Seo title={`${title} | BUL:C`} description={t('validation.seo.versionDescription', { version })} path={`/validation/${version}`} />
+      <Seo title={`${title} | BUL:C`} description={t('validation.seo.versionDescription', { version })} path={`/validation/${version}`} noindex />
       <Header logoText="BUL:C" />
       <main className="main-content sub-page">
         <div className="docs-container vv-container vv-wide">

@@ -27,7 +27,7 @@ const ValidationPage: React.FC = () => {
 
   return (
     <div className="app">
-      <Seo title={t('validation.seo.listTitle')} description={t('validation.seo.listDescription')} path="/validation" />
+      <Seo title={t('validation.seo.listTitle')} description={t('validation.seo.listDescription')} path="/validation" noindex />
       <Header logoText="BUL:C" />
       <main className="main-content sub-page">
         <div className="docs-container vv-container">
