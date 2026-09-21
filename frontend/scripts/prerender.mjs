@@ -27,7 +27,6 @@ const ROUTES = [
   '/docs/aset-rset',
   '/docs/performance-based-design',
   '/docs/fds-gpu-acceleration',
-  '/validation',
 ];
 
 const PORT = 4173;

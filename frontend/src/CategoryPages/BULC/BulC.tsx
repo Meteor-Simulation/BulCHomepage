@@ -22,7 +22,6 @@ import {
   CTASection,
   PriceSection,
   TutorialHubSection,
-  ValidationSection,
 } from './sections';
 
 const BulCPage: React.FC = () => {
@@ -33,7 +32,6 @@ const BulCPage: React.FC = () => {
     { id: 'price', label: t('bulc.nav.price') },
     { id: 'cta', label: t('bulc.nav.getStarted') },
     { id: 'tutorial', label: t('bulc.nav.tutorial') },
-    { id: 'validation', label: t('bulc.nav.validation') },
   ], [t]);
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
@@ -106,8 +104,6 @@ const BulCPage: React.FC = () => {
         return <CTASection onPurchaseClick={handlePurchaseClick} onDownloadClick={handleDownloadClick} isLoggedIn={isLoggedIn} />;
       case 'tutorial':
         return <TutorialHubSection />;
-      case 'validation':
-        return <ValidationSection />;
       default:
         return (
           <>
