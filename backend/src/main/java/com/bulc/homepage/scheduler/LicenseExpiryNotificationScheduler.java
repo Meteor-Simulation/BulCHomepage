@@ -6,7 +6,8 @@ import com.bulc.homepage.licensing.domain.LicensePlan;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.mail.service.OperationalMailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,9 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
 
 /**
  * MDP-496 라이선스 만료 임박 알림 스케줄러.
@@ -39,7 +43,9 @@ public class LicenseExpiryNotificationScheduler {
     private final LicenseRepository licenseRepository;
     private final LicensePlanRepository licensePlanRepository;
     private final UserRepository userRepository;
-    private final OperationalMailService operationalMailService;
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private final MailPort mailPort;
 
     @Value("${mail.site-url:https://bulc.msimul.com}")
     private String siteUrl;
@@ -79,8 +85,17 @@ public class LicenseExpiryNotificationScheduler {
                 LocalDate validUntil = license.getValidUntil().atZone(KST).toLocalDate();
                 long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(KST), validUntil);
 
-                operationalMailService.sendLicenseExpiryNotice(
-                        user.getEmail(), planName, validUntil, daysRemaining, renewUrl);
+                // 만료 안내의 문구·템플릿은 라이선스의 관심사다 (MDP-876).
+                // 중복 발송 방지는 발송자 책임이라 포트의 OncePerDay 변형에 맡긴다.
+                Map<String, String> vars = new HashMap<>();
+                vars.put("plan_name", planName != null ? planName : "BUL:C");
+                vars.put("valid_until", validUntil != null ? validUntil.format(DATE_FMT) : "-");
+                vars.put("days_remaining", String.valueOf(daysRemaining));
+                vars.put("renew_url", renewUrl);
+
+                mailPort.sendByTemplateOncePerDay(
+                        EmailCategory.OPERATIONAL, user.getEmail(), "license_expiry",
+                        String.format("[BulC] 라이선스 만료 D-%d 안내", daysRemaining), vars);
                 sent++;
             } catch (Exception e) {
                 log.warn("라이선스 만료 알림 발송 실패 license={} 사유={}",

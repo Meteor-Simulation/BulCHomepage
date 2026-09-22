@@ -2,7 +2,8 @@ package com.bulc.homepage.payment.notification;
 
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.mail.service.OperationalMailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -11,6 +12,11 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * 라이선스 발급 완료 메일을 발송한다 (MDP-833).
@@ -34,8 +40,14 @@ import java.util.Optional;
 @Slf4j
 public class LicenseIssuedMailListener {
 
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    @Value("${mail.site-url:https://bulc.msimul.com}")
+    private String siteUrl;
+
     private final UserRepository userRepository;
-    private final OperationalMailService operationalMailService;
+    private final MailPort mailPort;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -55,8 +67,21 @@ public class LicenseIssuedMailListener {
                 return;
             }
 
-            operationalMailService.sendLicenseIssuedNotice(
-                    email.trim(), event.licenseKey(), event.validUntil(), event.recovered());
+            // 발급 완료 안내의 문구·템플릿은 결제의 관심사다 (MDP-876).
+            // 메일 모듈은 발송만 담당하므로 공개 계약(MailPort)에만 의존한다.
+            Map<String, String> vars = new HashMap<>();
+            vars.put("license_key", event.licenseKey() != null ? event.licenseKey() : "-");
+            vars.put("valid_until", event.validUntil() != null
+                    ? event.validUntil().atZone(KST).toLocalDate().format(DATE_FMT)
+                    : "-");
+            vars.put("mypage_url", siteUrl + "/mypage");
+            vars.put("intro", event.recovered()
+                    ? "결제 직후 발급이 지연되었던 라이선스가 정상 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다."
+                    : "결제가 완료되어 라이선스가 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다.");
+
+            mailPort.sendByTemplate(
+                    EmailCategory.OPERATIONAL, email.trim(), "license_issued",
+                    "[BulC] 라이선스 발급 완료 안내", vars);
 
             log.info("[발급통지] 발송 완료 - userId={}, licenseId={}, recovered={}",
                     event.userId(), event.licenseId(), event.recovered());

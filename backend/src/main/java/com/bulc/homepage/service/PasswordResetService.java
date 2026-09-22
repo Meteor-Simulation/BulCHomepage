@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import com.bulc.homepage.mail.service.EmailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 
 @Slf4j
 @Service
@@ -22,7 +23,7 @@ public class PasswordResetService {
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
+    private final MailPort mailPort;
     private final PasswordEncoder passwordEncoder;
 
     private static final int CODE_LENGTH = 6;
@@ -64,7 +65,10 @@ public class PasswordResetService {
         // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
         CompletableFuture.runAsync(() -> {
             try {
-                emailService.sendPasswordResetEmail(email, code);
+                // 재설정 메일의 문구·템플릿은 회원/인증의 관심사다 (MDP-876).
+                mailPort.sendByTemplate(
+                        EmailCategory.ACCOUNT, email, "password_reset",
+                        "[BulC] 비밀번호 재설정 코드", java.util.Map.of("code", code));
             } catch (Exception e) {
                 log.error("비밀번호 재설정 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
             }

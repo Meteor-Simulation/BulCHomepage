@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -138,23 +140,7 @@ public class EmailService implements MailPort {
         return info;
     }
 
-    /**
-     * 이메일 인증 코드 발송
-     */
-    public void sendVerificationEmail(String toEmail, String verificationCode) {
-        String subject = "[BulC] 이메일 인증 코드";
-        String content = renderTemplate("verification_code", Map.of("code", verificationCode));
-        send(EmailCategory.ACCOUNT, toEmail, "verification_code", subject, content);
-    }
 
-    /**
-     * 비밀번호 재설정 코드 발송
-     */
-    public void sendPasswordResetEmail(String toEmail, String resetCode) {
-        String subject = "[BulC] 비밀번호 재설정 코드";
-        String content = renderTemplate("password_reset", Map.of("code", resetCode));
-        send(EmailCategory.ACCOUNT, toEmail, "password_reset", subject, content);
-    }
 
     /**
      * 결제 관련 이메일 발송
@@ -167,6 +153,28 @@ public class EmailService implements MailPort {
      * 카테고리 + 템플릿 키 + 변수로 발송 (외부 호출 진입점).
      * MDP-496 운영성 메일 발송 및 후속 광고성 발송에서 사용.
      */
+    /**
+     * 같은 수신자·templateKey 로 오늘 성공 발송한 기록이 있으면 건너뛴다 (MDP-876).
+     *
+     * <p>종전에는 이 판정이 OperationalMailService.sendLicenseExpiryNotice 안에 라이선스 문구와
+     * 뒤섞여 있었다. 문구는 도메인으로 옮기고 중복 방지만 여기 남긴다 — 발송자의 책임이므로.
+     */
+    @Override
+    public boolean sendByTemplateOncePerDay(EmailCategory category, String toEmail, String templateKey,
+                                            String subject, Map<String, String> vars) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        boolean alreadySent = emailLogRepository
+                .existsByRecipientEmailAndTemplateKeyAndStatusAndSentAtBetween(
+                        toEmail, templateKey, EmailLog.Status.SUCCESS, startOfDay, endOfDay);
+        if (alreadySent) {
+            log.info("중복 발송 SKIP (오늘 이미 발송): templateKey={}, to={}", templateKey, toEmail);
+            return false;
+        }
+        sendByTemplate(category, toEmail, templateKey, subject, vars);
+        return true;
+    }
+
     @Override
     public void sendByTemplate(EmailCategory category, String toEmail, String templateKey,
                                String subject, Map<String, String> vars) {
