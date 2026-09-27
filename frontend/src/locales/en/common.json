@@ -976,6 +976,27 @@
       "listTitle": "V&V results | BUL:C fire simulation",
       "listDescription": "Per-version verification (vs FDS) and validation (vs experiments) results of the BUL:C GPU fire simulation solver, with audit data.",
       "versionDescription": "BUL:C GPU solver {{version}}: verification against FDS 6.10.1, FDS Validation Guide experimental comparison and audit information."
+    },
+    "previousVs": "Previous version: {{version}}",
+    "prev": {
+      "title": "vs previous version {{version}}",
+      "lead": "{{n}} cases compared · {{r}} regressed · {{i}} improved · {{s}} status changes (Δ = current − previous; ×envelope = Δ over the current version's envelope; rules in config/regression.yaml)",
+      "casesNew": "new cases",
+      "casesDropped": "dropped cases",
+      "from": "from",
+      "to": "to",
+      "direction": "direction",
+      "dir": {
+        "regressed": "regressed",
+        "improved": "improved",
+        "other": "changed"
+      },
+      "alwaysReport": "Always-reported metrics (T.mean_err · mass.balance_err · energy.closure_err · gradT.iou_p95)",
+      "regressed": "Regressed (beyond envelope multiple)",
+      "improved": "Improved (beyond envelope multiple)",
+      "prevCol": "previous",
+      "curCol": "current",
+      "more": "{{n}} more"
     }
   }
 }

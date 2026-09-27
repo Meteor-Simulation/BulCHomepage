@@ -92,3 +92,9 @@
   .vv-case-grid { grid-template-columns: 1fr; }
   .vv-kv th { width: 120px; }
 }
+
+.vv-prev { margin: 12px 0 18px; }
+.vv-prev h3 { margin-bottom: 4px; }
+.vv-dir-regressed { background: #fde8e8; color: #9b1c1c; }
+.vv-dir-improved { background: #e3f6e8; color: #166534; }
+.vv-dir-other { background: #eee; color: #444; }
