@@ -2,6 +2,25 @@
  "schema": 1,
  "versions": [
   {
+   "version": "0.84.2",
+   "engine": "fds_gpu",
+   "generated_at": "2026-09-27T17:27:33",
+   "preliminary": true,
+   "counts": {
+    "cases": 12,
+    "FAIL": 12,
+    "private_excluded": 1
+   },
+   "phase2_counts": {
+    "both_match": 7,
+    "both_off": 0,
+    "x_only_off": 2,
+    "x_closer": 2,
+    "undetermined": 0
+   },
+   "path": "/validation/0.84.2/summary.json"
+  },
+  {
    "version": "0.79.0-det",
    "engine": "fds_gpu",
    "generated_at": "2026-09-21T16:47:43",
