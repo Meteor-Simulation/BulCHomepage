@@ -163,64 +163,7 @@ public class OperationalMailService {
         return new MailSendResult(targets.size(), sent, failed);
     }
 
-    /**
-     * 라이선스 만료 임박 알림 발송 (LicenseExpiryNotificationScheduler 에서 호출).
-     *
-     * MDP-505: 동일 사용자에게 같은 날 license_expiry 알림이 이미 SUCCESS 로 발송됐다면 SKIP.
-     * 스케줄러 재실행 / 장애 복구 시 중복 발송 방지.
-     */
-    public void sendLicenseExpiryNotice(String toEmail, String planName,
-                                        LocalDate validUntil, long daysRemaining,
-                                        String renewUrl) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
-        boolean alreadySent = emailLogRepository
-                .existsByRecipientEmailAndTemplateKeyAndStatusAndSentAtBetween(
-                        toEmail, LICENSE_EXPIRY_TEMPLATE,
-                        EmailLog.Status.SUCCESS, startOfDay, endOfDay);
-        if (alreadySent) {
-            log.info("라이선스 만료 알림 중복 SKIP (오늘 이미 발송): {}", toEmail);
-            return;
-        }
 
-        Map<String, String> vars = new HashMap<>();
-        vars.put("plan_name", planName != null ? planName : "BUL:C");
-        vars.put("valid_until", validUntil != null ? validUntil.format(DATE_FMT) : "-");
-        vars.put("days_remaining", String.valueOf(daysRemaining));
-        vars.put("renew_url", renewUrl);
-
-        String subject = String.format("[BulC] 라이선스 만료 D-%d 안내", daysRemaining);
-        emailService.sendByTemplate(EmailCategory.OPERATIONAL, toEmail,
-                LICENSE_EXPIRY_TEMPLATE, subject, vars);
-    }
-
-    /**
-     * 라이선스 발급 완료 통지 (MDP-833).
-     *
-     * <p>화면 없는 비동기 경로(가상계좌 입금 웹훅, 재시도 큐 복구)에서는 이 메일이
-     * 사용자가 라이선스 키를 받는 유일한 경로다.
-     *
-     * <p>중복 발송을 별도로 막지 않는 이유: 발급 호출부가 모두 멱등하다.
-     * 웹훅은 {@code payment.status == "C"} 로 조기 반환하고, 결제창 확인은 토스가
-     * 동일 paymentKey 재승인을 거절하며, 재시도 큐 적재는 발급 실패 시에만 일어난다.
-     *
-     * @param recovered 재시도 큐로 뒤늦게 복구된 발급인지 여부 (안내 문구가 달라진다)
-     */
-    public void sendLicenseIssuedNotice(String toEmail, String licenseKey,
-                                        Instant validUntil, boolean recovered) {
-        Map<String, String> vars = new HashMap<>();
-        vars.put("license_key", licenseKey != null ? licenseKey : "-");
-        vars.put("valid_until", validUntil != null
-                ? validUntil.atZone(KST).toLocalDate().format(DATE_FMT)
-                : "-");
-        vars.put("mypage_url", siteUrl + "/mypage");
-        vars.put("intro", recovered
-                ? "결제 직후 발급이 지연되었던 라이선스가 정상 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다."
-                : "결제가 완료되어 라이선스가 발급되었습니다.<br>아래 라이선스 키로 바로 이용하실 수 있습니다.");
-
-        emailService.sendByTemplate(EmailCategory.OPERATIONAL, toEmail,
-                LICENSE_ISSUED_TEMPLATE, "[BulC] 라이선스 발급 완료 안내", vars);
-    }
 
     /**
      * 발송 대상 이메일을 소스별로 모아 중복 제거(대소문자 무시)하여 반환.

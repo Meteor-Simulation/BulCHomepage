@@ -37,6 +37,18 @@ public interface MailPort {
                         String subject, Map<String, String> vars);
 
     /**
+     * 같은 수신자에게 같은 templateKey 로 <b>오늘 이미 성공 발송했다면 보내지 않는다.</b>
+     *
+     * <p>스케줄러가 재실행되거나 장애에서 복구될 때 같은 안내가 여러 번 나가는 것을 막는다.
+     * 중복 방지는 <b>발송 정책</b>이므로 메일 모듈이 소유한다 — 문구·시점은 도메인의 관심사지만,
+     * "같은 걸 두 번 보내지 않는다"는 발송자의 책임이다 (MDP-876).
+     *
+     * @return 발송했으면 {@code true}, 오늘 이미 보내서 건너뛰었으면 {@code false}
+     */
+    boolean sendByTemplateOncePerDay(EmailCategory category, String toEmail, String templateKey,
+                                     String subject, Map<String, String> vars);
+
+    /**
      * 템플릿을 렌더링만 하고 발송하지 않는다. 미리보기·본문 조합에 쓴다.
      */
     String renderTemplate(String templateKey, Map<String, String> vars);

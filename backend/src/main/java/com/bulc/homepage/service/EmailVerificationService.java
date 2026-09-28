@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import com.bulc.homepage.mail.service.EmailService;
+import com.bulc.homepage.mail.api.EmailCategory;
+import com.bulc.homepage.mail.api.MailPort;
 
 @Slf4j
 @Service
@@ -23,7 +24,7 @@ public class EmailVerificationService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final EmailVerificationAttemptRepository attemptRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
+    private final MailPort mailPort;
 
     private static final int CODE_LENGTH = 6;
     private static final int EXPIRATION_MINUTES = 5;
@@ -86,7 +87,11 @@ public class EmailVerificationService {
         // 비동기 이메일 발송 (DB에 코드 저장 후 즉시 응답)
         CompletableFuture.runAsync(() -> {
             try {
-                emailService.sendVerificationEmail(email, code);
+                // 인증 메일의 문구·템플릿은 회원/인증의 관심사다 (MDP-876).
+                // 메일 모듈은 발송만 담당하므로 공개 계약(MailPort)에만 의존한다.
+                mailPort.sendByTemplate(
+                        EmailCategory.ACCOUNT, email, "verification_code",
+                        "[BulC] 이메일 인증 코드", java.util.Map.of("code", code));
             } catch (Exception e) {
                 log.error("인증 이메일 발송 실패 (비동기) - 이메일: {}, 오류: {}", email, e.getMessage());
             }
