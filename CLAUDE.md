@@ -211,7 +211,7 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 - **카탈로그는 지금 착수 금지** — MDP-790·791 이 `entity/Product`·`PricePlan`·`Promotion`·`Subscription` 을 동시 수정 중이다. `Product` 소유권 결정도 선행 필요
 - **회원/인증이 마지막인 이유** — `User` 36개 파일·`UserRepository` 27개 파일이 참조한다. 떼어내는 대상이 아니라, 나머지가 `userId`(UUID)와 포트로만 접근하게 바꾼 뒤 **마지막에 남는 것**이다. `licensing/` 이 이미 그 형태다
-- **경계 강제 장치(ArchUnit)가 없다.** 지금 경계가 유지되는 건 규율이지 강제가 아니다. 다만 MDP-844(로컬 테스트 실행 불가) 해결 전에는 넣어도 무의미하다
+- **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 9개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`entity` 8곳 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
 
 ---
 
