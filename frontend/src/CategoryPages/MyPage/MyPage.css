@@ -91,11 +91,36 @@
   margin-bottom: 12px;
 }
 
-/* 관리자 하위 그룹 구분선 (사용자 / 상품·결제 / 라이선스 사이) */
+/* 관리자 하위 그룹 구분선 — 이름 없는 구분선은 MDP-908 에서 라벨로 대체했다 */
 .menu-divider {
   height: 1px;
   background: #e5e5e5;
   margin: 8px 14px;
+}
+
+/*
+  관리자 하위 그룹 이름 (회원 / 소통 / 상품·결제 / 라이선스) — MDP-908.
+  전에는 구분선만 있어서 왜 나뉘었는지 알 수 없었다. 백엔드 모듈 경계와 같은 선이다.
+*/
+.menu-subgroup-label {
+  margin-top: 6px;
+  padding: 12px 14px 4px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+/*
+  첫 묶음은 '관리자' 헤더 바로 아래라 선이 겹친다.
+  :first-of-type 은 같은 태그(div) 기준이어서 .menu-parent 가 먼저 걸리므로 쓸 수 없다.
+*/
+.menu-parent + .menu-subgroup-label {
+  margin-top: 0;
+  padding-top: 4px;
+  border-top: none;
 }
 
 .menu-child {

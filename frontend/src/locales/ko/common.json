@@ -35,8 +35,13 @@
       "adminPromotions": "프로모션 관리",
       "adminRedeem": "리딤 캠페인 발행",
       "adminPopups": "팝업 관리",
-      "adminMailing": "메일링 관리",
-      "redeem": "쿠폰 등록"
+      "adminMailing": "메일 발송",
+      "redeem": "쿠폰 등록",
+      "adminContacts": "컨택 관리",
+      "adminGroupMembers": "회원",
+      "adminGroupComms": "소통",
+      "adminGroupCommerce": "상품·결제",
+      "adminGroupLicense": "라이선스"
     },
     "profile": "프로필 정보",
     "edit": "수정",

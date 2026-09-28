@@ -35,8 +35,13 @@
       "adminPromotions": "Promotion Management",
       "adminRedeem": "Redeem Campaigns",
       "adminPopups": "Popup Management",
-      "adminMailing": "Mailing",
-      "redeem": "Redeem Code"
+      "adminMailing": "Mail Sending",
+      "redeem": "Redeem Code",
+      "adminContacts": "Contact Management",
+      "adminGroupMembers": "Members",
+      "adminGroupComms": "Communication",
+      "adminGroupCommerce": "Products & Payments",
+      "adminGroupLicense": "Licenses"
     },
     "profile": "Profile",
     "edit": "Edit",

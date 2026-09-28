@@ -17,12 +17,12 @@ import {
   AdminUser, AdminLicense, AdminPayment, Product, PricePlan,
   Promotion, LicensePlan, RedeemCampaign, RedeemCodeItem,
 } from './types';
-import { VALID_MENU_SECTIONS } from './constants';
+import { VALID_MENU_SECTIONS, ADMIN_MENU_GROUPS, MENU_LABEL_KEYS } from './constants';
 import {
   ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, PaymentHistoryPanel, RedeemPanel,
   AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
   AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
-  AdminMailingPanel,
+  AdminMailingPanel, AdminContactsPanel,
 } from './panels';
 import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import './MyPage.css';
@@ -966,29 +966,27 @@ const MyPage: React.FC = () => {
                   </svg>
                   <span>{t('myPage.menu.admin')}</span>
                 </div>
-                {/* 사용자 */}
-                <div className="menu-children">
-                  <button className={`menu-child ${activeMenu === 'admin-users' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-users')}>{t('myPage.menu.adminUsers')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-mailing' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-mailing')}>{t('myPage.menu.adminMailing')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-popups' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-popups')}>{t('myPage.menu.adminPopups')}</button>
-                </div>
-
-                <div className="menu-divider" />
-
-                {/* 상품/결제 */}
-                <div className="menu-children">
-                  <button className={`menu-child ${activeMenu === 'admin-products' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-products')}>{t('myPage.menu.adminProducts')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-payments' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-payments')}>{t('myPage.menu.adminPayments')}</button>
-                </div>
-
-                <div className="menu-divider" />
-
-                {/* 라이선스 */}
-                <div className="menu-children">
-                  <button className={`menu-child ${activeMenu === 'admin-licenses' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-licenses')}>{t('myPage.menu.adminLicenses')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-redeem' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-redeem')}>{t('myPage.menu.adminRedeem')}</button>
-                  <button className={`menu-child ${activeMenu === 'admin-promotions' ? 'active' : ''}`} onClick={() => handleMenuChange('admin-promotions')}>{t('myPage.menu.adminPromotions')}</button>
-                </div>
+                {/*
+                  관리자 하위 메뉴는 백엔드 모듈 경계와 같은 선으로 묶는다 (MDP-908).
+                  전에는 구분선만 있고 그룹 이름이 주석에만 있어, 왜 나뉘었는지 화면에서 알 수 없었다.
+                  묶음이 바뀌면 백엔드 모듈이 바뀐 것이니 CLAUDE.md 의 모듈 현황표와 함께 고칠 것.
+                */}
+                {ADMIN_MENU_GROUPS.map(group => (
+                  <React.Fragment key={group.labelKey}>
+                    <div className="menu-subgroup-label">{t(group.labelKey)}</div>
+                    <div className="menu-children">
+                      {group.items.map(item => (
+                        <button
+                          key={item}
+                          className={`menu-child ${activeMenu === item ? 'active' : ''}`}
+                          onClick={() => handleMenuChange(item)}
+                        >
+                          {t(`myPage.menu.${MENU_LABEL_KEYS[item]}`)}
+                        </button>
+                      ))}
+                    </div>
+                  </React.Fragment>
+                ))}
               </div>
               )}
             </nav>
@@ -1211,6 +1209,10 @@ const MyPage: React.FC = () => {
 
               {isAdmin && activeMenu === 'admin-mailing' && (
                 <AdminMailingPanel />
+              )}
+
+              {isAdmin && activeMenu === 'admin-contacts' && (
+                <AdminContactsPanel />
               )}
 
               {/* 모바일용 로그아웃 버튼 */}
