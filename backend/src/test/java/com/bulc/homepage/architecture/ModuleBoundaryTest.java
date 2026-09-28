@@ -27,7 +27,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * <pre>
  *   licensing → payment.port   4회   의존성 역전 — 결제가 licensing 을 모르게 하려고 계약을 결제 쪽에 뒀다
  *   payment   → mail.api       2회   공개 계약 경유
+ *   mail      → lead.api       2회   공개 계약 경유 (MDP-907 에서 repository 직접 조회를 걷어냈다)
  *   oauth2    → oauth          3회   같은 인증 축의 하위 모듈 (구현 직접 참조, 용인)
+ *   lead      → (없음)                자족 모듈
  * </pre>
  */
 @DisplayName("모듈 경계")
@@ -60,6 +62,25 @@ class ModuleBoundaryTest {
                     .that().resideOutsideOfPackage(BASE + ".mail..")
                     .should().dependOnClassesThat().resideInAnyPackage(BASE + ".mail.service..")
                     .because("메일 모듈의 공개 계약은 mail.api 다. 구현(mail.service)은 내부다 — MDP-895");
+            rule.check(classes);
+        }
+
+        /**
+         * 리드/컨택은 비회원의 이메일·이름·소속을 들고 있다. <b>엔티티가 모듈 밖으로 나가지 않는 것
+         * 자체가 목적</b>이다 — 침해가 나도 폭발 반경이 이 모듈 안에서 끝나야 한다.
+         * 공개 계약은 {@code lead.api} 다 (LeadContactPort · MailingContact · MarketingConsent).
+         */
+        @Test
+        @DisplayName("lead 바깥은 lead 내부(service · repository · domain)를 참조하지 않는다")
+        void leadInternalsAreHidden() {
+            ArchRule rule = noClasses()
+                    .that().resideOutsideOfPackage(BASE + ".lead..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".lead.service..",
+                            BASE + ".lead.repository..",
+                            BASE + ".lead.domain..",
+                            BASE + ".lead.dto..")
+                    .because("개인정보를 담은 엔티티가 모듈 밖으로 나가면 안 된다. 공개 계약은 lead.api — MDP-907");
             rule.check(classes);
         }
 
@@ -126,6 +147,25 @@ class ModuleBoundaryTest {
             mailToLicensing.check(classes);
         }
 
+        /**
+         * 리드/컨택은 다른 도메인 모듈을 부르지 않는다. 컨택을 등록·조회·해지하는 데
+         * 라이선스·결제·메일을 알 필요가 없기 때문이다. 이 방향이 0 이면 모듈을 통째로 떼어낼 수 있다.
+         *
+         * <p>평면 계층의 {@code service.PublicFormRateLimiter} 는 예외로 남아 있다 —
+         * 공개 폼 남용 방지라는 공용 인프라이고 도메인 모듈이 아니다. 인프라를 별도로 가를 때 재검토.
+         */
+        @Test
+        @DisplayName("lead 는 다른 도메인 모듈을 참조하지 않는다")
+        void leadIsSelfContained() {
+            ArchRule rule = noClasses()
+                    .that().resideInAPackage(BASE + ".lead..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".licensing..", BASE + ".payment..",
+                            BASE + ".mail..", BASE + ".oauth..")
+                    .because("컨택 관리에 라이선스·결제·메일을 알 필요가 없다 — MDP-907");
+            rule.check(classes);
+        }
+
         @Test
         @DisplayName("mail 은 payment 를 참조하지 않는다")
         void mailDoesNotKnowPayment() {
@@ -144,7 +184,7 @@ class ModuleBoundaryTest {
         @DisplayName("모듈 사이에 순환 의존이 없다")
         void noCyclesBetweenModules() {
             ArchRule rule = slices()
-                    .matching(BASE + ".(licensing|payment|mail).(*)..")
+                    .matching(BASE + ".(licensing|payment|mail|lead).(*)..")
                     .should().beFreeOfCycles()
                     .because("순환이 있으면 모듈을 따로 떼어낼 수 없다");
             rule.check(classes);
@@ -181,10 +221,10 @@ class ModuleBoundaryTest {
     /*
      * ── 아직 규칙으로 만들지 못한 부채 ────────────────────────────────────
      *
-     * 1. mail → entity/repository (8곳)
-     *    OperationalMailService.resolveRecipients 가 UserRepository · LeadContactRepository 를
-     *    직접 조회한다(관리자 '전체 회원 발송'). 수신자 선정 책임이 메일 것인지 회원 것인지
-     *    판단이 필요하다. 결정 후 규칙화.
+     * 1. mail → entity/repository (회원 쪽만 남음)
+     *    OperationalMailService.resolveRecipients 가 UserRepository 를 직접 조회한다
+     *    (관리자 '전체 회원 발송'). 컨택 쪽은 MDP-907 에서 LeadContactPort 로 갚았고,
+     *    회원 쪽은 회원 모듈이 서는 마지막 단계에 같은 형태로 갚는다.
      *
      * 2. licensing → entity (UserRepository · Product)
      *    회원/카탈로그 모듈이 아직 평면 계층에 있어 참조 자체를 막을 수 없다.

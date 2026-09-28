@@ -1,5 +1,6 @@
-package com.bulc.homepage.entity;
+package com.bulc.homepage.lead.api;
 
+import com.bulc.homepage.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

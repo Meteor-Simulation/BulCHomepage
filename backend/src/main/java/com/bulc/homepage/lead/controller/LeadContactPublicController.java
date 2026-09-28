@@ -1,7 +1,7 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.lead.controller;
 
-import com.bulc.homepage.dto.request.LeadContactPublicRequest;
-import com.bulc.homepage.service.LeadContactService;
+import com.bulc.homepage.lead.dto.request.LeadContactPublicRequest;
+import com.bulc.homepage.lead.service.LeadContactService;
 import com.bulc.homepage.service.PublicFormRateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

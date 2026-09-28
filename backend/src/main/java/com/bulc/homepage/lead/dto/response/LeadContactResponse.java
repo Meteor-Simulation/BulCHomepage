@@ -1,6 +1,6 @@
-package com.bulc.homepage.dto.response;
+package com.bulc.homepage.lead.dto.response;
 
-import com.bulc.homepage.entity.LeadContact;
+import com.bulc.homepage.lead.domain.LeadContact;
 import lombok.Builder;
 import lombok.Getter;
 

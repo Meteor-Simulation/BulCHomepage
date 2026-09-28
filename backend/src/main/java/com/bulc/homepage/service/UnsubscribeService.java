@@ -1,6 +1,7 @@
 package com.bulc.homepage.service;
 
-import com.bulc.homepage.entity.MarketingConsent;
+import com.bulc.homepage.lead.api.LeadContactPort;
+import com.bulc.homepage.lead.api.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import java.util.UUID;
 public class UnsubscribeService {
 
     private final UserRepository userRepository;
-    private final LeadContactService leadContactService;
+    private final LeadContactPort leadContactPort;
 
     public enum Result { MEMBER, CONTACT, NOT_FOUND }
 
@@ -53,7 +54,7 @@ public class UnsubscribeService {
         // 2) 직접등록 컨택(LeadContact) 토큰 (UUID)
         try {
             UUID uuid = UUID.fromString(trimmed);
-            if (leadContactService.unsubscribeByToken(uuid, "이메일 수신거부 링크").isPresent()) {
+            if (leadContactPort.unsubscribeByToken(uuid, "이메일 수신거부 링크")) {
                 log.info("[수신거부] 컨택 수신 비활성화 (token={})", uuid);
                 return Result.CONTACT;
             }

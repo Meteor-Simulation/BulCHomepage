@@ -1,12 +1,12 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.lead.controller;
 
-import com.bulc.homepage.dto.request.LeadContactRegisterRequest;
-import com.bulc.homepage.dto.request.LeadContactUnsubscribeRequest;
-import com.bulc.homepage.dto.request.LeadContactUpdateRequest;
-import com.bulc.homepage.dto.response.LeadContactImportResult;
-import com.bulc.homepage.dto.response.LeadContactResponse;
-import com.bulc.homepage.entity.LeadContact;
-import com.bulc.homepage.service.LeadContactService;
+import com.bulc.homepage.lead.dto.request.LeadContactRegisterRequest;
+import com.bulc.homepage.lead.dto.request.LeadContactUnsubscribeRequest;
+import com.bulc.homepage.lead.dto.request.LeadContactUpdateRequest;
+import com.bulc.homepage.lead.dto.response.LeadContactImportResult;
+import com.bulc.homepage.lead.dto.response.LeadContactResponse;
+import com.bulc.homepage.lead.domain.LeadContact;
+import com.bulc.homepage.lead.service.LeadContactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

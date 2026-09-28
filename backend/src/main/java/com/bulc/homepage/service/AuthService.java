@@ -8,7 +8,7 @@ import com.bulc.homepage.dto.response.AuthResponse;
 import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.RefreshToken;
 import com.bulc.homepage.entity.SignupTicket;
-import com.bulc.homepage.entity.MarketingConsent;
+import com.bulc.homepage.lead.api.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
 import com.bulc.homepage.exception.DeactivatedAccountException;

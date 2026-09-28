@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.lead.repository;
 
-import com.bulc.homepage.entity.LeadContact;
+import com.bulc.homepage.lead.domain.LeadContact;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
