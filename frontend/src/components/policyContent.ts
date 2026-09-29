@@ -12,13 +12,13 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제1조 (목적)',
         bodies: [
-          '본 약관은 주식회사 메테오시뮬레이션(이하 "회사")이 제공하는 BULC 소프트웨어 및 관련 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.',
+          '본 약관은 주식회사 메테오시뮬레이션(이하 "회사")이 제공하는 BUL:C 소프트웨어 및 관련 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.',
         ],
       },
       {
         title: '제2조 (정의)',
         bodies: [
-          '1. "서비스"란 회사가 제공하는 화재 시뮬레이션 소프트웨어 BULC 및 이와 관련된 모든 서비스를 의미합니다.<br/>2. "이용자"란 본 약관에 따라 회사가 제공하는 서비스를 이용하는 회원 및 비회원을 말합니다.<br/>3. "회원"이란 회사에 개인정보를 제공하여 회원등록을 한 자로서, 회사의 정보를 지속적으로 제공받으며 서비스를 계속적으로 이용할 수 있는 자를 말합니다.<br/>4. "라이선스"란 서비스를 이용할 수 있는 권한을 의미합니다.',
+          '1. "서비스"란 회사가 제공하는 화재 시뮬레이션 소프트웨어 BUL:C 및 이와 관련된 모든 서비스를 의미합니다.<br/>2. "이용자"란 본 약관에 따라 회사가 제공하는 서비스를 이용하는 회원 및 비회원을 말합니다.<br/>3. "회원"이란 회사에 개인정보를 제공하여 회원등록을 한 자로서, 회사의 정보를 지속적으로 제공받으며 서비스를 계속적으로 이용할 수 있는 자를 말합니다.<br/>4. "라이선스"란 서비스를 이용할 수 있는 권한을 의미합니다.',
         ],
       },
       {
@@ -30,7 +30,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: '제4조 (서비스의 제공)',
         bodies: [
-          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BULC 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.<br/>3. 회사는 서비스 운영상 필요한 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내)를 이메일 또는 서비스 내 알림 등의 방법으로 발송할 수 있으며, 이러한 안내는 수신 거부와 무관하게 발송됩니다.',
+          '1. 회사는 다음과 같은 서비스를 제공합니다:<br/>&nbsp;&nbsp;- BUL:C 화재 시뮬레이션 소프트웨어<br/>&nbsp;&nbsp;- 소프트웨어 업데이트 및 기술 지원<br/>&nbsp;&nbsp;- 기타 회사가 추가 개발하거나 제휴 계약 등을 통해 이용자에게 제공하는 서비스<br/>2. 회사는 서비스의 품질 향상을 위해 서비스의 내용을 변경할 수 있습니다.<br/>3. 회사는 서비스 운영상 필요한 안내(약관 변경, 서비스 점검, 보안 공지, 프로그램 업데이트, 라이선스 만료 등 정보성 안내)를 이메일 또는 서비스 내 알림 등의 방법으로 발송할 수 있으며, 이러한 안내는 수신 거부와 무관하게 발송됩니다.',
         ],
       },
       {
@@ -72,13 +72,13 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 1 (Purpose)',
         bodies: [
-          'These Terms set forth the rights, obligations, and responsibilities of Meteor Simulation Co., Ltd. (the "Company") and users in connection with the use of the BULC software and related services (the "Service") provided by the Company, as well as other necessary matters.',
+          'These Terms set forth the rights, obligations, and responsibilities of Meteor Simulation Co., Ltd. (the "Company") and users in connection with the use of the BUL:C software and related services (the "Service") provided by the Company, as well as other necessary matters.',
         ],
       },
       {
         title: 'Article 2 (Definitions)',
         bodies: [
-          '1. "Service" means the BULC fire simulation software and all related services provided by the Company.<br/>2. "User" means a member or non-member who uses the Service provided by the Company under these Terms.<br/>3. "Member" means a person who has provided personal information to the Company and completed registration, and who may continuously receive information from the Company and use the Service.<br/>4. "License" means the right to use the Service.',
+          '1. "Service" means the BUL:C fire simulation software and all related services provided by the Company.<br/>2. "User" means a member or non-member who uses the Service provided by the Company under these Terms.<br/>3. "Member" means a person who has provided personal information to the Company and completed registration, and who may continuously receive information from the Company and use the Service.<br/>4. "License" means the right to use the Service.',
         ],
       },
       {
@@ -90,7 +90,7 @@ export const POLICY_SECTIONS: Record<PolicyType, Record<PolicyLang, PolicySectio
       {
         title: 'Article 4 (Service Provision)',
         bodies: [
-          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BULC fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.<br/>3. The Company may send service-related notices (informational notices such as changes to these Terms, service maintenance, security announcements, software updates, and license expiration) by email or in-service notifications. Such notices are sent regardless of the user\'s opt-out from marketing communications.',
+          '1. The Company provides the following services:<br/>&nbsp;&nbsp;- BUL:C fire simulation software<br/>&nbsp;&nbsp;- Software updates and technical support<br/>&nbsp;&nbsp;- Other services provided to users through additional development or partnerships<br/>2. The Company may modify the content of the Service to improve quality.<br/>3. The Company may send service-related notices (informational notices such as changes to these Terms, service maintenance, security announcements, software updates, and license expiration) by email or in-service notifications. Such notices are sent regardless of the user\'s opt-out from marketing communications.',
         ],
       },
       {
