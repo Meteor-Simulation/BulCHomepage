@@ -93,7 +93,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
               <div key={license.id} className={`license-item ${license.status.toLowerCase()}`}>
                 <div className="license-header">
                   <span className="license-product">
-                    {license.productName || license.planName || 'BULC'}
+                    {license.productName || license.planName || 'BUL:C'}
                   </span>
                   <span className={`license-status status-${license.status.toLowerCase()}`}>
                     {t(`myPage.licenseStatus.${license.status}`, license.status)}

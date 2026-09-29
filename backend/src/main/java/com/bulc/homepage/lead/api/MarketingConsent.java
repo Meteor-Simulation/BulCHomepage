@@ -1,4 +1,4 @@
-package com.bulc.homepage.entity;
+package com.bulc.homepage.lead.api;
 
 /**
  * 광고성 메일 수신 상태 코드 (MDP-772).

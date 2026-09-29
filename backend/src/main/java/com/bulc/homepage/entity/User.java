@@ -1,5 +1,6 @@
 package com.bulc.homepage.entity;
 
+import com.bulc.homepage.lead.api.MarketingConsent;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

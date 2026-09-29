@@ -2,11 +2,11 @@ package com.bulc.homepage.mail.service;
 
 import com.bulc.homepage.mail.api.EmailCategory;
 import com.bulc.homepage.mail.domain.EmailLog;
-import com.bulc.homepage.entity.LeadContact;
-import com.bulc.homepage.entity.MarketingConsent;
+import com.bulc.homepage.lead.api.LeadContactPort;
+import com.bulc.homepage.lead.api.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.mail.repository.EmailLogRepository;
-import com.bulc.homepage.repository.LeadContactRepository;
+import com.bulc.homepage.lead.api.MailingContact;
 import com.bulc.homepage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class OperationalMailService {
 
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final LeadContactRepository leadContactRepository;
+    private final LeadContactPort leadContactPort;
     private final EmailLogRepository emailLogRepository;
 
     /** 발송 결과 요약 (대상 수 / 성공 / 실패). */
@@ -95,11 +95,10 @@ public class OperationalMailService {
             }
         }
         if (includeContacts) {
-            for (LeadContact c : leadContactRepository.findActiveMarketingContacts()) {
-                String email = c.getEmail();
+            for (MailingContact c : leadContactPort.findMarketingRecipients()) {
+                String email = c.email();
                 if (email == null || email.isBlank() || !seen.add(email.trim().toLowerCase())) continue;
-                UUID t = c.getUnsubscribeToken();
-                targets.add(new PromoTarget(email.trim(), t != null ? t.toString() : ""));
+                targets.add(new PromoTarget(email.trim(), c.unsubscribeToken()));
             }
         }
 
@@ -130,7 +129,7 @@ public class OperationalMailService {
      * @param subject           메일 Subject 헤더
      * @param templateKey       email_log 분류 키 (program_update, terms_change, security_notice 등)
      * @param includeMembers    활성 회원(User) 전체를 대상에 포함
-     * @param includeContacts   미해지+안내성 동의 컨택(LeadContact)을 대상에 포함
+     * @param includeContacts   미해지+안내성 동의 컨택을 대상에 포함
      * @param explicitRecipients 직접 지정한 이메일(선택). 위 소스와 합쳐 중복 제거된다.
      * @return 대상/성공/실패 건수
      */
@@ -175,7 +174,7 @@ public class OperationalMailService {
             userRepository.findAllByIsActiveTrue().forEach(u -> addEmail(dedup, u.getEmail()));
         }
         if (includeContacts) {
-            leadContactRepository.findActiveTransactionalEmails().forEach(e -> addEmail(dedup, e));
+            leadContactPort.findTransactionalRecipients().forEach(e -> addEmail(dedup, e));
         }
         if (explicitRecipients != null) {
             explicitRecipients.forEach(e -> addEmail(dedup, e));

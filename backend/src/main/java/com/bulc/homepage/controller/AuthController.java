@@ -9,7 +9,7 @@ import com.bulc.homepage.dto.request.EmailVerificationRequest;
 import com.bulc.homepage.dto.request.VerifyCodeRequest;
 import com.bulc.homepage.dto.response.ApiResponse;
 import com.bulc.homepage.dto.response.AuthResponse;
-import com.bulc.homepage.entity.MarketingConsent;
+import com.bulc.homepage.lead.api.MarketingConsent;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.repository.UserRepository;

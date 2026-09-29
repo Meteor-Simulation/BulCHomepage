@@ -1,8 +1,8 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.lead.service;
 
-import com.bulc.homepage.dto.request.LeadContactPublicRequest;
-import com.bulc.homepage.entity.LeadContact;
-import com.bulc.homepage.repository.LeadContactRepository;
+import com.bulc.homepage.lead.dto.request.LeadContactPublicRequest;
+import com.bulc.homepage.lead.domain.LeadContact;
+import com.bulc.homepage.lead.repository.LeadContactRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

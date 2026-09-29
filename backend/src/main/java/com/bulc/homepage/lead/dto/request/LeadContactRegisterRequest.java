@@ -1,4 +1,4 @@
-package com.bulc.homepage.dto.request;
+package com.bulc.homepage.lead.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

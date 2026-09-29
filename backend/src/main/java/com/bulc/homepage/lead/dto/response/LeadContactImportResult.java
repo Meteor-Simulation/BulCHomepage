@@ -1,4 +1,4 @@
-package com.bulc.homepage.dto.response;
+package com.bulc.homepage.lead.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

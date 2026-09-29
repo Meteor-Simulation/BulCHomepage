@@ -53,6 +53,22 @@
   cursor: not-allowed;
 }
 
+/* 발송 폼 — 전용 화면이 되어 모달 밖으로 나왔다 (MDP-908) */
+.amp-send-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 4px 4px;
+  max-width: 720px;
+}
+
+.amp-send-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
 /* 발송 결과 요약 */
 .amp-send-result {
   margin-top: 10px;

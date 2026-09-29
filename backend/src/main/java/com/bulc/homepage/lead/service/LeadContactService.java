@@ -1,11 +1,13 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.lead.service;
 
-import com.bulc.homepage.dto.request.LeadContactPublicRequest;
-import com.bulc.homepage.dto.request.LeadContactRegisterRequest;
-import com.bulc.homepage.dto.request.LeadContactUpdateRequest;
-import com.bulc.homepage.dto.response.LeadContactImportResult;
-import com.bulc.homepage.entity.LeadContact;
-import com.bulc.homepage.repository.LeadContactRepository;
+import com.bulc.homepage.lead.api.LeadContactPort;
+import com.bulc.homepage.lead.api.MailingContact;
+import com.bulc.homepage.lead.dto.request.LeadContactPublicRequest;
+import com.bulc.homepage.lead.dto.request.LeadContactRegisterRequest;
+import com.bulc.homepage.lead.dto.request.LeadContactUpdateRequest;
+import com.bulc.homepage.lead.dto.response.LeadContactImportResult;
+import com.bulc.homepage.lead.domain.LeadContact;
+import com.bulc.homepage.lead.repository.LeadContactRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -45,7 +47,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class LeadContactService {
+public class LeadContactService implements LeadContactPort {
 
     private final LeadContactRepository leadContactRepository;
 
@@ -368,16 +370,43 @@ public class LeadContactService {
         return c;
     }
 
+    @Override
     @Transactional
-    public Optional<LeadContact> unsubscribeByToken(UUID token, String reason) {
+    public boolean unsubscribeByToken(UUID token, String reason) {
         return leadContactRepository.findByUnsubscribeToken(token)
                 .map(c -> {
                     if (c.isActive()) {
                         c.markUnsubscribed(reason);
                         leadContactRepository.save(c);
                     }
-                    return c;
-                });
+                    // 이미 해지된 컨택도 true — 링크를 두 번 누른 사람에게 "없다"고 답하지 않는다
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    // ---- 발송 대상 조회 (LeadContactPort) ----------------------------------
+
+    /**
+     * 광고성 발송 대상. 동의 판단은 여기서 하고 발송 측에는 결과만 넘긴다.
+     *
+     * <p>엔티티가 아니라 {@link MailingContact} 로 좁혀 내보낸다 — 이름·소속·유입경로가
+     * 발송 모듈로 함께 나갈 이유가 없다.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<MailingContact> findMarketingRecipients() {
+        return leadContactRepository.findActiveMarketingContacts().stream()
+                .map(c -> new MailingContact(
+                        c.getEmail(),
+                        c.getUnsubscribeToken() != null ? c.getUnsubscribeToken().toString() : ""))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> findTransactionalRecipients() {
+        return leadContactRepository.findActiveTransactionalEmails();
     }
 
     // ---- Import (CSV / Excel 자동 감지) ------------------------------------
