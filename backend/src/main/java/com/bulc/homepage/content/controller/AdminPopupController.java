@@ -1,8 +1,8 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.content.controller;
 
-import com.bulc.homepage.dto.PopupDto;
+import com.bulc.homepage.content.dto.PopupDto;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.PopupService;
+import com.bulc.homepage.content.service.PopupService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
