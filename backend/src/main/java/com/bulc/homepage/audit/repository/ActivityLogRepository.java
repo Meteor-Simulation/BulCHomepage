@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.audit.repository;
 
-import com.bulc.homepage.entity.ActivityLog;
+import com.bulc.homepage.audit.domain.ActivityLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

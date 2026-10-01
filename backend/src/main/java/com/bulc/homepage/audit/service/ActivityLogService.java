@@ -1,9 +1,10 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.audit.service;
 
-import com.bulc.homepage.dto.request.ActivityLogRequest;
-import com.bulc.homepage.entity.ActivityLog;
+import com.bulc.homepage.audit.api.ActivityLogPort;
+import com.bulc.homepage.audit.dto.ActivityLogRequest;
+import com.bulc.homepage.audit.domain.ActivityLog;
 import com.bulc.homepage.entity.User;
-import com.bulc.homepage.repository.ActivityLogRepository;
+import com.bulc.homepage.audit.repository.ActivityLogRepository;
 import com.bulc.homepage.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ActivityLogService {
+public class ActivityLogService implements ActivityLogPort {
 
     private final ActivityLogRepository activityLogRepository;
     private final UserRepository userRepository;
@@ -88,6 +89,7 @@ public class ActivityLogService {
      */
     @Async
     @Transactional
+    @Override
     public void logPaymentActivity(UUID userId, String orderId, String status,
                                     String description, String ipAddress, String userAgent) {
         try {
@@ -200,5 +202,38 @@ public class ActivityLogService {
         }
 
         return request.getRemoteAddr();
+    }
+
+    /**
+     * 일반 활동 기록 (MDP-924). AuthService 가 엔티티를 직접 빌드해 저장하던 것을 여기로 모았다.
+     *
+     * <p>기록 실패를 삼키는 이유: 로그를 못 남겼다고 로그인·회원가입을 실패시키면 본말이 전도된다.
+     * 다른 로깅 메서드들도 같은 방침이다.
+     */
+    @Override
+    public void log(UUID userId, String action, String targetType, Long targetId, String description) {
+        try {
+            activityLogRepository.save(ActivityLog.builder()
+                    .userId(userId)
+                    .action(action)
+                    .targetType(targetType)
+                    .targetId(targetId)
+                    .description(description)
+                    .build());
+        } catch (Exception e) {
+            log.warn("[감사] 활동 로그 기록 실패 - action={}, userId={}, 사유={}", action, userId, e.getMessage());
+        }
+    }
+
+    /**
+     * 회원 탈퇴 정리 (MDP-924). 감사 로그를 지우는 것은 원칙적으로 바람직하지 않지만
+     * 개인정보를 담고 있어 탈퇴 시 삭제가 필요하다.
+     *
+     * <p>여기서는 예외를 삼키지 않는다 — 개인정보가 남는 것은 조용히 넘길 문제가 아니다.
+     */
+    @Override
+    @Transactional
+    public void deleteAllForUser(UUID userId) {
+        activityLogRepository.deleteByUserId(userId);
     }
 }

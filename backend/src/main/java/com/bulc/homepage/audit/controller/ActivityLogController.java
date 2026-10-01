@@ -1,8 +1,8 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.audit.controller;
 
-import com.bulc.homepage.dto.request.ActivityLogRequest;
+import com.bulc.homepage.audit.dto.ActivityLogRequest;
 import com.bulc.homepage.dto.response.ApiResponse;
-import com.bulc.homepage.service.ActivityLogService;
+import com.bulc.homepage.audit.service.ActivityLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

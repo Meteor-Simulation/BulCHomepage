@@ -31,6 +31,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *   oauth2    → oauth          3회   같은 인증 축의 하위 모듈 (구현 직접 참조, 용인)
  *   lead      → (없음)                자족 모듈
  *   content   → (없음)                자족 모듈 (들어오는 참조도 0)
+ *   → audit.api                3회   인증·결제·OAuth 가 기록. 전부 계약 경유 (MDP-924)
  * </pre>
  */
 @DisplayName("모듈 경계")
@@ -99,6 +100,27 @@ class ModuleBoundaryTest {
                     .that().resideOutsideOfPackage(BASE + ".content..")
                     .should().dependOnClassesThat().resideInAnyPackage(BASE + ".content..")
                     .because("팝업·공지는 다른 도메인이 알 이유가 없다 — MDP-922");
+            rule.check(classes);
+        }
+
+        /**
+         * 감사 로깅은 횡단 관심사다 — 인증·결제·OAuth 가 모두 기록을 남긴다. 그래서 제공자가
+         * 계약을 공개하는 형태다 ({@code audit.api.ActivityLogPort}).
+         *
+         * <p>직전까지 소비자들이 {@code ActivityLogRepository} 와 엔티티를 직접 들고 썼다.
+         * {@code AuthService} 는 엔티티를 손으로 빌드해 저장했다. 그러면 적재 방식을 바꿀 때
+         * (별도 저장소 분리·비동기 전환) 호출부 전부를 고쳐야 한다. MDP-924 에서 3곳을 모두 api 로 돌렸다.
+         */
+        @Test
+        @DisplayName("audit 바깥은 audit 내부(service · repository · domain)를 참조하지 않는다")
+        void auditInternalsAreHidden() {
+            ArchRule rule = noClasses()
+                    .that().resideOutsideOfPackage(BASE + ".audit..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".audit.service..",
+                            BASE + ".audit.repository..",
+                            BASE + ".audit.domain..")
+                    .because("감사 로그 적재 방식을 바꿀 때 호출부가 따라 깨지면 안 된다. 공개 계약은 audit.api — MDP-924");
             rule.check(classes);
         }
 
@@ -214,7 +236,7 @@ class ModuleBoundaryTest {
         @DisplayName("모듈 사이에 순환 의존이 없다")
         void noCyclesBetweenModules() {
             ArchRule rule = slices()
-                    .matching(BASE + ".(licensing|payment|mail|lead|content).(*)..")
+                    .matching(BASE + ".(licensing|payment|mail|lead|content|audit).(*)..")
                     .should().beFreeOfCycles()
                     .because("순환이 있으면 모듈을 따로 떼어낼 수 없다");
             rule.check(classes);
@@ -260,13 +282,17 @@ class ModuleBoundaryTest {
      *    회원/카탈로그 모듈이 아직 평면 계층에 있어 참조 자체를 막을 수 없다.
      *    해당 모듈이 서면 계약 경유로 바꾸고 규칙 추가.
      *
-     * 3. content → repository.UserRepository (1곳)
+     * 3. audit → entity.User · repository.UserRepository (각 1곳)
+     *    ActivityLogService.logLoginActivity / logSignupActivity 가 User 를 인자로 받는다.
+     *    회원 모듈이 서면 userId 기반으로 바꾼다. 엔티티의 @ManyToOne User 관계는 MDP-924 에서 제거했다.
+     *
+     * 4. content → repository.UserRepository (1곳)
      *    AdminPopupController 가 작성자 이름 표시를 위해 조회한다. 회원 모듈이 서면 계약 경유로 바꾼다.
      *
-     * 4. oauth2 → oauth 구현 직접 참조 (3곳)
+     * 5. oauth2 → oauth 구현 직접 참조 (3곳)
      *    같은 인증 축의 하위 모듈이라 용인 중. 회원/인증 모듈화(마지막 단계) 때 재검토.
      *
-     * 5. 평면 계층
+     * 6. 평면 계층
      *    모듈이 아니라 규칙을 걸 대상이 없다. 모듈화가 진행되는 만큼 규칙을 늘린다.
      */
 }

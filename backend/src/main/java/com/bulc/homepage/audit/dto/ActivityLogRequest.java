@@ -1,4 +1,4 @@
-package com.bulc.homepage.dto.request;
+package com.bulc.homepage.audit.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
