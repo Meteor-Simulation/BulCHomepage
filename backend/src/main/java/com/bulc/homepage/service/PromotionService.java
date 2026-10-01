@@ -156,15 +156,36 @@ public class PromotionService {
     }
 
     /**
-     * 쿠폰 사용 (사용 횟수 증가)
+     * 쿠폰을 검증하고 사용 횟수를 <b>원자적으로</b> 차감한다 (MDP-748 · MDP-749).
+     *
+     * <p>결제 승인 경로 전용이다. {@link #validateCoupon} 만으로는 부족한 이유:
+     * 검증과 차감이 분리되어 있으면 동시 결제가 남은 1회를 함께 통과해 한도를 넘는다.
+     * 그래서 차감을 {@code UPDATE ... WHERE usage_count < usage_limit} 한 문장으로 하고,
+     * 0행이 갱신되면 그 사이 한도가 소진된 것으로 보아 거부한다.
+     *
+     * <p><b>호출 위치가 중요하다 — 토스 결제 승인(캡처) 전에 불러야 한다.</b>
+     * 승인 메서드 전체가 하나의 트랜잭션이므로, 이후 어떤 단계가 실패해 예외가 나면
+     * 이 차감도 함께 롤백된다. 즉 "선점했지만 결제가 안 된" 상태가 남지 않는다.
+     * 반대로 캡처 후에 차감하면, 캡처는 됐는데 한도가 소진돼 거부해야 하는 난처한 상태가 생긴다.
+     *
+     * @param code        쿠폰 코드 (대소문자 무시)
+     * @param productCode 결제 대상 상품 코드. 쿠폰에 상품 제한이 걸려 있으면 대조한다
+     * @param orderAmount 할인 전 정가. 할인액 산정 기준이다
+     * @return 검증 통과 시 프로모션과 산정된 할인액. 실패 시 사유가 담긴 결과
      */
     @Transactional
-    public void useCoupon(String code) {
-        Promotion promotion = promotionRepository.findByCodeIgnoreCase(code)
-                .orElseThrow(() -> new IllegalArgumentException("프로모션을 찾을 수 없습니다."));
+    public PromotionValidationResult consumeCoupon(String code, String productCode, BigDecimal orderAmount) {
+        PromotionValidationResult result = validateCoupon(code, productCode, orderAmount);
+        if (!result.isValid()) {
+            return result;
+        }
 
-        promotion.incrementUsageCount();
-        promotionRepository.save(promotion);
+        Promotion promotion = result.getPromotion();
+        if (promotionRepository.consumeUsage(promotion.getId()) == 0) {
+            // validateCoupon 통과 후 커밋 사이에 다른 결제가 마지막 1회를 가져간 경우
+            return PromotionValidationResult.invalid("사용 가능 횟수가 초과된 쿠폰입니다.");
+        }
+        return result;
     }
 
     /**

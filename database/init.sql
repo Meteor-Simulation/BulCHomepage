@@ -458,6 +458,8 @@ CREATE TABLE payments (
     refund_reason       TEXT NULL,
     fail_reason         TEXT NULL,
     client_ip           VARCHAR(45) NULL,
+    promotion_code      VARCHAR(50) NULL,
+    discount_amount     DECIMAL(18,2) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -472,6 +474,10 @@ COMMENT ON COLUMN payments.user_email IS '결제 시점 이메일 스냅샷 (FK 
 COMMENT ON COLUMN payments.status IS 'P: 대기(Pending), C: 완료(Completed), F: 실패(Failed), R: 환불(Refunded)';
 COMMENT ON COLUMN payments.fail_reason IS '결제 실패/오류 사유 (디버깅용)';
 COMMENT ON COLUMN payments.client_ip IS '결제 요청 클라이언트 IP (감사 추적용)';
+COMMENT ON COLUMN payments.promotion_code IS '적용된 쿠폰 코드 (promotions.code 의 결제 시점 스냅샷, 미적용 시 NULL). FK 아님 — 프로모션이 삭제돼도 결제 사실은 남아야 한다';
+COMMENT ON COLUMN payments.discount_amount IS '서버가 산정한 할인액. amount = 정가 - discount_amount (미적용 시 NULL)';
+
+CREATE INDEX idx_payments_promotion_code ON payments(promotion_code) WHERE promotion_code IS NOT NULL;
 
 -- =========================================================
 -- 8. payment_details (결제 상세 테이블)

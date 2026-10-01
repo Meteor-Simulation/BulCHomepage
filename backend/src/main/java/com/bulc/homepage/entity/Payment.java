@@ -74,6 +74,20 @@ public class Payment {
     @Column(name = "client_ip", length = 45)
     private String clientIp;
 
+    /**
+     * 적용된 쿠폰 코드 (MDP-748). 결제 시점 스냅샷이며 FK 가 아니다 —
+     * 프로모션이 나중에 삭제·수정돼도 결제 사실은 남아야 한다(회계 자료).
+     */
+    @Column(name = "promotion_code", length = 50)
+    private String promotionCode;
+
+    /**
+     * 서버가 산정한 할인액 (MDP-748). {@code amount = 정가 - discountAmount} 다.
+     * {@code amount} 에는 실제 청구액이 들어가므로, 정가를 복원하려면 이 값이 필요하다.
+     */
+    @Column(name = "discount_amount", precision = 18, scale = 2)
+    private BigDecimal discountAmount;
+
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaymentDetail paymentDetail;
 

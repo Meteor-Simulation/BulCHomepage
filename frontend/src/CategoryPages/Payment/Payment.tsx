@@ -475,6 +475,17 @@ const PaymentPage: React.FC = () => {
       const paymentMethodType = getPaymentMethodType();
       const finalAmount = getFinalPrice();
 
+      // 적용한 쿠폰 코드를 주문번호로 보관한다 (MDP-748).
+      // 결제창을 거쳐 /payment/success 로 리다이렉트되면 이 컴포넌트의 상태는 사라지는데,
+      // 승인 요청에는 "어떤 쿠폰을 썼는지" 가 필요하다. 토스가 successUrl 에 붙이는
+      // 쿼리(paymentKey·orderId·amount) 에 끼워 넣는 방식은 토스 동작에 의존하므로 쓰지 않는다.
+      //
+      // 값이 조작돼도 안전하다 — 서버가 쿠폰을 다시 검증하고 할인액을 직접 계산한다.
+      // 임의 코드를 넣으면 기대 금액이 달라져 승인이 거부된다.
+      if (appliedCoupon) {
+        localStorage.setItem(`couponCode_${orderId}`, appliedCoupon.code);
+      }
+
       await tossPayments.requestPayment(paymentMethodType, {
         amount: finalAmount,
         orderId: orderId,

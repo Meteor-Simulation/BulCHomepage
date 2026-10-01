@@ -93,6 +93,8 @@ const PaymentSuccess: React.FC = () => {
             orderId,
             amount: parseInt(amount),
             pricePlanId,
+            // 결제 페이지에서 보관한 쿠폰 코드 (MDP-748). 없으면 쿠폰 미적용 결제다.
+            couponCode: localStorage.getItem(`couponCode_${orderId}`) || undefined,
           }),
         });
 
@@ -112,6 +114,8 @@ const PaymentSuccess: React.FC = () => {
         // 처리 완료된 결제 저장
         processedPayments.push(orderId);
         localStorage.setItem('processedPayments', JSON.stringify(processedPayments));
+        // 쿠폰 코드는 승인에만 쓰이므로 즉시 정리한다 (주문별로 쌓이면 지저분하다)
+        localStorage.removeItem(`couponCode_${orderId}`);
 
         setPaymentResult({
           orderId,

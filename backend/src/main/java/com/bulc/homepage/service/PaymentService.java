@@ -50,6 +50,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final BillingKeyService billingKeyService;
+    private final PromotionService promotionService;
 
     /**
      * 본인 결제 내역 조회 (MDP-576). 최신순. 민감 필드 제외 DTO로 변환.
@@ -127,10 +128,40 @@ public class PaymentService {
                     return new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId());
                 });
 
-        // 결제 금액과 요금제 가격 대조
-        if (pricePlan.getPrice().intValue() != request.getAmount()) {
-            log.error("[결제] 금액 불일치 - 요청금액={}, 요금제가격={}, orderId={}, userEmail={}",
-                    request.getAmount(), pricePlan.getPrice(), request.getOrderId(), userEmail);
+        // 쿠폰 검증 + 사용 횟수 차감 → 서버가 청구액을 직접 산정한다 (MDP-748 · MDP-749).
+        //
+        // 클라이언트가 보낸 금액을 기준으로 삼으면 임의 금액 결제가 가능하다. 그래서
+        // "정가 - 서버가 계산한 할인액" 을 기대값으로 만들고 요청 금액을 거기에 맞춰 검증한다.
+        //
+        // 차감을 토스 승인(캡처)보다 먼저 하는 이유는 consumeCoupon 의 주석 참고 —
+        // 이 메서드 전체가 한 트랜잭션이라 이후 실패 시 차감도 함께 롤백된다.
+        String couponCode = request.getCouponCode() == null ? null : request.getCouponCode().trim();
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        String appliedPromotionCode = null;
+
+        if (couponCode != null && !couponCode.isEmpty()) {
+            PromotionService.PromotionValidationResult coupon = promotionService.consumeCoupon(
+                    couponCode.toUpperCase(), pricePlan.getProductCode(), pricePlan.getPrice());
+
+            if (!coupon.isValid()) {
+                log.warn("[결제] 쿠폰 거부 - code={}, 사유={}, orderId={}, userId={}",
+                        couponCode, coupon.getMessage(), request.getOrderId(), userEmail);
+                throw new RuntimeException(coupon.getMessage());
+            }
+
+            discountAmount = coupon.getDiscountAmount();
+            appliedPromotionCode = coupon.getPromotion().getCode();
+            log.info("[결제] 쿠폰 적용 - code={}, 정가={}, 할인={}, orderId={}",
+                    appliedPromotionCode, pricePlan.getPrice(), discountAmount, request.getOrderId());
+        }
+
+        BigDecimal expectedAmount = pricePlan.getPrice().subtract(discountAmount).max(BigDecimal.ZERO);
+
+        // 결제 금액 대조 (정가가 아니라 '정가 - 할인액' 과 비교한다)
+        if (expectedAmount.compareTo(BigDecimal.valueOf(request.getAmount())) != 0) {
+            log.error("[결제] 금액 불일치 - 요청금액={}, 기대금액={}, 요금제가격={}, 할인={}, 쿠폰={}, orderId={}, userId={}",
+                    request.getAmount(), expectedAmount, pricePlan.getPrice(), discountAmount,
+                    appliedPromotionCode, request.getOrderId(), userEmail);
             throw new RuntimeException("결제 금액이 상품 가격과 일치하지 않습니다.");
         }
 
@@ -179,7 +210,8 @@ public class PaymentService {
                 String responseSummary = buildTossResponseSummary(responseBody);
 
                 // 결제 정보 저장
-                Payment payment = savePaymentInfo(request, responseBody, userEmail, pricePlan, clientIp, paymentStatus, responseSummary);
+                Payment payment = savePaymentInfo(request, responseBody, userEmail, pricePlan, clientIp,
+                        paymentStatus, responseSummary, appliedPromotionCode, discountAmount);
 
                 log.info("[결제] STEP 4/5 DB 저장 완료 - orderId={}, paymentId={}, dbStatus={}",
                         request.getOrderId(), payment.getId(), payment.getStatus());
@@ -548,7 +580,8 @@ public class PaymentService {
      */
     private Payment savePaymentInfo(PaymentConfirmRequest request, JsonNode responseBody,
                                      String userEmail, PricePlan pricePlan, String clientIp,
-                                     String tossStatus, String responseSummary) {
+                                     String tossStatus, String responseSummary,
+                                     String promotionCode, BigDecimal discountAmount) {
         var userOpt = userRepository.findByEmail(userEmail);
         UUID userId = userOpt.map(user -> user.getId()).orElse(null);
         String userName = userOpt.map(user -> user.getName()).orElse(null);
@@ -566,6 +599,9 @@ public class PaymentService {
                 .pricePlan(pricePlan)
                 .clientIp(clientIp)
                 .paidAt(isCompleted ? LocalDateTime.now() : null)
+                // 쿠폰 미적용이면 둘 다 null 로 남긴다 (0 과 "할인 없음" 을 구분)
+                .promotionCode(promotionCode)
+                .discountAmount(promotionCode == null ? null : discountAmount)
                 .build();
 
         // PaymentDetail 생성
