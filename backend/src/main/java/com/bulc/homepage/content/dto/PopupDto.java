@@ -1,6 +1,6 @@
-package com.bulc.homepage.dto;
+package com.bulc.homepage.content.dto;
 
-import com.bulc.homepage.entity.Popup;
+import com.bulc.homepage.content.domain.Popup;
 import lombok.*;
 
 import java.time.LocalDateTime;

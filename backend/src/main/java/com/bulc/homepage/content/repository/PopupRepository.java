@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.content.repository;
 
-import com.bulc.homepage.entity.Popup;
+import com.bulc.homepage.content.domain.Popup;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.bulc.homepage.entity;
+package com.bulc.homepage.content.domain;
 
 import jakarta.persistence.*;
 import lombok.*;

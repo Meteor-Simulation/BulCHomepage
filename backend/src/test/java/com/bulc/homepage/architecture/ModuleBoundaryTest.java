@@ -30,6 +30,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *   mail      → lead.api       2회   공개 계약 경유 (MDP-907 에서 repository 직접 조회를 걷어냈다)
  *   oauth2    → oauth          3회   같은 인증 축의 하위 모듈 (구현 직접 참조, 용인)
  *   lead      → (없음)                자족 모듈
+ *   content   → (없음)                자족 모듈 (들어오는 참조도 0)
  * </pre>
  */
 @DisplayName("모듈 경계")
@@ -81,6 +82,23 @@ class ModuleBoundaryTest {
                             BASE + ".lead.domain..",
                             BASE + ".lead.dto..")
                     .because("개인정보를 담은 엔티티가 모듈 밖으로 나가면 안 된다. 공개 계약은 lead.api — MDP-907");
+            rule.check(classes);
+        }
+
+        /**
+         * 콘텐츠(팝업)는 들어오는 참조가 처음부터 0 이었다 (MDP-922). 공지·팝업은 화면에
+         * 뿌리는 것이 전부라 다른 도메인이 알 이유가 없다. 그 상태를 규칙으로 고정해 둔다 —
+         * 나중에 누가 "팝업 노출 여부를 결제에서 판단" 같은 결합을 만들면 여기서 걸린다.
+         *
+         * <p>공개 계약이 아직 없다. 소비자가 없어서다. 생기면 {@code content/api} 를 만든다.
+         */
+        @Test
+        @DisplayName("content 바깥은 content 내부를 참조하지 않는다")
+        void contentIsSelfContained() {
+            ArchRule rule = noClasses()
+                    .that().resideOutsideOfPackage(BASE + ".content..")
+                    .should().dependOnClassesThat().resideInAnyPackage(BASE + ".content..")
+                    .because("팝업·공지는 다른 도메인이 알 이유가 없다 — MDP-922");
             rule.check(classes);
         }
 
@@ -161,8 +179,20 @@ class ModuleBoundaryTest {
                     .that().resideInAPackage(BASE + ".lead..")
                     .should().dependOnClassesThat().resideInAnyPackage(
                             BASE + ".licensing..", BASE + ".payment..",
-                            BASE + ".mail..", BASE + ".oauth..")
+                            BASE + ".mail..", BASE + ".oauth..", BASE + ".content..")
                     .because("컨택 관리에 라이선스·결제·메일을 알 필요가 없다 — MDP-907");
+            rule.check(classes);
+        }
+
+        @Test
+        @DisplayName("content 는 다른 도메인 모듈을 참조하지 않는다")
+        void contentDoesNotKnowOtherModules() {
+            ArchRule rule = noClasses()
+                    .that().resideInAPackage(BASE + ".content..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".licensing..", BASE + ".payment..",
+                            BASE + ".mail..", BASE + ".lead..", BASE + ".oauth..")
+                    .because("팝업 노출에 라이선스·결제를 알 필요가 없다 — MDP-922");
             rule.check(classes);
         }
 
@@ -184,7 +214,7 @@ class ModuleBoundaryTest {
         @DisplayName("모듈 사이에 순환 의존이 없다")
         void noCyclesBetweenModules() {
             ArchRule rule = slices()
-                    .matching(BASE + ".(licensing|payment|mail|lead).(*)..")
+                    .matching(BASE + ".(licensing|payment|mail|lead|content).(*)..")
                     .should().beFreeOfCycles()
                     .because("순환이 있으면 모듈을 따로 떼어낼 수 없다");
             rule.check(classes);
@@ -230,10 +260,13 @@ class ModuleBoundaryTest {
      *    회원/카탈로그 모듈이 아직 평면 계층에 있어 참조 자체를 막을 수 없다.
      *    해당 모듈이 서면 계약 경유로 바꾸고 규칙 추가.
      *
-     * 3. oauth2 → oauth 구현 직접 참조 (3곳)
+     * 3. content → repository.UserRepository (1곳)
+     *    AdminPopupController 가 작성자 이름 표시를 위해 조회한다. 회원 모듈이 서면 계약 경유로 바꾼다.
+     *
+     * 4. oauth2 → oauth 구현 직접 참조 (3곳)
      *    같은 인증 축의 하위 모듈이라 용인 중. 회원/인증 모듈화(마지막 단계) 때 재검토.
      *
-     * 4. 평면 계층(entity 26 · repository 21 · controller 21 · service 16)
+     * 5. 평면 계층
      *    모듈이 아니라 규칙을 걸 대상이 없다. 모듈화가 진행되는 만큼 규칙을 늘린다.
      */
 }
