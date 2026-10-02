@@ -196,6 +196,8 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | `licensing/` (77) | 완료 | `UserRepository` 4 · `Product` 4 | 5개 파일 |
 | `mail/` (7) | **완료** (MDP-848·895) | `UserRepository` 3 · `User` 2 · `lead.api` 2 | 6개 파일 전부 `api` 경유 |
 | `lead/` (14) | **완료** (MDP-907) | — (`PublicFormRateLimiter` 1 = 평면 인프라) | 2개 파일, 전부 `api` 경유 |
+| `content/` (6) | **완료** (MDP-922) | `UserRepository` 1 (작성자 이름 표시) | **0개** — 들어오는 참조가 처음부터 없었다 |
+| `audit/` (6) | **완료** (MDP-924) | `User` 1 · `UserRepository` 1 | 3개 파일, 전부 `api` 경유 |
 | `payment/` (11) | 경계만 그음 | — | 실제 로직은 아직 평면 계층 |
 
 ### 규약
@@ -209,11 +211,11 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ### 다음 순서 (2026-09-10 결합도 실측 기준)
 
-~~`리드/컨택`~~(MDP-907 완료) → `콘텐츠` → `카탈로그` → `결제 완성` → `감사/운영` → `회원/인증`
+~~`리드/컨택`~~(MDP-907) → ~~`콘텐츠`~~(MDP-922) → ~~`감사/운영`~~(MDP-924) → `카탈로그` → `결제 완성` → `회원/인증`
 
-- **카탈로그는 지금 착수 금지** — MDP-790·791 이 `entity/Product`·`PricePlan`·`Promotion`·`Subscription` 을 동시 수정 중이다. `Product` 소유권 결정도 선행 필요
+- **카탈로그·결제는 지금 착수 금지 (2026-10-01)** — 활성 브랜치 `fix/MDP-748-server-side-coupon`(미머지)이 `PaymentService`·`PaymentConfirmRequest`·`Payment`·`PromotionService`·`PromotionRepository` 를 수정 중이다. 이 파일들을 모듈로 옮기면 그 브랜치가 통째로 깨진다(rename × edit 충돌). **쿠폰 브랜치를 먼저 머지한 뒤 착수할 것.** `Product` 소유권(카탈로그 vs 결제) 결정도 여전히 선행 조건이다
 - **회원/인증이 마지막인 이유** — `User` 36개 파일·`UserRepository` 27개 파일이 참조한다. 떼어내는 대상이 아니라, 나머지가 `userId`(UUID)와 포트로만 접근하게 바꾼 뒤 **마지막에 남는 것**이다. `licensing/` 이 이미 그 형태다
-- **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 11개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`UserRepository` 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
+- **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 14개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`UserRepository` 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
 
 ---
 

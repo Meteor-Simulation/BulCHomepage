@@ -2,7 +2,7 @@ package com.bulc.homepage.controller;
 
 import com.bulc.homepage.dto.BillingPaymentRequest;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
-import com.bulc.homepage.service.ActivityLogService;
+import com.bulc.homepage.audit.api.ActivityLogPort;
 import com.bulc.homepage.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final ActivityLogService activityLogService;
+    private final ActivityLogPort activityLogPort;
 
     /**
      * 결제 승인 API
@@ -61,7 +61,7 @@ public class PaymentController {
 
             // DB 활동 로그 기록 (결제 성공)
             UUID userUuid = userId != null ? UUID.fromString(userId) : null;
-            activityLogService.logPaymentActivity(
+            activityLogPort.logPaymentActivity(
                     userUuid, request.getOrderId(), paymentStatus,
                     String.format("결제 승인 성공: %s, %d원, pricePlanId=%d",
                             request.getOrderId(), request.getAmount(), request.getPricePlanId()),
@@ -79,7 +79,7 @@ public class PaymentController {
                 if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
                     userUuid = UUID.fromString(auth.getName());
                 }
-                activityLogService.logPaymentActivity(
+                activityLogPort.logPaymentActivity(
                         userUuid, request.getOrderId(), "FAILED",
                         String.format("결제 승인 실패: %s, %d원, error=%s",
                                 request.getOrderId(), request.getAmount(), e.getMessage()),

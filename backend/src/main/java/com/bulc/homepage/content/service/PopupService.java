@@ -1,8 +1,8 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.content.service;
 
-import com.bulc.homepage.dto.PopupDto;
-import com.bulc.homepage.entity.Popup;
-import com.bulc.homepage.repository.PopupRepository;
+import com.bulc.homepage.content.dto.PopupDto;
+import com.bulc.homepage.content.domain.Popup;
+import com.bulc.homepage.content.repository.PopupRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

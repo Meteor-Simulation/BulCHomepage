@@ -3,7 +3,7 @@ package com.bulc.homepage.oauth2;
 import com.bulc.homepage.config.ValidationConfig;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.entity.UserSocialAccount;
-import com.bulc.homepage.repository.ActivityLogRepository;
+import com.bulc.homepage.audit.api.ActivityLogPort;
 import com.bulc.homepage.repository.RefreshTokenRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.repository.UserSocialAccountRepository;
@@ -28,7 +28,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
-    private final ActivityLogRepository activityLogRepository;
+    private final ActivityLogPort activityLogPort;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
@@ -215,7 +215,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
      */
     private void cleanupUserData(UUID userId) {
         // 활동 로그 삭제
-        activityLogRepository.deleteByUserId(userId);
+        activityLogPort.deleteAllForUser(userId);
         // 리프레시 토큰 삭제
         refreshTokenRepository.deleteAllByUserId(userId);
         log.info("사용자 관련 데이터 정리 완료: userId={}", userId);

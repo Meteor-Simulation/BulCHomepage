@@ -1,8 +1,8 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.content.controller;
 
-import com.bulc.homepage.dto.PopupDto;
-import com.bulc.homepage.entity.Popup;
-import com.bulc.homepage.service.PopupService;
+import com.bulc.homepage.content.dto.PopupDto;
+import com.bulc.homepage.content.domain.Popup;
+import com.bulc.homepage.content.service.PopupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -5,7 +5,6 @@ import com.bulc.homepage.dto.request.OAuthSignupRequest;
 import com.bulc.homepage.dto.request.RefreshTokenRequest;
 import com.bulc.homepage.dto.request.SignupRequest;
 import com.bulc.homepage.dto.response.AuthResponse;
-import com.bulc.homepage.entity.ActivityLog;
 import com.bulc.homepage.entity.RefreshToken;
 import com.bulc.homepage.entity.SignupTicket;
 import com.bulc.homepage.lead.api.MarketingConsent;
@@ -15,7 +14,7 @@ import com.bulc.homepage.exception.DeactivatedAccountException;
 import com.bulc.homepage.licensing.domain.OwnerType;
 import com.bulc.homepage.licensing.domain.UsageCategory;
 import com.bulc.homepage.licensing.service.LicenseService;
-import com.bulc.homepage.repository.ActivityLogRepository;
+import com.bulc.homepage.audit.api.ActivityLogPort;
 import com.bulc.homepage.repository.RefreshTokenRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.repository.UserSocialAccountRepository;
@@ -42,7 +41,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
-    private final ActivityLogRepository activityLogRepository;
+    private final ActivityLogPort activityLogPort;
     private final RefreshTokenRepository refreshTokenRepository;
     private final SignupTicketService signupTicketService;
     private final LicenseService licenseService;
@@ -83,7 +82,7 @@ public class AuthService {
             if (!existingUser.getIsActive()) {
                 log.info("비활성화된 계정 재활성화 처리: {}", email);
                 // 관련 데이터 정리
-                activityLogRepository.deleteByUserId(existingUser.getId());
+                activityLogPort.deleteAllForUser(existingUser.getId());
                 refreshTokenRepository.deleteAllByUserId(existingUser.getId());
                 // 소셜 계정 삭제
                 socialAccountRepository.deleteByUserId(existingUser.getId());
@@ -285,19 +284,12 @@ public class AuthService {
         }
     }
 
+    /**
+     * 활동 로그 기록. 엔티티를 직접 빌드해 저장하던 것을 감사 모듈 계약으로 위임한다 (MDP-924).
+     * 호출부(8곳)를 그대로 두기 위해 헬퍼는 남긴다.
+     */
     private void saveActivityLog(UUID userId, String action, String targetType, Long targetId, String description) {
-        try {
-            ActivityLog activityLog = ActivityLog.builder()
-                    .userId(userId)
-                    .action(action)
-                    .targetType(targetType)
-                    .targetId(targetId)
-                    .description(description)
-                    .build();
-            activityLogRepository.save(activityLog);
-        } catch (Exception e) {
-            log.error("활동 로그 저장 실패: {}", e.getMessage());
-        }
+        activityLogPort.log(userId, action, targetType, targetId, description);
     }
 
     /**
@@ -476,7 +468,7 @@ public class AuthService {
             if (!existingUser.getIsActive()) {
                 log.info("비활성화된 계정 재활성화 후 OAuth 재가입 처리: {}", email);
                 // 관련 데이터 정리
-                activityLogRepository.deleteByUserId(existingUser.getId());
+                activityLogPort.deleteAllForUser(existingUser.getId());
                 refreshTokenRepository.deleteAllByUserId(existingUser.getId());
                 socialAccountRepository.deleteByUserId(existingUser.getId());
 
