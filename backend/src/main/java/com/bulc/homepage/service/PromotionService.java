@@ -63,6 +63,21 @@ public class PromotionService {
             return PromotionValidationResult.invalid("비활성화된 쿠폰입니다.");
         }
 
+        // 할인 설정이 쓸 수 없는 상태인지 체크 (MDP-748)
+        //
+        // 현재 할인 계산은 discountType 을 할인율(%)로만 쓴다. discountValue(정액)는 아직
+        // 계산에 반영되지 않는다 — 할인 방식 설계는 MDP-747 의 결정 사항이다.
+        //
+        // 그래서 할인율이 없는 쿠폰(정액 전용으로 만들어진 것 등)은 "할인 0원" 이 되어
+        // 조용히 아무 일도 하지 않는다. 고객은 쿠폰을 넣었는데 정가를 결제하게 된다.
+        // 에러보다 조용히 틀리는 쪽이 더 나쁘므로 아예 거부한다.
+        //
+        // 생성·수정 단계에서도 막지만(PromotionController), DB 에 직접 넣은 데이터와
+        // 그 검증이 들어오기 전에 만들어진 쿠폰이 있을 수 있어 사용 시점에도 확인한다.
+        if (!isDiscountUsable(promotion)) {
+            return PromotionValidationResult.invalid("쿠폰이 사용 불가능한 상태입니다.");
+        }
+
         // 유효 기간 체크
         LocalDateTime now = LocalDateTime.now();
         if (promotion.getValidFrom() != null && now.isBefore(promotion.getValidFrom())) {
@@ -89,12 +104,47 @@ public class PromotionService {
     }
 
     /**
+     * 쓸 수 없는 할인 설정이면 거부한다 (MDP-748).
+     *
+     * <p>메시지에 허용 범위를 넣는다 — "안 된다" 만 알려주면 관리자가 무엇을 고쳐야 할지 모른다.
+     */
+    private void requireUsableDiscount(Promotion promotion) {
+        if (!isDiscountUsable(promotion)) {
+            throw new IllegalArgumentException(
+                    "할인율(discountType)은 1~100 사이여야 합니다. 정액 할인은 아직 지원하지 않습니다.");
+        }
+    }
+
+    /**
+     * 할인 설정이 실제로 금액을 깎을 수 있는 상태인지 (MDP-748).
+     *
+     * <p>할인율은 1~100 이어야 한다.
+     * <ul>
+     *   <li>{@code null}·0 이하 — 깎을 것이 없다. 정액 전용으로 만들어진 쿠폰이 여기 해당한다</li>
+     *   <li>100 초과 — 정가보다 많이 깎인다. 기대금액이 0 으로 끊기지만 그 금액으로는
+     *       결제를 완료할 수 없다({@code amount} 에 {@code @Positive} 가 걸려 있다).
+     *       무료 지급은 결제가 아니라 리딤 코드 경로가 맞다</li>
+     * </ul>
+     *
+     * <p>{@code discountValue}(정액)는 판단에 넣지 않는다. 지금 계산식이 쓰지 않으므로
+     * 값이 있어도 할인이 되지 않기 때문이다 — 있다고 통과시키면 조용히 틀린다.
+     */
+    public static boolean isDiscountUsable(Promotion promotion) {
+        Integer rate = promotion.getDiscountType();
+        return rate != null && rate > 0 && rate <= 100;
+    }
+
+    /**
      * 프로모션 생성
      */
     @Transactional
     public Promotion createPromotion(Promotion promotion) {
         // 쿠폰 코드 대문자 변환
         promotion.setCode(promotion.getCode().toUpperCase());
+
+        // 쓸 수 없는 할인 설정은 애초에 만들지 못하게 막는다 (MDP-748).
+        // 만들 수는 있는데 쓰면 거부되는 쿠폰은 관리자를 혼란스럽게 한다.
+        requireUsableDiscount(promotion);
 
         // 중복 체크
         if (promotionRepository.existsByCodeIgnoreCase(promotion.getCode())) {
@@ -118,6 +168,9 @@ public class PromotionService {
                 promotionRepository.existsByCodeIgnoreCase(newCode)) {
             throw new IllegalArgumentException("이미 존재하는 쿠폰 코드입니다.");
         }
+
+        // 수정으로 쓸 수 없는 상태가 되는 것도 막는다 — 생성만 막으면 우회할 수 있다
+        requireUsableDiscount(updatedPromotion);
 
         promotion.setCode(newCode);
         promotion.setName(updatedPromotion.getName());

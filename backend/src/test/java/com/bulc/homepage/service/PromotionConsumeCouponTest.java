@@ -191,6 +191,59 @@ class PromotionConsumeCouponTest {
         }
 
         /**
+         * 할인율이 없는 쿠폰 — 정액 전용으로 만들어진 것 등. 지금 계산식이 discountValue 를
+         * 쓰지 않아 "할인 0원" 이 되므로, 조용히 정가를 결제시키지 않고 거부해야 한다 (MDP-748).
+         */
+        @Test
+        @DisplayName("할인율이 없으면 '사용 불가능한 상태' 로 거부한다")
+        void noDiscountRateRejected() {
+            Promotion p = promotion(0, 100, 0);
+            p.setDiscountValue(new BigDecimal("50000")); // 정액만 설정된 쿠폰
+            given(p);
+
+            var result = promotionService.consumeCoupon(CODE, PRODUCT, PRICE);
+
+            assertThat(result.isValid()).isFalse();
+            assertThat(result.getMessage()).isEqualTo("쿠폰이 사용 불가능한 상태입니다.");
+            verify(promotionRepository, never()).consumeUsage(anyLong());
+        }
+
+        @Test
+        @DisplayName("할인율이 null 이면 거부한다")
+        void nullDiscountRateRejected() {
+            Promotion p = promotion(10, 100, 0);
+            p.setDiscountType(null);
+            given(p);
+
+            var result = promotionService.consumeCoupon(CODE, PRODUCT, PRICE);
+
+            assertThat(result.getMessage()).isEqualTo("쿠폰이 사용 불가능한 상태입니다.");
+        }
+
+        /** 100% 초과는 정가보다 많이 깎여 결제를 완료할 수 없다 — 무료 지급은 리딤 코드 경로다. */
+        @Test
+        @DisplayName("할인율이 100 을 넘으면 거부한다")
+        void overHundredPercentRejected() {
+            given(promotion(120, 100, 0));
+
+            var result = promotionService.consumeCoupon(CODE, PRODUCT, PRICE);
+
+            assertThat(result.getMessage()).isEqualTo("쿠폰이 사용 불가능한 상태입니다.");
+        }
+
+        @Test
+        @DisplayName("할인율 100 은 경계값으로 허용한다 (거부 사유가 아니다)")
+        void exactlyHundredPercentIsUsable() {
+            given(promotion(100, 100, 0));
+            givenConsumeSucceeds();
+
+            var result = promotionService.consumeCoupon(CODE, PRODUCT, PRICE);
+
+            assertThat(result.isValid()).isTrue();
+            assertThat(result.getDiscountAmount()).isEqualByComparingTo(PRICE);
+        }
+
+        /**
          * 핵심 경합 케이스. 검증 시점에는 남은 횟수가 있었지만, 차감 UPDATE 가 0행을 갱신했다
          * = 그 사이 다른 결제가 마지막 1회를 가져갔다. 여기서 통과시키면 한도를 넘겨 할인이 나간다.
          */
