@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * {@link ProductCatalogPort} 구현 (MDP-925).
+ * {@link ProductCatalogPort} 구현 (MDP-934).
  *
  * <p>엔티티를 {@link CatalogProduct} 로 좁혀 내보내는 것이 이 클래스의 전부다. 얇은 것이 맞다 —
  * 상품 조회에 업무 규칙이 없고, 있어야 할 규칙(활성 여부를 가릴지)은 메서드 선택으로 표현된다.

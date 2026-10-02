@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * 카탈로그(상품·가격·할인) 모듈의 공개 계약 (MDP-925).
+ * 카탈로그(상품·가격·할인) 모듈의 공개 계약 (MDP-934).
  *
  * <p><b>Product 소유권을 카탈로그로 정한 근거</b> — 상품 정의는 카탈로그의 핵심 개념이다.
  * 그런데 그동안 {@code ProductRepository} 가 {@code licensing/repository/} 안에 있었다.

@@ -52,7 +52,7 @@ class LicensePlanAdminServiceEntitlementTest {
         ));
         service = new LicensePlanAdminService(planRepository, productCatalog, registry);
 
-        // 계약이 record 라 스터빙 없이 값을 그대로 넣는다 (MDP-925)
+        // 계약이 record 라 스터빙 없이 값을 그대로 넣는다 (MDP-934)
         CatalogProduct product = new CatalogProduct(PRODUCT_ID, "001", "Test Product");
         lenient().when(productCatalog.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
         lenient().when(planRepository.existsByCodeAndDeletedFalse(any())).thenReturn(false);

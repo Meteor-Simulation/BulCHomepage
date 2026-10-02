@@ -32,7 +32,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *   lead      → (없음)                자족 모듈
  *   content   → (없음)                자족 모듈 (들어오는 참조도 0)
  *   → audit.api                3회   인증·결제·OAuth 가 기록. 전부 계약 경유 (MDP-924)
- *   licensing → catalog.api    4회   상품 조회(id·code·name). 전부 계약 경유 (MDP-925)
+ *   licensing → catalog.api    4회   상품 조회(id·code·name). 전부 계약 경유 (MDP-934)
  *   catalog   → (없음)                자족 모듈
  * </pre>
  */
@@ -126,6 +126,52 @@ class ModuleBoundaryTest {
             rule.check(classes);
         }
 
+        /**
+         * 상품 소유권을 카탈로그로 옮긴 결과. 그동안 {@code ProductRepository} 가
+         * {@code licensing/repository/} 안에 있었다 — 라이선싱이 상품을 제일 많이 참조했기
+         * 때문인데, 그건 역사의 흔적이지 설계가 아니다.
+         *
+         * <p>실측해 보니 라이선싱이 상품에서 필요한 것은 {@code id · code · name} 셋뿐이었고
+         * (호출부 5곳), 그래서 {@code catalog.api.ProductCatalogPort} 두 메서드로 끝났다.
+         * 엔티티가 넘어가지 않으므로 라이선싱이 상품을 수정할 수 없다 — "상품은 카탈로그가
+         * 관리한다" 가 주석이 아니라 타입으로 보장된다.
+         */
+        @Test
+        @DisplayName("licensing 은 catalog.api 만 본다 (domain · repository · service 금지)")
+        void licensingSeesOnlyCatalogApi() {
+            ArchRule rule = noClasses()
+                    .that().resideInAPackage(BASE + ".licensing..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".catalog.domain..",
+                            BASE + ".catalog.repository..",
+                            BASE + ".catalog.service..",
+                            BASE + ".catalog.controller..")
+                    .because("상품 엔티티가 라이선싱으로 넘어가면 카탈로그가 소유권을 잃는다");
+            rule.check(classes);
+        }
+
+        /**
+         * 결제 모듈 본체가 들어왔다 — 평면 계층의 22개 파일 3,127줄(결제·구독·빌링)을 옮겼다.
+         * 그래서 "다른 모듈은 결제 내부를 보지 않는다" 를 이제 검사할 수 있다.
+         *
+         * <p>licensing 은 {@code payment.port} 만 본다(바로 아래 규칙). 포트는 <b>소비자가
+         * 요구한</b> 계약이다 — 결제가 라이선스 발급자를 모르게 하려고 계약을 결제 쪽에 두고
+         * 라이선싱의 어댑터가 구현한다(MDP-831).
+         *
+         * <p>관리자 접착부({@code AdminController} · {@code TestController})는 부채 주석 참고.
+         */
+        @Test
+        @DisplayName("다른 도메인 모듈은 payment 내부를 참조하지 않는다")
+        void paymentInternalsAreHiddenFromOtherModules() {
+            ArchRule rule = noClasses()
+                    .that().resideInAnyPackage(
+                            BASE + ".mail..", BASE + ".lead..", BASE + ".content..",
+                            BASE + ".audit..", BASE + ".catalog..")
+                    .should().dependOnClassesThat().resideInAnyPackage(BASE + ".payment..")
+                    .because("결제를 쓰는 모듈은 계약으로만 접근해야 한다");
+            rule.check(classes);
+        }
+
         @Test
         @DisplayName("mail 바깥은 mail.repository · mail.domain 을 참조하지 않는다")
         void mailInternalsAreHidden() {
@@ -163,7 +209,12 @@ class ModuleBoundaryTest {
                     .should().dependOnClassesThat().resideInAnyPackage(
                             BASE + ".payment.service..",
                             BASE + ".payment.recovery..",
-                            BASE + ".payment.notification..")
+                            BASE + ".payment.notification..",
+                            BASE + ".payment.domain..",
+                            BASE + ".payment.repository..",
+                            BASE + ".payment.controller..",
+                            BASE + ".payment.dto..",
+                            BASE + ".payment.scheduler..")
                     .because("licensing 이 결제를 보는 창은 payment.port 뿐이다");
             rule.check(classes);
         }
@@ -208,6 +259,26 @@ class ModuleBoundaryTest {
             rule.check(classes);
         }
 
+        /**
+         * 카탈로그는 아무도 부르지 않는다. 상품·가격·할인을 정의하는 일에 결제·라이선스를
+         * 알 필요가 없기 때문이다. <b>이 방향이 0 이면 카탈로그를 통째로 떼어낼 수 있다.</b>
+         *
+         * <p>반대 방향(결제 → 카탈로그)은 의도적으로 허용한다 — 부채 주석 참고. 결제는
+         * "무엇을 얼마에 팔았는지" 를 기록하는 일이라 카탈로그와 본래 붙어 있다. 한쪽으로
+         * 고정해 두면 카탈로그는 독립이고, 결제를 떼어낼 때만 카탈로그가 함께 간다.
+         */
+        @Test
+        @DisplayName("catalog 는 다른 도메인 모듈을 참조하지 않는다")
+        void catalogIsSelfContained() {
+            ArchRule rule = noClasses()
+                    .that().resideInAPackage(BASE + ".catalog..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            BASE + ".licensing..", BASE + ".payment..", BASE + ".mail..",
+                            BASE + ".lead..", BASE + ".content..", BASE + ".audit..", BASE + ".oauth..")
+                    .because("상품·가격 정의에 결제·라이선스를 알 필요가 없다");
+            rule.check(classes);
+        }
+
         @Test
         @DisplayName("content 는 다른 도메인 모듈을 참조하지 않는다")
         void contentDoesNotKnowOtherModules() {
@@ -238,7 +309,7 @@ class ModuleBoundaryTest {
         @DisplayName("모듈 사이에 순환 의존이 없다")
         void noCyclesBetweenModules() {
             ArchRule rule = slices()
-                    .matching(BASE + ".(licensing|payment|mail|lead|content|audit).(*)..")
+                    .matching(BASE + ".(licensing|payment|mail|lead|content|audit|catalog).(*)..")
                     .should().beFreeOfCycles()
                     .because("순환이 있으면 모듈을 따로 떼어낼 수 없다");
             rule.check(classes);
@@ -275,15 +346,16 @@ class ModuleBoundaryTest {
     /*
      * ── 아직 규칙으로 만들지 못한 부채 ────────────────────────────────────
      *
-     * 0. 결제 → catalog.domain (의도적 용인, MDP-925)
+     * 0. 결제 → catalog.domain (의도적 용인, MDP-934)
      *    Payment.pricePlan · Subscription.product · Subscription.pricePlan 이 JPA 관계로
      *    카탈로그 엔티티를 참조한다. 끊으려면 포트 조회로 바꿔야 하는데 호출부가 14곳이고
      *    N+1 조회 위험이 생긴다. 얻는 것(이론적 분리)보다 잃는 것(복잡도·성능)이 크다.
      *    대신 방향을 한쪽으로 고정했다 — catalog → payment 는 규칙으로 금지한다.
      *    즉 카탈로그는 독립이고, 결제를 떼어낼 때만 카탈로그가 함께 간다.
      *
-     *    AdminController(695줄)도 catalog.domain·repository 를 직접 쓴다. 이 컨트롤러는
-     *    여러 도메인을 겸하는 관리자 접착부라 분해가 선행 조건이다.
+     *    AdminController(695줄)도 catalog.domain·repository 와 payment.domain·repository 를
+     *    직접 쓴다. 여러 도메인을 겸하는 관리자 접착부라 분해가 선행 조건이다.
+     *    TestController 도 payment 내부를 쓰지만 @Profile("dev") 라 운영에 없다.
      *
      * 1. mail → entity/repository (회원 쪽만 남음)
      *    OperationalMailService.resolveRecipients 가 UserRepository 를 직접 조회한다

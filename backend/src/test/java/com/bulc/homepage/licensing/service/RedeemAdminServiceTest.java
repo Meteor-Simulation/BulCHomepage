@@ -55,7 +55,7 @@ class RedeemAdminServiceTest {
                 productCatalog, hashService
         );
 
-        // 계약이 record 라 생성자로 끝난다 — 리플렉션으로 final 필드를 밀어넣을 수 없다 (MDP-925)
+        // 계약이 record 라 생성자로 끝난다 — 리플렉션으로 final 필드를 밀어넣을 수 없다 (MDP-934)
         CatalogProduct product = new CatalogProduct(PRODUCT_ID, "BULC", "Test Product");
         given(productCatalog.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 

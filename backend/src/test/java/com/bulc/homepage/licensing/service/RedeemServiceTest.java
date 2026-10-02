@@ -366,7 +366,7 @@ class RedeemServiceTest {
     }
 
     private CatalogProduct createProduct() {
-        // 계약이 record 라 ReflectionTestUtils 로 필드를 밀어넣을 필요가 없어졌다 (MDP-925)
+        // 계약이 record 라 ReflectionTestUtils 로 필드를 밀어넣을 필요가 없어졌다 (MDP-934)
         return new CatalogProduct(PRODUCT_ID, "BULC", "Test Product");
     }
 
