@@ -1,7 +1,7 @@
-package com.bulc.homepage.service;
+package com.bulc.homepage.catalog.service;
 
-import com.bulc.homepage.entity.Promotion;
-import com.bulc.homepage.repository.PromotionRepository;
+import com.bulc.homepage.catalog.domain.Promotion;
+import com.bulc.homepage.catalog.repository.PromotionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

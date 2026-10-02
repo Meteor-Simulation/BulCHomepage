@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.catalog.repository;
 
-import com.bulc.homepage.entity.Promotion;
+import com.bulc.homepage.catalog.domain.Promotion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

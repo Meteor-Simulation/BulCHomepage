@@ -1,6 +1,6 @@
-package com.bulc.homepage.licensing.repository;
+package com.bulc.homepage.catalog.repository;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.domain.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

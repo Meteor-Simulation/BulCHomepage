@@ -1,8 +1,8 @@
 package com.bulc.homepage.service;
 
 import com.bulc.homepage.entity.BillingKey;
-import com.bulc.homepage.entity.PricePlan;
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.domain.PricePlan;
+import com.bulc.homepage.catalog.domain.Product;
 import com.bulc.homepage.entity.Subscription;
 import com.bulc.homepage.entity.SubscriptionPayment;
 import com.bulc.homepage.payment.port.LicenseIssuePort;

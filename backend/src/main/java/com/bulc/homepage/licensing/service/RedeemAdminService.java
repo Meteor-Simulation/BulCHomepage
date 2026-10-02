@@ -1,6 +1,7 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.exception.LicenseException;
@@ -24,18 +25,18 @@ public class RedeemAdminService {
     private final RedeemCampaignRepository campaignRepository;
     private final RedeemCodeRepository codeRepository;
     private final LicensePlanRepository planRepository;
-    private final ProductRepository productRepository;
+    private final ProductCatalogPort productCatalog;
     private final RedeemCodeHashService hashService;
 
     public RedeemAdminService(RedeemCampaignRepository campaignRepository,
                               RedeemCodeRepository codeRepository,
                               LicensePlanRepository planRepository,
-                              ProductRepository productRepository,
+                              ProductCatalogPort productCatalog,
                               RedeemCodeHashService hashService) {
         this.campaignRepository = campaignRepository;
         this.codeRepository = codeRepository;
         this.planRepository = planRepository;
-        this.productRepository = productRepository;
+        this.productCatalog = productCatalog;
         this.hashService = hashService;
     }
 
@@ -195,8 +196,8 @@ public class RedeemAdminService {
     }
 
     private RedeemCampaignResponse toResponse(RedeemCampaign campaign) {
-        String productName = productRepository.findById(campaign.getProductId())
-                .map(Product::getName)
+        String productName = productCatalog.findById(campaign.getProductId())
+                .map(CatalogProduct::name)
                 .orElse("알 수 없는 제품");
 
         String planName = planRepository.findById(campaign.getLicensePlanId())

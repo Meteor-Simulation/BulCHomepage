@@ -1,9 +1,9 @@
-package com.bulc.homepage.controller;
+package com.bulc.homepage.catalog.controller;
 
-import com.bulc.homepage.entity.Promotion;
+import com.bulc.homepage.catalog.domain.Promotion;
 import com.bulc.homepage.repository.UserRepository;
-import com.bulc.homepage.service.PromotionService;
-import com.bulc.homepage.service.PromotionService.PromotionValidationResult;
+import com.bulc.homepage.catalog.service.PromotionService;
+import com.bulc.homepage.catalog.service.PromotionService.PromotionValidationResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

@@ -1,13 +1,13 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import com.bulc.homepage.licensing.domain.LicensePlan;
 import com.bulc.homepage.licensing.dto.LicensePlanRequest;
 import com.bulc.homepage.licensing.dto.LicensePlanResponse;
 import com.bulc.homepage.licensing.exception.LicenseException;
 import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
-import com.bulc.homepage.licensing.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class LicensePlanAdminService {
 
     private final LicensePlanRepository planRepository;
-    private final ProductRepository productRepository;
+    private final ProductCatalogPort productCatalog;
     private final EntitlementRegistry entitlementRegistry;
 
     /**
@@ -170,8 +170,8 @@ public class LicensePlanAdminService {
         if (productId == null) {
             throw new LicenseException(ErrorCode.INVALID_REQUEST, "productId 가 필요합니다");
         }
-        return productRepository.findById(productId)
-                .map(Product::getCode)
+        return productCatalog.findById(productId)
+                .map(CatalogProduct::code)
                 .orElseThrow(() -> new LicenseException(ErrorCode.INVALID_REQUEST,
                         "존재하지 않는 제품입니다: " + productId));
     }

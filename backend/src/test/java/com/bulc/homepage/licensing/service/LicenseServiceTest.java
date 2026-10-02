@@ -7,7 +7,7 @@ import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.ActivationRepository;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
-import com.bulc.homepage.licensing.repository.ProductRepository;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,7 +53,7 @@ class LicenseServiceTest {
     private LicensePlanRepository planRepository;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductCatalogPort productCatalog;
 
     @Mock
     private SessionTokenService sessionTokenService;
@@ -74,7 +74,7 @@ class LicenseServiceTest {
                 licenseRepository,
                 activationRepository,
                 planRepository,
-                productRepository,
+                productCatalog,
                 sessionTokenService,
                 offlineTokenService,
                 30  // v0.3.0: staleThresholdMinutes

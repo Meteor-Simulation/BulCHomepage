@@ -1,6 +1,6 @@
-package com.bulc.homepage.repository;
+package com.bulc.homepage.catalog.repository;
 
-import com.bulc.homepage.entity.PricePlan;
+import com.bulc.homepage.catalog.domain.PricePlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

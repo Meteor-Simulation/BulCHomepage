@@ -32,6 +32,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *   lead      → (없음)                자족 모듈
  *   content   → (없음)                자족 모듈 (들어오는 참조도 0)
  *   → audit.api                3회   인증·결제·OAuth 가 기록. 전부 계약 경유 (MDP-924)
+ *   licensing → catalog.api    4회   상품 조회(id·code·name). 전부 계약 경유 (MDP-925)
+ *   catalog   → (없음)                자족 모듈
  * </pre>
  */
 @DisplayName("모듈 경계")
@@ -272,6 +274,16 @@ class ModuleBoundaryTest {
 
     /*
      * ── 아직 규칙으로 만들지 못한 부채 ────────────────────────────────────
+     *
+     * 0. 결제 → catalog.domain (의도적 용인, MDP-925)
+     *    Payment.pricePlan · Subscription.product · Subscription.pricePlan 이 JPA 관계로
+     *    카탈로그 엔티티를 참조한다. 끊으려면 포트 조회로 바꿔야 하는데 호출부가 14곳이고
+     *    N+1 조회 위험이 생긴다. 얻는 것(이론적 분리)보다 잃는 것(복잡도·성능)이 크다.
+     *    대신 방향을 한쪽으로 고정했다 — catalog → payment 는 규칙으로 금지한다.
+     *    즉 카탈로그는 독립이고, 결제를 떼어낼 때만 카탈로그가 함께 간다.
+     *
+     *    AdminController(695줄)도 catalog.domain·repository 를 직접 쓴다. 이 컨트롤러는
+     *    여러 도메인을 겸하는 관리자 접착부라 분해가 선행 조건이다.
      *
      * 1. mail → entity/repository (회원 쪽만 남음)
      *    OperationalMailService.resolveRecipients 가 UserRepository 를 직접 조회한다

@@ -1,5 +1,7 @@
 package com.bulc.homepage.entity;
 
+import com.bulc.homepage.catalog.domain.PricePlan;
+import com.bulc.homepage.catalog.domain.Product;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

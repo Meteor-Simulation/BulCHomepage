@@ -1,6 +1,8 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
+import com.bulc.homepage.catalog.domain.Product;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.RedeemClaimResponse;
@@ -38,7 +40,7 @@ class RedeemServiceTest {
     @Mock private RedeemUserCampaignCounterRepository counterRepository;
     @Mock private LicenseService licenseService;
     @Mock private LicensePlanRepository planRepository;
-    @Mock private ProductRepository productRepository;
+    @Mock private ProductCatalogPort productCatalog;
     @Mock private UserRepository userRepository;
     @Mock private RedeemCodeHashService hashService;
     @Mock private RedeemRateLimiter rateLimiter;
@@ -57,7 +59,7 @@ class RedeemServiceTest {
         redeemService = new RedeemService(
                 codeRepository, campaignRepository, redemptionRepository,
                 counterRepository, licenseService, planRepository,
-                productRepository, userRepository, hashService, rateLimiter
+                productCatalog, userRepository, hashService, rateLimiter
         );
 
         // 기본 mock 설정
@@ -82,7 +84,7 @@ class RedeemServiceTest {
         given(counterRepository.save(any())).willReturn(null);
         given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
         given(redemptionRepository.save(any())).willReturn(null);
-        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(productCatalog.findById(any())).willReturn(Optional.of(createProduct()));
         given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
 
         // when
@@ -212,7 +214,7 @@ class RedeemServiceTest {
         given(counterRepository.save(any())).willReturn(null);
         given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
         given(redemptionRepository.save(any())).willReturn(null);
-        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(productCatalog.findById(any())).willReturn(Optional.of(createProduct()));
         given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
 
         // when
@@ -261,7 +263,7 @@ class RedeemServiceTest {
         given(counterRepository.save(any())).willReturn(null);
         given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
         given(redemptionRepository.save(any())).willReturn(null);
-        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(productCatalog.findById(any())).willReturn(Optional.of(createProduct()));
         given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
 
         // when
@@ -291,7 +293,7 @@ class RedeemServiceTest {
         given(counterRepository.save(any())).willReturn(null);
         given(licenseService.issueLicenseForRedeem(any(), any(), any())).willReturn(license);
         given(redemptionRepository.save(any())).willReturn(null);
-        given(productRepository.findById(any())).willReturn(Optional.of(createProduct()));
+        given(productCatalog.findById(any())).willReturn(Optional.of(createProduct()));
         given(planRepository.findById(any())).willReturn(Optional.of(createPlan()));
 
         // when
@@ -363,11 +365,9 @@ class RedeemServiceTest {
         return license;
     }
 
-    private Product createProduct() {
-        Product product = new Product();
-        ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
-        ReflectionTestUtils.setField(product, "name", "Test Product");
-        return product;
+    private CatalogProduct createProduct() {
+        // 계약이 record 라 ReflectionTestUtils 로 필드를 밀어넣을 필요가 없어졌다 (MDP-925)
+        return new CatalogProduct(PRODUCT_ID, "BULC", "Test Product");
     }
 
     private LicensePlan createPlan() {

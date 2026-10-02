@@ -1,14 +1,14 @@
 package com.bulc.homepage.controller;
 
-import com.bulc.homepage.entity.PricePlan;
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.domain.PricePlan;
+import com.bulc.homepage.catalog.domain.Product;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.licensing.domain.License;
 import com.bulc.homepage.licensing.domain.LicenseStatus;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
 import com.bulc.homepage.repository.PaymentRepository;
-import com.bulc.homepage.repository.PricePlanRepository;
-import com.bulc.homepage.licensing.repository.ProductRepository;
+import com.bulc.homepage.catalog.repository.PricePlanRepository;
+import com.bulc.homepage.catalog.repository.ProductRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.entity.Payment;
 import lombok.RequiredArgsConstructor;

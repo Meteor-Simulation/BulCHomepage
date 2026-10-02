@@ -1,7 +1,8 @@
 package com.bulc.homepage.service;
 
-import com.bulc.homepage.entity.Promotion;
-import com.bulc.homepage.repository.PromotionRepository;
+import com.bulc.homepage.catalog.service.PromotionService;
+import com.bulc.homepage.catalog.domain.Promotion;
+import com.bulc.homepage.catalog.repository.PromotionRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

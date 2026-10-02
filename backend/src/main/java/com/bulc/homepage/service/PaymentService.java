@@ -1,19 +1,20 @@
 package com.bulc.homepage.service;
 
+import com.bulc.homepage.catalog.service.PromotionService;
 import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.dto.BillingPaymentRequest;
 import com.bulc.homepage.dto.PaymentConfirmRequest;
 import com.bulc.homepage.dto.response.PaymentHistoryResponse;
 import com.bulc.homepage.entity.Payment;
 import com.bulc.homepage.entity.PaymentDetail;
-import com.bulc.homepage.entity.PricePlan;
+import com.bulc.homepage.catalog.domain.PricePlan;
 import com.bulc.homepage.entity.Subscription;
 import com.bulc.homepage.entity.User;
 import com.bulc.homepage.payment.port.IssuedLicense;
 import com.bulc.homepage.payment.port.LicenseAlreadyOwnedException;
 import com.bulc.homepage.payment.port.LicenseIssuePort;
 import com.bulc.homepage.repository.PaymentRepository;
-import com.bulc.homepage.repository.PricePlanRepository;
+import com.bulc.homepage.catalog.repository.PricePlanRepository;
 import com.bulc.homepage.repository.SubscriptionRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;

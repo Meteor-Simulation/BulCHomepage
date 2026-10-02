@@ -1,5 +1,6 @@
 package com.bulc.homepage.entity;
 
+import com.bulc.homepage.catalog.domain.PricePlan;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
