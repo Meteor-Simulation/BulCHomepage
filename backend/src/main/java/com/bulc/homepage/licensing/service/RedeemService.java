@@ -1,6 +1,7 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.RedeemClaimResponse;
 import com.bulc.homepage.licensing.exception.LicenseException;
@@ -27,7 +28,7 @@ public class RedeemService {
     private final RedeemUserCampaignCounterRepository counterRepository;
     private final LicenseService licenseService;
     private final LicensePlanRepository planRepository;
-    private final ProductRepository productRepository;
+    private final ProductCatalogPort productCatalog;
     private final UserRepository userRepository;
     private final RedeemCodeHashService hashService;
     private final RedeemRateLimiter rateLimiter;
@@ -38,7 +39,7 @@ public class RedeemService {
                          RedeemUserCampaignCounterRepository counterRepository,
                          LicenseService licenseService,
                          LicensePlanRepository planRepository,
-                         ProductRepository productRepository,
+                         ProductCatalogPort productCatalog,
                          UserRepository userRepository,
                          RedeemCodeHashService hashService,
                          RedeemRateLimiter rateLimiter) {
@@ -48,7 +49,7 @@ public class RedeemService {
         this.counterRepository = counterRepository;
         this.licenseService = licenseService;
         this.planRepository = planRepository;
-        this.productRepository = productRepository;
+        this.productCatalog = productCatalog;
         this.userRepository = userRepository;
         this.hashService = hashService;
         this.rateLimiter = rateLimiter;
@@ -141,8 +142,8 @@ public class RedeemService {
                 userId, campaign.getId(), license.getId());
 
         // 응답 빌드
-        String productName = productRepository.findById(campaign.getProductId())
-                .map(Product::getName)
+        String productName = productCatalog.findById(campaign.getProductId())
+                .map(CatalogProduct::name)
                 .orElse("알 수 없는 제품");
 
         String planName = planRepository.findById(campaign.getLicensePlanId())

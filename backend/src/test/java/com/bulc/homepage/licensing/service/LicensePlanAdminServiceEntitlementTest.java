@@ -1,12 +1,13 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.domain.Product;
 import com.bulc.homepage.licensing.domain.LicensePlan;
 import com.bulc.homepage.licensing.domain.LicenseType;
 import com.bulc.homepage.licensing.dto.LicensePlanRequest;
 import com.bulc.homepage.licensing.exception.LicenseException;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
-import com.bulc.homepage.licensing.repository.ProductRepository;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class LicensePlanAdminServiceEntitlementTest {
     private LicensePlanRepository planRepository;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductCatalogPort productCatalog;
 
     private EntitlementRegistry registry;
     private LicensePlanAdminService service;
@@ -49,11 +50,11 @@ class LicensePlanAdminServiceEntitlementTest {
         registry.setByProduct(Map.of(
                 "001", List.of("core-simulation", "export-csv", "advanced-visualization")
         ));
-        service = new LicensePlanAdminService(planRepository, productRepository, registry);
+        service = new LicensePlanAdminService(planRepository, productCatalog, registry);
 
-        Product product = mock(Product.class);
-        lenient().when(product.getCode()).thenReturn("001");
-        lenient().when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+        // 계약이 record 라 스터빙 없이 값을 그대로 넣는다 (MDP-934)
+        CatalogProduct product = new CatalogProduct(PRODUCT_ID, "001", "Test Product");
+        lenient().when(productCatalog.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
         lenient().when(planRepository.existsByCodeAndDeletedFalse(any())).thenReturn(false);
         lenient().when(planRepository.save(any(LicensePlan.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -105,7 +106,7 @@ class LicensePlanAdminServiceEntitlementTest {
     void shouldSkipValidationWhenRegistryEmpty() {
         EntitlementRegistry empty = new EntitlementRegistry();
         LicensePlanAdminService unvalidated =
-                new LicensePlanAdminService(planRepository, productRepository, empty);
+                new LicensePlanAdminService(planRepository, productCatalog, empty);
 
         assertThatCode(() -> unvalidated.createPlan(
                 requestWith(List.of("anything-goes"))

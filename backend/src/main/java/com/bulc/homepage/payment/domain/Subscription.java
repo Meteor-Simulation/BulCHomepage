@@ -1,0 +1,180 @@
+package com.bulc.homepage.payment.domain;
+
+import com.bulc.homepage.catalog.domain.PricePlan;
+import com.bulc.homepage.catalog.domain.Product;
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "subscriptions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Subscription {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "user_id")
+    private UUID userId;
+
+    // 회원 엔티티로의 @ManyToOne 관계를 제거했다 (결제 모듈 분리).
+    // 읽기 전용 매핑이었고 getUser() 를 쓰는 곳이 없었다. 유지하면 결제 모듈이 회원 엔티티를
+    // 알아야 해서 따로 떼어낼 수 없다. 조회는 userId 기반이고 user_id 컬럼은 위 userId 가 매핑한다.
+
+    // v1.2.0 (MDP-791): products.code 폭 확장(3→32)에 맞춰 FK 컬럼 동시 확장.
+    @Column(name = "product_code", nullable = false, length = 32)
+    private String productCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_code", referencedColumnName = "code", insertable = false, updatable = false)
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "price_plan_id", nullable = false)
+    private PricePlan pricePlan;
+
+    // A: Active(활성), E: Expired(만료), C: Canceled(취소)
+    @Column(nullable = false, length = 1)
+    @Builder.Default
+    private String status = "A";
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDateTime endDate;
+
+    @Column(name = "auto_renew", nullable = false)
+    @Builder.Default
+    private Boolean autoRenew = false;
+
+    @Column(name = "billing_key_id")
+    private Long billingKeyId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_key_id", insertable = false, updatable = false)
+    private BillingKey billingKey;
+
+    @Column(name = "next_billing_date")
+    private LocalDateTime nextBillingDate;
+
+    // MONTHLY, YEARLY, QUARTERLY 등
+    @Column(name = "billing_cycle", length = 20)
+    @Builder.Default
+    private String billingCycle = "YEARLY";
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 자동 갱신 활성화 (빌링키 연결)
+     */
+    public void enableAutoRenew(Long billingKeyId, String billingCycle) {
+        this.autoRenew = true;
+        this.billingKeyId = billingKeyId;
+        this.billingCycle = billingCycle;
+        calculateNextBillingDate();
+    }
+
+    /**
+     * 자동 갱신 비활성화
+     */
+    public void disableAutoRenew() {
+        this.autoRenew = false;
+        this.nextBillingDate = null;
+    }
+
+    /**
+     * 다음 결제 예정일 계산
+     */
+    public void calculateNextBillingDate() {
+        if (!this.autoRenew || this.endDate == null) {
+            this.nextBillingDate = null;
+            return;
+        }
+        // 구독 종료일 기준으로 다음 결제일 설정 (7일 전)
+        this.nextBillingDate = this.endDate.minusDays(7);
+    }
+
+    /**
+     * 구독 갱신 (결제 성공 후 호출)
+     */
+    public void renew() {
+        LocalDateTime newStartDate = this.endDate;
+        LocalDateTime newEndDate;
+
+        switch (this.billingCycle) {
+            case "MONTHLY":
+                newEndDate = newStartDate.plusMonths(1);
+                break;
+            case "QUARTERLY":
+                newEndDate = newStartDate.plusMonths(3);
+                break;
+            case "YEARLY":
+            default:
+                newEndDate = newStartDate.plusYears(1);
+                break;
+        }
+
+        this.startDate = newStartDate;
+        this.endDate = newEndDate;
+        this.status = "A";
+        calculateNextBillingDate();
+    }
+
+    /**
+     * 구독 취소
+     */
+    public void cancel() {
+        this.status = "C";
+        this.autoRenew = false;
+        this.nextBillingDate = null;
+    }
+
+    /**
+     * 구독 만료
+     */
+    public void expire() {
+        this.status = "E";
+    }
+
+    /**
+     * 구독이 활성 상태인지 확인
+     */
+    public boolean isActive() {
+        return "A".equals(this.status);
+    }
+
+    /**
+     * 구독이 갱신 대상인지 확인 (결제일이 도래한 경우)
+     */
+    public boolean isDueForRenewal() {
+        if (!this.autoRenew || this.nextBillingDate == null) {
+            return false;
+        }
+        return LocalDateTime.now().isAfter(this.nextBillingDate) ||
+               LocalDateTime.now().isEqual(this.nextBillingDate);
+    }
+}

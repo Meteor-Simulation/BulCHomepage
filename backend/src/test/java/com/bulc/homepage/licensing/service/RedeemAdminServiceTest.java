@@ -1,6 +1,8 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
+import com.bulc.homepage.catalog.domain.Product;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.exception.LicenseException;
@@ -36,7 +38,7 @@ class RedeemAdminServiceTest {
     @Mock private RedeemCampaignRepository campaignRepository;
     @Mock private RedeemCodeRepository codeRepository;
     @Mock private LicensePlanRepository planRepository;
-    @Mock private ProductRepository productRepository;
+    @Mock private ProductCatalogPort productCatalog;
     @Mock private RedeemCodeHashService hashService;
 
     private RedeemAdminService adminService;
@@ -50,13 +52,12 @@ class RedeemAdminServiceTest {
     void setUp() {
         adminService = new RedeemAdminService(
                 campaignRepository, codeRepository, planRepository,
-                productRepository, hashService
+                productCatalog, hashService
         );
 
-        Product product = new Product();
-        ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
-        ReflectionTestUtils.setField(product, "name", "Test Product");
-        given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+        // 계약이 record 라 생성자로 끝난다 — 리플렉션으로 final 필드를 밀어넣을 수 없다 (MDP-934)
+        CatalogProduct product = new CatalogProduct(PRODUCT_ID, "BULC", "Test Product");
+        given(productCatalog.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
         LicensePlan plan = LicensePlan.builder()
                 .productId(PRODUCT_ID).code("PLAN").name("Test Plan")
