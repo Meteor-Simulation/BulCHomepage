@@ -216,6 +216,8 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 - **`Product` 소유권 = 카탈로그로 확정 (MDP-934)** — 라이선싱이 가장 많이 참조했지만(13곳 중 7곳) 실제 필요는 `id·code·name` 셋뿐이어서 `catalog/api/ProductCatalogPort` 두 메서드로 끝났다. `ProductRepository` 가 `licensing/repository/` 에 있던 것은 역사의 흔적이었다
 - **결제 → 카탈로그 방향은 의도적으로 허용한다** — `Payment.pricePlan`·`Subscription.product`·`Subscription.pricePlan` JPA 관계. 끊으면 호출부 14곳과 N+1 위험이 생겨 얻는 것보다 잃는 것이 크다. 대신 `catalog → payment` 를 규칙으로 금지해 방향을 고정했다 — 카탈로그는 독립이고, 결제를 떼어낼 때만 함께 간다
+- **`scheduler/LicenseExpiryNotificationScheduler` 는 평면에 두는 것이 의도다 (2026-10-06 확인)** — `licensing/scheduler/` 로 옮기면 안 된다. 이 스케줄러는 라이선스 만료를 **감지**(licensing)하고 메일로 **알리는**(mail) 두 일을 바깥에서 조립하는 조정자다. 모듈 안으로 넣으면 `licensing → mail` 참조가 생겨 "licensing 모듈 자체는 메일을 모른다" 규칙이 깨진다. 실제로 옮겨 봤다가 ArchUnit 이 즉시 잡아 되돌렸다. 형제 스케줄러 2개가 `licensing/scheduler/` 에 있어 누락처럼 보이지만, 그 둘은 메일을 쓰지 않는다
+- **`AuthService` → `licensing` 은 남은 부채다** — 회원가입 시 체험 라이선스를 발급한다(`issueLicenseWithPlanCode`, `OwnerType`·`UsageCategory` 참조). 회원/인증 모듈 단계에서 계약 경유로 바꾼다
 - **남은 것은 회원/인증 하나다** — `AdminController`(695줄) 분해가 선행 조건이다. 이 컨트롤러가 `catalog`·`payment` 내부를 직접 쓰는 유일한 운영 코드다(`TestController` 는 `@Profile("dev")`)
 - **회원/인증이 마지막인 이유** — `User` 36개 파일·`UserRepository` 27개 파일이 참조한다. 떼어내는 대상이 아니라, 나머지가 `userId`(UUID)와 포트로만 접근하게 바꾼 뒤 **마지막에 남는 것**이다. `licensing/` 이 이미 그 형태다
 - **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 17개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`UserRepository` 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
