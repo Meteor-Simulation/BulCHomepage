@@ -187,7 +187,7 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 ## 모듈 경계 (2026-09-10)
 
 목표는 모듈형 구조다 — 서버 이전·분할이 자유롭고, 침해 시 폭발 반경이 모듈 안에서 끝나는 형태.
-백엔드 244개 파일 중 아직 **116개(entity 27·dto 27·repository 22·controller 22·service 18)가 평면 계층**에 남아 있다.
+백엔드 262개 파일 중 **180개가 9개 모듈**(licensing 81 · payment 35 · lead 14 · catalog 12 · oauth2 10 · oauth 9 · mail 7 · content 6 · audit 6)에 들어갔고, **76개가 평면 계층**에 남아 있다(entity 14 · dto 12 · repository 11 · controller 11 · service 9 · 그 외 인프라). 남은 평면 계층은 대부분 **회원/인증**과 공용 인프라다.
 
 ### 현황
 
@@ -198,7 +198,8 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 | `lead/` (14) | **완료** (MDP-907) | — (`PublicFormRateLimiter` 1 = 평면 인프라) | 2개 파일, 전부 `api` 경유 |
 | `content/` (6) | **완료** (MDP-922) | `UserRepository` 1 (작성자 이름 표시) | **0개** — 들어오는 참조가 처음부터 없었다 |
 | `audit/` (6) | **완료** (MDP-924) | `User` 1 · `UserRepository` 1 | 3개 파일, 전부 `api` 경유 |
-| `payment/` (11) | 경계만 그음 | — | 실제 로직은 아직 평면 계층 |
+| `catalog/` (12) | **완료** (MDP-934) | — (`UserRepository` 1 = 관리자 권한 검사) | licensing 4개 전부 `api` 경유 |
+| `payment/` (35) | **완료** (MDP-934) | `catalog.domain` 3 (의도적) · `entity.User` 3 · `mail.api`·`audit.api` | licensing 4개 전부 `port` 경유 |
 
 ### 규약
 
@@ -211,11 +212,13 @@ PENDING → ACTIVE → EXPIRED_GRACE → EXPIRED_HARD
 
 ### 다음 순서 (2026-09-10 결합도 실측 기준)
 
-~~`리드/컨택`~~(MDP-907) → ~~`콘텐츠`~~(MDP-922) → ~~`감사/운영`~~(MDP-924) → `카탈로그` → `결제 완성` → `회원/인증`
+~~`리드/컨택`~~(MDP-907) → ~~`콘텐츠`~~(MDP-922) → ~~`감사/운영`~~(MDP-924) → ~~`카탈로그`~~ → ~~`결제 완성`~~(MDP-934) → **`회원/인증`(마지막, 남음)**
 
-- **카탈로그·결제는 지금 착수 금지 (2026-10-01)** — 활성 브랜치 `fix/MDP-748-server-side-coupon`(미머지)이 `PaymentService`·`PaymentConfirmRequest`·`Payment`·`PromotionService`·`PromotionRepository` 를 수정 중이다. 이 파일들을 모듈로 옮기면 그 브랜치가 통째로 깨진다(rename × edit 충돌). **쿠폰 브랜치를 먼저 머지한 뒤 착수할 것.** `Product` 소유권(카탈로그 vs 결제) 결정도 여전히 선행 조건이다
+- **`Product` 소유권 = 카탈로그로 확정 (MDP-934)** — 라이선싱이 가장 많이 참조했지만(13곳 중 7곳) 실제 필요는 `id·code·name` 셋뿐이어서 `catalog/api/ProductCatalogPort` 두 메서드로 끝났다. `ProductRepository` 가 `licensing/repository/` 에 있던 것은 역사의 흔적이었다
+- **결제 → 카탈로그 방향은 의도적으로 허용한다** — `Payment.pricePlan`·`Subscription.product`·`Subscription.pricePlan` JPA 관계. 끊으면 호출부 14곳과 N+1 위험이 생겨 얻는 것보다 잃는 것이 크다. 대신 `catalog → payment` 를 규칙으로 금지해 방향을 고정했다 — 카탈로그는 독립이고, 결제를 떼어낼 때만 함께 간다
+- **남은 것은 회원/인증 하나다** — `AdminController`(695줄) 분해가 선행 조건이다. 이 컨트롤러가 `catalog`·`payment` 내부를 직접 쓰는 유일한 운영 코드다(`TestController` 는 `@Profile("dev")`)
 - **회원/인증이 마지막인 이유** — `User` 36개 파일·`UserRepository` 27개 파일이 참조한다. 떼어내는 대상이 아니라, 나머지가 `userId`(UUID)와 포트로만 접근하게 바꾼 뒤 **마지막에 남는 것**이다. `licensing/` 이 이미 그 형태다
-- **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 14개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`UserRepository` 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
+- **경계는 이제 테스트로 강제된다 (MDP-906).** `architecture/ModuleBoundaryTest` 가 규칙 17개를 검사한다 — 계약(`api`/`port`)만 경계를 넘고 구현(`service`/`domain`/`repository`)은 넘지 못한다. **모듈을 새로 세울 때마다 이 파일에 규칙을 추가할 것.** 아직 못 지키는 경계(`mail`→`UserRepository` 등)는 규칙화하지 않고 같은 파일 하단에 부채로 적어 뒀다 — 통과하지 않는 규칙을 넣으면 빨간불이 일상이 되어 아무도 보지 않게 된다
 
 ---
 

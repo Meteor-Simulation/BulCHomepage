@@ -14,8 +14,28 @@ import Header from '../../components/Header';
 import CardRegisterModal from '../../components/CardRegisterModal';
 import './Payment.css';
 
-// 토스페이먼츠 클라이언트 키
+// 토스페이먼츠 클라이언트 키 (MDP-937).
+//
+// 폴백을 남겨 둔다 — Vite 는 빌드 시점에 값을 박으므로, 키가 없으면 결제 페이지가 통째로
+// 죽는다. Cloudflare Pages 환경변수 설정 여부를 빌드 전에 확인할 수 없어서 폴백 제거는
+// "설정을 깜빡하면 결제 불가" 로 바뀐다. 그 대신 테스트 키로 동작 중임을 화면에 드러낸다.
+//
+// 문제는 폴백 자체가 아니라 그것이 '조용했다'는 점이었다. 테스트 키로는 결제창이 열리고
+// 승인도 성공하지만 대금이 들어오지 않는다. 눈에 보이면 사고가 아니다.
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
+
+/** 테스트 키로 동작 중인지. 실결제가 일어나지 않으므로 화면에 표시한다. */
+const IS_TOSS_TEST_KEY = TOSS_CLIENT_KEY.startsWith('test_');
+
+if (IS_TOSS_TEST_KEY) {
+  // 빌드 산출물에서도 확인할 수 있게 남긴다 — 운영에서 F12 로 바로 보인다
+  console.warn(
+    '[결제] 토스페이먼츠 테스트 키로 동작합니다. 실제 결제·정산이 일어나지 않습니다. ' +
+      (import.meta.env.VITE_TOSS_CLIENT_KEY
+        ? 'VITE_TOSS_CLIENT_KEY 가 테스트 키로 설정되어 있습니다.'
+        : 'VITE_TOSS_CLIENT_KEY 가 설정되지 않아 코드 기본값(테스트 키)을 사용했습니다.')
+  );
+}
 
 // 카드 등록(빌링 인증) 모달은 성공 시 토스가 결제 페이지를 떠나 successUrl로 리다이렉트한다.
 // 등록 후 결제 페이지로 복귀했을 때 직전 결제 진행 상태를 복원하기 위한 임시 저장 키.
@@ -594,6 +614,20 @@ const PaymentPage: React.FC = () => {
       <Header hideUserMenu={true} />
 
       <div className="payment-container">
+        {/*
+          테스트 키로 동작 중임을 알린다 (MDP-937). 실키로 전환하면 자동으로 사라진다.
+          테스트 키에서는 결제창이 열리고 승인도 성공하지만 대금이 들어오지 않는다 —
+          고객에게도 알려야 하고, 운영자가 전환을 깜빡한 것을 바로 알아채야 한다.
+        */}
+        {IS_TOSS_TEST_KEY && (
+          <div className="payment-testmode-banner" role="status">
+            <strong>테스트 모드</strong>
+            <span>
+              실제 결제가 이루어지지 않습니다. 카드가 청구되지 않으며 정산도 발생하지 않습니다.
+            </span>
+          </div>
+        )}
+
         <div className="payment-content">
           {/* 왼쪽: 선택 영역 */}
           <div className="payment-left">

@@ -1746,3 +1746,32 @@
     text-align: center;
   }
 }
+
+/*
+  테스트 모드 배너 (MDP-937).
+  실키 전환을 깜빡했을 때 가장 먼저 눈에 띄어야 하므로 결제 컨테이너 최상단에 둔다.
+  경고색(주의)을 쓰되 오류(빨강)와는 구분한다 — 고장이 아니라 상태 안내다.
+*/
+.payment-testmode-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #9a3412;
+}
+
+.payment-testmode-banner strong {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: #9a3412;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}

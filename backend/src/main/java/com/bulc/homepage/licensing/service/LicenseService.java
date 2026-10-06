@@ -1,6 +1,7 @@
 package com.bulc.homepage.licensing.service;
 
-import com.bulc.homepage.entity.Product;
+import com.bulc.homepage.catalog.api.CatalogProduct;
+import com.bulc.homepage.catalog.api.ProductCatalogPort;
 import com.bulc.homepage.licensing.domain.*;
 import com.bulc.homepage.licensing.dto.*;
 import com.bulc.homepage.licensing.dto.ValidationResponse.GlobalSessionInfo;
@@ -11,7 +12,6 @@ import com.bulc.homepage.licensing.exception.LicenseException.ErrorCode;
 import com.bulc.homepage.licensing.repository.ActivationRepository;
 import com.bulc.homepage.licensing.repository.LicensePlanRepository;
 import com.bulc.homepage.licensing.repository.LicenseRepository;
-import com.bulc.homepage.licensing.repository.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class LicenseService {
     private final LicenseRepository licenseRepository;
     private final ActivationRepository activationRepository;
     private final LicensePlanRepository planRepository;
-    private final ProductRepository productRepository;
+    private final ProductCatalogPort productCatalog;
     private final SessionTokenService sessionTokenService;
     private final OfflineTokenService offlineTokenService;
 
@@ -59,14 +59,14 @@ public class LicenseService {
     public LicenseService(LicenseRepository licenseRepository,
                           ActivationRepository activationRepository,
                           LicensePlanRepository planRepository,
-                          ProductRepository productRepository,
+                          ProductCatalogPort productCatalog,
                           SessionTokenService sessionTokenService,
                           OfflineTokenService offlineTokenService,
                           @Value("${bulc.licensing.stale-threshold-minutes:30}") int staleThresholdMinutes) {
         this.licenseRepository = licenseRepository;
         this.activationRepository = activationRepository;
         this.planRepository = planRepository;
-        this.productRepository = productRepository;
+        this.productCatalog = productCatalog;
         this.sessionTokenService = sessionTokenService;
         this.offlineTokenService = offlineTokenService;
         this.staleThresholdMinutes = staleThresholdMinutes;
@@ -1593,10 +1593,10 @@ public class LicenseService {
             return request.productId();
         }
         if (request.productCode() != null) {
-            Product product = productRepository.findByCodeAndIsActiveTrue(request.productCode())
+            CatalogProduct product = productCatalog.findActiveByCode(request.productCode())
                     .orElseThrow(() -> new LicenseException(ErrorCode.LICENSE_NOT_FOUND_FOR_PRODUCT,
                             "제품을 찾을 수 없습니다: " + request.productCode()));
-            return product.getId();
+            return product.id();
         }
         // 둘 다 없으면 null (모든 제품 대상 검색)
         return null;
@@ -1610,8 +1610,8 @@ public class LicenseService {
         if (productId == null) {
             return "UNKNOWN";
         }
-        return productRepository.findById(productId)
-                .map(Product::getCode)
+        return productCatalog.findById(productId)
+                .map(CatalogProduct::code)
                 .orElse("PRODUCT_" + productId.toString().substring(0, 8));
     }
 

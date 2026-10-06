@@ -197,8 +197,13 @@ bulc:
 # Toss Payments Configuration
 toss:
   payments:
-    client-key: ${TOSS_CLIENT_KEY:test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP}
-    secret-key: ${TOSS_SECRET_KEY:test_sk_GePWvyJnrKK7xZb1lNdOrgLzN97E}
+    # 테스트 키를 기본값으로 두지 않는다 (MDP-937).
+    #
+    # 기본값이 있으면 환경변수가 누락돼도 기동이 되고, 결제창도 열리고, 승인도 성공한다.
+    # 다만 돈이 들어오지 않는다. "조용히 틀리는" 전형이고 실키 전환 직후가 가장 위험하다.
+    # 미설정은 TossPaymentsStartupCheck 가 prod 프로파일에서 기동 중단으로 알린다.
+    client-key: ${TOSS_CLIENT_KEY:}
+    secret-key: ${TOSS_SECRET_KEY:}
     success-url: ${TOSS_SUCCESS_URL:http://localhost:3000/payment/success}
     fail-url: ${TOSS_FAIL_URL:http://localhost:3000/payment/fail}
 
