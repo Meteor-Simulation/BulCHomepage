@@ -5,6 +5,7 @@ import com.bulc.homepage.payment.dto.BillingKeyIssueRequest;
 import com.bulc.homepage.payment.dto.CardDirectRegisterRequest;
 import com.bulc.homepage.payment.dto.BillingKeyResponse;
 import com.bulc.homepage.payment.domain.BillingKey;
+import com.bulc.homepage.payment.domain.CardIssuer;
 import com.bulc.homepage.payment.repository.BillingKeyRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,6 +77,8 @@ public class BillingKeyService {
 
                 String billingKeyValue = responseBody.path("billingKey").asText();
                 JsonNode card = responseBody.path("card");
+                // 카드사명은 응답에 없다. 코드(issuerCode)만 오므로 우리가 표를 보고 변환한다.
+                String issuerCode = card.path("issuerCode").asText(null);
 
                 // 기존 기본 결제 수단 해제 (첫 번째 카드면 기본으로 설정)
                 boolean isFirstCard = !billingKeyRepository.existsByUserIdAndIsActiveTrue(userId);
@@ -88,7 +91,8 @@ public class BillingKeyService {
                         .userId(userId)
                         .billingKey(billingKeyValue)
                         .customerKey(customerKey)
-                        .cardCompany(card.path("company").asText(null))
+                        .cardIssuerCode(issuerCode)
+                        .cardCompany(CardIssuer.nameOf(issuerCode))
                         .cardNumber(card.path("number").asText(null))
                         .cardType(card.path("cardType").asText(null))
                         .ownerType(card.path("ownerType").asText(null))
@@ -148,6 +152,8 @@ public class BillingKeyService {
             JsonNode responseBody = objectMapper.readTree(response.getBody());
             String billingKeyValue = responseBody.path("billingKey").asText();
             JsonNode card = responseBody.path("card");
+            // 카드사명은 응답에 없다. 코드(issuerCode)만 오므로 우리가 표를 보고 변환한다.
+            String issuerCode = card.path("issuerCode").asText(null);
 
             boolean isFirstCard = !billingKeyRepository.existsByUserIdAndIsActiveTrue(userId);
             boolean makeDefault = request.isSetAsDefault() || isFirstCard;
@@ -159,7 +165,8 @@ public class BillingKeyService {
                     .userId(userId)
                     .billingKey(billingKeyValue)
                     .customerKey(customerKey)
-                    .cardCompany(card.path("company").asText(null))
+                    .cardIssuerCode(issuerCode)
+                    .cardCompany(CardIssuer.nameOf(issuerCode))
                     .cardNumber(card.path("number").asText(null))  // 토스가 마스킹해 돌려준 번호
                     .cardType(card.path("cardType").asText(null))
                     .ownerType(card.path("ownerType").asText(null))
