@@ -6,7 +6,7 @@
 -- 실행:
 --   BULC_SSH_TARGET=bulc-prod 로 접속한 뒤
 --   docker exec -i bulc-db-prod psql -U bulc_prod_user -d bulc_homepage_db \
---     < database/migrations/V20261007_2__seed_internal_test_price_plans_rollback.sql
+--     < database/migrations/V20261007__add_is_internal_to_price_plans_rollback.sql
 --
 -- ## DELETE 가 아니라 is_active = FALSE 인 이유
 --
