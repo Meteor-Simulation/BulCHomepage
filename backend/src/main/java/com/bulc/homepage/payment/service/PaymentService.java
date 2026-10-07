@@ -130,6 +130,8 @@ public class PaymentService {
                     return new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId());
                 });
 
+        requireInternalPlanAllowed(pricePlan, user, request.getOrderId());
+
         // 쿠폰 검증 + 사용 횟수 차감 → 서버가 청구액을 직접 산정한다 (MDP-748 · MDP-749).
         //
         // 클라이언트가 보낸 금액을 기준으로 삼으면 임의 금액 결제가 가능하다. 그래서
@@ -457,6 +459,9 @@ public class PaymentService {
 
         PricePlan pricePlan = pricePlanRepository.findById(request.getPricePlanId())
                 .orElseThrow(() -> new RuntimeException("요금제를 찾을 수 없습니다: " + request.getPricePlanId()));
+
+        requireInternalPlanAllowed(pricePlan, user, null);
+
         int amount = pricePlan.getPrice().intValue();
 
         // 동일 product 중복 구매 차단 (청구 전)
@@ -732,6 +737,26 @@ public class PaymentService {
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + encodedCredentials);
         return headers;
+    }
+
+    /**
+     * 내부 전용 요금제는 매니저 이상(roles_code 000·001)만 결제할 수 있다.
+     *
+     * <p>목록 조회({@code ProductController})에서 가리는 것만으로는 부족하다 — {@code pricePlanId} 를
+     * 알면 결제 API 를 직접 호출할 수 있으므로, 돈이 움직이는 두 경로(승인·빌링키 청구)에서 모두 막는다.
+     *
+     * @param orderId 로그용. 빌링키 경로처럼 아직 주문번호가 없으면 {@code null}
+     */
+    private void requireInternalPlanAllowed(PricePlan pricePlan, User user, String orderId) {
+        if (!Boolean.TRUE.equals(pricePlan.getIsInternal())) {
+            return;
+        }
+        String rolesCode = user.getRolesCode();
+        if (!"000".equals(rolesCode) && !"001".equals(rolesCode)) {
+            log.warn("[결제] 내부 전용 요금제 접근 차단 - userId={}, rolesCode={}, pricePlanId={}, orderId={}",
+                    user.getId(), rolesCode, pricePlan.getId(), orderId);
+            throw new RuntimeException("요금제를 찾을 수 없습니다: " + pricePlan.getId());
+        }
     }
 
     /**

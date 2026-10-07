@@ -63,6 +63,9 @@ interface PricePlan {
   description: string;
   price: number;
   currency: string;
+  // 내부 전용(소액 결제 점검용) 요금제. 서버가 매니저 이상에게만 true 를 섞어 내려준다 —
+  // 일반 고객 응답에는 내부 요금제가 아예 포함되지 않으므로 이 값으로 화면을 분기해도 안전하다.
+  isInternal?: boolean;
 }
 
 // 결제 정보 타입
@@ -231,15 +234,13 @@ const PaymentPage: React.FC = () => {
     fetchMyLicenses();
   }, [isLoggedIn]);
 
-  // 상품이 1개면 자동 선택 — 단, 이미 보유 중이면 자동 선택하지 않음
+  // 상품이 1개면 자동 선택. 보유 중이어도 선택은 해 둔다 — 선택이 곧 결제 가능을 뜻하지 않고,
+  // 요금제 목록을 받아 봐야 내부 전용 요금제가 있는지 알 수 있다.
   useEffect(() => {
     if (products.length === 1 && !selectedProduct) {
-      const only = products[0];
-      if (!ownedProductIds.has(only.id)) {
-        setSelectedProduct(only);
-      }
+      setSelectedProduct(products[0]);
     }
-  }, [products, ownedProductIds, selectedProduct]);
+  }, [products, selectedProduct]);
 
   // 선택된 상품의 요금제 로드
   useEffect(() => {
@@ -252,7 +253,12 @@ const PaymentPage: React.FC = () => {
     const fetchPlans = async () => {
       setIsLoadingPlans(true);
       try {
-        const response = await fetch(`${API_URL}/api/products/${selectedProduct.code}/plans?currency=${currency}`);
+        // credentials 를 보내야 서버가 역할을 보고 내부 전용 요금제를 섞어 준다.
+        // 비로그인/일반 회원에게는 공개 요금제만 내려오므로 응답은 종전과 같다.
+        const response = await fetch(
+          `${API_URL}/api/products/${selectedProduct.code}/plans?currency=${currency}`,
+          { credentials: 'include' as RequestCredentials }
+        );
         if (response.ok) {
           const data = await response.json();
           setPricePlans(data);
@@ -313,14 +319,22 @@ const PaymentPage: React.FC = () => {
     return ownedProductIds.has(product.id);
   };
 
+  // 내부 전용 요금제 목록. 서버가 매니저 이상에게만 내려주므로 일반 고객에게는 항상 빈 배열이다.
+  const internalPlans = pricePlans.filter((p) => p.isInternal);
+
+  // 보유 중인 상품이어도 내부 전용 요금제는 고를 수 있어야 한다.
+  // 결제 점검은 라이선스를 이미 들고 있는 계정으로 하게 되는데(매니저들이 대부분 보유 중),
+  // 중복 보유로 화면을 막아 버리면 점검 자체가 불가능해진다. 내부 요금제는
+  // license_plan_id 가 NULL 이라 라이선스를 발급하지 않으므로 중복 구매가 되지도 않는다.
+  const canSelectDespiteOwned = internalPlans.length > 0;
+
+  // 보유 중일 때는 내부 전용만 보여 준다 — 중복 구매 차단은 그대로 유지하면서 점검 경로만 연다.
+  const visiblePlans = isProductOwned(selectedProduct) ? internalPlans : pricePlans;
+
   // 상품 선택 핸들러
   const handleProductSelect = (product: Product) => {
-    if (isProductOwned(product)) {
-      // 보유 중인 상품은 선택해도 결제 진행 불가 — 정보만 노출
-      setSelectedProduct(product);
-      setSelectedPlan(null);
-      return;
-    }
+    // 보유 중이어도 상품 자체는 선택할 수 있다(정보 노출). 결제 가능 여부는 요금제 단위로
+    // 판단한다 — 내부 전용 요금제만 보유 중에도 결제가 열린다.
     setSelectedProduct(product);
     setSelectedPlan(null); // 플랜 선택 초기화
   };
@@ -434,8 +448,10 @@ const PaymentPage: React.FC = () => {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
       return;
     }
-    // 이미 보유한 상품은 결제 시도 자체를 차단 (뒤로가기 등으로 도달했을 때 방어)
-    if (isProductOwned(selectedProduct)) {
+    // 이미 보유한 상품은 결제 시도 자체를 차단 (뒤로가기 등으로 도달했을 때 방어).
+    // 단 내부 전용 요금제는 예외 — 라이선스를 발급하지 않아 중복 구매가 되지 않고,
+    // 결제 점검을 라이선스 보유 계정으로 해야 하기 때문이다. 서버도 같은 예외를 둔다.
+    if (isProductOwned(selectedProduct) && !selectedPlan?.isInternal) {
       showAlert({ message: t('payment.alreadyOwnedError'), type: 'warning' });
       return;
     }
@@ -673,19 +689,20 @@ const PaymentPage: React.FC = () => {
               </h2>
               {!selectedProduct ? (
                 <div className="no-selection-message">{t('payment.selectProductFirst')}</div>
-              ) : isProductOwned(selectedProduct) ? (
+              ) : isProductOwned(selectedProduct) && !canSelectDespiteOwned ? (
                 <div className="no-selection-message">{t('payment.alreadyOwnedNotice')}</div>
               ) : isLoadingPlans ? (
                 <div className="loading-placeholder">{t('payment.loadingPlans')}</div>
-              ) : pricePlans.length === 0 ? (
+              ) : visiblePlans.length === 0 ? (
                 <div className="no-selection-message">{t('payment.noPlans')}</div>
               ) : (
                 <div className="plans-grid">
-                  {pricePlans.map((plan) => {
+                  {visiblePlans.map((plan) => {
                     const isPremium = plan.name === 'BUL:C 3D Premium';
                     const isPermanent = isPremium && (plan.description?.includes('영구') ?? false);
                     const isSubscription = isPremium && !isPermanent;
-                    const showBadges = isSubscription || isPermanent;
+                    const isInternal = plan.isInternal === true;
+                    const showBadges = isSubscription || isPermanent || isInternal;
                     const isComingSoon = false;
                     return (
                       <div
@@ -710,6 +727,13 @@ const PaymentPage: React.FC = () => {
                               {isPermanent && (
                                 <span className="plan-badge plan-badge--permanent">
                                   {t('payment.permanent')}
+                                </span>
+                              )}
+                              {/* 매니저 이상에게만 내려오는 점검용 요금제. 실수로 고객 응대에
+                                  쓰지 않도록 눈에 띄게 표시한다. */}
+                              {isInternal && (
+                                <span className="plan-badge plan-badge--internal">
+                                  {t('payment.internalOnly')}
                                 </span>
                               )}
                             </div>

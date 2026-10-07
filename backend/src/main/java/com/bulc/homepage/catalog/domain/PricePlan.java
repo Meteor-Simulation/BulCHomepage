@@ -47,6 +47,20 @@ public class PricePlan {
     @Builder.Default
     private Boolean isActive = true;
 
+    /**
+     * 내부 전용 요금제 — 매니저 이상(roles_code 000·001)에게만 노출되고 그 역할만 결제할 수 있다.
+     *
+     * <p>{@code isActive} 와 축이 다르다. 비활성 요금제는 결제 자체가 막혀 테스트에 쓸 수 없으므로,
+     * "살 수는 있지만 아무에게나 보이지는 않는" 상태를 따로 뒀다 (소액 결제 점검용).
+     *   <ul>
+     *     <li>{@code isActive}   = 판매 가능 여부</li>
+     *     <li>{@code isInternal} = 노출·결제 대상 제한</li>
+     *   </ul>
+     */
+    @Column(name = "is_internal", nullable = false)
+    @Builder.Default
+    private Boolean isInternal = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
