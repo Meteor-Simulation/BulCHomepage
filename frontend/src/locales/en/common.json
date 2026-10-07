@@ -610,6 +610,7 @@
     "paymentButton": "Pay {{price}}",
     "paymentButtonDisabled": "Select a product and plan",
     "paymentButtonAlreadyOwned": "Currently subscribed",
+    "paymentButtonProcessing": "Processing…",
     "alreadyOwnedBadge": "Subscribed",
     "alreadyOwnedNotice": "You already own this product. Manage your license from My Account.",
     "alreadyOwnedError": "You already have a license for this product.",

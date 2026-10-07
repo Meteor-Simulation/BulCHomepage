@@ -5,7 +5,19 @@ import { ADMIN_ITEMS_PER_PAGE } from '../constants';
 
 interface AdminPaymentsPanelProps extends AdminSearchProps {
   adminPayments: AdminPayment[];
+  onCancelPayment: (payment: AdminPayment) => void;
+  /** 취소 요청이 진행 중인 결제 id — 해당 행의 버튼만 잠근다 */
+  cancelingPaymentId: number | null;
 }
+
+/** 상태 코드 → 표시 문구. init.sql 규약: P 대기 · C 완료 · F 실패 · R 환불 */
+const STATUS_LABEL: { [key: string]: string } = {
+  P: '대기', C: '완료', F: '실패', R: '환불',
+  PENDING: '대기', COMPLETED: '완료', FAILED: '실패', REFUNDED: '환불',
+};
+
+/** 완료된 결제만 취소할 수 있다 — 대기·실패는 취소할 승인이 없고, 환불은 이미 끝났다. */
+const isCancelable = (status: string | null) => status === 'C' || status === 'COMPLETED';
 
 const formatAdminDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -31,6 +43,8 @@ const formatPaymentMethod = (method: string | null) => {
 
 const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
   adminPayments,
+  onCancelPayment,
+  cancelingPaymentId,
   searchQuery,
   appliedSearch,
   currentPage,
@@ -86,6 +100,7 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                   <th>금액</th>
                   <th>상태</th>
                   <th>결제일</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,12 +112,25 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                       <td>{p.userEmail}</td>
                       <td>{formatPaymentMethod(p.paymentMethod)}</td>
                       <td>{formatAdminPrice(p.amount, p.currency)}</td>
-                      <td><span className={`status-badge status-${p.status?.toLowerCase()}`}>{p.status}</span></td>
+                      <td><span className={`status-badge status-${p.status?.toLowerCase()}`}>{STATUS_LABEL[p.status] || p.status}</span></td>
                       <td>{formatAdminDate(p.createdAt)}</td>
+                      <td>
+                        {isCancelable(p.status) ? (
+                          <button
+                            className="action-btn delete"
+                            onClick={() => onCancelPayment(p)}
+                            disabled={cancelingPaymentId !== null}
+                          >
+                            {cancelingPaymentId === p.id ? '취소 중…' : '환불'}
+                          </button>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={7} className="empty-row">데이터가 없습니다.</td></tr>
+                  <tr><td colSpan={8} className="empty-row">데이터가 없습니다.</td></tr>
                 )}
               </tbody>
             </table>

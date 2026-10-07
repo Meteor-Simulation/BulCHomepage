@@ -694,6 +694,25 @@
   box-shadow: 0 8px 24px rgba(196, 50, 10, 0.4);
 }
 
+/* 결제 전송 중 — 토스 승인이 수 초 걸린다(실측 9초). 아무 변화가 없으면 사용자가
+   "안 눌렸다" 고 판단해 다시 눌러 이중 결제가 된다. 진행 중임을 분명히 보여 준다. */
+.payment-button--processing {
+  background: linear-gradient(135deg, #8a4a33 0%, #a86a44 100%);
+  cursor: progress;
+  animation: payment-button-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes payment-button-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-button--processing {
+    animation: none;
+  }
+}
+
 /* 보안 표시 */
 .payment-security {
   display: flex;

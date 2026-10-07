@@ -11,6 +11,7 @@ import com.bulc.homepage.catalog.repository.PricePlanRepository;
 import com.bulc.homepage.catalog.repository.ProductRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.payment.domain.Payment;
+import com.bulc.homepage.payment.service.PaymentCancelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,6 +34,7 @@ public class AdminController {
     private final PricePlanRepository pricePlanRepository;
     private final LicenseRepository licenseRepository;
     private final PaymentRepository paymentRepository;
+    private final PaymentCancelService paymentCancelService;
 
     /**
      * 관리자 권한 체크 (000 또는 001)
@@ -682,6 +684,49 @@ public class AdminController {
         return ResponseEntity.ok(payments);
     }
 
+    /**
+     * 결제 취소·환불 (전액).
+     *
+     * <p>토스에 승인취소를 요청하고 성공한 뒤에만 기록을 바꾼다. 카드 결제를 현금으로 돌려주면
+     * 가맹점이 수수료만큼 손실을 보므로 반드시 이 경로를 쓸 것.
+     *
+     * <p>매니저 이상(000·001)이면 수행할 수 있다. 시스템 관리자로 더 좁히지 않은 이유는
+     * 중복 결제·오결제 대응이 운영 업무이고, 늦어질수록 고객 피해가 커지기 때문이다.
+     * 누가 취소했는지는 로그에 남는다.
+     */
+    @PostMapping("/payments/{paymentId}/cancel")
+    public ResponseEntity<?> cancelPayment(@PathVariable Long paymentId,
+                                           @RequestBody(required = false) PaymentCancelRequest request) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).body(new ErrorResponse("권한이 없습니다."));
+        }
+
+        UUID operator = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            try {
+                operator = UUID.fromString(auth.getName());
+            } catch (IllegalArgumentException ignored) {
+                // 식별자 형식이 달라도 취소 자체는 막지 않는다 — 로그 추적용 값일 뿐이다
+            }
+        }
+
+        try {
+            PaymentCancelService.CancelResult result = paymentCancelService.cancel(
+                    paymentId, request != null ? request.reason() : null, operator);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "paymentId", result.paymentId(),
+                    "orderId", result.orderId() != null ? result.orderId() : "",
+                    "amount", result.amount(),
+                    "tossStatus", result.tossStatus() != null ? result.tossStatus() : ""
+            ));
+        } catch (PaymentCancelService.PaymentCancelException e) {
+            // 사유를 그대로 보여 준다 (토스가 거부한 이유를 운영자가 알아야 다음 조치를 정할 수 있다)
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     // DTOs
     public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
     public record ProductResponse(String id, String code, String name, String description, Boolean isActive, String createdAt) {}
@@ -691,5 +736,6 @@ public class AdminController {
     public record LicenseResponse(String id, String licenseKey, String ownerType, String ownerId, String status, String validUntil, String createdAt) {}
     public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt) {}
     public record RoleUpdateRequest(String rolesCode) {}
+    public record PaymentCancelRequest(String reason) {}
     public record ErrorResponse(String message) {}
 }

@@ -243,6 +243,19 @@ public class BillingKeyService {
                 result.put("status", responseBody.path("status").asText());
                 result.put("approvedAt", responseBody.path("approvedAt").asText());
 
+                // 카드 정보를 함께 올려 보낸다. 종전에는 응답에 카드 객체가 있는데도 버려서
+                // payment_details 의 card_company·card_number 가 늘 NULL 이었다
+                // (2026-10-07 확인 — 결제 내역에서 어떤 카드로 냈는지 알 수 없었다).
+                JsonNode card = responseBody.path("card");
+                if (!card.isMissingNode()) {
+                    String issuerCode = card.path("issuerCode").asText(null);
+                    result.put("cardIssuerCode", issuerCode);
+                    result.put("cardCompany", CardIssuer.nameOf(issuerCode));
+                    result.put("cardNumber", card.path("number").asText(null));
+                    result.put("installmentMonths", card.path("installmentPlanMonths").asInt(0));
+                    result.put("approveNo", card.path("approveNo").asText(null));
+                }
+
                 log.info("빌링 결제 성공: orderId={}, paymentKey={}", orderId, result.get("paymentKey"));
                 return result;
             } else {
