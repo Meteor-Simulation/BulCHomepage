@@ -246,6 +246,14 @@
   border: 1px solid var(--accent, #C4320A);
 }
 
+/* 내부 점검용 요금제 — 매니저 이상에게만 보인다. 판매용 배지(accent)와 색을 달리해
+   고객 응대 중에 실수로 고르지 않도록 구분한다. */
+.plan-badge--internal {
+  background: #44403c;
+  color: #fff;
+  border: 1px solid #44403c;
+}
+
 .plan-price-row {
   display: flex;
   flex-direction: column;

@@ -293,6 +293,7 @@ CREATE TABLE price_plans (
     currency        VARCHAR(10) NOT NULL DEFAULT 'KRW',
     license_plan_id UUID NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    is_internal     BOOLEAN NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -302,6 +303,12 @@ CREATE TABLE price_plans (
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
 COMMENT ON COLUMN price_plans.description IS '요금제 설명 (예: 1년, 6개월 등)';
 COMMENT ON COLUMN price_plans.license_plan_id IS '연결된 라이선스 플랜 ID (결제 완료 시 해당 플랜으로 라이선스 발급)';
+COMMENT ON COLUMN price_plans.is_internal IS '내부 전용 요금제 — true 면 매니저 이상(roles_code 000·001)에게만 노출되고 결제도 그 역할만 가능';
+
+-- 일반 고객 목록 조회는 is_internal = false 만 훑는다 (공개 요금제가 대부분이라 부분 인덱스).
+CREATE INDEX idx_price_plans_public_lookup
+    ON price_plans (product_code, currency, price)
+    WHERE is_active = TRUE AND is_internal = FALSE;
 
 -- 기본 요금제 데이터 (license_plan_id는 license_plans 테이블 생성 후 업데이트)
 INSERT INTO price_plans (product_code, name, description, price, currency) VALUES

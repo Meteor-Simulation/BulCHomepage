@@ -530,6 +530,7 @@
     "evacIncluded": "Evac(피난 시뮬레이션) 포함",
     "subscription": "구독형",
     "permanent": "영구 라이선스",
+    "internalOnly": "내부 점검용",
     "cardForm": {
       "title": "카드 등록",
       "cardNumber": "카드번호",

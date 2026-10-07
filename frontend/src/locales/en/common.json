@@ -530,6 +530,7 @@
     "evacIncluded": "Evac (Evacuation Simulation) included",
     "subscription": "Subscription",
     "permanent": "Perpetual License",
+    "internalOnly": "Internal only",
     "cardForm": {
       "title": "Add Card",
       "cardNumber": "Card number",
