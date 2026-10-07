@@ -40,6 +40,10 @@ public class PaymentDetail {
     @Column(name = "card_company", length = 50)
     private String cardCompany;
 
+    /** 토스가 준 카드사 코드 원본({@code card.issuerCode}). cardCompany 는 이를 변환한 이름이다. */
+    @Column(name = "card_issuer_code", length = 10)
+    private String cardIssuerCode;
+
     @Column(name = "card_number", length = 50)
     private String cardNumber;
 

@@ -5,6 +5,7 @@ import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.payment.dto.BillingPaymentRequest;
 import com.bulc.homepage.payment.dto.PaymentConfirmRequest;
 import com.bulc.homepage.payment.dto.PaymentHistoryResponse;
+import com.bulc.homepage.payment.domain.CardIssuer;
 import com.bulc.homepage.payment.domain.Payment;
 import com.bulc.homepage.payment.domain.PaymentDetail;
 import com.bulc.homepage.catalog.domain.PricePlan;
@@ -343,7 +344,9 @@ public class PaymentService {
             // 카드 정보 (마스킹된 번호만)
             JsonNode card = responseBody.path("card");
             if (!card.isMissingNode()) {
-                summary.put("cardCompany", card.path("company").asText());
+                String issuerCode = card.path("issuerCode").asText(null);
+                summary.put("cardIssuerCode", issuerCode);
+                summary.put("cardCompany", CardIssuer.nameOf(issuerCode));
                 summary.put("cardNumber", card.path("number").asText());
             }
 
@@ -622,7 +625,9 @@ public class PaymentService {
         if ("CARD".equals(paymentMethodCode)) {
             JsonNode card = responseBody.path("card");
             if (!card.isMissingNode()) {
-                detailBuilder.cardCompany(card.path("company").asText(null));
+                String issuerCode = card.path("issuerCode").asText(null);
+                detailBuilder.cardIssuerCode(issuerCode);
+                detailBuilder.cardCompany(CardIssuer.nameOf(issuerCode));
                 detailBuilder.cardNumber(card.path("number").asText(null));
                 detailBuilder.installmentMonths(card.path("installmentPlanMonths").asInt(0));
                 detailBuilder.approveNo(card.path("approveNo").asText(null));
@@ -636,7 +641,9 @@ public class PaymentService {
                 detailBuilder.easyPayProvider(easyPay.path("provider").asText(null));
                 JsonNode card = responseBody.path("card");
                 if (!card.isMissingNode()) {
-                    detailBuilder.cardCompany(card.path("company").asText(null));
+                    String issuerCode = card.path("issuerCode").asText(null);
+                    detailBuilder.cardIssuerCode(issuerCode);
+                    detailBuilder.cardCompany(CardIssuer.nameOf(issuerCode));
                     detailBuilder.cardNumber(card.path("number").asText(null));
                     detailBuilder.installmentMonths(card.path("installmentPlanMonths").asInt(0));
                     detailBuilder.approveNo(card.path("approveNo").asText(null));
@@ -769,7 +776,11 @@ public class PaymentService {
         }
 
         JsonNode card = responseBody.path("card");
-        if (!card.isMissingNode() && card.has("company")) {
+        // card 객체의 존재만 본다. 예전에는 card.company 유무로 판단했는데 그 필드는 API
+        // 버전 2024-06-01 부터 응답에 없어서 카드 결제가 이 분기를 통과하지 못하고
+        // 아래 한글 문자열 비교까지 흘러내렸다. 간편결제·가상계좌·계좌이체는 위에서
+        // 이미 걸러졌으므로, 여기까지 왔는데 card 가 있으면 일반 카드 결제다.
+        if (!card.isMissingNode()) {
             return "CARD";
         }
 

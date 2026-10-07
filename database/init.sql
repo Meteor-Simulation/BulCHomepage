@@ -377,18 +377,19 @@ COMMENT ON COLUMN subscriptions.billing_cycle IS 'MONTHLY, QUARTERLY, YEARLY';
 -- 6-1. billing_keys (빌링키 테이블 - 자동결제용 카드 정보)
 -- =========================================================
 CREATE TABLE billing_keys (
-    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id         UUID NOT NULL,
-    billing_key     VARCHAR(255) NOT NULL,
-    customer_key    VARCHAR(255) NOT NULL,
-    card_company    VARCHAR(50) NULL,
-    card_number     VARCHAR(20) NULL,
-    card_type       VARCHAR(20) NULL,
-    owner_type      VARCHAR(20) NULL,
-    is_default      BOOLEAN NOT NULL DEFAULT FALSE,
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id               BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id          UUID NOT NULL,
+    billing_key      VARCHAR(255) NOT NULL,
+    customer_key     VARCHAR(255) NOT NULL,
+    card_company     VARCHAR(50) NULL,
+    card_issuer_code VARCHAR(10) NULL,
+    card_number      VARCHAR(20) NULL,
+    card_type        VARCHAR(20) NULL,
+    owner_type       VARCHAR(20) NULL,
+    is_default       BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active        BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_billing_keys_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -397,7 +398,8 @@ COMMENT ON TABLE billing_keys IS '빌링키 테이블 - 자동결제용 카드 �
 COMMENT ON COLUMN billing_keys.user_id IS '사용자 UUID (FK → users.id)';
 COMMENT ON COLUMN billing_keys.billing_key IS '토스페이먼츠 빌링키';
 COMMENT ON COLUMN billing_keys.customer_key IS '고객 식별키 (UUID)';
-COMMENT ON COLUMN billing_keys.card_company IS '카드사명';
+COMMENT ON COLUMN billing_keys.card_company IS '카드사명 (card_issuer_code 를 변환한 값, 표에 없는 코드면 NULL)';
+COMMENT ON COLUMN billing_keys.card_issuer_code IS '토스 카드사 코드 원본 (card.issuerCode, 예 61=현대)';
 COMMENT ON COLUMN billing_keys.card_number IS '마스킹된 카드번호 (앞6자리****뒤4자리)';
 COMMENT ON COLUMN billing_keys.is_default IS '기본 결제 수단 여부';
 
@@ -490,6 +492,7 @@ CREATE TABLE payment_details (
     payment_key         VARCHAR(255) NULL,
     -- 카드 결제 상세 정보
     card_company        VARCHAR(50) NULL,
+    card_issuer_code    VARCHAR(10) NULL,
     card_number         VARCHAR(50) NULL,
     installment_months  INT NULL,
     approve_no          VARCHAR(50) NULL,
@@ -513,7 +516,8 @@ CREATE TABLE payment_details (
 COMMENT ON TABLE payment_details IS '결제 상세 테이블 - PG사 연동 정보';
 COMMENT ON COLUMN payment_details.order_id IS '토스페이먼츠 주문 ID';
 COMMENT ON COLUMN payment_details.payment_key IS '토스페이먼츠 결제 키';
-COMMENT ON COLUMN payment_details.card_company IS '카드사명';
+COMMENT ON COLUMN payment_details.card_company IS '카드사명 (card_issuer_code 를 변환한 값, 표에 없는 코드면 NULL)';
+COMMENT ON COLUMN payment_details.card_issuer_code IS '토스 카드사 코드 원본 (card.issuerCode, 예 61=현대)';
 COMMENT ON COLUMN payment_details.card_number IS '마스킹된 카드번호';
 COMMENT ON COLUMN payment_details.toss_status IS '토스페이먼츠 결제 상태 (DONE, WAITING_FOR_DEPOSIT, CANCELED 등)';
 COMMENT ON COLUMN payment_details.toss_response_summary IS '토스 API 응답 요약 (민감정보 제외, 디버깅용)';

@@ -36,6 +36,14 @@ public class BillingKey {
     @Column(name = "card_company", length = 50)
     private String cardCompany;
 
+    /**
+     * 토스가 준 카드사 코드 원본({@code card.issuerCode}, 예 "61").
+     * cardCompany 는 이 코드를 {@link CardIssuer} 로 변환한 이름이다. 표에 없는 코드가 와서
+     * 이름이 비어도 코드는 남겨 추적할 수 있게 둘을 함께 저장한다.
+     */
+    @Column(name = "card_issuer_code", length = 10)
+    private String cardIssuerCode;
+
     @Column(name = "card_number", length = 20)
     private String cardNumber;
 
