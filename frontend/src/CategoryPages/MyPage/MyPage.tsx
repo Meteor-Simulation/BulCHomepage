@@ -113,6 +113,8 @@ const MyPage: React.FC = () => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [adminLicenses, setAdminLicenses] = useState<AdminLicense[]>([]);
   const [adminPayments, setAdminPayments] = useState<AdminPayment[]>([]);
+  // 취소 중인 결제 id — 버튼 연속 클릭으로 취소 요청이 두 번 가지 않게 한다
+  const [cancelingPaymentId, setCancelingPaymentId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -383,6 +385,46 @@ const MyPage: React.FC = () => {
   const fetchAdminPayments = async () => {
     const response = await fetch(`${API_URL}/api/admin/payments`, { credentials: 'include' as RequestCredentials });
     if (response.ok) setAdminPayments(await response.json());
+  };
+
+  /**
+   * 결제 전액 취소(환불). 토스에 승인취소를 요청하고, 성공한 뒤에만 기록이 바뀐다.
+   *
+   * 사유를 받는 이유: 환불은 회계 기록이라 나중에 "왜 돌려줬는지" 를 재구성할 수 있어야 한다.
+   * 비워 두면 서버가 '관리자 취소' 로 적는다.
+   */
+  const handleCancelPayment = async (payment: AdminPayment) => {
+    const amountLabel = payment.currency === 'KRW'
+      ? `${payment.amount.toLocaleString('ko-KR')}원`
+      : `$${payment.amount.toLocaleString('en-US')}`;
+    if (!window.confirm(
+      `이 결제를 전액 취소(환불)하시겠습니까?\n\n${payment.orderId}\n${payment.userEmail} · ${amountLabel}\n\n고객 카드로 승인취소가 즉시 요청됩니다.`
+    )) return;
+
+    const reason = window.prompt('취소 사유를 입력하세요 (기록에 남습니다)', '중복 결제 취소');
+    if (reason === null) return; // 사유 창에서 취소를 누른 경우 — 진행하지 않는다
+
+    setCancelingPaymentId(payment.id);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/payments/${payment.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include' as RequestCredentials,
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert({ message: `취소 완료 — ${data.orderId}`, type: 'success' });
+        await fetchAdminPayments();
+      } else {
+        // 토스가 거부한 사유를 그대로 보여 준다 (가상계좌는 환불 계좌가 필요해 거부된다)
+        showAlert({ message: data.message || '취소에 실패했습니다.', type: 'error' });
+      }
+    } catch {
+      showAlert({ message: '취소 요청 중 오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setCancelingPaymentId(null);
+    }
   };
 
   const fetchProducts = async () => {
@@ -1121,7 +1163,12 @@ const MyPage: React.FC = () => {
               )}
 
               {isAdmin && activeMenu === 'admin-payments' && (
-                <AdminPaymentsPanel {...adminSearchProps} adminPayments={adminPayments} />
+                <AdminPaymentsPanel
+                  {...adminSearchProps}
+                  adminPayments={adminPayments}
+                  onCancelPayment={handleCancelPayment}
+                  cancelingPaymentId={cancelingPaymentId}
+                />
               )}
 
               {isAdmin && activeMenu === 'admin-products' && (

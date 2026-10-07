@@ -473,6 +473,20 @@ public class PaymentService {
             }
         }
 
+        // 중복 승인 차단 — 돈이 나가기 전에 본다.
+        //
+        // 프론트의 전송 중 버튼 비활성만으로는 부족하다. 토스 승인이 수 초 걸리는 동안 두 번째
+        // 요청이 들어오면 둘 다 승인된다(2026-10-07: 2.4초 간격으로 100원 2건 청구).
+        // orderId 기반 중복 검사로는 막히지 않는다 — 아래에서 호출마다 새 orderId 를 만들기 때문이다.
+        //
+        // 창을 짧게(1분) 둔 이유: 같은 요금제를 의도적으로 두 번 사는 경우를 영구히 막으면 안 된다.
+        // 사람이 "안 눌렸나" 싶어 다시 누르는 간격은 수 초이므로 1분이면 충분하다.
+        if (paymentRepository.existsRecentCompleted(userId, pricePlan.getId(),
+                LocalDateTime.now().minusMinutes(1))) {
+            log.warn("[빌링결제] 중복 요청 차단 - userId={}, pricePlanId={}", userId, pricePlan.getId());
+            throw new RuntimeException("직전에 동일한 결제가 완료되었습니다. 결제 내역을 확인해 주세요.");
+        }
+
         String orderId = "BILL-" + pricePlan.getId() + "-" + System.currentTimeMillis();
         String orderName = pricePlan.getName();
 
@@ -496,6 +510,9 @@ public class PaymentService {
                 .clientIp(clientIp)
                 .paidAt(LocalDateTime.now())
                 .build();
+        // 카드 정보는 requestBillingPayment 가 토스 응답에서 꺼내 올려 준 값을 그대로 적는다.
+        // 종전에는 이 블록이 카드 필드를 아예 채우지 않아 결제 내역에서 어떤 카드로 냈는지
+        // 알 수 없었다(card_company·card_number 가 늘 NULL).
         PaymentDetail detail = PaymentDetail.builder()
                 .payment(payment)
                 .orderId(orderId)
@@ -503,6 +520,11 @@ public class PaymentService {
                 .paymentMethod("CARD")
                 .paymentProvider("TOSS")
                 .tossStatus("DONE")
+                .cardIssuerCode((String) charge.get("cardIssuerCode"))
+                .cardCompany((String) charge.get("cardCompany"))
+                .cardNumber((String) charge.get("cardNumber"))
+                .installmentMonths((Integer) charge.get("installmentMonths"))
+                .approveNo((String) charge.get("approveNo"))
                 .build();
         payment.setPaymentDetail(detail);
         paymentRepository.save(payment);

@@ -116,6 +116,10 @@ const PaymentPage: React.FC = () => {
   const [agreeTermsOfService, setAgreeTermsOfService] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
+  // 결제 전송 중 여부 — 중복 승인 방지. 토스 응답이 수 초 걸리는 동안 버튼이 다시 눌리면
+  // 결제가 두 번 승인된다(2026-10-07 100원 2건 청구 사례).
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+
   // 결제 수단 선택 상태 (card: 카드, bank: 계좌이체, vbank: 가상계좌)
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType>(null);
 
@@ -443,7 +447,26 @@ const PaymentPage: React.FC = () => {
     return isPremium && !isPermanent;
   };
 
+  /**
+   * 결제 시작. 전송 중 재진입을 막는 래퍼다.
+   *
+   * 토스 승인이 10초 가까이 걸릴 때가 있다(2026-10-07 실측 9초). 그 사이 버튼을 다시 누르면
+   * 결제가 두 번 승인된다 — 실제로 100원이 2.4초 간격으로 2건 청구됐다. 버튼 disabled 만으로는
+   * 부족하다(리렌더 전 연속 클릭·엔터 반복이 통과한다). 서버에도 같은 창을 막는 장치가 있다.
+   */
   const handlePayment = async () => {
+    if (isSubmittingPayment) return;
+    setIsSubmittingPayment(true);
+    try {
+      await runPayment();
+    } finally {
+      // 결제창 경로는 리다이렉트로 페이지를 떠나므로 이 복원이 쓰이지 않지만,
+      // 실패·취소로 돌아왔을 때는 다시 시도할 수 있어야 한다.
+      setIsSubmittingPayment(false);
+    }
+  };
+
+  const runPayment = async () => {
     if (!selectedProduct) {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
       return;
@@ -1089,15 +1112,20 @@ const PaymentPage: React.FC = () => {
                 // 이미 들고 있는 계정으로 하게 되고, 이 요금제는 license_plan_id 가 NULL 이라
                 // 라이선스를 발급하지 않으므로 중복 구매가 되지 않는다. 서버도 같은 예외를 둔다.
                 const ownedSelected = isProductOwned(selectedProduct) && !selectedPlan?.isInternal;
-                const canPay = !!selectedProduct && !!selectedPlan && agreeTermsOfService && agreePrivacy && !ownedSelected;
-                const label = ownedSelected
-                  ? t('payment.paymentButtonAlreadyOwned')
-                  : selectedPlan
-                    ? t('payment.paymentButton', { price: formatPrice(getFinalPrice()) })
-                    : t('payment.paymentButtonDisabled');
+                const canPay = !!selectedProduct && !!selectedPlan && agreeTermsOfService && agreePrivacy
+                  && !ownedSelected && !isSubmittingPayment;
+                // 전송 중에는 진행 문구를 보여 준다. 토스 승인이 수 초 걸리는 동안 아무 변화가
+                // 없으면 사용자가 "안 눌렸다" 고 판단해 다시 누른다 — 그게 이중 결제의 원인이었다.
+                const label = isSubmittingPayment
+                  ? t('payment.paymentButtonProcessing')
+                  : ownedSelected
+                    ? t('payment.paymentButtonAlreadyOwned')
+                    : selectedPlan
+                      ? t('payment.paymentButton', { price: formatPrice(getFinalPrice()) })
+                      : t('payment.paymentButtonDisabled');
                 return (
                   <button
-                    className={`payment-button ${canPay ? 'active' : ''}`}
+                    className={`payment-button ${canPay ? 'active' : ''}${isSubmittingPayment ? ' payment-button--processing' : ''}`}
                     onClick={handlePayment}
                     disabled={!canPay}
                   >
