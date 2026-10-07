@@ -1085,7 +1085,10 @@ const PaymentPage: React.FC = () => {
               </div>
 
               {(() => {
-                const ownedSelected = isProductOwned(selectedProduct);
+                // 보유 중이어도 내부 전용 요금제는 결제할 수 있어야 한다 — 점검은 라이선스를
+                // 이미 들고 있는 계정으로 하게 되고, 이 요금제는 license_plan_id 가 NULL 이라
+                // 라이선스를 발급하지 않으므로 중복 구매가 되지 않는다. 서버도 같은 예외를 둔다.
+                const ownedSelected = isProductOwned(selectedProduct) && !selectedPlan?.isInternal;
                 const canPay = !!selectedProduct && !!selectedPlan && agreeTermsOfService && agreePrivacy && !ownedSelected;
                 const label = ownedSelected
                   ? t('payment.paymentButtonAlreadyOwned')

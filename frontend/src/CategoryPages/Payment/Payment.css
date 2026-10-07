@@ -1320,9 +1320,12 @@
   background: linear-gradient(135deg, rgba(196, 50, 10, 0.03) 0%, rgba(232, 93, 4, 0.03) 100%);
 }
 
+/* 보유 중인 상품 — 배지로 알리되 선택은 막지 않는다. 내부 점검용 요금제는 보유 중에도
+   결제할 수 있어야 하고, 요금제 목록을 받아 봐야 그게 있는지 알 수 있기 때문이다.
+   (cursor: default 로 두면 못 누르는 것처럼 보여 점검 경로를 찾지 못한다) */
 .product-card--owned {
   background: #eef2f6;
-  cursor: default;
+  cursor: pointer;
 }
 
 .product-card--owned:hover {
