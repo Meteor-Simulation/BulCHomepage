@@ -329,12 +329,14 @@ const PaymentSuccess: React.FC = () => {
                     </div>
                   ) : (
                     <div className="license-body">
+                      {/* 실제로 뜨는 것은 서버가 보낸 licenseError 다. 아래 문구는 응답이
+                          유실된 비정상 경우의 보루이므로 서버(PaymentService)와 같게 유지한다. */}
                       <p className="license-note license-note--pending">
                         {paymentResult.licenseError
-                          || '발급이 지연되고 있습니다. 자동으로 재시도되며, 발급되면 이메일로 안내드립니다.'}
+                          || '발급 후 이메일로 전송됩니다. 발급에 시간이 소요될 수 있습니다.'}
                       </p>
                       <p className="license-meta">
-                        결제는 정상 완료되었으니 다시 결제하지 마세요. 마이페이지에서도 확인하실 수 있습니다.
+                        결제가 완료되었습니다. 홈페이지 우측 상단 내 정보에서 확인할 수 있습니다.
                       </p>
                     </div>
                   )}
