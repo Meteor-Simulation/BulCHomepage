@@ -140,15 +140,16 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                       </td>
                       <td>{formatAdminDate(p.createdAt)}</td>
                       <td>
-                        {/* 환불 요청이 걸린 건은 사유를 보고 판단해야 한다 — 사유 없이 환불
-                            버튼만 있으면 관리자가 다른 화면으로 옮겨 다녀야 했다. */}
+                        {/* 환불 요청이 걸린 건은 모달에서 사유를 보고 승인·거절한다.
+                            버튼 글자는 하려는 일("환불 처리")로 적는다 — "사유 확인" 으로
+                            적었더니 읽기 전용으로 읽혀 환불을 어디서 하는지 알 수 없었다. */}
                         {p.refundRequestId ? (
                           <button
-                            className="action-btn edit"
+                            className="action-btn delete"
                             onClick={() => onReviewRefund(p)}
                             disabled={cancelingPaymentId !== null}
                           >
-                            사유 확인
+                            환불 처리
                           </button>
                         ) : isCancelable(p.status) ? (
                           <button
