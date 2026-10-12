@@ -319,8 +319,10 @@ const PaymentSuccess: React.FC = () => {
                           유효기간 {new Date(paymentResult.licenseValidUntil).toLocaleDateString('ko-KR')}
                         </p>
                       )}
+                      {/* 문장마다 줄을 나눈다. 개행은 CSS white-space: pre-line 이 살린다 —
+                          서버가 보내는 문구(licenseError)도 평문이라 같은 방식이어야 한다. */}
                       <p className="license-meta">
-                        이 키로 바로 이용하실 수 있습니다. 같은 내용을 이메일로도 보냈습니다.
+                        {'이 키로 바로 이용하실 수 있습니다.\n같은 내용을 이메일로도 보냈습니다.'}
                       </p>
                     </div>
                   ) : paymentResult.licenseNotApplicable ? (
@@ -333,10 +335,10 @@ const PaymentSuccess: React.FC = () => {
                           유실된 비정상 경우의 보루이므로 서버(PaymentService)와 같게 유지한다. */}
                       <p className="license-note license-note--pending">
                         {paymentResult.licenseError
-                          || '발급 후 이메일로 전송됩니다. 발급에 시간이 소요될 수 있습니다.'}
+                          || '발급 후 이메일로 전송됩니다.\n발급에 시간이 소요될 수 있습니다.'}
                       </p>
                       <p className="license-meta">
-                        결제가 완료되었습니다. 홈페이지 우측 상단 내 정보에서 확인할 수 있습니다.
+                        {'결제가 완료되었습니다.\n홈페이지 우측 상단 내 정보에서 확인할 수 있습니다.'}
                       </p>
                     </div>
                   )}

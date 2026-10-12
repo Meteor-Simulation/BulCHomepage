@@ -278,6 +278,10 @@
   border: 1px solid #e7e5e4;
   padding: 8px 10px;
   border-radius: 4px;
+  /* 문구의 개행(\n)을 살린다. 서버가 보내는 안내문도 평문이라 이 방식이어야 한다 —
+     <br> 을 보내 HTML 로 해석시키면 얻는 것 없이 주입 경로가 생긴다.
+     pre-wrap 이 아니라 pre-line 인 이유: 들여쓰기로 생긴 공백은 접어야 한다. */
+  white-space: pre-line;
 }
 
 /* 발급 지연 — 주의가 필요한 상태라 색으로 구분한다 (MDP-832) */
@@ -292,6 +296,7 @@
   font-size: 12px;
   line-height: 1.6;
   color: #777;
+  white-space: pre-line;
 }
 
 /* 반응형 */

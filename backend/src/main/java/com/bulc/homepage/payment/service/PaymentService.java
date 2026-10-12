@@ -1015,7 +1015,9 @@ public class PaymentService {
             //
             // 프론트에도 같은 문구를 보루로 두고 있다(PaymentSuccess.tsx). 바꿀 때 양쪽을 함께
             // 고칠 것 — 실제로 화면에 뜨는 것은 이쪽이다.
-            result.put("licenseError", "발급 후 이메일로 전송됩니다. 발급에 시간이 소요될 수 있습니다.");
+            // 개행(\n)은 화면에서 CSS white-space: pre-line 이 살린다. <br> 을 보내지 않는 이유는
+            // 프론트가 HTML 로 해석하게 만들면(dangerouslySetInnerHTML) 얻는 것 없이 주입 경로가 생긴다.
+            result.put("licenseError", "발급 후 이메일로 전송됩니다.\n발급에 시간이 소요될 수 있습니다.");
         }
     }
 }
