@@ -253,6 +253,11 @@ public class PaymentService {
                     result.put("accountNumber", virtualAccount.path("accountNumber").asText());
                     result.put("dueDate", virtualAccount.path("dueDate").asText());
                     result.put("message", "가상계좌가 발급되었습니다. 입금 완료 후 라이선스가 발급됩니다.");
+                    // 라이선스를 주지 않는 요금제면 입금 안내에서 "라이선스가 발급됩니다" 라고
+                    // 말하지 않아야 한다. 웹훅도 같은 이유로 발급을 건너뛴다.
+                    if (pricePlan.getLicensePlanId() == null) {
+                        result.put("licenseNotApplicable", true);
+                    }
 
                     log.info("[결제] STEP 5/5 가상계좌 발급 (입금 대기) - orderId={}, 은행={}, 계좌={}",
                             request.getOrderId(), result.get("bankName"), result.get("accountNumber"));
@@ -274,6 +279,10 @@ public class PaymentService {
                                 pricePlan.getLicensePlanId(), payment, result);
                     } else {
                         log.warn("[결제] 라이선스 플랜 미연결 - orderId={}, pricePlanId={}", request.getOrderId(), pricePlan.getId());
+                        // 발급 지연과 구분되어야 한다. 이 요금제는 라이선스를 "나중에" 주는 게 아니라
+                        // 아예 주지 않는다(점검용 요금제 등). 완료 화면이 "발급 처리 중" 으로 안내하면
+                        // 고객은 오지 않을 키를 기다리게 된다.
+                        result.put("licenseNotApplicable", true);
                     }
                 } else {
                     log.warn("[결제] 예상 외 토스 상태 - orderId={}, tossStatus={}", request.getOrderId(), paymentStatus);
@@ -589,6 +598,10 @@ public class PaymentService {
         if (pricePlan.getLicensePlanId() != null) {
             issueLicenseIntoResult("[빌링결제]", orderId, userId,
                     pricePlan.getLicensePlanId(), payment, result);
+        } else {
+            log.warn("[빌링결제] 라이선스 플랜 미연결 - orderId={}, pricePlanId={}", orderId, pricePlan.getId());
+            // 발급 지연과 구분되어야 한다 — 위 confirmPayment 쪽 주석 참고.
+            result.put("licenseNotApplicable", true);
         }
 
         // 구독형이면 자동갱신 활성화 (연 1회 — 스케줄러가 빌링키로 재청구 + 라이선스 연장)
