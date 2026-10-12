@@ -566,7 +566,15 @@ public class AdminController {
             return ResponseEntity.status(403).build();
         }
 
-        List<PaymentResponse> payments = paymentRepository.findAll().stream()
+        List<Payment> all = paymentRepository.findAll();
+
+        // 환불 요청이 들어온 결제는 상태를 "환불 대기" 로 보여 준다. 결제 상태는 아직 '완료'
+        // 이지만 관리자가 처리해야 할 일이 걸려 있다는 사실이 목록에서 바로 보여야 한다.
+        // 결제마다 조회하면 N+1 이 되므로 한 번에 모아 온다.
+        Map<Long, com.bulc.homepage.payment.domain.RefundRequest> pendingRefunds =
+                refundRequestService.pendingByPaymentId(all.stream().map(Payment::getId).toList());
+
+        List<PaymentResponse> payments = all.stream()
                 .map(payment -> {
                     String orderId = payment.getPaymentDetail() != null
                             ? payment.getPaymentDetail().getOrderId()
@@ -581,6 +589,12 @@ public class AdminController {
                         case "R" -> "REFUNDED";
                         default -> payment.getStatus();
                     };
+                    // 환불 요청 대기 중이면 그 사실을 상태로 덮어 보여 준다. 결제 자체는 아직
+                    // 완료(C) 이므로 DB 는 건드리지 않는다 — 화면 표시만 바꾸는 것이다.
+                    // 환불이 끝나면(R) 더 이상 대기가 아니므로 완료 상태가 그대로 보인다.
+                    if ("COMPLETED".equals(statusText) && pendingRefunds.containsKey(payment.getId())) {
+                        statusText = "REFUND_PENDING";
+                    }
 
                     // 사용자 정보 조회 (우선순위: User 관계 > userId 조회 > userEmail 스냅샷)
                     // 비활성화된 계정은 "탈퇴한 사용자"로 표시

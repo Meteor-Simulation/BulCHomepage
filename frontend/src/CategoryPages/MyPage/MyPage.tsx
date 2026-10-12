@@ -26,6 +26,7 @@ import {
 } from './panels';
 import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import type { AdminRefundRequest } from './panels/AdminRefundRequestsPanel';
+import RefundRequestModal, { RefundRequestTarget } from './panels/RefundRequestModal';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
@@ -62,6 +63,8 @@ const MyPage: React.FC = () => {
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
   // 환불 신청 전송 중인 결제 id — 연속 클릭으로 신청이 두 번 가지 않게 한다
   const [requestingRefundId, setRequestingRefundId] = useState<number | null>(null);
+  // 환불 사유 선택 창의 대상 결제. null 이면 창이 닫힌 상태다
+  const [refundTarget, setRefundTarget] = useState<RefundRequestTarget | null>(null);
   const [isLoadingPaymentHistory, setIsLoadingPaymentHistory] = useState(false);
 
   // 프로필 수정 모드
@@ -308,28 +311,33 @@ const MyPage: React.FC = () => {
   }, [isLoggedIn, fetchPaymentHistory]);
 
   /**
-   * 환불 신청 (고객). 신청만 접수되고 실제 환불은 관리자가 처리한다.
+   * 환불 신청 (고객) — 버튼을 누르면 사유 선택 창을 띄운다.
+   *
+   * 종전에는 window.prompt 로 사유를 받았다. 브라우저마다 모양이 다르고 무엇을 환불하는지
+   * 보여 줄 수 없어서, 고객이 금액·주문을 확인하지 못한 채 사유만 적게 됐다.
+   */
+  const handleRequestRefund = (payment: PaymentHistoryItem) => {
+    setRefundTarget({
+      id: payment.id,
+      orderName: payment.orderName,
+      amount: payment.amount,
+      currency: payment.currency,
+    });
+  };
+
+  /**
+   * 선택한 사유로 환불을 신청한다. 신청만 접수되고 실제 환불은 관리자가 처리한다.
    *
    * 사유를 받는 이유: 관리자가 승인·거절을 판단할 근거가 필요하다. 사유 없이 들어온 요청은
    * 되묻는 왕복이 생겨 처리가 늦어진다.
    */
-  const handleRequestRefund = async (payment: PaymentHistoryItem) => {
-    const amountLabel = payment.currency === 'KRW'
-      ? `${payment.amount.toLocaleString('ko-KR')}원`
-      : `$${payment.amount.toLocaleString('en-US')}`;
-    const reason = window.prompt(
-      `환불 사유를 입력해 주세요.\n\n${payment.orderName || ''} · ${amountLabel}\n\n접수 후 관리자 확인을 거쳐 처리됩니다.`,
-      ''
-    );
-    if (reason === null) return;      // 입력창에서 취소
-    if (!reason.trim()) {
-      showAlert({ message: '환불 사유를 입력해 주세요.', type: 'warning' });
-      return;
-    }
+  const submitRefundRequest = async (reason: string) => {
+    if (!refundTarget) return;
+    const paymentId = refundTarget.id;
 
-    setRequestingRefundId(payment.id);
+    setRequestingRefundId(paymentId);
     try {
-      const res = await fetch(`${API_URL}/api/payments/me/${payment.id}/refund-request`, {
+      const res = await fetch(`${API_URL}/api/payments/me/${paymentId}/refund-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include' as RequestCredentials,
@@ -338,8 +346,10 @@ const MyPage: React.FC = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         showAlert({ message: '환불 요청이 접수되었습니다. 관리자 확인 후 처리됩니다.', type: 'success' });
+        setRefundTarget(null);
         await fetchPaymentHistory();
       } else {
+        // 창은 열어 둔다 — 중복 신청·대상 오류 등 사유를 보고 사용자가 판단할 수 있어야 한다
         showAlert({ message: data.message || '환불 요청에 실패했습니다.', type: 'error' });
       }
     } catch {
@@ -1418,6 +1428,14 @@ const MyPage: React.FC = () => {
           onSuccess={handleCardRegistered}
         />
       )}
+
+      {/* 환불 사유 선택 창 (고객) — 신청만 접수되고 실제 환불은 관리자가 처리한다 */}
+      <RefundRequestModal
+        target={refundTarget}
+        isSubmitting={requestingRefundId !== null}
+        onSubmit={submitRefundRequest}
+        onClose={() => setRefundTarget(null)}
+      />
 
       {/* 로그인 모달 - 전역 */}
       <LoginModal

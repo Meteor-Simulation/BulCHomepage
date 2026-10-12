@@ -10,14 +10,32 @@ interface AdminPaymentsPanelProps extends AdminSearchProps {
   cancelingPaymentId: number | null;
 }
 
-/** 상태 코드 → 표시 문구. init.sql 규약: P 대기 · C 완료 · F 실패 · R 환불 */
+/**
+ * 상태 코드 → 표시 문구. init.sql 규약: P 대기 · C 완료 · F 실패 · R 환불
+ *
+ * REFUND_PENDING 은 DB 상태가 아니다 — 환불 요청이 대기 중인 완료 결제에 서버가 붙여 주는
+ * 표시값이다(AdminController). 관리자가 처리할 일이 걸려 있다는 사실이 목록에서 바로 보여야 한다.
+ */
 const STATUS_LABEL: { [key: string]: string } = {
   P: '대기', C: '완료', F: '실패', R: '환불',
   PENDING: '대기', COMPLETED: '완료', FAILED: '실패', REFUNDED: '환불',
+  REFUND_PENDING: '환불 대기',
 };
 
-/** 완료된 결제만 취소할 수 있다 — 대기·실패는 취소할 승인이 없고, 환불은 이미 끝났다. */
-const isCancelable = (status: string | null) => status === 'C' || status === 'COMPLETED';
+/** 배지 색. 환불 대기는 처리가 필요한 상태라 '대기' 와 같은 계열로 눈에 띄게 둔다. */
+const STATUS_CLASS: { [key: string]: string } = {
+  REFUND_PENDING: 'pending',
+};
+
+/**
+ * 완료된 결제만 취소할 수 있다 — 대기·실패는 취소할 승인이 없고, 환불은 이미 끝났다.
+ *
+ * 환불 요청이 걸린 건(REFUND_PENDING)도 취소할 수 있다. 요청을 거치지 않고 바로 처리해야
+ * 할 때가 있고, 결제 자체는 여전히 완료 상태다. 다만 요청 화면에서 승인하는 쪽이 요청 상태까지
+ * 함께 정리되므로 그 경로를 권한다.
+ */
+const isCancelable = (status: string | null) =>
+  status === 'C' || status === 'COMPLETED' || status === 'REFUND_PENDING';
 
 const formatAdminDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -112,7 +130,11 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                       <td>{p.userEmail}</td>
                       <td>{formatPaymentMethod(p.paymentMethod)}</td>
                       <td>{formatAdminPrice(p.amount, p.currency)}</td>
-                      <td><span className={`status-badge status-${p.status?.toLowerCase()}`}>{STATUS_LABEL[p.status] || p.status}</span></td>
+                      <td>
+                        <span className={`status-badge status-${STATUS_CLASS[p.status] || p.status?.toLowerCase()}`}>
+                          {STATUS_LABEL[p.status] || p.status}
+                        </span>
+                      </td>
                       <td>{formatAdminDate(p.createdAt)}</td>
                       <td>
                         {isCancelable(p.status) ? (
