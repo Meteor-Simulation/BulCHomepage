@@ -64,6 +64,11 @@ export interface AdminPayment {
   dueDate: string | null;
   depositorName: string | null;
   settlementStatus: string | null;
+  /** 대기 중인 환불 요청 id. 없으면 null — 결제관리에서 바로 처리할 때 쓴다 */
+  refundRequestId: number | null;
+  /** 고객이 적은 환불 사유 */
+  refundReason: string | null;
+  refundRequestedAt: string | null;
   createdAt: string;
 }
 
