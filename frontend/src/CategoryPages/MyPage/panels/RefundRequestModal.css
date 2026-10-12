@@ -1,0 +1,125 @@
+/* 환불 요청 창 — 틀(.admin-modal-*)은 MyPage.css 의 기존 관리자 모달을 그대로 쓴다.
+   여기에는 이 창에만 필요한 것만 둔다. */
+
+.refund-request-modal {
+  /* 사유 목록이 길지 않으므로 관리자 모달(620px)보다 좁게 — 선택지가 가로로 늘어지면 읽기 어렵다 */
+  max-width: 460px;
+}
+
+/* 무엇을 환불하는지 — prompt 로는 보여 줄 수 없던 부분이다 */
+.refund-target {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #faf9f8;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.refund-target-name {
+  font-size: 14px;
+  color: #57534e;
+  word-break: break-word;
+}
+
+.refund-target-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.refund-modal-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.refund-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.refund-reason-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #292524;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.refund-reason-option:hover {
+  background: #faf9f8;
+}
+
+/* 선택된 항목을 바로 알 수 있게 한다 — 라디오 점만으로는 훑을 때 눈에 안 들어온다 */
+.refund-reason-option:has(input:checked) {
+  background: rgba(196, 50, 10, 0.06);
+  font-weight: 600;
+}
+
+.refund-reason-option input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent, #C4320A);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.refund-reason-option input[type='radio']:disabled,
+.refund-reason-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 기타를 골랐을 때만 나타난다 */
+.refund-memo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.refund-memo > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.refund-memo textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.6;
+}
+
+.refund-memo-count {
+  align-self: flex-end;
+  font-size: 12px;
+  color: #a8a29e;
+}
+
+.refund-modal-note {
+  margin: 20px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #78716c;
+  /* 문구의 개행을 살린다 (PaymentResult 의 안내문과 같은 방식) */
+  white-space: pre-line;
+}
+
+@media (max-width: 480px) {
+  .refund-target {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
