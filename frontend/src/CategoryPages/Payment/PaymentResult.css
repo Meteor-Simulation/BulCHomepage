@@ -232,25 +232,66 @@
   margin-bottom: 8px;
 }
 
-/* 라이선스 키 스타일 */
-.detail-row.license-key .value.license {
+/* ── 라이선스 블록 ────────────────────────────────────────────────────────────
+   상태(발급 완료 / 미해당 / 지연)에 따라 내용만 바뀌고 틀은 같다.
+
+   .detail-row 의 기본값(space-between + align-items:center)을 쓰면 여러 줄짜리
+   내용이 오른쪽 절반으로 눌리고 라벨만 세로 가운데에 떠서 라이선스 칸만 깨져 보였다.
+   그래서 이 행만 위아래로 쌓는다 — 주문번호·결제금액 행은 기존 레이아웃 그대로다. */
+.detail-row.license-block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.detail-row.license-block .label {
+  /* 다른 행의 라벨과 같은 크기·색을 유지한다 (통일감) */
+  font-size: 14px;
+  color: #666;
+}
+
+.license-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* flex 자식이 긴 문자열을 만나도 넘치지 않게 한다 (라이선스 키가 길다) */
+  min-width: 0;
+}
+
+.license-key-value {
   font-family: 'Roboto Mono', monospace;
   font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
   background: #f0f0f0;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-radius: 4px;
   word-break: break-all;
 }
 
-/* 결제는 완료됐으나 라이선스 발급이 지연된 경우 (MDP-832) */
-.detail-row.license-pending .value {
+.license-note {
+  margin: 0;
   font-size: 13px;
   line-height: 1.6;
-  color: #8a5a00;
-  background: #fff6e0;
-  border: 1px solid #f0d9a0;
+  color: #1a1a1a;
+  background: #f7f7f7;
+  border: 1px solid #e7e5e4;
   padding: 8px 10px;
   border-radius: 4px;
+}
+
+/* 발급 지연 — 주의가 필요한 상태라 색으로 구분한다 (MDP-832) */
+.license-note--pending {
+  color: #8a5a00;
+  background: #fff6e0;
+  border-color: #f0d9a0;
+}
+
+.license-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #777;
 }
 
 /* 반응형 */

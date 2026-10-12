@@ -13,8 +13,11 @@ interface PaymentResult {
   orderName?: string;
   licenseKey?: string;
   licenseValidUntil?: string;
-  // 결제는 완료됐으나 라이선스 발급이 지연된 경우 (MDP-832)
+  // 결제는 완료됐으나 라이선스 발급이 지연된 경우 (MDP-832). 서버가 구체 사유를 담아 보낸다
   licenseError?: string;
+  // 이 요금제는 라이선스를 발급하지 않는다(license_plan_id 미연결 — 점검용 요금제 등).
+  // '지연' 과 반드시 구분해야 한다. 지연은 곧 오지만 이건 영원히 오지 않는다.
+  licenseNotApplicable?: boolean;
   // 가상계좌 정보
   isVirtualAccount?: boolean;
   bankName?: string;
@@ -126,6 +129,7 @@ const PaymentSuccess: React.FC = () => {
           licenseKey: result.licenseKey,
           licenseValidUntil: result.licenseValidUntil,
           licenseError: result.licenseError,
+          licenseNotApplicable: result.licenseNotApplicable,
           // 가상계좌 정보
           isVirtualAccount: result.isVirtualAccount,
           bankName: result.bankName,
@@ -217,7 +221,12 @@ const PaymentSuccess: React.FC = () => {
               </svg>
             </div>
             <h2>가상계좌가 발급되었습니다</h2>
-            <p>아래 계좌로 입금하시면 라이선스가 발급됩니다.</p>
+            {/* 라이선스를 주지 않는 요금제에는 "라이선스가 발급됩니다" 라고 말하지 않는다 */}
+            <p>
+              {paymentResult.licenseNotApplicable
+                ? '아래 계좌로 입금하시면 결제가 완료됩니다.'
+                : '아래 계좌로 입금하시면 라이선스가 발급됩니다.'}
+            </p>
 
             <div className="payment-details virtual-account">
               <div className="detail-row bank-info">
@@ -244,7 +253,9 @@ const PaymentSuccess: React.FC = () => {
 
             <div className="virtual-account-notice">
               <p>입금 기한 내에 입금하지 않으면 주문이 자동 취소됩니다.</p>
-              <p>입금 완료 후 라이선스가 자동으로 발급되며, 이메일로 안내됩니다.</p>
+              {!paymentResult.licenseNotApplicable && (
+                <p>입금 완료 후 라이선스가 자동으로 발급되며, 이메일로 안내됩니다.</p>
+              )}
             </div>
 
             <div className="result-actions">
@@ -284,26 +295,49 @@ const PaymentSuccess: React.FC = () => {
                 <span className="label">결제금액</span>
                 <span className="value">{formatAmount(paymentResult.amount, paymentResult.currency)}</span>
               </div>
-              {paymentResult.licenseKey && (
-                <div className="detail-row license-key">
-                  <span className="label">라이선스 키</span>
-                  <span className="value license">{paymentResult.licenseKey}</span>
-                </div>
-              )}
-              {paymentResult.licenseValidUntil && (
-                <div className="detail-row">
-                  <span className="label">유효기간</span>
-                  <span className="value">{new Date(paymentResult.licenseValidUntil).toLocaleDateString('ko-KR')}</span>
-                </div>
-              )}
-              {!paymentResult.licenseKey && !paymentResult.isVirtualAccount && (
-                <div className="detail-row license-pending">
+              {/*
+                라이선스 — 상태가 셋이고 서로 다른 뜻이다. 틀은 하나로 두고 내용만 바꾼다.
+                종전에는 "발급 처리 중" 안내와 하단의 "이메일로 발송됩니다" 가 동시에 떠서
+                키가 지금 있는 건지 기다려야 하는 건지 알 수 없었다. 하단 문구는 지웠다.
+
+                  ① licenseKey 있음        → 바로 쓸 수 있다 (메일도 자동 발송된다)
+                  ② licenseNotApplicable  → 이 상품은 라이선스를 주지 않는다 (영원히 안 옴)
+                  ③ 그 외                  → 발급이 지연됐다, 자동 재시도 중 (MDP-832)
+
+                ②와 ③을 구분하는 것이 핵심이다. 종전에는 둘을 같은 분기로 묶어, 라이선스가
+                없는 요금제에도 "발급 처리 중" 이라고 알려 오지 않을 키를 기다리게 했다.
+                가상계좌는 입금 대기 화면에서 따로 안내하므로 여기 오지 않는다.
+              */}
+              {!paymentResult.isVirtualAccount && (
+                <div className="detail-row license-block">
                   <span className="label">라이선스</span>
-                  <span className="value">
-                    발급 처리 중입니다. 잠시 후 마이페이지에서 자동으로 확인하실 수 있습니다.
-                    <br />
-                    결제는 정상 완료되었으니 다시 결제하지 마세요.
-                  </span>
+                  {paymentResult.licenseKey ? (
+                    <div className="license-body">
+                      <code className="license-key-value">{paymentResult.licenseKey}</code>
+                      {paymentResult.licenseValidUntil && (
+                        <p className="license-meta">
+                          유효기간 {new Date(paymentResult.licenseValidUntil).toLocaleDateString('ko-KR')}
+                        </p>
+                      )}
+                      <p className="license-meta">
+                        이 키로 바로 이용하실 수 있습니다. 같은 내용을 이메일로도 보냈습니다.
+                      </p>
+                    </div>
+                  ) : paymentResult.licenseNotApplicable ? (
+                    <div className="license-body">
+                      <p className="license-note">이 상품은 라이선스가 발급되지 않습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="license-body">
+                      <p className="license-note license-note--pending">
+                        {paymentResult.licenseError
+                          || '발급이 지연되고 있습니다. 자동으로 재시도되며, 발급되면 이메일로 안내드립니다.'}
+                      </p>
+                      <p className="license-meta">
+                        결제는 정상 완료되었으니 다시 결제하지 마세요. 마이페이지에서도 확인하실 수 있습니다.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -314,11 +348,6 @@ const PaymentSuccess: React.FC = () => {
               다운로드 페이지로 이동
             </button>
           </div>
-
-          <p className="result-notice">
-            라이선스 키가 이메일로 발송됩니다.<br/>
-            문의사항은 고객센터로 연락해주세요.
-          </p>
         </div>
       </div>
     </div>
