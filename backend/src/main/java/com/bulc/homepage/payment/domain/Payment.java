@@ -74,6 +74,19 @@ public class Payment {
     @Column(name = "refund_reason", columnDefinition = "TEXT")
     private String refundReason;
 
+    /**
+     * 결제 멱등키 — 같은 키로 두 번 요청해도 한 번만 승인된다.
+     *
+     * <p>DB 에 유니크 제약이 걸려 있다. 동시 요청 둘이 와도 INSERT 단계에서 하나가 지므로
+     * 진 쪽은 토스를 부르지 못한다. "검사 후 실행" 이 아니라 "예약에 성공한 쪽만 실행" 이다.
+     * 종전의 조회 기반 중복 차단은 결제 행이 토스 승인 뒤에 저장되는 탓에 정작 막아야 할
+     * 7~9초 구간이 비어 있었다 (2026-10-07 · 10-12 이중 청구).
+     *
+     * <p>같은 값을 토스 {@code Idempotency-Key} 헤더로도 보내 2중으로 막는다.
+     */
+    @Column(name = "idempotency_key", length = 300)
+    private String idempotencyKey;
+
     @Column(name = "fail_reason", columnDefinition = "TEXT")
     private String failReason;
 

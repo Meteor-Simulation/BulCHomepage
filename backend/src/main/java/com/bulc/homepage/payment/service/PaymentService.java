@@ -8,6 +8,8 @@ import com.bulc.homepage.payment.dto.PaymentHistoryResponse;
 import com.bulc.homepage.payment.domain.CardIssuer;
 import com.bulc.homepage.payment.domain.Payment;
 import com.bulc.homepage.payment.domain.PaymentDetail;
+import com.bulc.homepage.payment.domain.RefundRequest;
+import com.bulc.homepage.payment.repository.RefundRequestRepository;
 import com.bulc.homepage.catalog.domain.PricePlan;
 import com.bulc.homepage.payment.domain.Subscription;
 import com.bulc.homepage.entity.User;
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -53,13 +57,22 @@ public class PaymentService {
     private final RestTemplate restTemplate;
     private final BillingKeyService billingKeyService;
     private final PromotionService promotionService;
+    private final RefundRequestRepository refundRequestRepository;
 
     /**
      * 본인 결제 내역 조회 (MDP-576). 최신순. 민감 필드 제외 DTO로 변환.
      */
     @Transactional(readOnly = true)
     public List<PaymentHistoryResponse> getMyPaymentHistory(UUID userId) {
-        return paymentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+        List<Payment> payments = paymentRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        // 환불 요청 상태를 한 번에 가져와 붙인다 — 결제마다 조회하면 N+1 이 된다.
+        // 가장 최근 요청 하나만 쓴다(결제당 대기 요청은 1건이고, 거절 뒤 재신청도 최신이 현재 상태다).
+        Map<Long, RefundRequest> latestByPayment = refundRequestRepository
+                .findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .collect(Collectors.toMap(RefundRequest::getPaymentId, r -> r, (newer, older) -> newer));
+
+        return payments.stream()
                 .map(p -> {
                     PaymentDetail d = p.getPaymentDetail();
                     String status = switch (p.getStatus() == null ? "" : p.getStatus()) {
@@ -69,7 +82,9 @@ public class PaymentService {
                         case "R" -> "REFUNDED";
                         default -> p.getStatus();
                     };
+                    RefundRequest refund = latestByPayment.get(p.getId());
                     return new PaymentHistoryResponse(
+                            p.getId(),
                             d != null ? d.getOrderId() : null,
                             p.getOrderName(),
                             p.getAmount(),
@@ -81,7 +96,9 @@ public class PaymentService {
                             p.getPaidAt(),
                             p.getCreatedAt(),
                             p.getRefundedAt(),
-                            p.getRefundAmount()
+                            p.getRefundAmount(),
+                            refund != null ? refund.getStatus() : null,
+                            refund != null ? refund.getAdminNote() : null
                     );
                 })
                 .toList();
@@ -473,43 +490,69 @@ public class PaymentService {
             }
         }
 
-        // 중복 승인 차단 — 돈이 나가기 전에 본다.
+        // ── 중복 승인 차단: "검사 후 실행" 이 아니라 "예약에 성공한 쪽만 실행" ──────────────
         //
-        // 프론트의 전송 중 버튼 비활성만으로는 부족하다. 토스 승인이 수 초 걸리는 동안 두 번째
-        // 요청이 들어오면 둘 다 승인된다(2026-10-07: 2.4초 간격으로 100원 2건 청구).
-        // orderId 기반 중복 검사로는 막히지 않는다 — 아래에서 호출마다 새 orderId 를 만들기 때문이다.
+        // 종전 구현은 "최근 완료된 결제가 있나" 를 조회했는데, 결제 행은 토스 승인이 끝난 뒤에야
+        // 저장된다. 토스가 7~9초 걸리므로 정작 막아야 할 그 구간이 비어 있었다:
         //
-        // 창을 짧게(1분) 둔 이유: 같은 요금제를 의도적으로 두 번 사는 경우를 영구히 막으면 안 된다.
-        // 사람이 "안 눌렸나" 싶어 다시 누르는 간격은 수 초이므로 1분이면 충분하다.
-        if (paymentRepository.existsRecentCompleted(userId, pricePlan.getId(),
-                LocalDateTime.now().minusMinutes(1))) {
-            log.warn("[빌링결제] 중복 요청 차단 - userId={}, pricePlanId={}", userId, pricePlan.getId());
-            throw new RuntimeException("직전에 동일한 결제가 완료되었습니다. 결제 내역을 확인해 주세요.");
-        }
-
+        //   01:22:30.855  요청 A  → 완료 결제 없음 → 토스 호출
+        //   01:22:32.942  요청 B  → 여전히 없음(A 미커밋) → 토스 호출   ← 둘 다 승인
+        //
+        // 2026-10-07·10-12 두 번 모두 이렇게 100원이 2건 청구됐다. 프론트 방어는 배포돼
+        // 있었는데도 뚫렸다 — 캐시된 구버전 번들·탭 중복 등으로 클라이언트 상태는 언제든 어긋난다.
+        //
+        // 그래서 멱등키 행을 먼저 심는다(status P). 유니크 제약이 걸려 있으니 동시 요청 둘 중
+        // 하나는 INSERT 에서 지고, 진 쪽은 토스를 부르지 못한다.
+        String idempotencyKey = resolveIdempotencyKey(request.getIdempotencyKey(), userId, pricePlan.getId());
         String orderId = "BILL-" + pricePlan.getId() + "-" + System.currentTimeMillis();
         String orderName = pricePlan.getName();
 
-        // 빌링키로 즉시 청구 (소유권 검증은 requestBillingPayment 내부에서 수행)
-        Map<String, Object> charge = billingKeyService.requestBillingPayment(
-                request.getBillingKeyId(), orderId, orderName, amount, userId);
-        if (!Boolean.TRUE.equals(charge.get("success"))) {
-            throw new RuntimeException("결제에 실패했습니다.");
-        }
-
-        // 결제 이력 저장
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(amount))
                 .currency(pricePlan.getCurrency())
                 .orderName(orderName)
-                .status("C")
+                .status("P")
                 .userId(userId)
                 .userEmail(user.getEmail())
                 .userName(user.getName())
                 .pricePlan(pricePlan)
                 .clientIp(clientIp)
-                .paidAt(LocalDateTime.now())
+                .idempotencyKey(idempotencyKey)
                 .build();
+        try {
+            paymentRepository.saveAndFlush(payment);
+        } catch (DataIntegrityViolationException e) {
+            // 유니크 제약 위반 = 같은 키의 결제가 이미 진행 중이거나 끝났다. 토스를 부르지 않는다.
+            log.warn("[빌링결제] 중복 요청 차단 - userId={}, pricePlanId={}, key={}",
+                    userId, pricePlan.getId(), idempotencyKey);
+            throw new RuntimeException("결제가 이미 처리되고 있습니다. 결제 내역을 확인해 주세요.");
+        }
+
+        // 빌링키로 즉시 청구 (소유권 검증은 requestBillingPayment 내부에서 수행).
+        // 같은 멱등키를 토스에도 보낸다 — 우리 쪽 경쟁을 뚫더라도 토스가 재청구하지 않는다.
+        Map<String, Object> charge;
+        try {
+            charge = billingKeyService.requestBillingPayment(
+                    request.getBillingKeyId(), orderId, orderName, amount, userId, idempotencyKey);
+        } catch (RuntimeException e) {
+            // 실패를 기록으로 남긴다. 멱등키가 실패 행에 묶여 있으면 사용자가 다시 시도할 수
+            // 없으므로 키를 비운다 — 재시도 때 클라이언트가 새 키를 들고 온다.
+            payment.setStatus("F");
+            payment.setFailReason(e.getMessage());
+            payment.setIdempotencyKey(null);
+            paymentRepository.save(payment);
+            throw e;
+        }
+        if (!Boolean.TRUE.equals(charge.get("success"))) {
+            payment.setStatus("F");
+            payment.setFailReason("빌링 결제 실패");
+            payment.setIdempotencyKey(null);
+            paymentRepository.save(payment);
+            throw new RuntimeException("결제에 실패했습니다.");
+        }
+
+        payment.setStatus("C");
+        payment.setPaidAt(LocalDateTime.now());
         // 카드 정보는 requestBillingPayment 가 토스 응답에서 꺼내 올려 준 값을 그대로 적는다.
         // 종전에는 이 블록이 카드 필드를 아예 채우지 않아 결제 내역에서 어떤 카드로 냈는지
         // 알 수 없었다(card_company·card_number 가 늘 NULL).
@@ -759,6 +802,26 @@ public class PaymentService {
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + encodedCredentials);
         return headers;
+    }
+
+    /**
+     * 멱등키를 정한다. 클라이언트가 보낸 값을 쓰고, 없으면 서버가 만든다.
+     *
+     * <p>대체 키를 만드는 이유: 캐시된 구버전 화면은 키를 보내지 않는다. 그래도 보호가
+     * 끊기면 안 되므로 사용자·요금제·10초 시간창으로 키를 합성한다. 사람이 "안 눌렸나" 싶어
+     * 다시 누르는 간격(수 초)을 같은 창에 묶으면 두 번째 요청이 유니크 제약에 걸린다.
+     *
+     * <p>시간창을 10초로 둔 이유: 토스 승인이 7~9초 걸린다. 그보다 짧으면 창이 갈려 둘 다
+     * 통과하고, 지나치게 길면 의도적인 재구매가 막힌다.
+     */
+    private String resolveIdempotencyKey(String clientKey, UUID userId, Long pricePlanId) {
+        if (clientKey != null && !clientKey.isBlank()) {
+            // 토스 상한이 300자다. 그보다 긴 값이 오면 자른다(거부하지 않는다 — 결제를 막을 이유는 아니다).
+            String trimmed = clientKey.trim();
+            return trimmed.length() > 300 ? trimmed.substring(0, 300) : trimmed;
+        }
+        long window = System.currentTimeMillis() / 10_000L;
+        return "auto:" + userId + ":" + pricePlanId + ":" + window;
     }
 
     /**

@@ -8,6 +8,11 @@ import java.time.LocalDateTime;
  * 내부 식별자/IP/PG 원문 등 민감 필드는 제외하고 노출 가능한 항목만 담는다.
  */
 public record PaymentHistoryResponse(
+        /**
+         * 결제 id — 환불 신청에 쓴다. 본인 결제만 내려오고 신청 시 서버가 소유자를 다시
+         * 확인하므로(RefundRequestService.request) 남의 결제에 손댈 수는 없다.
+         */
+        Long id,
         String orderId,
         String orderName,
         BigDecimal amount,
@@ -19,5 +24,9 @@ public record PaymentHistoryResponse(
         LocalDateTime paidAt,
         LocalDateTime createdAt,
         LocalDateTime refundedAt,
-        BigDecimal refundAmount
+        BigDecimal refundAmount,
+        /** 이 결제의 환불 요청 상태 — PENDING / APPROVED / REJECTED. 신청 이력이 없으면 null */
+        String refundRequestStatus,
+        /** 관리자 메모 (거절 사유 등) — 고객이 왜 거절됐는지 알 수 있어야 한다 */
+        String refundRequestNote
 ) {}

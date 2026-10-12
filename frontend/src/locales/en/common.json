@@ -38,7 +38,8 @@
       "adminGroupMembers": "Members",
       "adminGroupComms": "Communication",
       "adminGroupCommerce": "Products & Payments",
-      "adminGroupLicense": "Licenses"
+      "adminGroupLicense": "Licenses",
+      "adminRefunds": "Refund requests"
     },
     "profile": "Profile",
     "edit": "Edit",
@@ -112,7 +113,13 @@
         "EASY_PAY": "Easy Pay",
         "TRANSFER": "Transfer",
         "MOBILE": "Mobile"
-      }
+      },
+      "colRefund": "Refund",
+      "refundRequest": "Request refund",
+      "refundRequesting": "Sending…",
+      "refundPending": "Request received",
+      "refundApproved": "Refunded",
+      "refundRejected": "Request declined"
     }
   },
   "common": {
@@ -618,6 +625,26 @@
     "modal": {
       "cancel": "Cancel",
       "agree": "I Agree"
+    },
+    "confirmModal": {
+      "title": "Confirm your order",
+      "lead": "Please review the details below before paying.",
+      "product": "Product",
+      "plan": "Plan",
+      "listPrice": "List price",
+      "method": "Payment method",
+      "card": "Card",
+      "cardFallback": "Card",
+      "coupon": "Coupon",
+      "buyer": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "total": "Total",
+      "back": "Go back",
+      "proceed": "Pay now",
+      "processingTitle": "Processing your payment",
+      "processingBody": "Card approval can take up to 10 seconds.",
+      "doNotClose": "Please do not close this window or click again."
     }
   },
   "login": {

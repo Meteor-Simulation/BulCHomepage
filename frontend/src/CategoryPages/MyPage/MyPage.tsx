@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -20,11 +20,12 @@ import {
 import { VALID_MENU_SECTIONS, ADMIN_MENU_GROUPS, MENU_LABEL_KEYS } from './constants';
 import {
   ProfilePanel, AccountPanel, SubscriptionPanel, PaymentPanel, PaymentHistoryPanel, RedeemPanel,
-  AdminUsersPanel, AdminPaymentsPanel, AdminProductsPanel,
+  AdminUsersPanel, AdminPaymentsPanel, AdminRefundRequestsPanel, AdminProductsPanel,
   AdminLicensesPanel, AdminPromotionsPanel, AdminRedeemPanel, AdminPopupsPanel,
   AdminMailingPanel, AdminContactsPanel,
 } from './panels';
 import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
+import type { AdminRefundRequest } from './panels/AdminRefundRequestsPanel';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
@@ -59,6 +60,8 @@ const MyPage: React.FC = () => {
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isLoadingBillingKeys, setIsLoadingBillingKeys] = useState(false);
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
+  // 환불 신청 전송 중인 결제 id — 연속 클릭으로 신청이 두 번 가지 않게 한다
+  const [requestingRefundId, setRequestingRefundId] = useState<number | null>(null);
   const [isLoadingPaymentHistory, setIsLoadingPaymentHistory] = useState(false);
 
   // 프로필 수정 모드
@@ -115,6 +118,10 @@ const MyPage: React.FC = () => {
   const [adminPayments, setAdminPayments] = useState<AdminPayment[]>([]);
   // 취소 중인 결제 id — 버튼 연속 클릭으로 취소 요청이 두 번 가지 않게 한다
   const [cancelingPaymentId, setCancelingPaymentId] = useState<number | null>(null);
+  const [refundRequests, setRefundRequests] = useState<AdminRefundRequest[]>([]);
+  const [isLoadingRefundRequests, setIsLoadingRefundRequests] = useState(false);
+  // 처리 중인 환불 요청 id
+  const [processingRefundId, setProcessingRefundId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -278,26 +285,69 @@ const MyPage: React.FC = () => {
     if (isLoggedIn) fetchBillingKeys();
   }, [isLoggedIn]);
 
-  // 결제 내역 로드
-  useEffect(() => {
-    const fetchPaymentHistory = async () => {
-      setIsLoadingPaymentHistory(true);
-      try {
-        const response = await fetch(`${API_URL}/api/payments/me`, {
-          credentials: 'include' as RequestCredentials,
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setPaymentHistory(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        // 결제 내역 로드 실패
-      } finally {
-        setIsLoadingPaymentHistory(false);
+  // 결제 내역 로드. 환불 신청 뒤 다시 불러야 하므로 useCallback 으로 꺼내 둔다.
+  const fetchPaymentHistory = useCallback(async () => {
+    setIsLoadingPaymentHistory(true);
+    try {
+      const response = await fetch(`${API_URL}/api/payments/me`, {
+        credentials: 'include' as RequestCredentials,
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentHistory(Array.isArray(data) ? data : []);
       }
-    };
+    } catch (error) {
+      // 결제 내역 로드 실패
+    } finally {
+      setIsLoadingPaymentHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
     if (isLoggedIn) fetchPaymentHistory();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchPaymentHistory]);
+
+  /**
+   * 환불 신청 (고객). 신청만 접수되고 실제 환불은 관리자가 처리한다.
+   *
+   * 사유를 받는 이유: 관리자가 승인·거절을 판단할 근거가 필요하다. 사유 없이 들어온 요청은
+   * 되묻는 왕복이 생겨 처리가 늦어진다.
+   */
+  const handleRequestRefund = async (payment: PaymentHistoryItem) => {
+    const amountLabel = payment.currency === 'KRW'
+      ? `${payment.amount.toLocaleString('ko-KR')}원`
+      : `$${payment.amount.toLocaleString('en-US')}`;
+    const reason = window.prompt(
+      `환불 사유를 입력해 주세요.\n\n${payment.orderName || ''} · ${amountLabel}\n\n접수 후 관리자 확인을 거쳐 처리됩니다.`,
+      ''
+    );
+    if (reason === null) return;      // 입력창에서 취소
+    if (!reason.trim()) {
+      showAlert({ message: '환불 사유를 입력해 주세요.', type: 'warning' });
+      return;
+    }
+
+    setRequestingRefundId(payment.id);
+    try {
+      const res = await fetch(`${API_URL}/api/payments/me/${payment.id}/refund-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include' as RequestCredentials,
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert({ message: '환불 요청이 접수되었습니다. 관리자 확인 후 처리됩니다.', type: 'success' });
+        await fetchPaymentHistory();
+      } else {
+        showAlert({ message: data.message || '환불 요청에 실패했습니다.', type: 'error' });
+      }
+    } catch {
+      showAlert({ message: '환불 요청 중 오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setRequestingRefundId(null);
+    }
+  };
 
   // 관리자 메뉴 변경 시 데이터 로드
   useEffect(() => {
@@ -317,6 +367,7 @@ const MyPage: React.FC = () => {
             await fetchProducts();
             break;
           case 'admin-payments': await fetchAdminPayments(); break;
+          case 'admin-refunds': await fetchRefundRequests(); break;
           case 'admin-products':
             await fetchProducts();
             await fetchPricePlans();
@@ -424,6 +475,76 @@ const MyPage: React.FC = () => {
       showAlert({ message: '취소 요청 중 오류가 발생했습니다.', type: 'error' });
     } finally {
       setCancelingPaymentId(null);
+    }
+  };
+
+  const fetchRefundRequests = async () => {
+    setIsLoadingRefundRequests(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/refund-requests`, {
+        credentials: 'include' as RequestCredentials,
+      });
+      if (response.ok) setRefundRequests(await response.json());
+    } finally {
+      setIsLoadingRefundRequests(false);
+    }
+  };
+
+  /**
+   * 환불 요청 승인 — 토스 승인취소까지 수행된다.
+   *
+   * 실패하면 요청은 대기 상태로 남는다. 환불이 안 됐는데 "완료" 로 적히면 고객은 받은 줄
+   * 알고 기다리게 된다.
+   */
+  const handleApproveRefund = async (request: AdminRefundRequest) => {
+    const amountLabel = request.currency === 'KRW'
+      ? `${(request.amount ?? 0).toLocaleString('ko-KR')}원`
+      : `$${(request.amount ?? 0).toLocaleString('en-US')}`;
+    if (!window.confirm(
+      `환불을 승인하시겠습니까?\n\n${request.orderId || `#${request.paymentId}`}\n${request.userEmail || ''} · ${amountLabel}\n사유: ${request.reason}\n\n고객 카드로 승인취소가 즉시 요청됩니다.`
+    )) return;
+    const note = window.prompt('메모 (선택 — 기록에 남습니다)', '');
+    if (note === null) return;
+    await processRefundRequest(request.id, 'approve', note);
+  };
+
+  /** 환불 요청 거절. 돈은 움직이지 않는다 — 사유를 남겨 고객이 알 수 있게 한다. */
+  const handleRejectRefund = async (request: AdminRefundRequest) => {
+    const note = window.prompt('거절 사유를 입력하세요 (고객에게 표시됩니다)', '');
+    if (note === null) return;
+    if (!note.trim()) {
+      showAlert({ message: '거절 사유를 입력해 주세요.', type: 'warning' });
+      return;
+    }
+    await processRefundRequest(request.id, 'reject', note);
+  };
+
+  const processRefundRequest = async (requestId: number, action: 'approve' | 'reject', note: string) => {
+    setProcessingRefundId(requestId);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/refund-requests/${requestId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include' as RequestCredentials,
+        body: JSON.stringify({ note }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert({
+          message: action === 'approve' ? '환불이 완료되었습니다.' : '요청을 거절했습니다.',
+          type: 'success',
+        });
+        await fetchRefundRequests();
+        // 승인하면 결제 상태도 C → R 로 바뀌므로 함께 갱신한다
+        if (action === 'approve') await fetchAdminPayments();
+      } else {
+        // 토스가 거부한 사유를 그대로 보여 준다
+        showAlert({ message: data.message || '처리에 실패했습니다.', type: 'error' });
+      }
+    } catch {
+      showAlert({ message: '처리 중 오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setProcessingRefundId(null);
     }
   };
 
@@ -1137,6 +1258,8 @@ const MyPage: React.FC = () => {
                   <PaymentHistoryPanel
                     isLoading={isLoadingPaymentHistory}
                     payments={paymentHistory}
+                    onRequestRefund={handleRequestRefund}
+                    requestingRefundId={requestingRefundId}
                   />
                   <PaymentPanel
                     isLoadingBillingKeys={isLoadingBillingKeys}
@@ -1168,6 +1291,16 @@ const MyPage: React.FC = () => {
                   adminPayments={adminPayments}
                   onCancelPayment={handleCancelPayment}
                   cancelingPaymentId={cancelingPaymentId}
+                />
+              )}
+
+              {isAdmin && activeMenu === 'admin-refunds' && (
+                <AdminRefundRequestsPanel
+                  requests={refundRequests}
+                  isLoading={isLoadingRefundRequests}
+                  onApprove={handleApproveRefund}
+                  onReject={handleRejectRefund}
+                  processingId={processingRefundId}
                 />
               )}
 
