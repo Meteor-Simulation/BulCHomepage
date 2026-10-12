@@ -1009,7 +1009,13 @@ public class PaymentService {
             // 실패 사유 DB 기록
             payment.setFailReason("라이선스 발급 실패: " + e.getMessage());
             paymentRepository.save(payment);
-            result.put("licenseError", "라이선스 발급이 지연되고 있습니다. 자동으로 재시도되며 잠시 후 마이페이지에서 확인하실 수 있습니다.");
+            // 고객에게는 이 고정 문구만 보낸다. 실제 예외 메시지는 위 로그와 payments.fail_reason
+            // 에 남긴다 — 내부 오류 문구(DB 제약 위반·포트 오류 등)는 고객이 이해할 수 없고
+            // 시스템 내부 구조만 드러낸다.
+            //
+            // 프론트에도 같은 문구를 보루로 두고 있다(PaymentSuccess.tsx). 바꿀 때 양쪽을 함께
+            // 고칠 것 — 실제로 화면에 뜨는 것은 이쪽이다.
+            result.put("licenseError", "발급 후 이메일로 전송됩니다. 발급에 시간이 소요될 수 있습니다.");
         }
     }
 }
