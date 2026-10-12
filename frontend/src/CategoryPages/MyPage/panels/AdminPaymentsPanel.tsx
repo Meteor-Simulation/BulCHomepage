@@ -8,6 +8,8 @@ interface AdminPaymentsPanelProps extends AdminSearchProps {
   onCancelPayment: (payment: AdminPayment) => void;
   /** 취소 요청이 진행 중인 결제 id — 해당 행의 버튼만 잠근다 */
   cancelingPaymentId: number | null;
+  /** 환불 요청 사유 확인·처리 창 열기 — 환불 대기 건에만 쓰인다 */
+  onReviewRefund: (payment: AdminPayment) => void;
 }
 
 /**
@@ -63,6 +65,7 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
   adminPayments,
   onCancelPayment,
   cancelingPaymentId,
+  onReviewRefund,
   searchQuery,
   appliedSearch,
   currentPage,
@@ -137,7 +140,17 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                       </td>
                       <td>{formatAdminDate(p.createdAt)}</td>
                       <td>
-                        {isCancelable(p.status) ? (
+                        {/* 환불 요청이 걸린 건은 사유를 보고 판단해야 한다 — 사유 없이 환불
+                            버튼만 있으면 관리자가 다른 화면으로 옮겨 다녀야 했다. */}
+                        {p.refundRequestId ? (
+                          <button
+                            className="action-btn edit"
+                            onClick={() => onReviewRefund(p)}
+                            disabled={cancelingPaymentId !== null}
+                          >
+                            사유 확인
+                          </button>
+                        ) : isCancelable(p.status) ? (
                           <button
                             className="action-btn delete"
                             onClick={() => onCancelPayment(p)}

@@ -592,7 +592,8 @@ public class AdminController {
                     // 환불 요청 대기 중이면 그 사실을 상태로 덮어 보여 준다. 결제 자체는 아직
                     // 완료(C) 이므로 DB 는 건드리지 않는다 — 화면 표시만 바꾸는 것이다.
                     // 환불이 끝나면(R) 더 이상 대기가 아니므로 완료 상태가 그대로 보인다.
-                    if ("COMPLETED".equals(statusText) && pendingRefunds.containsKey(payment.getId())) {
+                    var pendingRefund = pendingRefunds.get(payment.getId());
+                    if ("COMPLETED".equals(statusText) && pendingRefund != null) {
                         statusText = "REFUND_PENDING";
                     }
 
@@ -692,7 +693,11 @@ public class AdminController {
                             dueDate,
                             depositorName,
                             settlementStatus,
-                            payment.getCreatedAt() != null ? payment.getCreatedAt().toString() : null
+                            payment.getCreatedAt() != null ? payment.getCreatedAt().toString() : null,
+                            pendingRefund != null ? pendingRefund.getId() : null,
+                            pendingRefund != null ? pendingRefund.getReason() : null,
+                            pendingRefund != null && pendingRefund.getCreatedAt() != null
+                                    ? pendingRefund.getCreatedAt().toString() : null
                     );
                 })
                 .collect(Collectors.toList());
@@ -812,7 +817,14 @@ public class AdminController {
     public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String createdAt) {}
     public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive) {}
     public record LicenseResponse(String id, String licenseKey, String ownerType, String ownerId, String status, String validUntil, String createdAt) {}
-    public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt) {}
+    /**
+     * @param refundRequestId   대기 중인 환불 요청 id. 없으면 null — 결제관리에서 바로 승인·거절할 때 쓴다
+     * @param refundReason      고객이 적은 환불 사유. 목록에서 사유를 모르면 관리자가 다른 화면으로
+     *                          옮겨 다녀야 하므로 함께 내려보낸다
+     * @param refundRequestedAt 요청 접수 시각
+     */
+    public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt,
+                                  Long refundRequestId, String refundReason, String refundRequestedAt) {}
     public record RoleUpdateRequest(String rolesCode) {}
     public record PaymentCancelRequest(String reason) {}
     public record RefundProcessRequest(String note) {}

@@ -27,6 +27,7 @@ import {
 import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import type { AdminRefundRequest } from './panels/AdminRefundRequestsPanel';
 import RefundRequestModal, { RefundRequestTarget } from './panels/RefundRequestModal';
+import RefundReviewModal, { RefundReviewTarget } from './panels/RefundReviewModal';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
@@ -125,6 +126,8 @@ const MyPage: React.FC = () => {
   const [isLoadingRefundRequests, setIsLoadingRefundRequests] = useState(false);
   // 처리 중인 환불 요청 id
   const [processingRefundId, setProcessingRefundId] = useState<number | null>(null);
+  // 결제관리에서 띄우는 환불 요청 확인 창의 대상. null 이면 닫힌 상태다
+  const [refundReviewTarget, setRefundReviewTarget] = useState<RefundReviewTarget | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -529,7 +532,38 @@ const MyPage: React.FC = () => {
     await processRefundRequest(request.id, 'reject', note);
   };
 
-  const processRefundRequest = async (requestId: number, action: 'approve' | 'reject', note: string) => {
+  /**
+   * 결제관리 목록에서 환불 요청 사유를 확인하는 창을 띄운다.
+   *
+   * 종전에는 목록이 "환불 대기" 만 보여 주고 사유는 환불 요청 메뉴로 옮겨 가야 알 수 있었다.
+   * 사유를 모르면 승인·거절을 판단할 수 없으므로 같은 자리에서 보고 처리할 수 있게 한다.
+   */
+  const handleReviewRefund = (payment: AdminPayment) => {
+    if (!payment.refundRequestId) return;
+    setRefundReviewTarget({
+      refundRequestId: payment.refundRequestId,
+      orderId: payment.orderId,
+      userEmail: payment.userEmail,
+      userName: payment.userName,
+      amount: payment.amount,
+      currency: payment.currency,
+      reason: payment.refundReason || '(사유 없음)',
+      requestedAt: payment.refundRequestedAt,
+    });
+  };
+
+  /** 확인 창에서 승인·거절을 실행한다. 성공하면 창을 닫는다. */
+  const submitRefundReview = async (action: 'approve' | 'reject', note: string) => {
+    if (!refundReviewTarget) return;
+    const ok = await processRefundRequest(refundReviewTarget.refundRequestId, action, note);
+    // 실패하면 창을 열어 둔다 — 토스가 거부한 사유를 보고 다시 판단해야 한다
+    if (ok) setRefundReviewTarget(null);
+  };
+
+  /** @returns 처리 성공 여부 — 호출부가 창을 닫을지 판단한다 */
+  const processRefundRequest = async (
+    requestId: number, action: 'approve' | 'reject', note: string,
+  ): Promise<boolean> => {
     setProcessingRefundId(requestId);
     try {
       const res = await fetch(`${API_URL}/api/admin/refund-requests/${requestId}/${action}`, {
@@ -545,14 +579,16 @@ const MyPage: React.FC = () => {
           type: 'success',
         });
         await fetchRefundRequests();
-        // 승인하면 결제 상태도 C → R 로 바뀌므로 함께 갱신한다
-        if (action === 'approve') await fetchAdminPayments();
-      } else {
-        // 토스가 거부한 사유를 그대로 보여 준다
-        showAlert({ message: data.message || '처리에 실패했습니다.', type: 'error' });
+        // 결제 목록의 "환불 대기" 표시도 갱신해야 한다 (거절도 대기가 풀린다)
+        await fetchAdminPayments();
+        return true;
       }
+      // 토스가 거부한 사유를 그대로 보여 준다
+      showAlert({ message: data.message || '처리에 실패했습니다.', type: 'error' });
+      return false;
     } catch {
       showAlert({ message: '처리 중 오류가 발생했습니다.', type: 'error' });
+      return false;
     } finally {
       setProcessingRefundId(null);
     }
@@ -1301,6 +1337,7 @@ const MyPage: React.FC = () => {
                   adminPayments={adminPayments}
                   onCancelPayment={handleCancelPayment}
                   cancelingPaymentId={cancelingPaymentId}
+                  onReviewRefund={handleReviewRefund}
                 />
               )}
 
@@ -1435,6 +1472,15 @@ const MyPage: React.FC = () => {
         isSubmitting={requestingRefundId !== null}
         onSubmit={submitRefundRequest}
         onClose={() => setRefundTarget(null)}
+      />
+
+      {/* 환불 요청 확인·처리 창 (관리자) — 결제관리 목록에서 바로 띄운다 */}
+      <RefundReviewModal
+        target={refundReviewTarget}
+        isProcessing={processingRefundId !== null}
+        onApprove={(note) => submitRefundReview('approve', note)}
+        onReject={(note) => submitRefundReview('reject', note)}
+        onClose={() => setRefundReviewTarget(null)}
       />
 
       {/* 로그인 모달 - 전역 */}
