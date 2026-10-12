@@ -276,12 +276,6 @@ const PaymentSuccess: React.FC = () => {
       <Header hideUserMenu={true} />
       <div className="payment-result-container">
         <div className="payment-result-card success">
-          <div className="result-icon success">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M8 12l2 2 4-4"/>
-            </svg>
-          </div>
           <h2>결제가 완료되었습니다</h2>
           <p>BulC 라이선스 구매가 완료되었습니다.</p>
 
@@ -347,9 +341,14 @@ const PaymentSuccess: React.FC = () => {
             </div>
           )}
 
+          {/* .result-actions 는 flex + button{flex:1} 이라 두 버튼이 균등하게 나뉜다
+              (좁은 화면에서는 세로로 쌓인다 — 아래 반응형 분기) */}
           <div className="result-actions">
             <button className="btn-primary" onClick={() => navigate('/bulc', { state: { activeTab: 'download' } })}>
-              다운로드 페이지로 이동
+              다운로드
+            </button>
+            <button className="btn-secondary" onClick={() => navigate('/')}>
+              홈페이지 이동
             </button>
           </div>
         </div>
