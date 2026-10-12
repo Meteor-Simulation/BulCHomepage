@@ -90,6 +90,20 @@ const RefundReviewModal: React.FC<RefundReviewModalProps> = ({
   return (
     <div className="admin-modal-overlay" onClick={handleOverlayClick}>
       <div className="admin-modal refund-review-modal" onClick={(e) => e.stopPropagation()}>
+        {/*
+          처리 중에는 창 전체를 덮는다. 버튼 disabled 만으로는 부족하다 — 토스 승인취소가
+          수 초 걸리는 동안 화면이 그대로면 관리자가 다시 누르거나 닫으려 하고, 닫아 버리면
+          환불이 진행 중인지 알 수 없어 같은 건을 또 처리하려 한다.
+          (결제 쪽에서 같은 이유로 100원이 두 번 청구된 전례가 있다)
+        */}
+        {isProcessing && (
+          <div className="refund-review-blocker" aria-live="polite" aria-busy="true">
+            <div className="refund-review-blocker-spinner" aria-hidden="true" />
+            <p>환불을 처리하고 있습니다</p>
+            <small>카드사 승인취소까지 수 초가 걸릴 수 있습니다. 창을 닫지 마세요.</small>
+          </div>
+        )}
+
         <div className="admin-modal-header">
           <h3>환불 요청 확인</h3>
         </div>

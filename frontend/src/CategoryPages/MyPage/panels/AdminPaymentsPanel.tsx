@@ -140,27 +140,25 @@ const AdminPaymentsPanel: React.FC<AdminPaymentsPanelProps> = ({
                       </td>
                       <td>{formatAdminDate(p.createdAt)}</td>
                       <td>
-                        {/* 환불 요청이 걸린 건은 모달에서 사유를 보고 승인·거절한다.
-                            버튼 글자는 하려는 일("환불 처리")로 적는다 — "사유 확인" 으로
-                            적었더니 읽기 전용으로 읽혀 환불을 어디서 하는지 알 수 없었다. */}
-                        {p.refundRequestId ? (
+                        {/*
+                          버튼은 "환불" 하나다. 대기 여부는 상태 칸(환불 대기)이 말해 준다 —
+                          관리 칸까지 상태를 적으면 같은 정보가 두 번 나온다.
+
+                          isCancelable 을 먼저 보는 것이 중요하다. 종전에는 요청 유무만 보고
+                          버튼을 띄워서, 이미 환불된 결제(status R)에 요청이 PENDING 으로
+                          남아 있으면 처리 버튼이 계속 떴다
+                          (2026-10-12: BILL-10-1791776913624). 환불이 끝난 건에는 할 일이 없다.
+                        */}
+                        {!isCancelable(p.status) ? (
+                          <span>-</span>
+                        ) : (
                           <button
                             className="action-btn delete"
-                            onClick={() => onReviewRefund(p)}
-                            disabled={cancelingPaymentId !== null}
-                          >
-                            환불 처리
-                          </button>
-                        ) : isCancelable(p.status) ? (
-                          <button
-                            className="action-btn delete"
-                            onClick={() => onCancelPayment(p)}
+                            onClick={() => (p.refundRequestId ? onReviewRefund(p) : onCancelPayment(p))}
                             disabled={cancelingPaymentId !== null}
                           >
                             {cancelingPaymentId === p.id ? '취소 중…' : '환불'}
                           </button>
-                        ) : (
-                          <span>-</span>
                         )}
                       </td>
                     </tr>
