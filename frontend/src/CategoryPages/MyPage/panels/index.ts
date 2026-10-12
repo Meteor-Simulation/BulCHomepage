@@ -6,6 +6,7 @@ export { default as PaymentHistoryPanel } from './PaymentHistoryPanel';
 export { default as RedeemPanel } from './RedeemPanel';
 export { default as AdminUsersPanel } from './AdminUsersPanel';
 export { default as AdminPaymentsPanel } from './AdminPaymentsPanel';
+export { default as AdminRefundRequestsPanel } from './AdminRefundRequestsPanel';
 export { default as AdminProductsPanel } from './AdminProductsPanel';
 export { default as AdminLicensesPanel } from './AdminLicensesPanel';
 export { default as AdminPromotionsPanel } from './AdminPromotionsPanel';

@@ -38,7 +38,8 @@
       "adminGroupMembers": "회원",
       "adminGroupComms": "소통",
       "adminGroupCommerce": "상품·결제",
-      "adminGroupLicense": "라이선스"
+      "adminGroupLicense": "라이선스",
+      "adminRefunds": "환불 요청"
     },
     "profile": "프로필 정보",
     "edit": "수정",
@@ -112,7 +113,13 @@
         "EASY_PAY": "간편결제",
         "TRANSFER": "계좌이체",
         "MOBILE": "휴대폰"
-      }
+      },
+      "colRefund": "환불",
+      "refundRequest": "환불 요청",
+      "refundRequesting": "요청 중…",
+      "refundPending": "환불 요청 접수",
+      "refundApproved": "환불 완료",
+      "refundRejected": "요청 거절"
     }
   },
   "common": {
@@ -618,6 +625,26 @@
     "modal": {
       "cancel": "취소",
       "agree": "동의합니다"
+    },
+    "confirmModal": {
+      "title": "결제 내용 확인",
+      "lead": "아래 내용이 맞는지 확인한 뒤 결제를 진행해 주세요.",
+      "product": "상품",
+      "plan": "요금제",
+      "listPrice": "정가",
+      "method": "결제 수단",
+      "card": "결제 카드",
+      "cardFallback": "카드",
+      "coupon": "쿠폰",
+      "buyer": "구매자",
+      "email": "이메일",
+      "phone": "연락처",
+      "total": "결제 금액",
+      "back": "다시 확인",
+      "proceed": "결제하기",
+      "processingTitle": "결제를 진행하고 있습니다",
+      "processingBody": "카드사 승인까지 최대 10초가 걸릴 수 있습니다.",
+      "doNotClose": "창을 닫거나 다시 누르지 말아 주세요."
     }
   },
   "login": {

@@ -10,6 +10,7 @@ import Seo from '../../components/Seo';
 import { usePreventRefresh } from '../../hooks/useNavigationGuard';
 import { formatPhoneNumber, formatPhoneNumberOnInput, cleanPhoneNumber } from '../../utils/phoneUtils';
 import { API_URL } from '../../utils/api';
+import PaymentConfirmModal, { ConfirmRow } from './PaymentConfirmModal';
 import Header from '../../components/Header';
 import CardRegisterModal from '../../components/CardRegisterModal';
 import './Payment.css';
@@ -116,9 +117,22 @@ const PaymentPage: React.FC = () => {
   const [agreeTermsOfService, setAgreeTermsOfService] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
-  // 결제 전송 중 여부 — 중복 승인 방지. 토스 응답이 수 초 걸리는 동안 버튼이 다시 눌리면
-  // 결제가 두 번 승인된다(2026-10-07 100원 2건 청구 사례).
+  // 결제 전송 중 여부. 상태만으로는 중복 클릭을 막을 수 없어서(아래 submittingRef 참고)
+  // 표시 전용으로 쓴다 — 실제 차단은 ref 와 서버 멱등키가 한다.
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+
+  // 중복 진입 차단은 ref 로 한다. 상태는 리렌더 뒤에야 반영되므로, 같은 렌더 안에서 두 번
+  // 눌리면 두 핸들러가 모두 옛 값(false)을 보고 통과한다. ref 는 즉시 바뀐다.
+  const submittingRef = useRef(false);
+
+  // 결제 확인 창 — 무엇을 결제하는지 보여 주고, 전송이 시작되면 진행 상태를 그 안에서 잇는다.
+  // 종전에는 버튼을 누르면 화면이 그대로 있다가 몇 초 뒤 완료 페이지로 넘어가, 그 침묵 구간에
+  // 사용자가 다시 눌러 결제가 두 번 됐다.
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  // 결제 시도마다 새로 만드는 멱등키. 버튼이 두 번 눌려 요청이 두 번 가도 같은 키가 실려
+  // 가므로 서버가 두 번째를 거부한다. 성공·실패로 끝나면 비워 다음 시도에 새 키를 받는다.
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   // 결제 수단 선택 상태 (card: 카드, bank: 계좌이체, vbank: 가상계좌)
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType>(null);
@@ -448,62 +462,139 @@ const PaymentPage: React.FC = () => {
   };
 
   /**
-   * 결제 시작. 전송 중 재진입을 막는 래퍼다.
+   * 확인 창에 보여 줄 항목. 고객이 "내가 맞게 고른 건지" 를 한눈에 볼 수 있어야 한다.
    *
-   * 토스 승인이 10초 가까이 걸릴 때가 있다(2026-10-07 실측 9초). 그 사이 버튼을 다시 누르면
-   * 결제가 두 번 승인된다 — 실제로 100원이 2.4초 간격으로 2건 청구됐다. 버튼 disabled 만으로는
-   * 부족하다(리렌더 전 연속 클릭·엔터 반복이 통과한다). 서버에도 같은 창을 막는 장치가 있다.
+   * 쿠폰은 적용했을 때만 줄을 넣는다 — 비어 있는 줄은 확인을 방해한다.
+   * 카드 결제는 어느 카드로 나가는지가 가장 중요하므로 마스킹 번호까지 보여 준다.
    */
-  const handlePayment = async () => {
-    if (isSubmittingPayment) return;
+  const buildConfirmRows = (): ConfirmRow[] => {
+    const rows: ConfirmRow[] = [];
+    if (selectedProduct) rows.push({ label: t('payment.confirmModal.product'), value: selectedProduct.name });
+    if (selectedPlan) {
+      rows.push({
+        label: t('payment.confirmModal.plan'),
+        value: selectedPlan.description
+          ? `${selectedPlan.name} (${selectedPlan.description})`
+          : selectedPlan.name,
+      });
+      rows.push({ label: t('payment.confirmModal.listPrice'), value: formatPrice(selectedPlan.price) });
+    }
+    rows.push({ label: t('payment.confirmModal.method'), value: getPaymentMethodType() });
+
+    if (selectedPaymentType === 'card') {
+      const card = billingCards.find((c) => c.id === selectedBillingKeyId);
+      if (card) {
+        rows.push({
+          label: t('payment.confirmModal.card'),
+          value: `${card.cardCompany || t('payment.confirmModal.cardFallback')} ${card.cardNumber || ''}`.trim(),
+        });
+      }
+    }
+    if (appliedCoupon) {
+      rows.push({
+        label: t('payment.confirmModal.coupon'),
+        value: `${appliedCoupon.code} (−${formatPrice(selectedPlan ? selectedPlan.price - getFinalPrice() : 0)})`,
+      });
+    }
+    rows.push({ label: t('payment.confirmModal.buyer'), value: paymentInfo.name });
+    rows.push({ label: t('payment.confirmModal.email'), value: paymentInfo.email });
+    rows.push({ label: t('payment.confirmModal.phone'), value: formatPhoneNumber(paymentInfo.phone) });
+    return rows;
+  };
+
+  /**
+   * 결제하기 버튼 — 바로 결제하지 않고 확인 창을 띄운다.
+   *
+   * 입력 검증을 여기서 먼저 하는 이유: 확인 창에 "무엇을 결제하는지" 를 보여 주려면 상품·요금제·
+   * 결제수단·구매자 정보가 모두 채워져 있어야 한다. 빈 값으로 창을 띄우면 확인의 의미가 없다.
+   */
+  const handlePaymentButtonClick = () => {
+    if (submittingRef.current) return;
+    if (!validatePaymentInput()) return;
+    setIsConfirmModalOpen(true);
+  };
+
+  /**
+   * 확인 창에서 '결제하기' 를 누른 시점 — 실제 결제를 시작한다.
+   *
+   * 중복 진입을 ref 로 막는다. 상태(isSubmittingPayment)는 리렌더 뒤에야 반영되므로 같은 렌더
+   * 안에서 두 번 눌리면 두 핸들러가 모두 옛 값을 보고 통과한다. 2026-10-07·10-12 두 번 모두
+   * 상태 기반 방어가 배포돼 있었는데도 100원이 2건 청구됐다 — 최종 방어선은 서버 멱등키다.
+   */
+  const handleConfirmPayment = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmittingPayment(true);
+
+    // 이 시도에 쓸 멱등키를 만든다. 재시도 때는 새 키를 받아야 하므로 끝에서 비운다.
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
     try {
       await runPayment();
     } finally {
       // 결제창 경로는 리다이렉트로 페이지를 떠나므로 이 복원이 쓰이지 않지만,
       // 실패·취소로 돌아왔을 때는 다시 시도할 수 있어야 한다.
+      submittingRef.current = false;
       setIsSubmittingPayment(false);
+      idempotencyKeyRef.current = null;
+      setIsConfirmModalOpen(false);
     }
   };
 
-  const runPayment = async () => {
+  /**
+   * 결제에 필요한 입력이 다 채워졌는지 본다. 확인 창을 띄우기 전에 한 번, 실제 전송 직전에
+   * 한 번 더 호출한다 — 창이 열린 동안 값이 바뀌었을 수 있다.
+   *
+   * @returns 통과하면 true. 실패하면 사용자에게 무엇이 비었는지 알리고 false.
+   */
+  const validatePaymentInput = (): boolean => {
     if (!selectedProduct) {
       showAlert({ message: t('alerts.selectProduct'), type: 'warning' });
-      return;
+      return false;
     }
     // 이미 보유한 상품은 결제 시도 자체를 차단 (뒤로가기 등으로 도달했을 때 방어).
     // 단 내부 전용 요금제는 예외 — 라이선스를 발급하지 않아 중복 구매가 되지 않고,
     // 결제 점검을 라이선스 보유 계정으로 해야 하기 때문이다. 서버도 같은 예외를 둔다.
     if (isProductOwned(selectedProduct) && !selectedPlan?.isInternal) {
       showAlert({ message: t('payment.alreadyOwnedError'), type: 'warning' });
-      return;
+      return false;
     }
     if (!selectedPlan) {
       showAlert({ message: t('alerts.selectPlan'), type: 'warning' });
-      return;
+      return false;
     }
     if (!selectedPaymentType) {
       showAlert({ message: t('alerts.selectPaymentMethod'), type: 'warning' });
-      return;
+      return false;
     }
     if (!paymentInfo.name || !paymentInfo.email || !paymentInfo.phone) {
       showAlert({ message: t('alerts.missingRequiredInfo'), type: 'warning' });
-      return;
+      return false;
     }
     if (!agreeTermsOfService || !agreePrivacy) {
       showAlert({ message: t('alerts.agreeTermsRequired'), type: 'warning' });
-      return;
+      return false;
     }
+    // 등록 카드 결제는 쓸 카드가 지정돼야 한다
+    if (selectedPaymentType === 'card' && !selectedBillingKeyId) {
+      showAlert({ message: t('payment.cards.selectRequired'), type: 'warning' });
+      return false;
+    }
+    return true;
+  };
+
+  const runPayment = async () => {
+    if (!validatePaymentInput() || !selectedProduct || !selectedPlan) return;
 
     // 구매자 정보 저장
     await saveUserInfo();
 
     // 카드 결제 → 등록 카드(빌링키)로 즉시 결제
     if (selectedPaymentType === 'card') {
-      if (!selectedBillingKeyId) {
-        showAlert({ message: t('payment.cards.selectRequired'), type: 'warning' });
-        return;
-      }
       try {
         const res = await fetch(`${API_URL}/api/payments/billing`, {
           method: 'POST',
@@ -513,6 +604,9 @@ const PaymentPage: React.FC = () => {
             pricePlanId: selectedPlan.id,
             billingKeyId: selectedBillingKeyId,
             enableAutoRenew: isSubscriptionPlan(selectedPlan),
+            // 같은 시도에서 요청이 두 번 가도 같은 키가 실린다 → 서버가 두 번째를 거부한다.
+            // 이게 이중 청구를 실제로 막는 지점이다 (클라이언트 상태 방어는 두 번 뚫렸다).
+            idempotencyKey: idempotencyKeyRef.current,
           }),
         });
         const data = await res.json();
@@ -1126,7 +1220,7 @@ const PaymentPage: React.FC = () => {
                 return (
                   <button
                     className={`payment-button ${canPay ? 'active' : ''}${isSubmittingPayment ? ' payment-button--processing' : ''}`}
-                    onClick={handlePayment}
+                    onClick={handlePaymentButtonClick}
                     disabled={!canPay}
                   >
                     {label}
@@ -1183,6 +1277,16 @@ const PaymentPage: React.FC = () => {
           setIsPrivacyModalOpen(false);
           setPendingTermsAgreement(false);
         }}
+      />
+
+      {/* 결제 확인 창 — 무엇을 결제하는지 보여 주고, 전송이 시작되면 진행 상태를 그 안에서 잇는다 */}
+      <PaymentConfirmModal
+        isOpen={isConfirmModalOpen}
+        rows={buildConfirmRows()}
+        totalLabel={formatPrice(getFinalPrice())}
+        isSubmitting={isSubmittingPayment}
+        onConfirm={handleConfirmPayment}
+        onClose={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

@@ -18,7 +18,7 @@ export const VALID_MENU_SECTIONS: MenuSection[] = [
   'profile', 'account', 'subscription', 'payment', 'redeem',
   'admin-users', 'admin-contacts',
   'admin-mailing', 'admin-popups',
-  'admin-products', 'admin-promotions', 'admin-payments',
+  'admin-products', 'admin-promotions', 'admin-payments', 'admin-refunds',
   'admin-licenses', 'admin-redeem',
 ];
 
@@ -43,6 +43,7 @@ export const MENU_LABEL_KEYS: Record<MenuSection, string> = {
   'admin-products': 'adminProducts',
   'admin-promotions': 'adminPromotions',
   'admin-payments': 'adminPayments',
+  'admin-refunds': 'adminRefunds',
   'admin-licenses': 'adminLicenses',
   'admin-redeem': 'adminRedeem',
 };
@@ -59,6 +60,6 @@ export const MENU_LABEL_KEYS: Record<MenuSection, string> = {
 export const ADMIN_MENU_GROUPS: { labelKey: string; items: MenuSection[] }[] = [
   { labelKey: 'myPage.menu.adminGroupMembers', items: ['admin-users', 'admin-contacts'] },
   { labelKey: 'myPage.menu.adminGroupComms', items: ['admin-mailing', 'admin-popups'] },
-  { labelKey: 'myPage.menu.adminGroupCommerce', items: ['admin-products', 'admin-promotions', 'admin-payments'] },
+  { labelKey: 'myPage.menu.adminGroupCommerce', items: ['admin-products', 'admin-promotions', 'admin-payments', 'admin-refunds'] },
   { labelKey: 'myPage.menu.adminGroupLicense', items: ['admin-licenses', 'admin-redeem'] },
 ];

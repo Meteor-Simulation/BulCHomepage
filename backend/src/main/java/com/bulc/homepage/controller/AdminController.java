@@ -12,6 +12,7 @@ import com.bulc.homepage.catalog.repository.ProductRepository;
 import com.bulc.homepage.repository.UserRepository;
 import com.bulc.homepage.payment.domain.Payment;
 import com.bulc.homepage.payment.service.PaymentCancelService;
+import com.bulc.homepage.payment.service.RefundRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,7 @@ public class AdminController {
     private final LicenseRepository licenseRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentCancelService paymentCancelService;
+    private final RefundRequestService refundRequestService;
 
     /**
      * 관리자 권한 체크 (000 또는 001)
@@ -727,6 +729,68 @@ public class AdminController {
         }
     }
 
+    /**
+     * 환불 요청 목록 (관리자). {@code ?status=PENDING} 으로 대기 건만 볼 수 있다.
+     */
+    @GetMapping("/refund-requests")
+    public ResponseEntity<?> getRefundRequests(@RequestParam(required = false) String status) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).body(new ErrorResponse("권한이 없습니다."));
+        }
+        List<RefundRequestService.View> views = refundRequestService.list(status).stream()
+                .map(refundRequestService::toView)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(views);
+    }
+
+    /**
+     * 환불 요청 승인 — 토스 승인취소까지 수행한다.
+     *
+     * <p>취소가 실패하면 요청은 대기 상태로 남는다. 환불이 안 됐는데 "환불 완료" 로 적히면
+     * 고객은 받은 줄 알고 기다리게 된다.
+     */
+    @PostMapping("/refund-requests/{requestId}/approve")
+    public ResponseEntity<?> approveRefundRequest(@PathVariable Long requestId,
+                                                  @RequestBody(required = false) RefundProcessRequest body) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).body(new ErrorResponse("권한이 없습니다."));
+        }
+        try {
+            var request = refundRequestService.approve(requestId, currentUserId(), body != null ? body.note() : null);
+            return ResponseEntity.ok(Map.of("success", true, "status", request.getStatus()));
+        } catch (RefundRequestService.RefundRequestException | PaymentCancelService.PaymentCancelException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /** 환불 요청 거절. 돈은 움직이지 않는다 — 사유를 남겨 고객이 알 수 있게 한다. */
+    @PostMapping("/refund-requests/{requestId}/reject")
+    public ResponseEntity<?> rejectRefundRequest(@PathVariable Long requestId,
+                                                 @RequestBody(required = false) RefundProcessRequest body) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(403).body(new ErrorResponse("권한이 없습니다."));
+        }
+        try {
+            var request = refundRequestService.reject(requestId, currentUserId(), body != null ? body.note() : null);
+            return ResponseEntity.ok(Map.of("success", true, "status", request.getStatus()));
+        } catch (RefundRequestService.RefundRequestException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /** 현재 로그인한 관리자 id — 누가 처리했는지 기록용. 형식이 어긋나도 처리 자체는 막지 않는다. */
+    private UUID currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(auth.getName());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     // DTOs
     public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
     public record ProductResponse(String id, String code, String name, String description, Boolean isActive, String createdAt) {}
@@ -737,5 +801,6 @@ public class AdminController {
     public record PaymentResponse(Long id, String userEmail, String userName, String orderId, Long amount, String currency, String status, String paymentMethod, String cardCompany, String cardNumber, Integer installmentMonths, String approveNo, String easyPayProvider, String bankName, String accountNumber, String dueDate, String depositorName, String settlementStatus, String createdAt) {}
     public record RoleUpdateRequest(String rolesCode) {}
     public record PaymentCancelRequest(String reason) {}
+    public record RefundProcessRequest(String note) {}
     public record ErrorResponse(String message) {}
 }

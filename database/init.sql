@@ -469,6 +469,7 @@ CREATE TABLE payments (
     client_ip           VARCHAR(45) NULL,
     promotion_code      VARCHAR(50) NULL,
     discount_amount     DECIMAL(18,2) NULL,
+    idempotency_key     VARCHAR(300) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -485,8 +486,13 @@ COMMENT ON COLUMN payments.fail_reason IS '결제 실패/오류 사유 (디버�
 COMMENT ON COLUMN payments.client_ip IS '결제 요청 클라이언트 IP (감사 추적용)';
 COMMENT ON COLUMN payments.promotion_code IS '적용된 쿠폰 코드 (promotions.code 의 결제 시점 스냅샷, 미적용 시 NULL). FK 아님 — 프로모션이 삭제돼도 결제 사실은 남아야 한다';
 COMMENT ON COLUMN payments.discount_amount IS '서버가 산정한 할인액. amount = 정가 - discount_amount (미적용 시 NULL)';
+COMMENT ON COLUMN payments.idempotency_key IS '결제 멱등키 — 같은 키로 두 번 요청해도 한 번만 승인된다. 토스 Idempotency-Key 로도 함께 전달';
 
 CREATE INDEX idx_payments_promotion_code ON payments(promotion_code) WHERE promotion_code IS NOT NULL;
+
+-- 중복 승인 차단의 본체. "검사 후 실행" 이 아니라 "예약에 성공한 쪽만 실행" 이 되게 한다 —
+-- 동시 요청 둘이 와도 INSERT 에서 하나가 지고, 진 쪽은 토스를 부르지 못한다.
+CREATE UNIQUE INDEX uq_payments_idempotency_key ON payments(idempotency_key) WHERE idempotency_key IS NOT NULL;
 
 -- =========================================================
 -- 8. payment_details (결제 상세 테이블)
@@ -537,6 +543,41 @@ COMMENT ON COLUMN payment_details.account_number IS '가상계좌 번호';
 COMMENT ON COLUMN payment_details.due_date IS '입금 기한 (가상계좌)';
 COMMENT ON COLUMN payment_details.depositor_name IS '입금자명 (가상계좌)';
 COMMENT ON COLUMN payment_details.settlement_status IS '정산 상태 (계좌이체)';
+
+-- =========================================================
+-- 8-2. refund_requests (환불 요청 테이블)
+-- =========================================================
+-- 고객이 직접 환불을 실행하게 두지 않는다. 환불은 돈이 나가는 일이고 사유 확인·중복 검토가
+-- 필요하다. 고객은 요청만 내고, 실제 승인취소는 관리자가 결제관리에서 수행한다.
+CREATE TABLE refund_requests (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    payment_id      BIGINT NOT NULL,
+    user_id         UUID NOT NULL,
+    reason          TEXT NOT NULL,
+    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    admin_note      TEXT NULL,
+    processed_by    UUID NULL,
+    processed_at    TIMESTAMP NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_refund_requests_payment FOREIGN KEY (payment_id) REFERENCES payments(id),
+    CONSTRAINT fk_refund_requests_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT ck_refund_requests_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))
+);
+
+COMMENT ON TABLE refund_requests IS '환불 요청 - 고객이 신청하고 관리자가 결제관리에서 처리한다';
+COMMENT ON COLUMN refund_requests.reason IS '고객이 적은 환불 사유';
+COMMENT ON COLUMN refund_requests.status IS 'PENDING 대기 · APPROVED 환불완료 · REJECTED 거절';
+COMMENT ON COLUMN refund_requests.admin_note IS '관리자 메모 (거절 사유 등). 고객에게 보여 줄 수 있다';
+COMMENT ON COLUMN refund_requests.processed_by IS '처리한 관리자 user id';
+
+-- 결제당 대기 중 요청은 1건만 — 둘이 있으면 관리자가 무엇을 처리할지 알 수 없다.
+-- 거절·완료된 뒤에는 다시 낼 수 있다.
+CREATE UNIQUE INDEX uq_refund_requests_pending_payment
+    ON refund_requests (payment_id) WHERE status = 'PENDING';
+CREATE INDEX idx_refund_requests_status_created ON refund_requests (status, created_at DESC);
+CREATE INDEX idx_refund_requests_user ON refund_requests (user_id, created_at DESC);
 
 -- =========================================================
 -- 9. activity_logs (활동 로그 테이블)

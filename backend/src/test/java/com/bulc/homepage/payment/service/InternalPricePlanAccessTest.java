@@ -223,7 +223,7 @@ class InternalPricePlanAccessTest {
 
             // 이 경로의 과금은 billingKeyService 가 수행한다. 불리지 않았어야 한다.
             verify(billingKeyService, never())
-                    .requestBillingPayment(anyLong(), anyString(), anyString(), anyInt(), any(UUID.class));
+                    .requestBillingPayment(anyLong(), anyString(), anyString(), anyInt(), any(UUID.class), anyString());
         }
 
         @Test
@@ -239,7 +239,7 @@ class InternalPricePlanAccessTest {
             }
 
             verify(billingKeyService)
-                    .requestBillingPayment(anyLong(), anyString(), anyString(), anyInt(), any(UUID.class));
+                    .requestBillingPayment(anyLong(), anyString(), anyString(), anyInt(), any(UUID.class), anyString());
         }
     }
 }

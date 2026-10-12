@@ -4,6 +4,7 @@ import com.bulc.homepage.payment.dto.BillingPaymentRequest;
 import com.bulc.homepage.payment.dto.PaymentConfirmRequest;
 import com.bulc.homepage.audit.api.ActivityLogPort;
 import com.bulc.homepage.payment.service.PaymentService;
+import com.bulc.homepage.payment.service.RefundRequestService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final ActivityLogPort activityLogPort;
+    private final RefundRequestService refundRequestService;
 
     /**
      * 결제 승인 API
@@ -142,6 +144,35 @@ public class PaymentController {
         UUID userId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(paymentService.getMyPaymentHistory(userId));
     }
+
+    /**
+     * 환불 신청 (고객). 신청만 접수되고 실제 승인취소는 관리자가 결제관리에서 수행한다.
+     *
+     * <p>고객이 직접 환불을 실행하게 두지 않는 이유: 환불은 돈이 나가는 일이고 사유 확인·중복
+     * 검토가 필요하다. 본인 결제인지는 서버가 다시 확인한다 — 결제 id 는 추측 가능한 숫자다.
+     */
+    @PostMapping("/me/{paymentId}/refund-request")
+    public ResponseEntity<?> requestRefund(@PathVariable Long paymentId,
+                                           @RequestBody(required = false) RefundRequestBody body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+        }
+        UUID userId = UUID.fromString(authentication.getName());
+        try {
+            var request = refundRequestService.request(paymentId, userId, body != null ? body.reason() : null);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "requestId", request.getId(),
+                    "status", request.getStatus()
+            ));
+        } catch (RefundRequestService.RefundRequestException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    public record RefundRequestBody(String reason) {}
 
     /**
      * 결제 정보 조회 API

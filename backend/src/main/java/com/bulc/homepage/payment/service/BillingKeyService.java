@@ -203,12 +203,23 @@ public class BillingKeyService {
         }
     }
 
-    /**
-     * 빌링키로 결제 요청
-     */
+    /** 멱등키 없이 호출하는 경로(자동갱신 스케줄러 등)를 위한 오버로드. */
     @Transactional
     public Map<String, Object> requestBillingPayment(Long billingKeyId, String orderId, String orderName,
                                                       int amount, UUID userId) {
+        return requestBillingPayment(billingKeyId, orderId, orderName, amount, userId, null);
+    }
+
+    /**
+     * 빌링키로 결제 요청.
+     *
+     * @param idempotencyKey 토스 {@code Idempotency-Key} 로 전달할 값. 같은 키로 두 번 요청하면
+     *                       토스가 재청구하지 않고 원래 응답을 돌려준다(15일 유효). null 이면 생략.
+     *                       우리 DB 유니크 제약과 함께 2중으로 이중 청구를 막는다.
+     */
+    @Transactional
+    public Map<String, Object> requestBillingPayment(Long billingKeyId, String orderId, String orderName,
+                                                      int amount, UUID userId, String idempotencyKey) {
         log.info("빌링 결제 요청: billingKeyId={}, orderId={}, amount={}", billingKeyId, orderId, amount);
 
         BillingKey billingKey = billingKeyRepository.findByIdAndIsActiveTrue(billingKeyId)
@@ -220,6 +231,11 @@ public class BillingKeyService {
 
         HttpHeaders headers = createAuthHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            // 같은 키로 다시 요청하면 토스가 재청구하지 않고 원래 응답을 돌려준다.
+            // 우리 DB 유니크 제약을 뚫더라도 돈이 두 번 나가지 않게 하는 마지막 방어선이다.
+            headers.set("Idempotency-Key", idempotencyKey);
+        }
 
         Map<String, Object> body = new HashMap<>();
         body.put("customerKey", billingKey.getCustomerKey());
