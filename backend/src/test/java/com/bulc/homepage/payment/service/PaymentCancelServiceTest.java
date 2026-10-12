@@ -3,7 +3,9 @@ package com.bulc.homepage.payment.service;
 import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.payment.domain.Payment;
 import com.bulc.homepage.payment.domain.PaymentDetail;
+import com.bulc.homepage.payment.domain.RefundRequest;
 import com.bulc.homepage.payment.repository.PaymentRepository;
+import com.bulc.homepage.payment.repository.RefundRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +60,7 @@ class PaymentCancelServiceTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock private PaymentRepository paymentRepository;
+    @Mock private RefundRequestRepository refundRequestRepository;
     @Mock private TossPaymentsConfig tossPaymentsConfig;
     @Mock private RestTemplate restTemplate;
 
@@ -68,6 +71,22 @@ class PaymentCancelServiceTest {
     void setUp() {
         ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
         when(tossPaymentsConfig.getSecretKey()).thenReturn("test_sk_dummy");
+        // 기본은 "걸려 있는 환불 요청 없음". 있는 경우는 givenPendingRequest 로 따로 세운다.
+        when(refundRequestRepository.findByPaymentIdAndStatus(any(), anyString()))
+                .thenReturn(Optional.empty());
+    }
+
+    private RefundRequest givenPendingRequest() {
+        RefundRequest request = RefundRequest.builder()
+                .paymentId(PAYMENT_ID)
+                .userId(UUID.randomUUID())
+                .reason("중복 결제")
+                .status(RefundRequest.STATUS_PENDING)
+                .build();
+        request.setId(9L);
+        when(refundRequestRepository.findByPaymentIdAndStatus(PAYMENT_ID, RefundRequest.STATUS_PENDING))
+                .thenReturn(Optional.of(request));
+        return request;
     }
 
     private Payment givenPayment(String status, boolean withKey) {
@@ -145,6 +164,35 @@ class PaymentCancelServiceTest {
 
             assertThat(payment.getRefundReason()).isEqualTo("관리자 취소");
         }
+
+        @Test
+        @DisplayName("걸려 있던 환불 요청을 함께 닫는다 — 안 닫으면 영원히 대기로 남는다")
+        void closesPendingRefundRequest() {
+            givenPayment("C", true);
+            givenTossCancels("CANCELED", "0");
+            RefundRequest request = givenPendingRequest();
+
+            service.cancel(PAYMENT_ID, "중복 결제 취소", operator);
+
+            // 고객이 요청했고 실제로 환불됐으므로 APPROVED 가 맞다
+            assertThat(request.getStatus()).isEqualTo(RefundRequest.STATUS_APPROVED);
+            assertThat(request.getProcessedBy()).isEqualTo(operator);
+            assertThat(request.getProcessedAt()).isNotNull();
+            // 어디서 처리됐는지 남겨 둬야 나중에 경위를 알 수 있다
+            assertThat(request.getAdminNote()).contains("결제관리에서 직접 환불 처리");
+            verify(refundRequestRepository).save(request);
+        }
+
+        @Test
+        @DisplayName("걸려 있는 요청이 없으면 아무것도 저장하지 않는다")
+        void noRequestToClose() {
+            givenPayment("C", true);
+            givenTossCancels("CANCELED", "0");
+
+            service.cancel(PAYMENT_ID, "사유", operator);
+
+            verify(refundRequestRepository, never()).save(any(RefundRequest.class));
+        }
     }
 
     @Nested
@@ -210,6 +258,7 @@ class PaymentCancelServiceTest {
         void partialCancelIsRefused() {
             Payment payment = givenPayment("C", true);
             givenTossCancels("PARTIAL_CANCELED", "50");
+            RefundRequest request = givenPendingRequest();
 
             assertThatThrownBy(() -> service.cancel(PAYMENT_ID, "사유", operator))
                     .isInstanceOf(PaymentCancelService.PaymentCancelException.class)
@@ -219,6 +268,9 @@ class PaymentCancelServiceTest {
             assertThat(payment.getStatus()).isEqualTo("C");
             assertThat(payment.getRefundedAt()).isNull();
             verify(paymentRepository, never()).save(any(Payment.class));
+            // 환불이 안 됐으므로 요청도 대기로 남아야 한다 — 닫으면 고객이 받은 줄 안다
+            assertThat(request.getStatus()).isEqualTo(RefundRequest.STATUS_PENDING);
+            verify(refundRequestRepository, never()).save(any(RefundRequest.class));
         }
 
         @Test

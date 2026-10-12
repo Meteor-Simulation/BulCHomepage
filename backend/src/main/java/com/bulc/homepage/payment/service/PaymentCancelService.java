@@ -3,7 +3,9 @@ package com.bulc.homepage.payment.service;
 import com.bulc.homepage.config.TossPaymentsConfig;
 import com.bulc.homepage.payment.domain.Payment;
 import com.bulc.homepage.payment.domain.PaymentDetail;
+import com.bulc.homepage.payment.domain.RefundRequest;
 import com.bulc.homepage.payment.repository.PaymentRepository;
+import com.bulc.homepage.payment.repository.RefundRequestRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,11 @@ import java.util.UUID;
 public class PaymentCancelService {
 
     private final PaymentRepository paymentRepository;
+    /**
+     * 요청을 함께 닫기 위해 리포지토리를 직접 쓴다. RefundRequestService 를 주입하면
+     * 그쪽이 이 서비스를 쓰고 있어 순환 의존이 된다.
+     */
+    private final RefundRequestRepository refundRequestRepository;
     private final TossPaymentsConfig tossPaymentsConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -105,6 +112,24 @@ public class PaymentCancelService {
         payment.setRefundReason(cancelReason);
         detail.setTossStatus(tossStatus != null ? tossStatus : "CANCELED");
         paymentRepository.save(payment);
+
+        // 이 결제에 걸려 있던 환불 요청을 함께 닫는다.
+        //
+        // 종전에는 결제관리에서 직접 취소하면 요청이 PENDING 으로 남았다. 그러면 환불은 끝났는데
+        // 요청 목록에는 영원히 대기로 보이고, 결제관리에도 처리 버튼이 계속 떴다
+        // (2026-10-12: BILL-10-1791776913624 — 결제는 R 인데 요청은 PENDING).
+        //
+        // 고객이 환불을 요청했고 실제로 환불됐으므로 APPROVED 가 맞다. 요청 화면에서 승인한
+        // 경우에는 RefundRequestService 가 이미 상태를 바꾸므로 여기서 또 바꿀 일이 없다
+        // (그쪽은 cancel() 이 끝난 뒤에 approve() 를 호출한다 — 이 조회에 걸리지 않는다).
+        refundRequestRepository
+                .findByPaymentIdAndStatus(paymentId, RefundRequest.STATUS_PENDING)
+                .ifPresent(request -> {
+                    request.approve(operator, "결제관리에서 직접 환불 처리: " + cancelReason);
+                    refundRequestRepository.save(request);
+                    log.info("[결제취소] 대기 중이던 환불 요청 함께 처리 - requestId={}, paymentId={}",
+                            request.getId(), paymentId);
+                });
 
         log.info("[결제취소] 완료 - paymentId={}, orderId={}, tossStatus={}, operator={}",
                 paymentId, detail.getOrderId(), tossStatus, operator);
