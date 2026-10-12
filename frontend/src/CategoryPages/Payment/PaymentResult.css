@@ -3,15 +3,28 @@
 ======================================== */
 
 .payment-result-page {
+  /*
+    헤더는 position: fixed 라 레이아웃 공간을 차지하지 않는다(index.css). 그래서 이만큼
+    비워 주지 않으면 카드가 헤더 밑으로 파고들어, 흰 헤더와 흰 카드가 한 덩어리처럼 붙어
+    보인다. 종전에는 min-height 에서만 80px 를 빼고 실제 여백은 주지 않아 어긋나 있었다.
+
+    84px = 헤더 상하 패딩 20+20 + 로고 40 + 로고 하단 패딩 4.
+    한 곳에서만 관리하도록 변수로 둔다 — 아래 min-height 와 값이 엇갈리면 스크롤이 생긴다.
+  */
+  --result-header-offset: 84px;
+
   min-height: 100vh;
   background: #f5f5f7;
+  /* 전역 box-sizing: border-box 라 이 패딩은 100vh 안에 들어간다 (불필요한 스크롤 없음) */
+  padding-top: var(--result-header-offset);
 }
 
 .payment-result-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - var(--result-header-offset));
+  /* 상단 40px 이 헤더와 카드 사이의 실제 간격이 된다 */
   padding: 40px 20px;
 }
 
@@ -300,6 +313,18 @@
 }
 
 /* 반응형 */
+
+/*
+  이 폭에서는 헤더가 낮아진다 — index.css 의 같은 분기에서 패딩 16+16, 로고 32 로 줄어
+  68px 가 된다(= 16+16+32+4). 분기점을 index.css 와 똑같이 유지해야 한다.
+  어긋나면 헤더와 카드 사이 간격만 어색해진다(레이아웃이 깨지지는 않는다).
+*/
+@media (max-width: 320px) {
+  .payment-result-page {
+    --result-header-offset: 68px;
+  }
+}
+
 @media (max-width: 480px) {
   .payment-result-card {
     padding: 32px 24px;
