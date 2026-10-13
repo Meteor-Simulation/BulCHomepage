@@ -19,6 +19,8 @@
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  /* 처리 중 덮개(ProcessingBlocker)가 이 창 기준으로 깔리게 한다 */
+  position: relative;
 }
 
 .card-modal__header {

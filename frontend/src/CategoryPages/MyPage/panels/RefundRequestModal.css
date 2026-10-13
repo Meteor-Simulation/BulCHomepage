@@ -4,7 +4,7 @@
 .refund-request-modal {
   /* 사유 목록이 길지 않으므로 관리자 모달(620px)보다 좁게 — 선택지가 가로로 늘어지면 읽기 어렵다 */
   max-width: 460px;
-  /* 처리 중 덮개(.refund-review-blocker)가 이 창 기준으로 깔리게 한다 */
+  /* 처리 중 덮개(ProcessingBlocker)가 이 창 기준으로 깔리게 한다 */
   position: relative;
 }
 
