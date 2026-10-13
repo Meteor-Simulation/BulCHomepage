@@ -642,9 +642,8 @@
       "total": "Total",
       "back": "Cancel",
       "proceed": "Pay",
-      "processingTitle": "Processing your payment",
-      "processingBody": "Card approval can take up to 10 seconds.",
-      "doNotClose": "Please do not close this window or click again."
+      "processingTitle": "Processing your payment.",
+      "processingBody": "Please keep this window open while the card is approved."
     }
   },
   "login": {

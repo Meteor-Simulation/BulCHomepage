@@ -44,10 +44,10 @@ const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
           <div className="payment-confirm-progress">
             <div className="payment-confirm-spinner" aria-hidden="true" />
             <h3>{t('payment.confirmModal.processingTitle')}</h3>
-            <p>{t('payment.confirmModal.processingBody')}</p>
-            {/* 결제창 경로는 토스 화면으로 넘어가므로 이 문구가 잠깐만 보인다.
-                등록 카드 결제는 응답까지 7~9초 걸려 이 구간이 길다. */}
-            <p className="payment-confirm-warning">{t('payment.confirmModal.doNotClose')}</p>
+            {/* "창을 닫지 말라" 는 당부를 본문에 합쳤다 — 줄이 셋이면 읽히지 않고, 정작 중요한
+                한 줄이 묻힌다. 결제창 경로는 토스 화면으로 넘어가 잠깐만 보이지만, 등록 카드
+                결제는 응답까지 7~9초 걸려 이 구간이 길다. */}
+            <p className="payment-confirm-warning">{t('payment.confirmModal.processingBody')}</p>
           </div>
         ) : (
           <>
