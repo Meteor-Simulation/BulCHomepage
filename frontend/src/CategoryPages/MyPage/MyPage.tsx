@@ -28,6 +28,7 @@ import type { PaymentHistoryItem } from './panels/PaymentHistoryPanel';
 import type { AdminRefundRequest } from './panels/AdminRefundRequestsPanel';
 import RefundRequestModal, { RefundRequestTarget } from './panels/RefundRequestModal';
 import RefundReviewModal, { RefundReviewTarget } from './panels/RefundReviewModal';
+import ProcessingBlocker from '../../components/ProcessingBlocker';
 import './MyPage.css';
 
 // 토스 빌링 인증(카드 등록)용 클라이언트 키 — Payment 페이지와 동일
@@ -1472,6 +1473,20 @@ const MyPage: React.FC = () => {
         isSubmitting={requestingRefundId !== null}
         onSubmit={submitRefundRequest}
         onClose={() => setRefundTarget(null)}
+      />
+
+      {/*
+        모달 없이 목록에서 바로 처리하는 흐름의 차단 — 결제관리의 직접 환불(window.confirm 경로)과
+        환불 요청 메뉴의 승인·거절이 여기 해당한다. 모달이 없으니 화면 전체를 덮는다.
+
+        확인 창이 열려 있을 때는 그 창이 자기 덮개를 띄우므로 제외한다 — 둘이 겹치면
+        덮개가 두 겹으로 깔려 더 흐려진다.
+      */}
+      <ProcessingBlocker
+        isActive={cancelingPaymentId !== null || (processingRefundId !== null && !refundReviewTarget)}
+        title="환불을 처리하고 있습니다"
+        description={'카드사 승인취소까지 수 초가 걸릴 수 있습니다.\n페이지를 벗어나지 마세요.'}
+        fullscreen
       />
 
       {/* 환불 요청 확인·처리 창 (관리자) — 결제관리 목록에서 바로 띄운다 */}

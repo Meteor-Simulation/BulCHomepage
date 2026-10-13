@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { API_URL } from '../utils/api';
+import ProcessingBlocker from './ProcessingBlocker';
 import './CardRegisterModal.css';
 
 interface CardRegisterModalProps {
@@ -119,6 +120,14 @@ const CardRegisterModal: React.FC<CardRegisterModalProps> = ({ onClose, onSucces
       onMouseDown={(e) => { if (e.target === e.currentTarget && !isSubmitting) onClose(); }}
     >
       <div className="card-modal" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="card-modal-title">
+        {/* 카드 등록은 토스에 빌링키 발급을 요청한다 — 중복 호출이면 카드가 두 번 등록된다.
+            전송 중에는 창을 덮어 다시 누르거나 닫으려는 시도 자체를 막는다. */}
+        <ProcessingBlocker
+          isActive={isSubmitting}
+          title="카드를 등록하고 있습니다"
+          description={'카드사 확인까지 수 초가 걸릴 수 있습니다.\n창을 닫지 마세요.'}
+        />
+
         <div className="card-modal__header">
           <h2 className="card-modal__title" id="card-modal-title">{t('payment.cardForm.title')}</h2>
           <button

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ProcessingBlocker from '../../../components/ProcessingBlocker';
 import './RefundReviewModal.css';
 
 /**
@@ -96,13 +97,11 @@ const RefundReviewModal: React.FC<RefundReviewModalProps> = ({
           환불이 진행 중인지 알 수 없어 같은 건을 또 처리하려 한다.
           (결제 쪽에서 같은 이유로 100원이 두 번 청구된 전례가 있다)
         */}
-        {isProcessing && (
-          <div className="refund-review-blocker" aria-live="polite" aria-busy="true">
-            <div className="refund-review-blocker-spinner" aria-hidden="true" />
-            <p>환불을 처리하고 있습니다</p>
-            <small>카드사 승인취소까지 수 초가 걸릴 수 있습니다. 창을 닫지 마세요.</small>
-          </div>
-        )}
+        <ProcessingBlocker
+          isActive={isProcessing}
+          title="환불을 처리하고 있습니다"
+          description={'카드사 승인취소까지 수 초가 걸릴 수 있습니다.\n창을 닫지 마세요.'}
+        />
 
         <div className="admin-modal-header">
           <h3>환불 요청 확인</h3>

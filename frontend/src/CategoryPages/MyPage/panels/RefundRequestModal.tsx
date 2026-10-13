@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import ProcessingBlocker from '../../../components/ProcessingBlocker';
 import './RefundRequestModal.css';
-// 처리 중 차단 덮개(.refund-review-blocker)는 두 창이 같은 모양이어야 하므로 한 곳에 둔다
-import './RefundReviewModal.css';
 
 /**
  * 환불 신청 창.
@@ -75,15 +74,11 @@ const RefundRequestModal: React.FC<RefundRequestModalProps> = ({
   return (
     <div className="admin-modal-overlay" onClick={handleOverlayClick}>
       <div className="admin-modal refund-request-modal" onClick={(e) => e.stopPropagation()}>
-        {/* 전송 중에는 창을 덮어 클릭 자체를 막는다 — disabled 만으로는 다시 누르거나
-            닫으려 시도하게 되고, 닫으면 접수됐는지 알 수 없어 같은 신청을 반복한다 */}
-        {isSubmitting && (
-          <div className="refund-review-blocker" aria-live="polite" aria-busy="true">
-            <div className="refund-review-blocker-spinner" aria-hidden="true" />
-            <p>환불 요청을 접수하고 있습니다</p>
-            <small>잠시만 기다려 주세요.</small>
-          </div>
-        )}
+        <ProcessingBlocker
+          isActive={isSubmitting}
+          title="환불 요청을 접수하고 있습니다"
+          description="잠시만 기다려 주세요."
+        />
 
         <div className="admin-modal-header">
           <h3>환불 요청</h3>
