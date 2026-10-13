@@ -277,9 +277,22 @@ public class BillingKeyService {
             } else {
                 throw new RuntimeException("빌링 결제 실패");
             }
+        } catch (HttpClientErrorException e) {
+            // 토스가 거절한 사유만 꺼내 올린다. 종전에는 e.getMessage() 를 그대로 붙여서
+            // 고객 화면에 이런 게 떴다 (2026-10-13 실제 사례):
+            //   빌링 결제 중 오류가 발생했습니다: 403 Forbidden: {"code":"REJECT_ACCOUNT_PAYMENT",
+            //   "message":"잔액부족으로 결제에 실패했습니다."}
+            // 고객이 읽어야 할 것은 "잔액부족으로 결제에 실패했습니다" 한 줄이다.
+            // 카드 등록(registerCardDirect)은 이미 이렇게 처리하고 있었는데 결제 쪽만 빠져 있었다.
+            String detail = extractTossErrorMessage(e.getResponseBodyAsString());
+            log.error("빌링 결제 거절 - orderId={}, status={}, reason={}", orderId, e.getStatusCode(), detail);
+            throw new RuntimeException(detail);
+        } catch (RuntimeException e) {
+            // 위에서 직접 던진 메시지(권한 없음·빌링 결제 실패)는 그대로 통과시킨다
+            throw e;
         } catch (Exception e) {
-            log.error("빌링 결제 오류: {}", e.getMessage(), e);
-            throw new RuntimeException("빌링 결제 중 오류가 발생했습니다: " + e.getMessage());
+            log.error("빌링 결제 오류 - orderId={}, type={}", orderId, e.getClass().getSimpleName(), e);
+            throw new RuntimeException("결제 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 

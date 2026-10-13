@@ -58,6 +58,8 @@ public class PaymentService {
     private final BillingKeyService billingKeyService;
     private final PromotionService promotionService;
     private final RefundRequestRepository refundRequestRepository;
+    /** 실패 기록은 이 서비스의 롤백에 휩쓸리면 안 되므로 별도 빈을 거쳐야 한다 */
+    private final PaymentFailureRecorder paymentFailureRecorder;
 
     /**
      * 본인 결제 내역 조회 (MDP-576). 최신순. 민감 필드 제외 DTO로 변환.
@@ -544,19 +546,18 @@ public class PaymentService {
             charge = billingKeyService.requestBillingPayment(
                     request.getBillingKeyId(), orderId, orderName, amount, userId, idempotencyKey);
         } catch (RuntimeException e) {
-            // 실패를 기록으로 남긴다. 멱등키가 실패 행에 묶여 있으면 사용자가 다시 시도할 수
-            // 없으므로 키를 비운다 — 재시도 때 클라이언트가 새 키를 들고 온다.
-            payment.setStatus("F");
-            payment.setFailReason(e.getMessage());
-            payment.setIdempotencyKey(null);
-            paymentRepository.save(payment);
+            // 실패 기록은 반드시 별도 트랜잭션에서 남겨야 한다.
+            //
+            // 종전에는 여기서 payment 를 F 로 바꿔 저장했는데, 이 메서드가 @Transactional 이라
+            // 아래에서 예외를 다시 던지면 Spring 이 트랜잭션 전체를 롤백해 그 기록까지 지웠다.
+            // 2026-10-13 카드 거절(잔액부족) 때 status='F' 행이 한 건도 남지 않은 것이 그 때문이다.
+            //
+            // 위에서 심은 P 행도 함께 롤백된다 — 멱등키가 풀리므로 재시도를 막지 않는다.
+            recordBillingFailure(userId, user, pricePlan, amount, orderName, clientIp, e.getMessage());
             throw e;
         }
         if (!Boolean.TRUE.equals(charge.get("success"))) {
-            payment.setStatus("F");
-            payment.setFailReason("빌링 결제 실패");
-            payment.setIdempotencyKey(null);
-            paymentRepository.save(payment);
+            recordBillingFailure(userId, user, pricePlan, amount, orderName, clientIp, "빌링 결제 실패");
             throw new RuntimeException("결제에 실패했습니다.");
         }
 
@@ -815,6 +816,16 @@ public class PaymentService {
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + encodedCredentials);
         return headers;
+    }
+
+    /** 빌링 결제 실패를 독립 트랜잭션에 남긴다 (이 메서드의 롤백에 휩쓸리지 않게). */
+    private void recordBillingFailure(UUID userId, User user, PricePlan pricePlan,
+                                      int amount, String orderName, String clientIp, String reason) {
+        paymentFailureRecorder.recordBillingFailure(
+                userId,
+                user != null ? user.getEmail() : null,
+                user != null ? user.getName() : null,
+                pricePlan, amount, orderName, clientIp, reason);
     }
 
     /**
