@@ -640,8 +640,8 @@
       "email": "Email",
       "phone": "Phone",
       "total": "Total",
-      "back": "Go back",
-      "proceed": "Pay now",
+      "back": "Cancel",
+      "proceed": "Pay",
       "processingTitle": "Processing your payment",
       "processingBody": "Card approval can take up to 10 seconds.",
       "doNotClose": "Please do not close this window or click again."
