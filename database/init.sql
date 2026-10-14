@@ -520,6 +520,7 @@ CREATE TABLE payment_details (
     settlement_status   VARCHAR(20) NULL,
     toss_status         VARCHAR(50) NULL,
     toss_response_summary TEXT NULL,
+    toss_secret         VARCHAR(64) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -533,6 +534,7 @@ COMMENT ON COLUMN payment_details.card_company IS '카드사명 (card_issuer_cod
 COMMENT ON COLUMN payment_details.card_issuer_code IS '토스 카드사 코드 원본 (card.issuerCode, 예 61=현대)';
 COMMENT ON COLUMN payment_details.card_number IS '마스킹된 카드번호';
 COMMENT ON COLUMN payment_details.toss_status IS '토스페이먼츠 결제 상태 (DONE, WAITING_FOR_DEPOSIT, CANCELED 등)';
+COMMENT ON COLUMN payment_details.toss_secret IS '웹훅 검증용 토스 secret. 웹훅 본문의 secret 과 대조한다 (NULL 이면 대조를 건너뛰고 재조회 검증만 적용)';
 COMMENT ON COLUMN payment_details.toss_response_summary IS '토스 API 응답 요약 (민감정보 제외, 디버깅용)';
 COMMENT ON COLUMN payment_details.installment_months IS '할부 개월수 (0: 일시불)';
 COMMENT ON COLUMN payment_details.approve_no IS '카드 승인번호';

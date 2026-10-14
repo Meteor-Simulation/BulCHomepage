@@ -82,6 +82,16 @@ public class PaymentDetail {
     @Column(name = "toss_response_summary", columnDefinition = "TEXT")
     private String tossResponseSummary;
 
+    /**
+     * 웹훅 검증용 토스 secret (결제 승인 응답의 최상위 {@code secret}, 최대 50자).
+     *
+     * <p>가상계좌 입금 완료 웹훅 본문의 {@code secret} 과 대조한다. 값이 다르면 제3자가 보낸
+     * 위조 요청이다. 가상계좌 결제에만 담기므로 카드 결제에서는 NULL 로 남는다 —
+     * NULL 이면 대조를 건너뛰고 재조회 검증만 적용한다(과거 결제의 웹훅을 막아선 안 된다).
+     */
+    @Column(name = "toss_secret", length = 64)
+    private String tossSecret;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

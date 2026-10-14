@@ -703,7 +703,10 @@ public class PaymentService {
                 .paymentMethod(paymentMethodCode)
                 .paymentProvider("TOSS")
                 .tossStatus(tossStatus)
-                .tossResponseSummary(responseSummary);
+                .tossResponseSummary(responseSummary)
+                // 가상계좌 입금 완료 웹훅을 검증할 값. 가상계좌 결제에만 담겨 오고
+                // 카드 결제에서는 없어서 null 이 된다 — 그래도 꺼내 둬야 입금 웹훅을 검증할 수 있다.
+                .tossSecret(responseBody.path("secret").asText(null));
 
         // 카드 결제 정보 파싱
         if ("CARD".equals(paymentMethodCode)) {
