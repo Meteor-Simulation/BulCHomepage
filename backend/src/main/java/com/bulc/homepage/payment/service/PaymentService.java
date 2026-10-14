@@ -268,7 +268,11 @@ public class PaymentService {
 
                 // 즉시 완료 상태 (카드, 계좌이체 등) - 구독 생성 및 라이선스 발급
                 if ("DONE".equals(paymentStatus)) {
-                    Subscription subscription = createSubscriptionForPayment(userEmail, pricePlan);
+                    // userEmail 은 이름과 달리 UUID 문자열이다(위 주석 참고). 종전에는 이 값을
+                    // 이메일로 조회하는 createSubscriptionForPayment 에 넘겨 늘 예외가 났다 —
+                    // 이 메서드가 @Transactional 이므로 토스에서 돈은 이미 빠져나간 뒤 결제
+                    // 기록까지 롤백됐다. 이미 꺼내 둔 user 를 쓴다.
+                    Subscription subscription = createSubscriptionForUser(user.getId(), pricePlan);
                     result.put("subscriptionId", subscription.getId());
                     result.put("subscriptionEndDate", subscription.getEndDate().toString());
 
@@ -326,16 +330,17 @@ public class PaymentService {
      */
     private void saveFailedPayment(PaymentConfirmRequest request, String userEmail, String clientIp, String failReason) {
         try {
-            var userOpt = userRepository.findByEmail(userEmail);
-            UUID userId = userOpt.map(user -> user.getId()).orElse(null);
-            String userName = userOpt.map(user -> user.getName()).orElse(null);
+            // userEmail 은 UUID 문자열이다 — findByEmail 로 찾으면 늘 비어 user_id 가 NULL 로 남는다
+            var userOpt = findUserByAuthId(userEmail);
+            UUID userId = userOpt.map(User::getId).orElse(null);
+            String userName = userOpt.map(User::getName).orElse(null);
 
             Payment payment = Payment.builder()
                     .amount(BigDecimal.valueOf(request.getAmount()))
                     .currency("KRW")
                     .status("F")  // Failed
                     .userId(userId)
-                    .userEmail(userEmail)
+                    .userEmail(userOpt.map(User::getEmail).orElse(userEmail))
                     .userName(userName)
                     .clientIp(clientIp)
                     .failReason(failReason)
@@ -437,16 +442,20 @@ public class PaymentService {
         // 구독 생성 및 라이선스 발급
         PricePlan pricePlan = payment.getPricePlan();
         if (pricePlan != null) {
-            Subscription subscription = createSubscriptionForPayment(payment.getUserEmail(), pricePlan);
+            // 결제 행에 적힌 userId 를 그대로 쓴다. 종전에는 user_email 컬럼을 이메일로 조회해
+            // 구독을 만들려 했는데, 이 경로는 그 칸에 UUID 문자열을 넣어 두므로 늘 예외가 났다 —
+            // 가상계좌 입금 웹훅이 와도 구독·라이선스가 생기지 않고 결제는 P 로 남았다.
+            UUID userId = payment.getUserId();
+            if (userId == null) {
+                throw new RuntimeException("[웹훅] 결제에 사용자 정보가 없습니다: orderId=" + orderId);
+            }
+
+            Subscription subscription = createSubscriptionForUser(userId, pricePlan);
             log.info("[웹훅] 구독 생성 성공 - orderId={}, subscriptionId={}", orderId, subscription.getId());
 
             // 라이선스 발급
             if (pricePlan.getLicensePlanId() != null) {
                 try {
-                    // payment.userEmail은 실제로는 UUID 문자열 (PaymentController에서 인증 식별자 그대로 저장)
-                    UUID userId = userRepository.findById(UUID.fromString(payment.getUserEmail()))
-                            .map(User::getId)
-                            .orElseThrow(() -> new RuntimeException("[웹훅] 사용자 정보를 찾을 수 없습니다: " + payment.getUserEmail()));
                     UUID orderUuid = UUID.nameUUIDFromBytes(orderId.getBytes(StandardCharsets.UTF_8));
 
                     IssuedLicense license = licenseIssuePort.issue(userId, pricePlan.getLicensePlanId(), orderUuid);
@@ -637,30 +646,24 @@ public class PaymentService {
         return subscriptionRepository.save(subscription);
     }
 
-    private Subscription createSubscriptionForPayment(String userEmail, PricePlan pricePlan) {
-        UUID userId = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userEmail))
-                .getId();
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endDate = now.plusYears(1);
-        String billingCycle = "YEARLY";
-
-        Subscription subscription = Subscription.builder()
-                .userId(userId)
-                .productCode(pricePlan.getProductCode())
-                .pricePlan(pricePlan)
-                .status("A")
-                .startDate(now)
-                .endDate(endDate)
-                .autoRenew(false)
-                .billingCycle(billingCycle)
-                .build();
-
-        subscriptionRepository.save(subscription);
-
-        log.info("[구독] 생성 완료 - userId={}, productCode={}, endDate={}", userId, pricePlan.getProductCode(), endDate);
-        return subscription;
+    /**
+     * 인증 식별자(UUID 문자열)로 사용자를 찾는다.
+     *
+     * <p>이 클래스의 {@code userEmail} 파라미터는 이름과 달리 이메일이 아니라
+     * {@code authentication.getName()} 이 준 UUID 문자열이다. 그 값을 {@code findByEmail} 에
+     * 넘기는 코드가 세 군데 있었고 전부 조용히 빈 결과를 받았다 — 결제 행의 user_id 가 NULL 로
+     * 남거나, 구독 생성에서 예외가 터져 결제가 롤백됐다. 변환을 한곳에 모아 같은 실수를 막는다.
+     */
+    private java.util.Optional<User> findUserByAuthId(String authId) {
+        if (authId == null || authId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        try {
+            return userRepository.findById(UUID.fromString(authId));
+        } catch (IllegalArgumentException e) {
+            log.warn("[결제] 사용자 식별자 형식 오류 - value={}", authId);
+            return java.util.Optional.empty();
+        }
     }
 
     /**
@@ -670,9 +673,15 @@ public class PaymentService {
                                      String userEmail, PricePlan pricePlan, String clientIp,
                                      String tossStatus, String responseSummary,
                                      String promotionCode, BigDecimal discountAmount) {
-        var userOpt = userRepository.findByEmail(userEmail);
-        UUID userId = userOpt.map(user -> user.getId()).orElse(null);
-        String userName = userOpt.map(user -> user.getName()).orElse(null);
+        // userEmail 은 이름과 달리 인증 식별자(UUID 문자열)다. 종전에는 이 값을 그대로
+        // findByEmail 에 넘겨 늘 빈 결과를 받았고, 그 결과 user_id 가 NULL 로 저장됐다 —
+        // 마이페이지 결제 내역은 user_id 로 조회하므로 결제가 보이지 않는다.
+        var userOpt = findUserByAuthId(userEmail);
+        UUID userId = userOpt.map(User::getId).orElse(null);
+        String userName = userOpt.map(User::getName).orElse(null);
+        // user_email 칸에는 UUID 가 아니라 실제 이메일을 적는다. 조회 실패 시에만
+        // 식별자를 남겨 추적할 수 있게 한다.
+        String userEmailValue = userOpt.map(User::getEmail).orElse(userEmail);
 
         boolean isCompleted = "DONE".equals(tossStatus);
 
@@ -682,7 +691,7 @@ public class PaymentService {
                 .orderName(responseBody.path("orderName").asText())
                 .status(isCompleted ? "C" : "P")
                 .userId(userId)
-                .userEmail(userEmail)
+                .userEmail(userEmailValue)
                 .userName(userName)
                 .pricePlan(pricePlan)
                 .clientIp(clientIp)
