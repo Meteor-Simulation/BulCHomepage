@@ -582,7 +582,9 @@
       "widget": "Other payment methods",
       "widgetDesc": "Bank transfer · Virtual account · Card · Easy pay",
       "widgetLoading": "Loading payment methods...",
-      "widgetFailed": "Could not load payment methods."
+      "widgetFailed": "Could not load payment methods.",
+      "fixedBySubscription": "Auto-renewing subscription — paid with your saved card. Future years are billed to this card.",
+      "fixedByOneTime": "One-time purchase — bank transfer, virtual account, card and easy pay are all available."
     },
     "coupon": {
       "placeholder": "Enter coupon code",
@@ -650,7 +652,8 @@
       "proceed": "Pay",
       "processingTitle": "Processing your payment.",
       "processingBody": "Please keep this window open while the card is approved."
-    }
+    },
+    "selectPlanFirst": "Please select a plan first."
   },
   "login": {
     "title": "Login",
