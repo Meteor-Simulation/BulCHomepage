@@ -1834,3 +1834,12 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+/* 갱신가 안내 — 첫 결제가와 갱신가가 다른 요금제에만 나타난다.
+   가격 소개 탭에도 적혀 있지만, 실제로 돈이 나가는 화면에서 한 번 더 보여야 한다. */
+.plan-renewal-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+}

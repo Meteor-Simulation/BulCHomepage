@@ -8,6 +8,8 @@ interface PricePlan {
   name: string;
   description: string;
   price: number;
+  /** 갱신가. 첫 결제가와 다를 때만 내려온다 (하드웨어 포함 요금제 등). */
+  renewalPrice: number | null;
   currency: string;
 }
 
@@ -18,13 +20,16 @@ interface PriceSectionProps {
   isLoggedIn?: boolean;
 }
 
+const HARDWARE_PLAN = 'BUL:C 3D Premium + 구동용 하드웨어';
+
 const FEATURE_KEYS: Record<string, string> = {
   'BUL:C PRO': 'pro',
   'BUL:C 3D Premium': 'premium',
+  [HARDWARE_PLAN]: 'hardware',
 };
 
 const COMING_SOON_PLANS: string[] = [];
-const EVAC_PLANS = ['BUL:C 3D Premium'];
+const EVAC_PLANS = ['BUL:C 3D Premium', HARDWARE_PLAN];
 
 const isPermanentPlan = (plan: PricePlan) =>
   EVAC_PLANS.includes(plan.name) && plan.description?.includes('영구');
@@ -172,6 +177,18 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                       })()}
                     </span>
                   </div>
+                  {/* 갱신가가 첫 결제가와 다르면(하드웨어 포함 요금제) 2년차 금액을 밝힌다.
+                      첫해 990만원만 보고 결제한 뒤 600만원이 청구되면 분쟁이 된다.
+                      금액은 DB 의 renewal_price 에서 그대로 온다 — 문구에 적어 두면
+                      가격이 바뀔 때 화면과 실제 청구액이 조용히 어긋난다. */}
+                  {plan.renewalPrice != null && plan.renewalPrice !== plan.price && (
+                    <p className="bulc-price__card-renewal">
+                      {(() => {
+                        const r = formatPrice(plan.renewalPrice, plan.currency);
+                        return t('bulc.price.renewalNote', { amount: `${r.value}${r.unit}` });
+                      })()}
+                    </p>
+                  )}
                   {(includes || features.length > 0) && (
                     <ul className="bulc-price__card-features">
                       {includes && <li className="bulc-price__card-features-includes">{includes}</li>}
@@ -190,30 +207,6 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
                 </div>
               );
             })}
-
-            {/* 프로그램 + 하드웨어 견적 문의 */}
-            <div className="bulc-price__card bulc-price__card--quote">
-              <div className="bulc-price__card-header">
-                <h3 className="bulc-price__card-name">{t('bulc.price.quote.name')}</h3>
-                <div className="bulc-price__card-badges">
-                  <span className="bulc-price__card-badge bulc-price__card-badge--subscription">
-                    {t('payment.subscription')}
-                  </span>
-                </div>
-              </div>
-              <div className="bulc-price__card-price">
-                <span className="bulc-price__card-amount">{t('bulc.price.quote.price')}</span>
-                <span className="bulc-price__card-period">{t('bulc.price.quote.period')}</span>
-              </div>
-              <ul className="bulc-price__card-features">
-                {(t('bulc.price.quote.features', { returnObjects: true }) as string[]).map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
-              <button className="bulc-price__card-btn" onClick={onPurchaseClick}>
-                {t('bulc.price.purchase')}
-              </button>
-            </div>
 
             {/* 교육/연구 플랜 */}
             <div className="bulc-price__card bulc-price__card--education">

@@ -100,6 +100,8 @@ interface PricePlan {
   name: string;
   description: string;
   price: number;
+  /** 갱신가. 첫 결제가와 다를 때만 내려온다 (하드웨어 포함 요금제 등). */
+  renewalPrice?: number | null;
   currency: string;
   // 내부 전용(소액 결제 점검용) 요금제. 서버가 매니저 이상에게만 true 를 섞어 내려준다 —
   // 일반 고객 응답에는 내부 요금제가 아예 포함되지 않으므로 이 값으로 화면을 분기해도 안전하다.
@@ -628,6 +630,13 @@ const PaymentPage: React.FC = () => {
           : selectedPlan.name,
       });
       rows.push({ label: t('payment.confirmModal.listPrice'), value: formatPrice(selectedPlan.price) });
+      // 갱신가가 다르면 확인창에도 적는다 — 결제 직전이 마지막 고지 지점이다.
+      if (selectedPlan.renewalPrice != null && selectedPlan.renewalPrice !== selectedPlan.price) {
+        rows.push({
+          label: t('payment.confirmModal.renewal'),
+          value: formatPrice(selectedPlan.renewalPrice),
+        });
+      }
     }
     rows.push({ label: t('payment.confirmModal.method'), value: getPaymentMethodLabel() });
 
@@ -1027,6 +1036,14 @@ const PaymentPage: React.FC = () => {
                             <span className="plan-duration">{plan.description}</span>
                           )}
                         </div>
+                        {/* 갱신가가 다르면 밝힌다. 가격 소개 탭에도 적혀 있지만, 실제로
+                            돈이 나가는 화면에서 한 번 더 보여야 "첫해 990만원만 보고
+                            결제했다" 가 되지 않는다. 금액은 DB 에서 그대로 온다. */}
+                        {plan.renewalPrice != null && plan.renewalPrice !== plan.price && (
+                          <p className="plan-renewal-note">
+                            {t('bulc.price.renewalNote', { amount: formatPrice(plan.renewalPrice) })}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
