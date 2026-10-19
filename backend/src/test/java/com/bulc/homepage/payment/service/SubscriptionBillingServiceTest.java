@@ -279,4 +279,56 @@ class SubscriptionBillingServiceTest {
             verify(licenseIssuePort, never()).renew(any(), any(), any(), any());
         }
     }
+
+    /**
+     * 갱신가가 첫 결제가와 다른 요금제 (하드웨어 포함).
+     *
+     * <p>첫 해에만 하드웨어 대금이 붙는다. 갱신 때 첫 결제가를 그대로 청구하면 매년
+     * 하드웨어 값을 또 받게 되고, 그 사실은 1년 뒤에야 드러난다.
+     */
+    @Nested
+    @DisplayName("갱신가가 따로 있는 요금제")
+    class RenewalPrice {
+
+        private Subscription planWith(String price, String renewalPrice) {
+            Subscription s = dueSubscription();
+            s.getPricePlan().setPrice(new BigDecimal(price));
+            s.getPricePlan().setRenewalPrice(renewalPrice == null ? null : new BigDecimal(renewalPrice));
+            when(billingKeyRepository.findByIdAndIsActiveTrue(BILLING_KEY_ID))
+                    .thenReturn(Optional.of(activeKey()));
+            givenPaymentSucceeds();
+            return s;
+        }
+
+        @Test
+        @DisplayName("갱신가가 있으면 그 금액으로 청구한다")
+        void chargesRenewalPrice() {
+            service.processSubscriptionRenewal(planWith("9900000", "6000000"));
+
+            verify(billingKeyService).requestBillingPayment(
+                    anyLong(), anyString(), anyString(), eq(6000000), any());
+        }
+
+        @Test
+        @DisplayName("갱신가가 없으면 첫 결제가를 그대로 쓴다")
+        void fallsBackToPrice() {
+            service.processSubscriptionRenewal(planWith("6000000", null));
+
+            verify(billingKeyService).requestBillingPayment(
+                    anyLong(), anyString(), anyString(), eq(6000000), any());
+        }
+
+        /** 결제 이력에도 갱신가가 남아야 한다 — 청구액과 기록이 어긋나면 정산에서 터진다. */
+        @Test
+        @DisplayName("결제 이력에도 갱신가가 기록된다")
+        void recordsRenewalPrice() {
+            service.processSubscriptionRenewal(planWith("9900000", "6000000"));
+
+            ArgumentCaptor<SubscriptionPayment> captor =
+                    ArgumentCaptor.forClass(SubscriptionPayment.class);
+            verify(subscriptionPaymentRepository, atLeastOnce()).save(captor.capture());
+            assertThat(captor.getAllValues().get(0).getAmount())
+                    .isEqualByComparingTo(new BigDecimal("6000000"));
+        }
+    }
 }

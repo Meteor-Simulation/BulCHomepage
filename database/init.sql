@@ -290,6 +290,7 @@ CREATE TABLE price_plans (
     name            VARCHAR(100) NOT NULL,
     description     VARCHAR(100) NULL,
     price           DECIMAL(18,2) NOT NULL,
+    renewal_price   DECIMAL(18,2) NULL,
     currency        VARCHAR(10) NOT NULL DEFAULT 'KRW',
     license_plan_id UUID NULL,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -302,6 +303,7 @@ CREATE TABLE price_plans (
 
 COMMENT ON TABLE price_plans IS '상품 가격 테이블 - 상품별 요금제 정의';
 COMMENT ON COLUMN price_plans.description IS '요금제 설명 (예: 1년, 6개월 등)';
+COMMENT ON COLUMN price_plans.renewal_price IS '자동갱신 시 청구할 금액. NULL 이면 price 와 같다. 첫 해에만 하드웨어 대금이 붙는 요금제처럼 첫 결제와 갱신가가 다를 때만 채운다';
 COMMENT ON COLUMN price_plans.license_plan_id IS '연결된 라이선스 플랜 ID (결제 완료 시 해당 플랜으로 라이선스 발급)';
 COMMENT ON COLUMN price_plans.is_internal IS '내부 전용 요금제 — true 면 매니저 이상(roles_code 000·001)에게만 노출되고 결제도 그 역할만 가능';
 

@@ -86,6 +86,10 @@ public class ProductController {
                         p.getName(),
                         p.getDescription(),
                         p.getPrice().longValue(),
+                        // 갱신가가 첫 결제가와 다를 때만 내려보낸다. 화면이 "첫해 / 2년차부터" 를
+                        // 나눠 보여줄 근거가 된다 — 990만원 결제 후 600만원 청구를 모르고 있으면
+                        // 분쟁이 된다.
+                        p.getRenewalPrice() != null ? p.getRenewalPrice().longValue() : null,
                         p.getCurrency(),
                         Boolean.TRUE.equals(p.getIsInternal())
                 ))
@@ -101,6 +105,6 @@ public class ProductController {
      * @param isInternal 내부 전용 여부. 일반 고객 응답에는 항상 {@code false} 만 들어 있고,
      *                   매니저 이상에게만 {@code true} 가 섞여 내려오므로 화면에서 배지로 구분할 수 있다.
      */
-    public record PricePlanResponse(Long id, String name, String description, Long price, String currency,
-                                    boolean isInternal) {}
+    public record PricePlanResponse(Long id, String name, String description, Long price, Long renewalPrice,
+                                    String currency, boolean isInternal) {}
 }

@@ -126,8 +126,10 @@ public class SubscriptionBillingService {
             return;
         }
 
-        // 결제 금액 계산
-        BigDecimal amount = subscription.getPricePlan().getPrice();
+        // 갱신 금액. 첫 결제가가 아니라 갱신가를 쓴다 — 하드웨어가 포함된 요금제는 첫 해에만
+        // 하드웨어 대금이 붙고 2년차부터는 소프트웨어 값만 청구해야 한다.
+        // 갱신가를 따로 두지 않은 요금제는 renewalAmount() 가 price 를 그대로 돌려준다.
+        BigDecimal amount = subscription.getPricePlan().renewalAmount();
 
         // 주문 ID 생성
         String orderId = "SUB-" + subscription.getId() + "-" + System.currentTimeMillis();
