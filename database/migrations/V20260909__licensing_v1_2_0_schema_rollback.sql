@@ -18,4 +18,7 @@ ALTER TABLE promotions      ALTER COLUMN product_code TYPE VARCHAR(3);
 ALTER TABLE price_plans     ALTER COLUMN product_code TYPE VARCHAR(3);
 ALTER TABLE products        ALTER COLUMN code         TYPE VARCHAR(3);
 
+-- forward 가 바꾼 COMMENT 복원 (MDP-858 리허설: 미복원 시 pre 상태와 dump diff 잔차)
+COMMENT ON COLUMN products.code IS '상품 코드 (000~999), UNIQUE';
+
 COMMIT;
