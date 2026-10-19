@@ -320,16 +320,6 @@
           "ASET+RSET auto-analysis report"
         ]
       },
-      "quote": {
-        "name": "License\n(+ Compute Hardware)",
-        "price": "9,900,000 KRW",
-        "period": "",
-        "button": "Request a Quote",
-        "features": [
-          "Year 1: License + compute hardware combined, then auto-renew at 6,000,000 KRW/year",
-          "Dedicated compute hardware included"
-        ]
-      },
       "education": {
         "name": "Education / Research",
         "desc": "For universities & research institutions",
@@ -409,6 +399,14 @@
           "AI auto-analysis & reporting",
           "R&D technical service (3 sessions)",
           "Professional training (1 session)"
+        ]
+      },
+      "renewalNote": "First-year price. Renews automatically at {{amount}} per year from year 2.",
+      "hardware": {
+        "includes": "Everything in 3D Premium",
+        "features": [
+          "Dedicated workstation included",
+          "License and hardware billed together in year 1"
         ]
       }
     },
@@ -652,7 +650,8 @@
       "back": "Cancel",
       "proceed": "Pay",
       "processingTitle": "Processing your payment.",
-      "processingBody": "Please keep this window open while the card is approved."
+      "processingBody": "Please keep this window open while the card is approved.",
+      "renewal": "From year 2"
     },
     "selectPlanFirst": "Please select a plan first."
   },

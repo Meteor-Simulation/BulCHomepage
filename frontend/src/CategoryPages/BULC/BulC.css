@@ -1262,6 +1262,15 @@
   margin: 8px 0 0;
 }
 
+/* 갱신가 안내 — 첫 결제가와 갱신가가 다른 요금제에만 나타난다.
+   금액 바로 아래에 붙여, 큰 숫자만 보고 지나치지 않게 한다. */
+.bulc-price__card-renewal {
+  margin: -16px 0 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
 .bulc-price__card-price {
   margin-bottom: 24px;
   display: flex;
