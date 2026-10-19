@@ -47,6 +47,30 @@ if (IS_TOSS_TEST_KEY) {
   );
 }
 
+/**
+ * 결제위젯(계좌이체·가상계좌·간편결제) 사용 여부. **임시로 꺼 둔 상태다.**
+ *
+ * ## 왜 껐나 (2026-10-19)
+ *
+ * 위젯 상점 `msimul2sq0` 가 토스 쪽에서 결제 중지 상태다. 위젯은 정상적으로 뜨고
+ * 결제수단 목록도 내려오지만, 승인 API 에서 거부된다:
+ *
+ *   NOT_AVAILABLE_PAYMENT_BY_MERCHANT — "업체 사정으로 결제가 중지되었습니다"
+ *
+ * 고객이 결제창에서 계좌이체를 마친 **뒤에** 실패하므로, 띄워 두면 "결제했는데
+ * 안 됐다" 는 경험만 남는다. 토스 확인 결과 현재 이용 불가로 회신받아 막는다.
+ *
+ * ## 다시 켤 때
+ *
+ * 토스에서 두 가지가 풀린 뒤 이 값만 `true` 로 바꾸면 된다. 코드는 그대로 두었다.
+ *   1. `msimul2sq0` 결제 중지 해제
+ *   2. 같은 상점에 웹훅 등록 (`https://api.msimul.com/api/payments/webhook`,
+ *      `DEPOSIT_CALLBACK` 필수) — 없으면 가상계좌 입금이 영원히 반영되지 않는다
+ *
+ * 백엔드(gsk 키 분리·웹훅·취소 경로)는 건드리지 않았다. 켜는 즉시 동작한다.
+ */
+const WIDGET_PAYMENT_ENABLED = false;
+
 /** 결제위젯이 그려질 자리. 위젯은 셀렉터로 DOM 을 찾으므로 id 를 한 곳에서 관리한다. */
 const WIDGET_METHODS_SELECTOR = 'toss-payment-methods';
 const WIDGET_AGREEMENT_SELECTOR = 'toss-payment-agreement';
@@ -408,7 +432,10 @@ const PaymentPage: React.FC = () => {
       setSelectedPaymentType(null);
       return;
     }
-    const mustUseBillingCard = currency === 'USD' || isSubscriptionPlan(selectedPlan);
+    // 위젯이 꺼져 있으면 전부 등록 카드로 보낸다. 영구 라이선스까지 위젯으로 두면
+    // 결제할 수단이 아예 없어진다 — 위젯 도입 전에도 이 경로로 팔고 있었다.
+    const mustUseBillingCard =
+      !WIDGET_PAYMENT_ENABLED || currency === 'USD' || isSubscriptionPlan(selectedPlan);
     setSelectedPaymentType(mustUseBillingCard ? 'card' : 'widget');
     // isSubscriptionPlan 은 순수 함수라 의존성에 넣지 않는다 (매 렌더 새로 만들어진다).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1027,9 +1054,13 @@ const PaymentPage: React.FC = () => {
                       : t('payment.methods.widget')}
                   </div>
                   <div className="method-fixed-reason">
-                    {selectedPaymentType === 'card'
-                      ? t('payment.methods.fixedBySubscription')
-                      : t('payment.methods.fixedByOneTime')}
+                    {selectedPaymentType !== 'card'
+                      ? t('payment.methods.fixedByOneTime')
+                      : /* 위젯을 막아 둔 동안에는 구독이 아닌 요금제도 카드로 온다.
+                           "자동갱신이라서" 라고 적으면 사실과 다르다. */
+                      !WIDGET_PAYMENT_ENABLED && !isSubscriptionPlan(selectedPlan)
+                      ? t('payment.methods.fixedCardOnlyTemp')
+                      : t('payment.methods.fixedBySubscription')}
                   </div>
                 </div>
               )}
@@ -1037,22 +1068,25 @@ const PaymentPage: React.FC = () => {
               {/* 결제위젯이 그려지는 자리.
                   셀렉터로 DOM 을 찾으므로 선택 여부와 상관없이 항상 마운트해 둔다 —
                   조건부로 넣으면 렌더 시점에 요소가 없어 위젯이 붙지 못한다. 대신 선택되지
-                  않았을 때 감춘다. */}
-              <div
-                className="toss-widget-area"
-                style={{ display: selectedPaymentType === 'widget' ? 'block' : 'none' }}
-              >
-                {selectedPaymentType === 'widget' && !isWidgetReady && !widgetError && (
-                  <div className="loading-placeholder">{t('payment.methods.widgetLoading')}</div>
-                )}
-                {widgetError && (
-                  <div className="no-selection-message" role="alert">
-                    {widgetError}
-                  </div>
-                )}
-                <div id={WIDGET_METHODS_SELECTOR} />
-                <div id={WIDGET_AGREEMENT_SELECTOR} />
-              </div>
+                  않았을 때 감춘다. 위젯을 꺼 둔 동안에는 통째로 빼서, 빈 자리나 깜빡임이
+                  화면에 남지 않게 한다. */}
+              {WIDGET_PAYMENT_ENABLED && (
+                <div
+                  className="toss-widget-area"
+                  style={{ display: selectedPaymentType === 'widget' ? 'block' : 'none' }}
+                >
+                  {selectedPaymentType === 'widget' && !isWidgetReady && !widgetError && (
+                    <div className="loading-placeholder">{t('payment.methods.widgetLoading')}</div>
+                  )}
+                  {widgetError && (
+                    <div className="no-selection-message" role="alert">
+                      {widgetError}
+                    </div>
+                  )}
+                  <div id={WIDGET_METHODS_SELECTOR} />
+                  <div id={WIDGET_AGREEMENT_SELECTOR} />
+                </div>
+              )}
 
               {/* 등록 카드 선택 (카드 결제 시) */}
               {selectedPaymentType === 'card' && isLoggedIn && (
