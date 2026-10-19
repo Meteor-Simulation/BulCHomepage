@@ -576,7 +576,13 @@
       "bank": "Bank Transfer",
       "bankDesc": "Real-time bank transfer",
       "vbank": "Virtual Account",
-      "vbankDesc": "Virtual account issuance"
+      "vbankDesc": "Virtual account issuance",
+      "savedCard": "Pay with a saved card",
+      "savedCardDesc": "Can be used for auto-renewal",
+      "widget": "Other payment methods",
+      "widgetDesc": "Bank transfer · Virtual account · Card · Easy pay",
+      "widgetLoading": "Loading payment methods...",
+      "widgetFailed": "Could not load payment methods."
     },
     "coupon": {
       "placeholder": "Enter coupon code",

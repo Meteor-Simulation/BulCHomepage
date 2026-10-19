@@ -470,6 +470,7 @@ CREATE TABLE payments (
     promotion_code      VARCHAR(50) NULL,
     discount_amount     DECIMAL(18,2) NULL,
     idempotency_key     VARCHAR(300) NULL,
+    toss_key_set        VARCHAR(10) NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -487,6 +488,7 @@ COMMENT ON COLUMN payments.client_ip IS '결제 요청 클라이언트 IP (감�
 COMMENT ON COLUMN payments.promotion_code IS '적용된 쿠폰 코드 (promotions.code 의 결제 시점 스냅샷, 미적용 시 NULL). FK 아님 — 프로모션이 삭제돼도 결제 사실은 남아야 한다';
 COMMENT ON COLUMN payments.discount_amount IS '서버가 산정한 할인액. amount = 정가 - discount_amount (미적용 시 NULL)';
 COMMENT ON COLUMN payments.idempotency_key IS '결제 멱등키 — 같은 키로 두 번 요청해도 한 번만 승인된다. 토스 Idempotency-Key 로도 함께 전달';
+COMMENT ON COLUMN payments.toss_key_set IS '결제를 생성한 토스 키 세트 — BILLING(ck/sk, 자동결제) | WIDGET(gck/gsk, 결제위젯). 취소·조회 시 같은 세트의 키를 써야 한다(섞으면 INVALID_API_KEY)';
 
 CREATE INDEX idx_payments_promotion_code ON payments(promotion_code) WHERE promotion_code IS NOT NULL;
 

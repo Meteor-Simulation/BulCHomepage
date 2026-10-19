@@ -777,6 +777,13 @@
   gap: 12px;
 }
 
+/* 토스 결제위젯이 그려지는 자리.
+   위젯 내부는 토스가 iframe 으로 그리므로 우리가 꾸밀 수 있는 건 바깥 여백뿐이다.
+   폭을 제한하거나 overflow 를 걸면 위젯이 잘리므로 건드리지 않는다. */
+.toss-widget-area {
+  margin-top: 16px;
+}
+
 .method-option-btn {
   display: flex;
   align-items: center;

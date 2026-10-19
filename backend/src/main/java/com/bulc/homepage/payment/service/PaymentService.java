@@ -204,7 +204,7 @@ public class PaymentService {
         // 토스페이먼츠 API 호출
         String url = TossPaymentsConfig.TOSS_API_URL + "/confirm";
 
-        HttpHeaders headers = createAuthHeaders();
+        HttpHeaders headers = createWidgetAuthHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> body = new HashMap<>();
@@ -344,6 +344,7 @@ public class PaymentService {
                     .userName(userName)
                     .clientIp(clientIp)
                     .failReason(failReason)
+                    .tossKeySet(Payment.KEY_SET_WIDGET)
                     .build();
 
             PaymentDetail detail = PaymentDetail.builder()
@@ -538,6 +539,7 @@ public class PaymentService {
                 .pricePlan(pricePlan)
                 .clientIp(clientIp)
                 .idempotencyKey(idempotencyKey)
+                .tossKeySet(Payment.KEY_SET_BILLING)
                 .build();
         try {
             paymentRepository.saveAndFlush(payment);
@@ -699,6 +701,7 @@ public class PaymentService {
                 // 쿠폰 미적용이면 둘 다 null 로 남긴다 (0 과 "할인 없음" 을 구분)
                 .promotionCode(promotionCode)
                 .discountAmount(promotionCode == null ? null : discountAmount)
+                .tossKeySet(Payment.KEY_SET_WIDGET)
                 .build();
 
         // PaymentDetail 생성
@@ -797,7 +800,7 @@ public class PaymentService {
      */
     public String verifyPaymentStatus(String paymentKey) {
         try {
-            HttpHeaders headers = createAuthHeaders();
+            HttpHeaders headers = createWidgetAuthHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -819,11 +822,19 @@ public class PaymentService {
     }
 
     /**
-     * 토스페이먼츠 인증 헤더 생성
+     * 결제위젯 인증 헤더 생성 (gsk).
+     *
+     * <p>이 클래스가 부르는 토스 API 는 전부 위젯으로 시작한 결제를 다룬다 — 승인
+     * ({@code /v1/payments/confirm}) 과 웹훅 재조회 ({@code /v1/payments/{paymentKey}}).
+     * 자동결제(빌링)는 {@code BillingKeyService} 가 sk 로 따로 호출한다.
+     *
+     * <p><b>섞으면 안 된다.</b> 토스는 세트가 아닌 키를 {@code INVALID_API_KEY} 로 거부한다.
+     * 계좌이체·가상계좌·간편결제는 위젯 세트에만 열려 있어서, 여기서 sk 를 쓰면 승인이
+     * 전부 실패한다 — 그것도 고객이 결제를 마친 뒤에 실패한다.
      */
-    private HttpHeaders createAuthHeaders() {
+    private HttpHeaders createWidgetAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        String credentials = tossPaymentsConfig.getSecretKey() + ":";
+        String credentials = tossPaymentsConfig.getWidgetSecretKey() + ":";
         String encodedCredentials = Base64.getEncoder()
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + encodedCredentials);

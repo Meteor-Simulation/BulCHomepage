@@ -92,7 +92,8 @@ public class PaymentCancelService {
         log.info("[결제취소] 요청 - paymentId={}, orderId={}, amount={}, operator={}",
                 paymentId, detail.getOrderId(), payment.getAmount(), operator);
 
-        JsonNode tossResponse = requestCancelToToss(detail.getPaymentKey(), cancelReason, detail.getOrderId());
+        JsonNode tossResponse = requestCancelToToss(
+                detail.getPaymentKey(), cancelReason, detail.getOrderId(), payment.getTossKeySet());
 
         String tossStatus = tossResponse.path("status").asText(null);
         BigDecimal balance = new BigDecimal(tossResponse.path("balanceAmount").asText("0"));
@@ -137,9 +138,26 @@ public class PaymentCancelService {
         return new CancelResult(paymentId, detail.getOrderId(), payment.getAmount(), tossStatus);
     }
 
-    private JsonNode requestCancelToToss(String paymentKey, String cancelReason, String orderId) {
+    /**
+     * 취소에 쓸 시크릿 키를 결제 출처에 맞춰 고른다.
+     *
+     * <p>토스는 연동 방식마다 키 세트를 따로 발급하고 <b>세트가 아닌 키를 섞으면
+     * {@code INVALID_API_KEY} 로 거부</b>한다. 위젯으로 결제한 건을 빌링 키(sk)로 취소하려
+     * 들면 실패하는데, 그 시점에 고객은 이미 환불을 기다리고 있다.
+     *
+     * <p>값이 없는 과거 행은 빌링으로 본다 — 위젯 결제가 존재하기 전의 데이터다.
+     */
+    private String resolveCancelSecretKey(String tossKeySet) {
+        if (Payment.KEY_SET_WIDGET.equals(tossKeySet)) {
+            return tossPaymentsConfig.getWidgetSecretKey();
+        }
+        return tossPaymentsConfig.getSecretKey();
+    }
+
+    private JsonNode requestCancelToToss(String paymentKey, String cancelReason, String orderId,
+                                         String tossKeySet) {
         HttpHeaders headers = new HttpHeaders();
-        String credentials = tossPaymentsConfig.getSecretKey() + ":";
+        String credentials = resolveCancelSecretKey(tossKeySet) + ":";
         headers.set("Authorization", "Basic " + Base64.getEncoder()
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8)));
         headers.setContentType(MediaType.APPLICATION_JSON);

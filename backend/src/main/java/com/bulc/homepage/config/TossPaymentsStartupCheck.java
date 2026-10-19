@@ -49,8 +49,19 @@ public class TossPaymentsStartupCheck {
         this.environment = environment;
     }
 
+    /**
+     * 두 키 세트를 모두 점검한다.
+     *
+     * <p>{@code @PostConstruct} 를 메서드마다 달면 호출 순서가 보장되지 않으므로 한 곳에서 부른다.
+     */
     @PostConstruct
     public void check() {
+        checkIntegrationKeys();
+        checkWidgetKeys();
+    }
+
+    /** API 개별 연동 키 세트 점검 ({@code ck}/{@code sk}) — 자동결제(빌링)에 쓰인다. */
+    void checkIntegrationKeys() {
         boolean prod = isProd();
         String secret = trimToEmpty(config.getSecretKey());
         String client = trimToEmpty(config.getClientKey());
@@ -114,6 +125,84 @@ public class TossPaymentsStartupCheck {
 
         log.info("[결제] 토스페이먼츠 라이브 키로 구성되었습니다 (client={}, secret={}).",
                 prefixOf(client), prefixOf(secret));
+    }
+
+    /**
+     * 결제위젯 키 세트 점검 ({@code gck}/{@code gsk}).
+     *
+     * <p>ck/sk 와 **다른 세트**다. 토스는 세트가 아닌 키를 {@code INVALID_API_KEY} 로 거부한다.
+     * 흔한 사고는 두 가지고, 둘 다 기동 때 잡지 않으면 고객이 결제를 마친 뒤에 터진다.
+     * <ol>
+     *   <li>위젯 자리에 {@code ck}/{@code sk} 를 넣는다 → 결제창은 열리지만
+     *       "Toss Payments와 계약된 결제수단이 아닙니다" 로 거부된다. 계좌이체·가상계좌·
+     *       간편결제는 위젯 세트에만 열려 있기 때문이다</li>
+     *   <li>live 와 test 를 섞는다 → 승인 단계에서 {@code INVALID_API_KEY}</li>
+     * </ol>
+     */
+    void checkWidgetKeys() {
+        boolean prod = isProd();
+        String client = trimToEmpty(config.getWidgetClientKey());
+        String secret = trimToEmpty(config.getWidgetSecretKey());
+
+        // 1) 누락 — prod 에서는 기동 중단 (ck/sk 와 같은 기준)
+        if (client.isEmpty() || secret.isEmpty()) {
+            String missing = (client.isEmpty() ? "TOSS_WIDGET_CLIENT_KEY" : "")
+                    + (client.isEmpty() && secret.isEmpty() ? ", " : "")
+                    + (secret.isEmpty() ? "TOSS_WIDGET_SECRET_KEY" : "");
+            if (prod) {
+                throw new IllegalStateException(
+                        "[FATAL] 결제위젯 키가 prod 프로파일에서 비어 있습니다 (" + missing + "). "
+                                + "계좌이체·가상계좌·간편결제가 전부 승인 실패하므로 서버를 시작하지 않습니다. "
+                                + "서버 .env 에 해당 항목이 있는지, docker-compose 의 environment 로 "
+                                + "전달되는지 확인하세요.");
+            }
+            log.warn("[결제] 결제위젯 키가 설정되지 않았습니다 ({}). 계좌이체·가상계좌를 쓸 수 없습니다.", missing);
+            return;
+        }
+
+        // 2) 세트 혼동 — ck/sk 를 위젯 자리에 넣은 경우
+        if (!hasInfix(client, "gck")) {
+            throw new IllegalStateException(
+                    "[FATAL] TOSS_WIDGET_CLIENT_KEY 가 결제위젯 키가 아닙니다 (" + prefixOf(client) + "). "
+                            + "주문서형·결제창형 연동 키의 클라이언트 키는 live_gck_ / test_gck_ 로 시작합니다. "
+                            + "API 개별 연동 키(live_ck_)를 넣으면 계좌이체·가상계좌가 열리지 않습니다.");
+        }
+        if (!hasInfix(secret, "gsk")) {
+            throw new IllegalStateException(
+                    "[FATAL] TOSS_WIDGET_SECRET_KEY 가 결제위젯 키가 아닙니다 (" + prefixOf(secret) + "). "
+                            + "주문서형·결제창형 연동 키의 시크릿 키는 live_gsk_ / test_gsk_ 로 시작합니다.");
+        }
+
+        // 3) live/test 혼용
+        KeyKind clientKind = kindOf(client);
+        KeyKind secretKind = kindOf(secret);
+        if (clientKind == KeyKind.UNKNOWN || secretKind == KeyKind.UNKNOWN) {
+            throw new IllegalStateException(
+                    "[FATAL] 결제위젯 키 형식이 올바르지 않습니다 "
+                            + "(client=" + prefixOf(client) + ", secret=" + prefixOf(secret) + "). "
+                            + "키는 live_ 또는 test_ 로 시작해야 합니다.");
+        }
+        if (clientKind != secretKind) {
+            throw new IllegalStateException(
+                    "[FATAL] 결제위젯 클라이언트 키와 시크릿 키의 종류가 다릅니다 "
+                            + "(client=" + prefixOf(client) + ", secret=" + prefixOf(secret) + "). "
+                            + "두 키는 같은 연동 키 세트에서 복사해야 하며, 섞이면 결제 승인이 실패합니다.");
+        }
+
+        if (clientKind == KeyKind.TEST && prod) {
+            log.warn("========================================");
+            log.warn("운영 프로파일인데 결제위젯이 테스트 키로 동작합니다 — 실제 결제·정산이 일어나지 않습니다.");
+            log.warn("========================================");
+            return;
+        }
+
+        log.info("[결제] 결제위젯 라이브 키로 구성되었습니다 (client={}, secret={}).",
+                prefixOf(client), prefixOf(secret));
+    }
+
+    /** {@code live_gck_...} 에서 가운데 토큰이 기대값인지. 세트 혼동을 잡는 지점이다. */
+    private boolean hasInfix(String key, String infix) {
+        return key.startsWith(LIVE_PREFIX + infix + "_") || key.startsWith(TEST_PREFIX + infix + "_");
     }
 
     /** 무엇이 비었는지 사람이 읽을 형태로. 둘 다 비면 둘 다 알려준다. */

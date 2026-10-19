@@ -60,6 +60,7 @@ public class PaymentFailureRecorder {
                     .pricePlan(pricePlan)
                     .clientIp(clientIp)
                     .failReason(truncate(reason))
+                    .tossKeySet(Payment.KEY_SET_BILLING)
                     .build();
             paymentRepository.save(failed);
 

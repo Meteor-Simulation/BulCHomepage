@@ -576,7 +576,13 @@
       "bank": "계좌이체",
       "bankDesc": "실시간 계좌이체",
       "vbank": "무통장입금",
-      "vbankDesc": "가상계좌 발급"
+      "vbankDesc": "가상계좌 발급",
+      "savedCard": "등록한 카드로 결제",
+      "savedCardDesc": "자동갱신에 쓸 수 있습니다",
+      "widget": "다른 수단으로 결제",
+      "widgetDesc": "계좌이체 · 무통장입금 · 카드 · 간편결제",
+      "widgetLoading": "결제수단을 불러오는 중입니다...",
+      "widgetFailed": "결제수단을 불러오지 못했습니다."
     },
     "coupon": {
       "placeholder": "쿠폰 코드를 입력하세요",
