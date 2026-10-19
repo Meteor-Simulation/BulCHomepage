@@ -584,7 +584,8 @@
       "widgetLoading": "Loading payment methods...",
       "widgetFailed": "Could not load payment methods.",
       "fixedBySubscription": "Auto-renewing subscription — paid with your saved card. Future years are billed to this card.",
-      "fixedByOneTime": "One-time purchase — bank transfer, virtual account, card and easy pay are all available."
+      "fixedByOneTime": "One-time purchase — bank transfer, virtual account, card and easy pay are all available.",
+      "fixedCardOnlyTemp": "Bank transfer and virtual account are temporarily unavailable — paid with your saved card."
     },
     "coupon": {
       "placeholder": "Enter coupon code",
