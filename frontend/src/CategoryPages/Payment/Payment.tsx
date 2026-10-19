@@ -212,9 +212,7 @@ const PaymentPage: React.FC = () => {
       const s = JSON.parse(raw);
       if (s.product) setSelectedProduct(s.product);
       if (s.plan) setSelectedPlan(s.plan);
-      // 'bank'·'vbank' 로 저장된 구버전 상태가 돌아올 수 있다 (결제위젯 전환 전 세션).
-      // 지금은 카드 외 수단이 위젯 한 갈래이므로 그쪽으로 모은다.
-      if (s.paymentType) setSelectedPaymentType(s.paymentType === 'card' ? 'card' : 'widget');
+      // 결제 갈래는 복원하지 않는다 — 요금제가 정하므로 플랜만 복원되면 따라온다.
       if (s.coupon) setAppliedCoupon(s.coupon);
       if (s.paymentInfo) {
         setPaymentInfo(s.paymentInfo);
@@ -392,19 +390,29 @@ const PaymentPage: React.FC = () => {
     setSelectedPlan(null); // 플랜 선택 초기화
   };
 
-  // USD일 때 카드만 허용 → 자동 선택
+  /**
+   * 결제 갈래는 **요금제가 정한다.** 사용자가 고르지 않는다.
+   *
+   * - 자동갱신 구독 → 등록 카드(빌링키). 갱신은 저장된 카드로만 청구할 수 있다.
+   *   위젯으로 결제하면 그 건은 통과해도 다음 해에 청구할 수단이 없다.
+   * - 영구 라이선스·단건 → 위젯. 갱신이 없으므로 계좌이체·가상계좌·간편결제를
+   *   포함해 전부 열어 준다.
+   * - USD → 등록 카드. 위젯에 해외결제(`international`)가 구성돼 있지 않다.
+   *
+   * 판정에 {@link isSubscriptionPlan} 을 쓰는 것이 핵심이다 — 자동갱신 여부를 정하는
+   * 함수와 **같은 것**을 써야 "갱신은 켜졌는데 결제수단이 빌링키가 아닌" 조합이
+   * 구조적으로 생기지 않는다.
+   */
   useEffect(() => {
-    if (currency === 'USD') {
-      setSelectedPaymentType('card');
+    if (!selectedPlan) {
+      setSelectedPaymentType(null);
+      return;
     }
-  }, [currency]);
-
-  // 결제 수단 선택 핸들러 (간소화: 모달 없이 바로 선택)
-  const handlePaymentMethodSelect = (type: PaymentType) => {
-    // USD일 때 카드 외 결제 수단 선택 차단
-    if (currency === 'USD' && type !== 'card') return;
-    setSelectedPaymentType(type);
-  };
+    const mustUseBillingCard = currency === 'USD' || isSubscriptionPlan(selectedPlan);
+    setSelectedPaymentType(mustUseBillingCard ? 'card' : 'widget');
+    // isSubscriptionPlan 은 순수 함수라 의존성에 넣지 않는다 (매 렌더 새로 만들어진다).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlan, currency]);
 
   // 주문 ID 생성 (pricePlanId 포함)
   const generateOrderId = (planId: number) => {
@@ -1005,43 +1013,26 @@ const PaymentPage: React.FC = () => {
                 <span className="step-number">3</span>
                 {t('payment.step3Title')}
               </h2>
-              {/* 두 갈래로 나눈다. 위젯 안에도 카드가 있지만 그쪽은 일회성이라 자동갱신이
-                  안 되고, 자동갱신 구독에는 등록 카드(빌링키)가 반드시 필요하다. */}
-              <div className={`payment-methods ${currency === 'USD' ? 'one-option' : 'two-options'}`}>
-                <button
-                  className={`method-option-btn ${selectedPaymentType === 'card' ? 'selected' : ''}`}
-                  onClick={() => handlePaymentMethodSelect('card')}
-                >
-                  <div className="method-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                      <line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
+              {/* 결제 방법은 고르는 것이 아니라 요금제가 정한다.
+                  자동갱신 구독은 빌링키가 있어야 갱신이 되므로 등록 카드만 쓸 수 있고,
+                  영구 라이선스·단건은 갱신이 없으므로 위젯의 모든 수단을 쓸 수 있다.
+                  둘을 고르게 두면 "구독을 샀는데 갱신이 안 되는" 상태가 만들어진다. */}
+              {!selectedPlan ? (
+                <div className="no-selection-message">{t('payment.selectPlanFirst')}</div>
+              ) : (
+                <div className="method-fixed-notice">
+                  <div className="method-fixed-name">
+                    {selectedPaymentType === 'card'
+                      ? t('payment.methods.savedCard')
+                      : t('payment.methods.widget')}
                   </div>
-                  <div className="method-text">
-                    <span className="method-name">{t('payment.methods.savedCard')}</span>
-                    <span className="method-description">{t('payment.methods.savedCardDesc')}</span>
+                  <div className="method-fixed-reason">
+                    {selectedPaymentType === 'card'
+                      ? t('payment.methods.fixedBySubscription')
+                      : t('payment.methods.fixedByOneTime')}
                   </div>
-                </button>
-
-                {currency !== 'USD' && (
-                  <button
-                    className={`method-option-btn ${selectedPaymentType === 'widget' ? 'selected' : ''}`}
-                    onClick={() => handlePaymentMethodSelect('widget')}
-                  >
-                    <div className="method-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <path d="M3 9h18M9 21V9"/>
-                      </svg>
-                    </div>
-                    <div className="method-text">
-                      <span className="method-name">{t('payment.methods.widget')}</span>
-                      <span className="method-description">{t('payment.methods.widgetDesc')}</span>
-                    </div>
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* 결제위젯이 그려지는 자리.
                   셀렉터로 DOM 을 찾으므로 선택 여부와 상관없이 항상 마운트해 둔다 —

@@ -582,7 +582,9 @@
       "widget": "다른 수단으로 결제",
       "widgetDesc": "계좌이체 · 무통장입금 · 카드 · 간편결제",
       "widgetLoading": "결제수단을 불러오는 중입니다...",
-      "widgetFailed": "결제수단을 불러오지 못했습니다."
+      "widgetFailed": "결제수단을 불러오지 못했습니다.",
+      "fixedBySubscription": "자동갱신 구독이라 등록된 카드로만 결제됩니다. 다음 해부터 이 카드로 청구됩니다.",
+      "fixedByOneTime": "갱신이 없는 결제라 계좌이체·무통장입금·카드·간편결제를 모두 쓸 수 있습니다."
     },
     "coupon": {
       "placeholder": "쿠폰 코드를 입력하세요",
@@ -650,7 +652,8 @@
       "proceed": "결제",
       "processingTitle": "결제를 진행하고 있습니다.",
       "processingBody": "카드사 승인까지 창을 닫지 말고 잠시만 기다려주세요."
-    }
+    },
+    "selectPlanFirst": "요금제를 먼저 선택해 주세요."
   },
   "login": {
     "title": "로그인",

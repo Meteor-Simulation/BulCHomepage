@@ -777,6 +777,28 @@
   gap: 12px;
 }
 
+/* 결제 방법 고정 안내.
+   사용자가 고르는 UI 가 아니라 "요금제가 이렇게 정했다" 를 알리는 자리다.
+   버튼처럼 보이면 눌러 보려 하므로 카드 톤으로만 둔다. */
+.method-fixed-notice {
+  padding: 16px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.method-fixed-name {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.method-fixed-reason {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
 /* 토스 결제위젯이 그려지는 자리.
    위젯 내부는 토스가 iframe 으로 그리므로 우리가 꾸밀 수 있는 건 바깥 여백뿐이다.
    폭을 제한하거나 overflow 를 걸면 위젯이 잘리므로 건드리지 않는다. */
