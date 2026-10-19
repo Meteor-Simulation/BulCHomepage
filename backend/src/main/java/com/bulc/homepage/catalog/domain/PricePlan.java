@@ -36,6 +36,23 @@ public class PricePlan {
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal price;
 
+    /**
+     * 자동갱신 시 청구할 금액. {@code null} 이면 {@link #price} 와 같다.
+     *
+     * <p>하드웨어가 포함된 요금제처럼 <b>첫 해에만 추가 대금이 붙는</b> 경우에만 채운다.
+     * 예) 첫 결제 9,900,000(소프트웨어 600만 + 하드웨어 390만) / 갱신 6,000,000.
+     *
+     * <p>직접 읽지 말고 {@link #renewalAmount()} 를 쓴다 — 호출부마다 null 처리를 두면
+     * 한 곳이 빠졌을 때 390만원이 더 청구되고, 그 사실은 1년 뒤에야 드러난다.
+     */
+    @Column(name = "renewal_price", precision = 18, scale = 2)
+    private BigDecimal renewalPrice;
+
+    /** 갱신 때 청구할 금액. 따로 정해두지 않았으면 첫 결제가와 같다. */
+    public BigDecimal renewalAmount() {
+        return renewalPrice != null ? renewalPrice : price;
+    }
+
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String currency = "KRW";

@@ -326,6 +326,7 @@ public class AdminController {
                         plan.getName(),
                         plan.getDescription(),
                         plan.getPrice().longValue(),
+                        plan.getRenewalPrice() != null ? plan.getRenewalPrice().longValue() : null,
                         plan.getCurrency(),
                         plan.getIsActive(),
                         plan.getCreatedAt() != null ? plan.getCreatedAt().toString() : null
@@ -362,6 +363,7 @@ public class AdminController {
                 .name(request.name())
                 .description(request.description())
                 .price(BigDecimal.valueOf(request.price()))
+                .renewalPrice(request.renewalPrice() != null ? BigDecimal.valueOf(request.renewalPrice()) : null)
                 .currency(request.currency() != null ? request.currency() : "KRW")
                 .isActive(request.isActive() != null ? request.isActive() : true)
                 .build();
@@ -373,6 +375,7 @@ public class AdminController {
                 saved.getName(),
                 saved.getDescription(),
                 saved.getPrice().longValue(),
+                saved.getRenewalPrice() != null ? saved.getRenewalPrice().longValue() : null,
                 saved.getCurrency(),
                 saved.getIsActive(),
                 saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
@@ -399,6 +402,14 @@ public class AdminController {
                     if (request.price() != null) {
                         plan.setPrice(BigDecimal.valueOf(request.price()));
                     }
+                    // 음수는 "갱신가를 지운다" 는 뜻으로 받는다. null 은 "안 보냄" 이라 구분이
+                    // 필요하다 — 한 번 넣은 갱신가를 되돌릴 방법이 없으면 잘못 넣었을 때
+                    // 손댈 수가 없고, 그 요금제는 1년 뒤에 틀린 금액을 청구한다.
+                    if (request.renewalPrice() != null) {
+                        plan.setRenewalPrice(request.renewalPrice() < 0
+                                ? null
+                                : BigDecimal.valueOf(request.renewalPrice()));
+                    }
                     if (request.currency() != null) {
                         plan.setCurrency(request.currency());
                     }
@@ -412,6 +423,7 @@ public class AdminController {
                             saved.getName(),
                             saved.getDescription(),
                             saved.getPrice().longValue(),
+                            saved.getRenewalPrice() != null ? saved.getRenewalPrice().longValue() : null,
                             saved.getCurrency(),
                             saved.getIsActive(),
                             saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
@@ -457,6 +469,7 @@ public class AdminController {
                             saved.getName(),
                             saved.getDescription(),
                             saved.getPrice().longValue(),
+                            saved.getRenewalPrice() != null ? saved.getRenewalPrice().longValue() : null,
                             saved.getCurrency(),
                             saved.getIsActive(),
                             saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
@@ -814,8 +827,11 @@ public class AdminController {
     public record UserResponse(String id, String email, String name, String phone, String rolesCode, String countryCode, Boolean isActive, String createdAt) {}
     public record ProductResponse(String id, String code, String name, String description, Boolean isActive, String createdAt) {}
     public record ProductRequest(String code, String name, String description, Boolean isActive) {}
-    public record PricePlanResponse(Long id, String productCode, String name, String description, Long price, String currency, Boolean isActive, String createdAt) {}
-    public record PricePlanRequest(String productCode, String name, String description, Long price, String currency, Boolean isActive) {}
+    public record PricePlanResponse(Long id, String productCode, String name, String description, Long price,
+                                    Long renewalPrice, String currency, Boolean isActive, String createdAt) {}
+    /** renewalPrice 는 갱신가가 첫 결제가와 다를 때만 보낸다. null 이면 price 를 그대로 쓴다. */
+    public record PricePlanRequest(String productCode, String name, String description, Long price,
+                                   Long renewalPrice, String currency, Boolean isActive) {}
     public record LicenseResponse(String id, String licenseKey, String ownerType, String ownerId, String status, String validUntil, String createdAt) {}
     /**
      * @param refundRequestId   대기 중인 환불 요청 id. 없으면 null — 결제관리에서 바로 승인·거절할 때 쓴다
