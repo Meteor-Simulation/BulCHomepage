@@ -27,7 +27,7 @@ export const ORGANIZATION_JSONLD = {
     availableLanguage: ['Korean', 'English'],
   },
   sameAs: [
-    'https://www.youtube.com/@SimulationMeteor',
+    'https://www.youtube.com/@meteorsimulation',
     'https://www.threads.com/@meteorsimulation',
   ],
 };
