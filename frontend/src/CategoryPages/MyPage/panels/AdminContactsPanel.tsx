@@ -218,6 +218,24 @@ const AdminContactsPanel: React.FC = () => {
     setInactivePage(0);
   };
 
+  /**
+   * 행사·태그 칩을 눌렀을 때 그 값으로 바로 검색한다.
+   *
+   * 입력란에도 값을 넣어 둔다 — 지금 무엇으로 걸러진 목록인지 보이지 않으면
+   * "왜 10명만 나오지" 가 된다. 초기화 버튼도 그 값이 있어야 나타난다.
+   */
+  const searchByTag = (value: string, isActiveSection: boolean) => {
+    if (isActiveSection) {
+      setActiveSearchInput(value);
+      setActiveQ(value);
+      setActivePage(0);
+    } else {
+      setInactiveSearchInput(value);
+      setInactiveQ(value);
+      setInactivePage(0);
+    }
+  };
+
   // ---- Form CRUD ----
 
   const openCreateModal = () => {
@@ -419,6 +437,35 @@ const AdminContactsPanel: React.FC = () => {
 
   // ---- Render helpers ----
 
+  /**
+   * 행사명·태그를 칩으로 보여 준다. 누르면 그 값으로 검색된다.
+   *
+   * 전시회에서 받은 컨택을 추려 보는 가장 흔한 동작이라, 값을 눈으로 확인하고 손으로
+   * 다시 타이핑하는 단계를 없앤다. 행사명은 한글이라 오타가 나기 쉽다.
+   */
+  const renderTags = (c: LeadContact, isActiveSection: boolean) => {
+    const chips = [
+      ...(c.sourceEvent ? [{ kind: 'event', text: c.sourceEvent }] : []),
+      ...(c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => ({ kind: 'tag', text: t })) : []),
+    ];
+    if (chips.length === 0) return <span className="contact-tag-empty">-</span>;
+    return (
+      <div className="contact-tag-group">
+        {chips.map((chip, i) => (
+          <button
+            key={`${chip.kind}-${i}`}
+            type="button"
+            className={`contact-tag contact-tag--${chip.kind}`}
+            title={`'${chip.text}' 로 검색`}
+            onClick={() => searchByTag(chip.text, isActiveSection)}
+          >
+            {chip.text}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   const renderTable = (rows: LeadContact[], isActiveSection: boolean) => (
     <div className="admin-table-wrapper">
       <table className="admin-table">
@@ -427,6 +474,7 @@ const AdminContactsPanel: React.FC = () => {
             <th>이메일</th>
             <th>이름</th>
             <th>회사</th>
+            <th>행사/태그</th>
             <th>광고/안내</th>
             <th>액션</th>
           </tr>
@@ -437,6 +485,7 @@ const AdminContactsPanel: React.FC = () => {
               <td>{c.email}</td>
               <td>{c.contactName || '-'}</td>
               <td>{c.companyName || '-'}</td>
+              <td>{renderTags(c, isActiveSection)}</td>
               <td>
                 <span className={`status-toggle-btn ${c.optInMarketing ? 'active' : 'inactive'}`}>광고</span>{' '}
                 <span className={`status-toggle-btn ${c.optInTransactional ? 'active' : 'inactive'}`}>안내</span>
@@ -452,7 +501,7 @@ const AdminContactsPanel: React.FC = () => {
               </td>
             </tr>
           )) : (
-            <tr><td colSpan={5} className="empty-row">{isActiveSection ? '활성 컨택이 없습니다.' : '비활성 컨택이 없습니다.'}</td></tr>
+            <tr><td colSpan={6} className="empty-row">{isActiveSection ? '활성 컨택이 없습니다.' : '비활성 컨택이 없습니다.'}</td></tr>
           )}
         </tbody>
       </table>
@@ -492,7 +541,7 @@ const AdminContactsPanel: React.FC = () => {
         <div className="admin-search-bar">
           <input
             type="text"
-            placeholder="이메일, 이름, 회사로 검색"
+            placeholder="이메일, 이름, 회사, 행사명, 태그로 검색"
             value={activeSearchInput}
             onChange={e => setActiveSearchInput(e.target.value)}
             onKeyPress={e => { if (e.key === 'Enter') applyActiveSearch(); }}
@@ -519,7 +568,7 @@ const AdminContactsPanel: React.FC = () => {
         <div className="admin-search-bar">
           <input
             type="text"
-            placeholder="이메일, 이름, 회사로 검색"
+            placeholder="이메일, 이름, 회사, 행사명, 태그로 검색"
             value={inactiveSearchInput}
             onChange={e => setInactiveSearchInput(e.target.value)}
             onKeyPress={e => { if (e.key === 'Enter') applyInactiveSearch(); }}

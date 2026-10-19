@@ -45,6 +45,11 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
      * 검색 쿼리. 빈 필터는 '' (빈 문자열)로 전달해야 한다.
      * <p>null 파라미터를 :param IS NULL 로 비교하면 PostgreSQL JDBC가
      * 타입 추론에 실패해 bytea 로 바인딩 → LOWER(bytea) 미존재 에러 발생.
+     *
+     * <p>통합검색 {@code :q} 는 <b>행사명·태그까지</b> 훑는다. 전시회에서 받은 컨택을
+     * 찾는 가장 자연스러운 입력이 행사명이기 때문이다 — 종전에는 이메일·이름·회사만
+     * 훑어서 "한국소방기술사회" 로 검색하면 0건이 나왔고, 행사별로 보려면 별도 필터
+     * 파라미터를 직접 붙여야 했다.
      */
     @Query("""
             SELECT lc FROM LeadContact lc
@@ -57,6 +62,8 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
                      LOWER(lc.email) LIKE LOWER(CONCAT('%', :q, '%'))
                   OR LOWER(COALESCE(lc.contactName, '')) LIKE LOWER(CONCAT('%', :q, '%'))
                   OR LOWER(COALESCE(lc.companyName, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+                  OR LOWER(COALESCE(lc.sourceEvent, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+                  OR LOWER(COALESCE(lc.tags, '')) LIKE LOWER(CONCAT('%', :q, '%'))
                ))
                AND (:activeOnly = false OR lc.unsubscribedAt IS NULL)
                AND (:inactiveOnly = false OR lc.unsubscribedAt IS NOT NULL)

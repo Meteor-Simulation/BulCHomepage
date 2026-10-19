@@ -164,3 +164,50 @@
   max-height: 120px;
   overflow-y: auto;
 }
+
+/* ========================================
+   컨택 목록의 행사·태그 칩 (AdminContactsPanel)
+   누르면 그 값으로 검색된다. 행사명은 한글이라 손으로 다시 치면 오타가 나기 쉽다.
+======================================== */
+.contact-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.contact-tag {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.contact-tag:hover {
+  filter: brightness(0.94);
+}
+
+/* 행사명 — QR·부스에서 들어온 출처라 가장 눈에 띄어야 한다 */
+.contact-tag--event {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+/* 직접 붙인 태그 */
+.contact-tag--tag {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #4b5563;
+}
+
+.contact-tag-empty {
+  color: #9ca3af;
+}
