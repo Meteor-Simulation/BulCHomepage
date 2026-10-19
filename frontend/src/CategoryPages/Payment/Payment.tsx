@@ -162,6 +162,9 @@ const PaymentPage: React.FC = () => {
 
   // 결제위젯 인스턴스. 렌더가 끝나야 requestPayment 를 부를 수 있어서 ref 로 들고 있는다.
   const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
+  // 그려 놓은 결제수단·약관 UI. 페이지를 떠날 때 destroy 해야 한다 — 남겨 두면 다시
+  // 들어왔을 때 토스가 PAYMENT_METHODS_WIDGET_ALREADY_RENDERED 로 거부한다.
+  const renderedWidgetsRef = useRef<Array<{ destroy: () => Promise<void> }>>([]);
   const [isWidgetReady, setIsWidgetReady] = useState(false);
   // 위젯을 띄우지 못한 사유. 계약·키 문제가 여기로 들어오므로 화면에 그대로 보여 준다 —
   // 삼키면 "결제수단이 안 보인다" 는 말밖에 남지 않는다.
@@ -470,15 +473,18 @@ const PaymentPage: React.FC = () => {
    * 위젯이 아니라 빌링키로 처리하므로 여기서 회원을 묶을 이유가 없다.
    */
   useEffect(() => {
-    if (selectedPaymentType !== 'widget') {
-      widgetsRef.current = null;
-      setIsWidgetReady(false);
-      return;
-    }
+    if (selectedPaymentType !== 'widget') return;
+
+    // 이미 그려져 있으면 다시 그리지 않는다. 토스는 결제수단 위젯을 페이지당 하나만
+    // 허용하고, 지우지 않은 채 다시 그리면 이렇게 거부한다:
+    //   code=PAYMENT_METHODS_WIDGET_ALREADY_RENDERED
+    //   "하나의 결제수단 위젯만을 사용할 수 있어요."
+    // 갈래를 "등록한 카드" 로 바꿨다가 돌아오면 이 effect 가 다시 도는데, 그때 또 그리면
+    // 결제가 통째로 막힌다. 감추는 것은 display 가 하므로 지웠다 다시 그릴 이유도 없다.
+    if (widgetsRef.current) return;
 
     let active = true;
     setWidgetError(null);
-    setIsWidgetReady(false);
 
     (async () => {
       try {
@@ -491,12 +497,20 @@ const PaymentPage: React.FC = () => {
         await widgets.setAmount({ value: getFinalPrice(), currency: 'KRW' });
         if (!active) return;
 
-        await Promise.all([
+        const [methodWidget, agreementWidget] = await Promise.all([
           widgets.renderPaymentMethods({ selector: `#${WIDGET_METHODS_SELECTOR}` }),
           widgets.renderAgreement({ selector: `#${WIDGET_AGREEMENT_SELECTOR}` }),
         ]);
-        if (!active) return;
 
+        // 그리는 사이에 페이지를 떠났다면 붙은 것을 치운다. 안 치우면 다음에 들어왔을 때
+        // 위의 ALREADY_RENDERED 에 걸린다.
+        if (!active) {
+          void methodWidget.destroy().catch(() => {});
+          void agreementWidget.destroy().catch(() => {});
+          return;
+        }
+
+        renderedWidgetsRef.current = [methodWidget, agreementWidget];
         widgetsRef.current = widgets;
         setIsWidgetReady(true);
       } catch (error) {
@@ -516,6 +530,13 @@ const PaymentPage: React.FC = () => {
     // 위젯을 통째로 다시 그려 깜빡이고, 사용자가 고른 수단도 풀린다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPaymentType]);
+
+  /** 페이지를 떠날 때 위젯을 치운다. 남겨 두면 되돌아왔을 때 ALREADY_RENDERED 가 난다. */
+  useEffect(() => () => {
+    renderedWidgetsRef.current.forEach((w) => { void w.destroy().catch(() => {}); });
+    renderedWidgetsRef.current = [];
+    widgetsRef.current = null;
+  }, []);
 
   /** 쿠폰 적용·해제로 금액이 바뀌면 위젯에도 알린다. 다시 그리지 않고 금액만 올린다. */
   useEffect(() => {
