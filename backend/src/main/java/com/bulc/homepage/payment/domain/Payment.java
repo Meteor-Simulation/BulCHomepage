@@ -87,6 +87,27 @@ public class Payment {
     @Column(name = "idempotency_key", length = 300)
     private String idempotencyKey;
 
+    /** 자동결제(빌링) — API 개별 연동 키 세트({@code ck}/{@code sk}) 로 만들어진 결제. */
+    public static final String KEY_SET_BILLING = "BILLING";
+    /** 결제위젯 — 주문서형·결제창형 키 세트({@code gck}/{@code gsk}) 로 만들어진 결제. */
+    public static final String KEY_SET_WIDGET = "WIDGET";
+
+    /**
+     * 이 결제를 생성한 토스 키 세트.
+     *
+     * <p>토스는 <b>세트가 아닌 키를 섞으면 {@code INVALID_API_KEY} 로 거부</b>한다. 승인뿐
+     * 아니라 취소·조회도 같다. 그래서 나중에 취소할 때 어느 키로 호출해야 하는지 알려면
+     * 결제 시점에 남겨 두어야 한다.
+     *
+     * <p>주문번호 접두사({@code BILL-} / {@code BULC_})로도 갈라낼 수 있지만, 그 규칙은
+     * 서버와 프론트에 흩어진 암묵적 약속이라 한쪽이 바뀌면 조용히 틀린다. 명시로 남긴다.
+     *
+     * <p>과거 행은 마이그레이션에서 {@link #KEY_SET_BILLING} 으로 백필했다 — 위젯 결제가
+     * 존재하기 전이기 때문이다. 값이 없으면 빌링으로 간주한다.
+     */
+    @Column(name = "toss_key_set", length = 10)
+    private String tossKeySet;
+
     @Column(name = "fail_reason", columnDefinition = "TEXT")
     private String failReason;
 

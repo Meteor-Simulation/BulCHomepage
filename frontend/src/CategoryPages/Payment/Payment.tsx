@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { loadTossPayments, TossPaymentsInstance } from '@tosspayments/payment-sdk';
+import { loadTossPayments, ANONYMOUS, type TossPaymentsWidgets } from '@tosspayments/tosspayments-sdk';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAlert } from '../../components/AlertProvider';
@@ -23,20 +23,33 @@ import './Payment.css';
 //
 // 문제는 폴백 자체가 아니라 그것이 '조용했다'는 점이었다. 테스트 키로는 결제창이 열리고
 // 승인도 성공하지만 대금이 들어오지 않는다. 눈에 보이면 사고가 아니다.
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_Z1aOwX7K8mjmkLb4W0B03yQxzvNP';
+//
+// ## ck 가 아니라 gck 다
+//
+// 토스는 연동 방식마다 키 세트를 따로 발급한다. 결제위젯(주문서형·결제창형)은 gck/gsk 고,
+// 구 결제창 직접 연동은 ck/sk 다. **계좌이체·가상계좌·간편결제는 위젯 세트에만 열린다** —
+// 상점관리자의 "결제 UI 설정" 이 그 세트에 적용되기 때문이다. ck 로 requestPayment('계좌이체')
+// 를 부르면 계약이 끝나 있어도 "Toss Payments와 계약된 결제수단이 아닙니다" 로 거부된다.
+// 2026-10 까지 그 상태였고, 카드만 되던 이유가 이것이다(카드는 서버 빌링키 경로라 무관).
+const TOSS_WIDGET_CLIENT_KEY =
+  import.meta.env.VITE_TOSS_WIDGET_CLIENT_KEY || 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
 
 /** 테스트 키로 동작 중인지. 실결제가 일어나지 않으므로 화면에 표시한다. */
-const IS_TOSS_TEST_KEY = TOSS_CLIENT_KEY.startsWith('test_');
+const IS_TOSS_TEST_KEY = TOSS_WIDGET_CLIENT_KEY.startsWith('test_');
 
 if (IS_TOSS_TEST_KEY) {
   // 빌드 산출물에서도 확인할 수 있게 남긴다 — 운영에서 F12 로 바로 보인다
   console.warn(
     '[결제] 토스페이먼츠 테스트 키로 동작합니다. 실제 결제·정산이 일어나지 않습니다. ' +
-      (import.meta.env.VITE_TOSS_CLIENT_KEY
-        ? 'VITE_TOSS_CLIENT_KEY 가 테스트 키로 설정되어 있습니다.'
-        : 'VITE_TOSS_CLIENT_KEY 가 설정되지 않아 코드 기본값(테스트 키)을 사용했습니다.')
+      (import.meta.env.VITE_TOSS_WIDGET_CLIENT_KEY
+        ? 'VITE_TOSS_WIDGET_CLIENT_KEY 가 테스트 키로 설정되어 있습니다.'
+        : 'VITE_TOSS_WIDGET_CLIENT_KEY 가 설정되지 않아 코드 기본값(테스트 키)을 사용했습니다.')
   );
 }
+
+/** 결제위젯이 그려질 자리. 위젯은 셀렉터로 DOM 을 찾으므로 id 를 한 곳에서 관리한다. */
+const WIDGET_METHODS_SELECTOR = 'toss-payment-methods';
+const WIDGET_AGREEMENT_SELECTOR = 'toss-payment-agreement';
 
 // 카드 등록(빌링 인증) 모달은 성공 시 토스가 결제 페이지를 떠나 successUrl로 리다이렉트한다.
 // 등록 후 결제 페이지로 복귀했을 때 직전 결제 진행 상태를 복원하기 위한 임시 저장 키.
@@ -77,7 +90,17 @@ interface PaymentInfo {
 }
 
 // 결제 수단 타입 (토스페이먼츠 결제창에서 세부 선택)
-type PaymentType = 'card' | 'bank' | 'vbank' | null;
+/**
+ * 결제 갈래.
+ *
+ * - `card`   등록해 둔 카드(빌링키)로 서버가 즉시 승인한다. **자동갱신 구독에 쓸 수 있는 유일한 경로다.**
+ * - `widget` 토스 결제위젯. 계좌이체·가상계좌·카드·토스페이·페이코가 여기에 들어 있고,
+ *            노출 목록은 코드가 아니라 상점관리자의 "결제 UI 설정" 이 정한다.
+ *
+ * 위젯 안에도 카드가 있어 카드가 두 군데로 보이지만, 그쪽은 일회성이라 자동갱신이 안 된다.
+ * 그래서 둘을 합치지 않고 갈래로 나눠 둔다.
+ */
+type PaymentType = 'card' | 'widget' | null;
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -134,8 +157,15 @@ const PaymentPage: React.FC = () => {
   // 가므로 서버가 두 번째를 거부한다. 성공·실패로 끝나면 비워 다음 시도에 새 키를 받는다.
   const idempotencyKeyRef = useRef<string | null>(null);
 
-  // 결제 수단 선택 상태 (card: 카드, bank: 계좌이체, vbank: 가상계좌)
+  // 결제 갈래 — 등록 카드(빌링키) vs 토스 결제위젯
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType>(null);
+
+  // 결제위젯 인스턴스. 렌더가 끝나야 requestPayment 를 부를 수 있어서 ref 로 들고 있는다.
+  const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
+  const [isWidgetReady, setIsWidgetReady] = useState(false);
+  // 위젯을 띄우지 못한 사유. 계약·키 문제가 여기로 들어오므로 화면에 그대로 보여 준다 —
+  // 삼키면 "결제수단이 안 보인다" 는 말밖에 남지 않는다.
+  const [widgetError, setWidgetError] = useState<string | null>(null);
 
   // 약관 모달 상태
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -179,7 +209,9 @@ const PaymentPage: React.FC = () => {
       const s = JSON.parse(raw);
       if (s.product) setSelectedProduct(s.product);
       if (s.plan) setSelectedPlan(s.plan);
-      if (s.paymentType) setSelectedPaymentType(s.paymentType);
+      // 'bank'·'vbank' 로 저장된 구버전 상태가 돌아올 수 있다 (결제위젯 전환 전 세션).
+      // 지금은 카드 외 수단이 위젯 한 갈래이므로 그쪽으로 모은다.
+      if (s.paymentType) setSelectedPaymentType(s.paymentType === 'card' ? 'card' : 'widget');
       if (s.coupon) setAppliedCoupon(s.coupon);
       if (s.paymentInfo) {
         setPaymentInfo(s.paymentInfo);
@@ -378,21 +410,16 @@ const PaymentPage: React.FC = () => {
     return `BULC_${planId}_${timestamp}_${random}`;
   };
 
-  // 결제 수단 타입 매핑 (토스페이먼츠 SDK 지원 타입)
-  type PaymentMethodType = '카드' | '계좌이체' | '가상계좌';
-
-  const getPaymentMethodType = (): PaymentMethodType => {
-    switch (selectedPaymentType) {
-      case 'card':
-        return '카드';
-      case 'bank':
-        return '계좌이체';
-      case 'vbank':
-        return '가상계좌';
-      default:
-        return '카드';
-    }
-  };
+  /**
+   * 확인 창에 보여 줄 결제 갈래 이름.
+   *
+   * 위젯은 구체적인 수단(계좌이체인지 가상계좌인지)을 위젯 안에서 고르고, 그 선택은
+   * 토스 쪽에 있다. 우리가 단정해서 적으면 실제와 어긋날 수 있으므로 갈래까지만 적는다.
+   */
+  const getPaymentMethodLabel = (): string =>
+    selectedPaymentType === 'card'
+      ? t('payment.methods.savedCard')
+      : t('payment.methods.widget');
 
   // 구매자 정보 저장 (결제 시에만 호출)
   const saveUserInfo = async () => {
@@ -431,6 +458,73 @@ const PaymentPage: React.FC = () => {
       .finally(() => { if (active) setIsLoadingCards(false); });
     return () => { active = false; };
   }, [selectedPaymentType, isLoggedIn]);
+
+  /**
+   * 결제위젯을 띄운다.
+   *
+   * <p>노출되는 결제수단은 코드가 정하지 않는다 — 상점관리자의 "결제 UI 설정" 에 등록된
+   * 것이 그대로 내려온다. 그래서 수단을 늘리거나 줄일 때 배포가 필요 없다.
+   *
+   * <p>`customerKey` 는 ANONYMOUS 를 쓴다. 회원 식별이 필요한 건 브랜드페이뿐이고,
+   * 토스가 customerKey 에 이메일 같은 개인정보를 넣지 말라고 안내한다. 우리 자동갱신은
+   * 위젯이 아니라 빌링키로 처리하므로 여기서 회원을 묶을 이유가 없다.
+   */
+  useEffect(() => {
+    if (selectedPaymentType !== 'widget') {
+      widgetsRef.current = null;
+      setIsWidgetReady(false);
+      return;
+    }
+
+    let active = true;
+    setWidgetError(null);
+    setIsWidgetReady(false);
+
+    (async () => {
+      try {
+        const toss = await loadTossPayments(TOSS_WIDGET_CLIENT_KEY);
+        if (!active) return;
+
+        const widgets = toss.widgets({ customerKey: ANONYMOUS });
+        // 금액을 먼저 올린 뒤에 그려야 한다 — 위젯이 금액에 따라 쓸 수 있는 수단을 가린다
+        // (계좌이체 최소 200원 등). 순서가 뒤집히면 수단이 비어 보인다.
+        await widgets.setAmount({ value: getFinalPrice(), currency: 'KRW' });
+        if (!active) return;
+
+        await Promise.all([
+          widgets.renderPaymentMethods({ selector: `#${WIDGET_METHODS_SELECTOR}` }),
+          widgets.renderAgreement({ selector: `#${WIDGET_AGREEMENT_SELECTOR}` }),
+        ]);
+        if (!active) return;
+
+        widgetsRef.current = widgets;
+        setIsWidgetReady(true);
+      } catch (error) {
+        if (!active) return;
+        // 계약·키 문제가 여기로 들어온다. 삼키면 "결제수단이 안 보인다" 는 말만 남는다.
+        const reason = (error as { message?: string } | null)?.message?.trim();
+        console.error('[결제] 결제위젯 로드 실패', error);
+        setWidgetError(reason || t('payment.methods.widgetFailed'));
+        widgetsRef.current = null;
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+    // 금액은 아래 별도 effect 가 setAmount 로 갱신한다 — 여기서 의존하면 쿠폰을 바꿀 때마다
+    // 위젯을 통째로 다시 그려 깜빡이고, 사용자가 고른 수단도 풀린다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPaymentType]);
+
+  /** 쿠폰 적용·해제로 금액이 바뀌면 위젯에도 알린다. 다시 그리지 않고 금액만 올린다. */
+  useEffect(() => {
+    if (!isWidgetReady || !widgetsRef.current) return;
+    widgetsRef.current
+      .setAmount({ value: getFinalPrice(), currency: 'KRW' })
+      .catch((e) => console.error('[결제] 위젯 금액 갱신 실패', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWidgetReady, selectedPlan, appliedCoupon]);
 
   // 카드 등록 — 자체 카드 입력 모달을 띄운다 (MDP-758).
   // 토스 인증창으로 넘기지 않으므로 페이지 이탈도, 상태 저장/복원도 필요 없다.
@@ -479,7 +573,7 @@ const PaymentPage: React.FC = () => {
       });
       rows.push({ label: t('payment.confirmModal.listPrice'), value: formatPrice(selectedPlan.price) });
     }
-    rows.push({ label: t('payment.confirmModal.method'), value: getPaymentMethodType() });
+    rows.push({ label: t('payment.confirmModal.method'), value: getPaymentMethodLabel() });
 
     if (selectedPaymentType === 'card') {
       const card = billingCards.find((c) => c.id === selectedBillingKeyId);
@@ -584,6 +678,14 @@ const PaymentPage: React.FC = () => {
       showAlert({ message: t('payment.cards.selectRequired'), type: 'warning' });
       return false;
     }
+    // 위젯은 다 그려진 뒤에만 결제를 요청할 수 있다. 못 띄운 사유가 있으면 그걸 보여 준다.
+    if (selectedPaymentType === 'widget' && !isWidgetReady) {
+      showAlert({
+        message: widgetError || t('payment.methods.widgetLoading'),
+        type: 'warning',
+      });
+      return false;
+    }
     return true;
   };
 
@@ -621,12 +723,15 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    try {
-      const tossPayments: TossPaymentsInstance = await loadTossPayments(TOSS_CLIENT_KEY);
+    // 결제위젯 — 구체적인 수단(계좌이체·가상계좌·카드·간편결제)은 위젯 안에서 고른 것을 쓴다.
+    const widgets = widgetsRef.current;
+    if (!widgets) {
+      showAlert({ message: widgetError || t('payment.methods.widgetLoading'), type: 'error' });
+      return;
+    }
 
+    try {
       const orderId = generateOrderId(selectedPlan.id);
-      const paymentMethodType = getPaymentMethodType();
-      const finalAmount = getFinalPrice();
 
       // 적용한 쿠폰 코드를 주문번호로 보관한다 (MDP-748).
       // 결제창을 거쳐 /payment/success 로 리다이렉트되면 이 컴포넌트의 상태는 사라지는데,
@@ -639,28 +744,32 @@ const PaymentPage: React.FC = () => {
         localStorage.setItem(`couponCode_${orderId}`, appliedCoupon.code);
       }
 
-      await tossPayments.requestPayment(paymentMethodType, {
-        amount: finalAmount,
-        orderId: orderId,
+      // 금액을 인자로 넘기지 않는다 — 위젯은 setAmount 로 올려둔 값을 쓴다. 두 값이 어긋나면
+      // 승인에서 거부되므로, 금액의 출처를 한 곳(setAmount)으로 둔다.
+      await widgets.requestPayment({
+        orderId,
         orderName: `${selectedProduct.name} - ${selectedPlan.name}${appliedCoupon ? ` (${t('payment.coupon.couponLabel')}: ${appliedCoupon.code})` : ''}`,
         customerName: paymentInfo.name,
         customerEmail: paymentInfo.email,
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
-        ...(selectedPaymentType === 'vbank' && {
-          validHours: 24,
-        }),
-        ...(currency === 'USD' && {
-          currency: 'USD',
-          useInternationalCardOnly: 'true',
-        }),
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('USER_CANCEL')) {
+      // 토스 SDK 는 Error 가 아니라 { code, message } 객체로 거부한다. code 로 판별하지
+      // 않으면 사용자가 결제창을 그냥 닫은 것까지 "결제 요청 실패" 로 표시된다.
+      const tossError = error as { code?: string; message?: string } | null;
+      const code = tossError?.code;
+      const reason = tossError?.message?.trim();
+
+      if (code === 'USER_CANCEL') {
         return;
       }
-      // 결제 요청 오류
-      showAlert({ message: t('alerts.paymentRequestFailed'), type: 'error' });
+
+      // 사유를 그대로 보여준다. 계약되지 않은 결제수단·최소 결제금액 미달처럼
+      // "왜 안 되는지" 가 여기에만 담겨 오는데, 종전에는 통째로 삼키고 일반 문구만
+      // 띄워서 카드 외 수단이 왜 실패하는지 알 수 없었다. 코드는 F12 로 확인한다.
+      console.error('[결제] 결제창 호출 실패 -', code ?? '(코드 없음)', reason ?? error);
+      showAlert({ message: reason || t('alerts.paymentRequestFailed'), type: 'error' });
     }
   };
 
@@ -875,7 +984,9 @@ const PaymentPage: React.FC = () => {
                 <span className="step-number">3</span>
                 {t('payment.step3Title')}
               </h2>
-              <div className={`payment-methods ${currency === 'USD' ? 'one-option' : 'three-options'}`}>
+              {/* 두 갈래로 나눈다. 위젯 안에도 카드가 있지만 그쪽은 일회성이라 자동갱신이
+                  안 되고, 자동갱신 구독에는 등록 카드(빌링키)가 반드시 필요하다. */}
+              <div className={`payment-methods ${currency === 'USD' ? 'one-option' : 'two-options'}`}>
                 <button
                   className={`method-option-btn ${selectedPaymentType === 'card' ? 'selected' : ''}`}
                   onClick={() => handlePaymentMethodSelect('card')}
@@ -887,15 +998,15 @@ const PaymentPage: React.FC = () => {
                     </svg>
                   </div>
                   <div className="method-text">
-                    <span className="method-name">{t('payment.methods.creditCard')}</span>
-                    <span className="method-description">{t('payment.methods.creditCardDesc')}</span>
+                    <span className="method-name">{t('payment.methods.savedCard')}</span>
+                    <span className="method-description">{t('payment.methods.savedCardDesc')}</span>
                   </div>
                 </button>
 
                 {currency !== 'USD' && (
                   <button
-                    className={`method-option-btn ${selectedPaymentType === 'bank' ? 'selected' : ''}`}
-                    onClick={() => handlePaymentMethodSelect('bank')}
+                    className={`method-option-btn ${selectedPaymentType === 'widget' ? 'selected' : ''}`}
+                    onClick={() => handlePaymentMethodSelect('widget')}
                   >
                     <div className="method-icon">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -904,29 +1015,31 @@ const PaymentPage: React.FC = () => {
                       </svg>
                     </div>
                     <div className="method-text">
-                      <span className="method-name">{t('payment.methods.bank')}</span>
-                      <span className="method-description">{t('payment.methods.bankDesc')}</span>
+                      <span className="method-name">{t('payment.methods.widget')}</span>
+                      <span className="method-description">{t('payment.methods.widgetDesc')}</span>
                     </div>
                   </button>
                 )}
+              </div>
 
-                {currency !== 'USD' && (
-                  <button
-                    className={`method-option-btn ${selectedPaymentType === 'vbank' ? 'selected' : ''}`}
-                    onClick={() => handlePaymentMethodSelect('vbank')}
-                  >
-                    <div className="method-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/>
-                        <path d="M6 8h.01M6 12h.01M6 16h.01M10 8h8M10 12h8M10 16h8"/>
-                      </svg>
-                    </div>
-                    <div className="method-text">
-                      <span className="method-name">{t('payment.methods.vbank')}</span>
-                      <span className="method-description">{t('payment.methods.vbankDesc')}</span>
-                    </div>
-                  </button>
+              {/* 결제위젯이 그려지는 자리.
+                  셀렉터로 DOM 을 찾으므로 선택 여부와 상관없이 항상 마운트해 둔다 —
+                  조건부로 넣으면 렌더 시점에 요소가 없어 위젯이 붙지 못한다. 대신 선택되지
+                  않았을 때 감춘다. */}
+              <div
+                className="toss-widget-area"
+                style={{ display: selectedPaymentType === 'widget' ? 'block' : 'none' }}
+              >
+                {selectedPaymentType === 'widget' && !isWidgetReady && !widgetError && (
+                  <div className="loading-placeholder">{t('payment.methods.widgetLoading')}</div>
                 )}
+                {widgetError && (
+                  <div className="no-selection-message" role="alert">
+                    {widgetError}
+                  </div>
+                )}
+                <div id={WIDGET_METHODS_SELECTOR} />
+                <div id={WIDGET_AGREEMENT_SELECTOR} />
               </div>
 
               {/* 등록 카드 선택 (카드 결제 시) */}

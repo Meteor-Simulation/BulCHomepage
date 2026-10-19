@@ -204,6 +204,10 @@ toss:
     # 미설정은 TossPaymentsStartupCheck 가 prod 프로파일에서 기동 중단으로 알린다.
     client-key: ${TOSS_CLIENT_KEY:}
     secret-key: ${TOSS_SECRET_KEY:}
+    # 결제위젯(주문서형·결제창형) 키 세트. ck/sk 와 섞으면 INVALID_API_KEY 가 난다.
+    # 계좌이체·가상계좌·간편결제는 이 세트에만 열린다.
+    widget-client-key: ${TOSS_WIDGET_CLIENT_KEY:}
+    widget-secret-key: ${TOSS_WIDGET_SECRET_KEY:}
     success-url: ${TOSS_SUCCESS_URL:http://localhost:3000/payment/success}
     fail-url: ${TOSS_FAIL_URL:http://localhost:3000/payment/fail}
 
