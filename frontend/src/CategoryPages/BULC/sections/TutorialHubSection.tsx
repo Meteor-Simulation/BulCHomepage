@@ -40,7 +40,7 @@ const Award: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>
 );
 
-const YOUTUBE_URL = 'https://www.youtube.com/@SimulationMeteor';
+const YOUTUBE_URL = 'https://www.youtube.com/@meteorsimulation';
 
 // 기술문서(테크니컬 가이드북) HTML 경로 — 새 창으로 열립니다. (frontend/public/tech-docs/)
 const TECH_GUIDE_HTML_URL = '/tech-docs/technical-doc.html';

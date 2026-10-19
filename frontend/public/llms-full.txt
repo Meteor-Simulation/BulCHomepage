@@ -12,7 +12,7 @@
 - 사업자등록번호: 524-88-02647
 - 이메일: simul@msimul.com
 - 웹사이트: https://bulc.msimul.com
-- 유튜브: https://www.youtube.com/@SimulationMeteor
+- 유튜브: https://www.youtube.com/@meteorsimulation
 - 사업 영역: AI 기반 화재·유체 시뮬레이션 소프트웨어(BUL:C), VR 소방 안전 교육 솔루션
 
 ## BUL:C 제품 상세
