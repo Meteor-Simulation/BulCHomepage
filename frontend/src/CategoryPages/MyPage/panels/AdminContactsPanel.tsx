@@ -728,6 +728,7 @@ const AdminContactsPanel: React.FC = () => {
                 <li><strong>CSV / Excel (.xlsx, .xls)</strong> 모두 지원. 헤더 행 필수, 이메일 컬럼 필수.</li>
                 <li>한국어 명함 양식 헤더 자동 인식: <code>회사 · 이름 · 부서 · 직함 · 전자 메일 주소 · 근무지 주소 번지 · 근무처 전화 · 근무처 팩스 · 휴대폰 · 명함 등록일 · 명함첩 이름 · 메모</code></li>
                 <li>날짜는 <code>yyyy-MM-dd</code> / <code>yyyy.MM.dd</code> / <code>yyyy/MM/dd</code> 자동 인식, Excel 시리얼 날짜도 처리</li>
+                <li><strong>행사/태그는 파일명을 따릅니다</strong> — <code>한국소방기술사회(명함).xlsx</code> 로 올리면 <code>한국소방기술사회(명함)</code> 으로 등록됩니다. 파일에 <code>행사명</code> 열이 있으면 그 값이 우선합니다.</li>
                 <li>이미 등록된 이메일은 건너뜁니다.</li>
                 <li>명함 임포트는 기본값 <code>광고성 동의=false</code>, <code>안내성 동의=true</code>, <code>동의 방식=import</code>로 등록됨 (정보통신망법 안전 기본값).</li>
               </ul>
