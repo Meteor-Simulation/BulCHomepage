@@ -421,6 +421,10 @@ public class LeadContactService implements LeadContactPort {
      */
     @Transactional
     public LeadContactImportResult importFile(MultipartFile file, UUID adminId) {
+        // 행사명을 열에 적지 않고 파일명에 담아 올리는 경우가 많다 (예: 한국소방기술사회(명함).xlsx).
+        // 열 값이 있으면 그쪽이 이기고, 없을 때만 이 값을 쓴다.
+        String eventFromFilename = eventNameFromFilename(file.getOriginalFilename());
+
         byte[] bytes;
         try {
             bytes = file.getBytes();
@@ -495,7 +499,7 @@ public class LeadContactService implements LeadContactPort {
                         .workPhone(getCell(cells, colIdx, "work_phone"))
                         .workFax(getCell(cells, colIdx, "work_fax"))
                         .mobilePhone(getCell(cells, colIdx, "mobile_phone"))
-                        .sourceEvent(getCell(cells, colIdx, "source_event"))
+                        .sourceEvent(firstNonBlank(getCell(cells, colIdx, "source_event"), eventFromFilename))
                         .sourceDate(parseFlexibleDate(getCell(cells, colIdx, "source_date")))
                         .collectedBy(getCell(cells, colIdx, "collected_by"))
                         .consentMethod(firstNonBlank(getCell(cells, colIdx, "consent_method"), "import"))
@@ -606,6 +610,27 @@ public class LeadContactService implements LeadContactPort {
         if (i == null || i >= cells.size()) return null;
         String v = cells.get(i);
         return v == null || v.isBlank() ? null : v.trim();
+    }
+
+    /**
+     * 업로드한 파일명에서 행사명을 뽑는다. {@code 한국소방기술사회(명함).xlsx -> 한국소방기술사회(명함)}
+     *
+     * <p>명함·방명록을 행사별로 모아 올리는 운용 방식에 맞춘다. 행사명을 열로 넣지 않고
+     * 파일명에 적는 편이 자연스럽고, 실제로 그렇게 올라온다. 파일에 source_event 열이
+     * 있으면 그쪽이 이긴다 — 행 단위로 적어 둔 값을 파일명이 덮어쓰면 안 된다.
+     *
+     * <p>경로 구분자를 함께 자른다. 브라우저는 보통 파일명만 보내지만 일부 환경은
+     * 전체 경로를 보내는데, 그대로 두면 행사명에 폴더 경로가 섞인다.
+     */
+    static String eventNameFromFilename(String filename) {
+        if (filename == null || filename.isBlank()) return null;
+        String name = filename.trim();
+        int sep = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+        if (sep >= 0) name = name.substring(sep + 1);
+        int dot = name.lastIndexOf('.');
+        if (dot > 0) name = name.substring(0, dot);
+        name = name.trim();
+        return name.isEmpty() ? null : name;
     }
 
     private static String firstNonBlank(String... values) {
