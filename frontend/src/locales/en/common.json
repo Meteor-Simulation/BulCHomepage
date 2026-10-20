@@ -403,10 +403,8 @@
       },
       "renewalNote": "First-year price. Renews automatically at {{amount}} per year from year 2.",
       "hardware": {
-        "includes": "Everything in 3D Premium",
         "features": [
-          "Dedicated workstation included",
-          "License and hardware billed together in year 1"
+          "Dedicated workstation included"
         ]
       }
     },

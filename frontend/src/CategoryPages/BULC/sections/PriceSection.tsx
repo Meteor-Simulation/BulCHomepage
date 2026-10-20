@@ -20,19 +20,25 @@ interface PriceSectionProps {
   isLoggedIn?: boolean;
 }
 
-const HARDWARE_PLAN = 'BUL:C 3D Premium + 구동용 하드웨어';
-
 const FEATURE_KEYS: Record<string, string> = {
   'BUL:C PRO': 'pro',
   'BUL:C 3D Premium': 'premium',
-  [HARDWARE_PLAN]: 'hardware',
 };
 
 const COMING_SOON_PLANS: string[] = [];
-const EVAC_PLANS = ['BUL:C 3D Premium', HARDWARE_PLAN];
+const EVAC_PLANS = ['BUL:C 3D Premium'];
 
 const isPermanentPlan = (plan: PricePlan) =>
   EVAC_PLANS.includes(plan.name) && plan.description?.includes('영구');
+
+/**
+ * 하드웨어가 딸린 요금제인지. 설명으로 가른다.
+ *
+ * 이름은 기존 Premium 과 같다 — 이름을 바꾸면 구독 여부 판정(isSubscriptionPlan)이
+ * 이름 완전일치라 통과하지 못하고, 자동갱신이 꺼진 채 결제된다. 그 사실은 1년 뒤
+ * 갱신이 안 돌 때에야 드러난다. 그래서 이름은 건드리지 않고 설명으로 구분한다.
+ */
+const isHardwarePlan = (plan: PricePlan) => plan.description?.includes('하드웨어') ?? false;
 
 const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClick, onEducationContact, isLoggedIn }) => {
   const { t } = useTranslation();
@@ -71,10 +77,13 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
     return { value: '$' + price.toLocaleString(), unit: '' };
   };
 
-  const getFeatures = (planName: string): string[] => {
-    const key = FEATURE_KEYS[planName];
-    if (!key) return [];
-    return t(`bulc.price.${key}.features`, { returnObjects: true }) as string[];
+  const getFeatures = (plan: PricePlan): string[] => {
+    const key = FEATURE_KEYS[plan.name];
+    const base = key ? (t(`bulc.price.${key}.features`, { returnObjects: true }) as string[]) : [];
+    if (!isHardwarePlan(plan)) return base;
+    // 하드웨어 항목을 맨 앞에 둔다 — 같은 Premium 과 무엇이 다른지가 먼저 보여야 한다
+    const extra = t('bulc.price.hardware.features', { returnObjects: true }) as string[];
+    return [...extra, ...base];
   };
 
   const getIncludes = (planName: string): string | null => {
@@ -130,7 +139,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({ onPurchaseClick, onFreeClic
 
             {/* DB 유료 플랜 */}
             {plans.map((plan) => {
-              const features = getFeatures(plan.name);
+              const features = getFeatures(plan);
               const includes = getIncludes(plan.name);
               const isComingSoon = COMING_SOON_PLANS.includes(plan.name);
               const isPremium = EVAC_PLANS.includes(plan.name);
