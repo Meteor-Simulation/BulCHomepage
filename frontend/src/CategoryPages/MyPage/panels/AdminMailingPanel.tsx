@@ -244,7 +244,6 @@ const AdminMailingPanel: React.FC = () => {
           />
           <p className="amp-note amp-note--block">
             이름이 없으면 <strong>고객</strong>, 소속이 없으면 <strong>빈칸</strong>으로 나갑니다.
-            예: <code>{'{name}'}님 안녕하세요</code> → <strong>강주원님 안녕하세요</strong>
           </p>
 
           {unreadyInBody.length > 0 && (
