@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { getApiBaseUrl } from '../../../utils/api';
 import { useAlert } from '../../../components/AlertProvider';
 import './AdminMailingPanel.css';
@@ -26,6 +26,33 @@ const SEND_TEMPLATE_KEYS = [
   { value: 'redeem_code', label: '체험 라이선스 코드 안내' },
 ];
 
+/**
+ * 본문에 쓸 수 있는 개인화 항목.
+ *
+ * 치환은 서버(MailPersonalizer)가 한다. 여기 목록은 화면 안내용이고, 둘이 어긋나면
+ * 관리자가 쓴 자리표시자가 메일에 그대로 나간다 — 추가할 때 양쪽을 같이 고쳐야 한다.
+ *
+ * `ready: false` 는 아직 서버가 치환하지 못하는 항목이다. 목록에서 빼지 않고 남겨 두는
+ * 이유는, 없으면 "쿠폰은 어떻게 넣나" 를 매번 다시 묻게 되기 때문이다. 대신 쓰면 경고한다.
+ */
+const MAIL_PLACEHOLDERS: Array<{
+  token: string;
+  label: string;
+  fallback: string;
+  ready: boolean;
+  note?: string;
+}> = [
+  { token: '{name}', label: '수신자 이름', fallback: '고객', ready: true },
+  { token: '{company}', label: '소속', fallback: '빈칸', ready: true },
+  {
+    token: '{coupon}',
+    label: '체험 라이선스 코드',
+    fallback: '-',
+    ready: false,
+    note: '1인당 1개씩 발급해 넣는 방식이라 코드 발급 연동이 필요합니다.',
+  },
+];
+
 interface SendForm {
   mailType: 'operational' | 'promotional';
   templateKey: string;
@@ -50,6 +77,7 @@ const AdminMailingPanel: React.FC = () => {
   const { showAlert } = useAlert();
 
   const [sendForm, setSendForm] = useState<SendForm>(emptySendForm());
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ targetCount: number; sentCount: number; failedCount: number } | null>(null);
 
@@ -110,6 +138,32 @@ const AdminMailingPanel: React.FC = () => {
       setIsSending(false);
     }
   };
+
+  /**
+   * 자리표시자를 본문의 커서 위치에 끼워 넣는다.
+   *
+   * 끝에 덧붙이면 문장 중간에 넣고 싶을 때 다시 잘라 옮겨야 한다. 삽입 후 커서를
+   * 넣은 값 뒤로 옮겨 두어 이어서 타이핑할 수 있게 한다.
+   */
+  const insertPlaceholder = (token: string) => {
+    const el = contentRef.current;
+    const text = sendForm.contentHtml;
+    const at = el ? el.selectionStart : text.length;
+    const next = text.slice(0, at) + token + text.slice(el ? el.selectionEnd : text.length);
+    setSendForm({ ...sendForm, contentHtml: next });
+    // 상태 반영 뒤에 커서를 옮긴다 — 같은 틱에 하면 React 가 값을 덮어쓴다.
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(at + token.length, at + token.length);
+    });
+  };
+
+  // 아직 치환되지 않는 항목이 본문에 들어가 있으면 그대로 발송된다.
+  // 보낸 뒤에는 되돌릴 수 없으므로 발송 전에 알린다.
+  const unreadyInBody = MAIL_PLACEHOLDERS.filter(
+    p => !p.ready && sendForm.contentHtml.includes(p.token)
+  );
 
   return (
     <div className="info-card admin-section-card wide">
@@ -185,13 +239,57 @@ const AdminMailingPanel: React.FC = () => {
 
         <div className="amp-field">
           <span className="amp-field__label">본문 내용 <em className="amp-note">HTML 허용</em> <span className="amp-req">*</span></span>
-          <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={10} placeholder="<p>{name}님 안녕하세요. ...</p>" />
-          <p className="amp-note amp-note--block">
-            <code>{'{name}'}</code> 수신자 이름 (없으면 <strong>고객</strong>) ·{' '}
-            <code>{'{company}'}</code> 소속 (없으면 빈칸)
-            <br />
-            예: <code>{'{name}'}님 안녕하세요</code> → <strong>강주원님 안녕하세요</strong> 로 각각 발송됩니다.
-          </p>
+          <textarea
+            ref={contentRef}
+            className="admin-modal-input"
+            value={sendForm.contentHtml}
+            onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })}
+            rows={10}
+            placeholder="<p>{name}님 안녕하세요. ...</p>"
+          />
+
+          {/* 쓸 수 있는 항목을 표로 펼쳐 둔다. 문장으로 적으면 무엇이 있는지 한눈에
+              안 들어오고, 넣을 때마다 중괄호를 손으로 쳐야 한다. */}
+          <div className="amp-ph">
+            <div className="amp-ph__head">
+              개인화 항목 <em className="amp-note">누르면 커서 위치에 들어갑니다</em>
+            </div>
+            <table className="amp-ph__table">
+              <tbody>
+                {MAIL_PLACEHOLDERS.map(ph => (
+                  <tr key={ph.token} className={ph.ready ? '' : 'amp-ph__row--pending'}>
+                    <td>
+                      <button
+                        type="button"
+                        className="amp-ph__btn"
+                        onClick={() => insertPlaceholder(ph.token)}
+                        disabled={!ph.ready}
+                        title={ph.ready ? `${ph.token} 삽입` : '아직 치환되지 않습니다'}
+                      >
+                        {ph.token}
+                      </button>
+                    </td>
+                    <td className="amp-ph__label">{ph.label}</td>
+                    <td className="amp-ph__fallback">
+                      {ph.ready ? <>없으면 <strong>{ph.fallback}</strong></> : <span className="amp-ph__badge">준비 중</span>}
+                    </td>
+                    <td className="amp-ph__note">{ph.note || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="amp-note amp-note--block">
+              예: <code>{'{name}'}님 안녕하세요</code> → <strong>강주원님 안녕하세요</strong> 로 수신자마다 각각 발송됩니다.
+            </p>
+          </div>
+
+          {unreadyInBody.length > 0 && (
+            <p className="amp-warn">
+              본문에 아직 치환되지 않는 항목이 있습니다 —{' '}
+              {unreadyInBody.map(p => <code key={p.token}>{p.token}</code>)}
+              . 이대로 보내면 <strong>중괄호가 그대로 메일에 나갑니다.</strong>
+            </p>
+          )}
         </div>
 
         {sendResult && (
