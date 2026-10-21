@@ -115,48 +115,73 @@ const AdminMailingPanel: React.FC = () => {
         <span className="amp-hint amp-hint--inline">홈페이지 회원과 직접 등록한 컨택에게 안내성·광고성 메일을 발송합니다. (광고성은 수신 동의자에게만 발송)</span>
       </div>
 
-      <div className="amp-send-form">
-        <div className="form-group">
-          <label>메일 종류</label>
-          <div className="admin-modal-radio-group">
-            <label>
-              <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'operational'} onChange={() => setSendForm({ ...sendForm, mailType: 'operational' })} /> 안내성 (수신동의 불필요)
+      {/*
+        발송 폼은 공용 레이아웃 클래스(.form-group, .admin-modal-radio-group)를 쓰지 않는다.
+        MyPage.css 에 `.mypage-container .form-group label { width: 100px }` 이 있어 선택지
+        라벨까지 100px 로 눌리고, 한글은 글자 단위로 꺾여 한 글자씩 끊겨 보였다. 특이도가
+        같아(둘 다 0,2,1) 덮어쓰려 해도 나중에 로드되는 MyPage.css 가 이긴다.
+
+        그래서 레이아웃은 amp- 전용 클래스로만 짠다. 항목 이름을 <label> 이 아니라
+        <span> 으로 두는 것도 같은 이유다 — 공용 규칙이 label 을 겨냥하고 있다.
+        입력 상자(.admin-modal-input)와 버튼은 단독 클래스라 간섭이 없어 그대로 쓴다.
+      */}
+      <div className="amp-form">
+        <div className="amp-field">
+          <span className="amp-field__label">메일 종류</span>
+          <div className="amp-options">
+            <label className="amp-option">
+              <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'operational'} onChange={() => setSendForm({ ...sendForm, mailType: 'operational' })} />
+              <span>안내성 <em className="amp-note">수신동의 불필요</em></span>
             </label>
-            <label>
-              <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'promotional'} onChange={() => setSendForm({ ...sendForm, mailType: 'promotional' })} /> 광고성 (동의자 한정 · "(광고)" 표기)
+            <label className="amp-option">
+              <input type="radio" name="amp-mailtype" checked={sendForm.mailType === 'promotional'} onChange={() => setSendForm({ ...sendForm, mailType: 'promotional' })} />
+              <span>광고성 <em className="amp-note">동의자 한정 · 제목에 "(광고)" 표기</em></span>
             </label>
           </div>
         </div>
-        <div className="form-group">
-          <label>분류</label>
+
+        <div className="amp-field">
+          <span className="amp-field__label">분류</span>
           <select className="admin-modal-input" value={sendForm.templateKey} onChange={e => setSendForm({ ...sendForm, templateKey: e.target.value })}>
             {SEND_TEMPLATE_KEYS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
-        <div className="form-group">
-          <label>발송 대상 <span>*</span></label>
-          <div className="amp-checks">
-            <label><input type="checkbox" checked={sendForm.includeMembers} onChange={e => setSendForm({ ...sendForm, includeMembers: e.target.checked })} /> 홈페이지 회원 {sendForm.mailType === 'promotional' ? '(광고 수신동의 회원)' : '(활성 회원 전체)'}</label>
-            <label><input type="checkbox" checked={sendForm.includeContacts} onChange={e => setSendForm({ ...sendForm, includeContacts: e.target.checked })} /> 직접 등록 컨택 {sendForm.mailType === 'promotional' ? '(광고 동의 + 활성)' : '(안내성 동의 + 활성)'}</label>
+
+        <div className="amp-field">
+          <span className="amp-field__label">발송 대상 <span className="amp-req">*</span></span>
+          <div className="amp-options">
+            <label className="amp-option">
+              <input type="checkbox" checked={sendForm.includeMembers} onChange={e => setSendForm({ ...sendForm, includeMembers: e.target.checked })} />
+              <span>홈페이지 회원 <em className="amp-note">{sendForm.mailType === 'promotional' ? '광고 수신동의 회원' : '활성 회원 전체'}</em></span>
+            </label>
+            <label className="amp-option">
+              <input type="checkbox" checked={sendForm.includeContacts} onChange={e => setSendForm({ ...sendForm, includeContacts: e.target.checked })} />
+              <span>직접 등록 컨택 <em className="amp-note">{sendForm.mailType === 'promotional' ? '광고 동의 + 활성' : '안내성 동의 + 활성'}</em></span>
+            </label>
           </div>
         </div>
-        <div className="form-group">
-          <label>메일 제목 <span>*</span></label>
+
+        <div className="amp-field">
+          <span className="amp-field__label">메일 제목 <span className="amp-req">*</span></span>
           <input type="text" className="admin-modal-input" value={sendForm.subject} onChange={e => setSendForm({ ...sendForm, subject: e.target.value })} placeholder="예: [BUL:C] v1.2.0 업데이트 안내" />
         </div>
-        <div className="form-group">
-          <label>본문 제목 <span>*</span></label>
+
+        <div className="amp-field">
+          <span className="amp-field__label">본문 제목 <span className="amp-req">*</span></span>
           <input type="text" className="admin-modal-input" value={sendForm.title} onChange={e => setSendForm({ ...sendForm, title: e.target.value })} placeholder="메일 본문 상단의 큰 제목" />
         </div>
-        <div className="form-group vertical">
-          <label>본문 내용 (HTML 허용) <span>*</span></label>
+
+        <div className="amp-field">
+          <span className="amp-field__label">본문 내용 <em className="amp-note">HTML 허용</em> <span className="amp-req">*</span></span>
           <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={10} placeholder="<p>안녕하세요. ...</p>" />
         </div>
+
         {sendResult && (
           <div className="amp-send-result">
             발송 결과 — 대상 <strong>{sendResult.targetCount}</strong> · 성공 <strong>{sendResult.sentCount}</strong> · 실패 <strong>{sendResult.failedCount}</strong>
           </div>
         )}
+
         <div className="amp-send-actions">
           <button className="cancel-btn" onClick={resetForm} disabled={isSending}>초기화</button>
           <button className="save-btn" onClick={handleSend} disabled={isSending}>{isSending ? '발송 중...' : '발송'}</button>

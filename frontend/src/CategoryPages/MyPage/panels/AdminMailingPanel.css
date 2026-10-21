@@ -53,13 +53,75 @@
   cursor: not-allowed;
 }
 
-/* 발송 폼 — 전용 화면이 되어 모달 밖으로 나왔다 (MDP-908) */
-.amp-send-form {
+/* ========================================
+   발송 폼 — 공용 레이아웃에 기대지 않는다
+   ========================================
+   MyPage.css 의 `.mypage-container .form-group label { width: 100px }` 이 선택지
+   라벨까지 잡아 한글이 글자 단위로 꺾였다. 특이도가 같아(둘 다 0,2,1) 덮어쓰기로는
+   못 이긴다 — MyPage.tsx 가 panels 를 먼저 import 하고 자기 CSS 를 뒤에 import 하므로
+   동점이면 그쪽이 이긴다.
+
+   그래서 폭·정렬을 공용 클래스에서 떼어내고 amp- 전용 클래스로만 짠다. 바깥 CSS 가
+   무엇을 하든 이 폼은 영향받지 않는다. 입력 상자(.admin-modal-input)와 버튼은 단독
+   클래스라 간섭이 없어 그대로 쓴다. */
+.amp-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   padding: 18px 4px 4px;
-  max-width: 720px;
+  max-width: 760px;
+}
+
+/* 한 항목 = 이름(위) + 입력(아래).
+   이름을 왼쪽에 고정폭으로 두면 긴 문구가 좁은 칸에 갇힌다. 세로로 쌓으면 문구가
+   길어져도 가로를 전부 쓴다. */
+.amp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amp-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.amp-req {
+  color: #dc2626;
+  margin-left: 1px;
+}
+
+/* 항목 이름이나 선택지에 덧붙는 설명. 본문과 같은 굵기면 무엇이 제목인지 흐려진다. */
+.amp-note {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* 선택지 묶음 — 언제나 한 줄에 하나 */
+.amp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amp-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+/* 문구가 두 줄이 되어도 버튼은 첫 줄에 붙어 있어야 한다 —
+   가운데 정렬이면 긴 문구에서 버튼이 아래로 내려가 어긋나 보인다. */
+.amp-option > input {
+  flex: 0 0 auto;
+  margin: 4px 0 0;
 }
 
 .amp-send-actions {
@@ -212,61 +274,3 @@
   color: #9ca3af;
 }
 
-/* ========================================
-   발송 폼의 선택지 — 한 줄에 하나씩
-   ========================================
-   공용 .admin-modal-radio-group 은 모달 안의 짧은 선택지(예: "예 / 아니오")를
-   전제로 가로 배치(flex row)다. 그런데 여기 문구는 길다.
-
-     안내성 (수신동의 불필요)
-     광고성 (동의자 한정 · "(광고)" 표기)
-
-   가로로 붙이면 폼 폭(720px)을 넘겨 문구 중간에서 줄이 꺾이고, 꺾인 줄이
-   라디오 버튼과 어긋나 무엇을 고르는 항목인지 읽기 어려워진다.
-
-   공용 클래스를 고치면 다른 관리자 모달의 짧은 선택지까지 세로로 늘어서므로,
-   발송 폼 안에서만 세로로 바꾼다. 아래 .amp-checks 와 모양을 맞춘다. */
-.amp-send-form .admin-modal-radio-group {
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 선택지 문구가 한 줄에 들어가게 한다.
-   ========================================
-   MyPage.css 에 이런 규칙이 있다.
-
-     .mypage-container .form-group label { width: 100px; min-width: 100px; }
-
-   "메일 종류" 같은 **항목 이름** 라벨의 폭을 맞추려는 규칙인데, 선택자가
-   .form-group 안의 label 을 전부 잡는다. 그래서 라디오·체크박스 라벨까지
-   100px 로 눌려 문구가 서너 글자마다 꺾였다. 한글은 글자 단위로 꺾이기 때문에
-   거의 한 글자씩 끊긴 것처럼 보인다.
-
-   특이도가 (0,2,1) 이다. .amp-send-form .admin-modal-radio-group label 도 (0,2,1) 로
-   **동점**이고, MyPage.css 가 나중에 로드되므로(MyPage.tsx 가 panels 를 먼저 import
-   하고 자기 CSS 를 뒤에 import 한다) 동점이면 저쪽이 이긴다. 그래서 .mypage-container
-   를 앞에 붙여 (0,3,1) 로 확실히 넘어선다.
-
-   폭 제한만 푸는 게 아니라 항목 이름용 글꼴·색까지 함께 되돌려야 선택지가 항목
-   이름처럼 보이지 않는다.
-
-   문구가 두 줄이 되는 경우에도 라디오는 첫 줄에 붙어 있어야 한다 —
-   align-items: center 면 버튼이 가운데로 내려가 어긋나 보인다. */
-.mypage-container .amp-send-form .admin-modal-radio-group label,
-.mypage-container .amp-send-form .amp-checks label {
-  width: auto;
-  min-width: 0;
-  flex-shrink: 1;
-  align-items: flex-start;
-  font-size: 13px;
-  font-weight: 400;
-  color: #333;
-  line-height: 1.6;
-}
-
-/* 선택 버튼이 문구에 밀려 찌그러지지 않게 한다 */
-.amp-send-form .admin-modal-radio-group input[type='radio'],
-.amp-send-form .amp-checks input[type='checkbox'] {
-  flex: 0 0 auto;
-  margin-top: 3px;
-}
