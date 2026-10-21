@@ -302,96 +302,6 @@
   color: #92400e;
 }
 
-/* ========================================
-   개인화 항목 안내
-   ========================================
-   본문 아래에 붙는 참고표. 입력이 아니라 읽을거리라서 배경을 한 톤 낮춘다. */
-.amp-ph {
-  margin-top: 8px;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-
-.amp-ph__head {
-  font-size: 12px;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 6px;
-}
-
-.amp-ph__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.amp-ph__table td {
-  padding: 2px 8px 2px 0;
-  vertical-align: top;
-}
-
-/* 자리표시자를 누르면 본문에 들어간다. 손으로 중괄호를 치지 않게 한다. */
-.amp-ph__btn {
-  padding: 2px 7px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: #fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  color: #0f172a;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.amp-ph__btn:hover:not(:disabled) {
-  border-color: #94a3b8;
-  background: #f1f5f9;
-}
-
-.amp-ph__btn:disabled {
-  color: #94a3b8;
-  background: #f1f5f9;
-  cursor: not-allowed;
-}
-
-.amp-ph__label {
-  color: #334155;
-  white-space: nowrap;
-}
-
-.amp-ph__fallback,
-.amp-ph__note {
-  color: #64748b;
-}
-
-/* "없으면 고객" 은 한 덩어리다. 꺾이면 '없으면' 과 '고객' 이 따로 읽힌다. */
-.amp-ph__fallback {
-  white-space: nowrap;
-}
-
-/* 설명만 남은 폭을 전부 가져가 다른 칸이 눌리지 않게 한다 */
-.amp-ph__note {
-  width: 100%;
-}
-
-/* 아직 치환되지 않는 항목 — 목록에는 두되 쓸 수 없음이 보여야 한다 */
-.amp-ph__row--pending .amp-ph__label {
-  color: #94a3b8;
-}
-
-.amp-ph__badge {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: #fef3c7;
-  color: #92400e;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .amp-warn code {
   padding: 1px 5px;
   margin: 0 2px;
@@ -399,4 +309,21 @@
   background: #fff7ed;
   border: 1px solid #fed7aa;
   font-size: 12px;
+}
+
+/* 항목 이름 옆에 적는 자리표시자. 본문을 쓰면서 바로 눈에 들어와야 한다. */
+.amp-field__label code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 아직 치환되지 않는 항목 — 쓸 수 있는 것과 같아 보이면 안 된다 */
+.amp-field__label code.is-pending {
+  background: #f1f5f9;
+  color: #94a3b8;
 }
