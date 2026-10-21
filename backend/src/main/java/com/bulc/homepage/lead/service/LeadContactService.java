@@ -397,16 +397,30 @@ public class LeadContactService implements LeadContactPort {
     @Transactional(readOnly = true)
     public List<MailingContact> findMarketingRecipients() {
         return leadContactRepository.findActiveMarketingContacts().stream()
-                .map(c -> new MailingContact(
-                        c.getEmail(),
-                        c.getUnsubscribeToken() != null ? c.getUnsubscribeToken().toString() : ""))
+                .map(LeadContactService::toMailingContact)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<String> findTransactionalRecipients() {
-        return leadContactRepository.findActiveTransactionalEmails();
+    public List<MailingContact> findTransactionalRecipients() {
+        return leadContactRepository.findActiveTransactionalContacts().stream()
+                .map(LeadContactService::toMailingContact)
+                .toList();
+    }
+
+    /**
+     * 엔티티를 발송용 정보로 좁힌다.
+     *
+     * <p>이름·소속은 본문 자리표시자 치환에만 쓰인다 (MDP-1020). 유입경로·동의 증빙·메모는
+     * 발송과 무관하므로 내보내지 않는다.
+     */
+    private static MailingContact toMailingContact(LeadContact c) {
+        return new MailingContact(
+                c.getEmail(),
+                c.getUnsubscribeToken() != null ? c.getUnsubscribeToken().toString() : "",
+                c.getContactName(),
+                c.getCompanyName());
     }
 
     // ---- Import (CSV / Excel 자동 감지) ------------------------------------

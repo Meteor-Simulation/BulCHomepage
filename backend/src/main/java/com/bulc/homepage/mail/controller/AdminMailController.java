@@ -24,7 +24,11 @@ import java.util.UUID;
 public class AdminMailController {
 
     private static final Set<String> ALLOWED_TEMPLATE_KEYS = Set.of(
-            "program_update", "terms_change", "security_notice"
+            "program_update", "terms_change", "security_notice",
+            // 전시회·이벤트 참가자에게 체험 라이선스 코드를 보낼 때 (MDP-1020).
+            // 본인이 요청한 코드를 이행하는 발송이므로 **안내성**으로 보낸다 — 광고성으로
+            // 보내면 QR 로 받은 컨택은 opt_in_marketing=false 라 한 명에게도 가지 않는다.
+            "redeem_code"
     );
 
     private final OperationalMailService operationalMailService;
@@ -35,7 +39,7 @@ public class AdminMailController {
      *
      * Body 예시:
      * {
-     *   "templateKey": "program_update",   // program_update / terms_change / security_notice
+     *   "templateKey": "program_update",   // program_update / terms_change / security_notice / redeem_code
      *   "subject": "[BulC] v1.2.0 업데이트 안내",
      *   "title": "BulC v1.2.0 출시",
      *   "contentHtml": "<p>새 기능 ... </p>",

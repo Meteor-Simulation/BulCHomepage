@@ -21,6 +21,9 @@ const SEND_TEMPLATE_KEYS = [
   { value: 'program_update', label: '프로그램 업데이트 안내' },
   { value: 'terms_change', label: '약관 변경 안내' },
   { value: 'security_notice', label: '보안 공지' },
+  // 전시회·이벤트 참가자에게 체험 라이선스 코드를 보낼 때.
+  // 본인이 요청한 코드를 이행하는 발송이므로 안내성으로 보낸다 (아래 안내 문구 참고).
+  { value: 'redeem_code', label: '체험 라이선스 코드 안내' },
 ];
 
 interface SendForm {
@@ -145,6 +148,15 @@ const AdminMailingPanel: React.FC = () => {
           <select className="admin-modal-input" value={sendForm.templateKey} onChange={e => setSendForm({ ...sendForm, templateKey: e.target.value })}>
             {SEND_TEMPLATE_KEYS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
+          {/* 전시회 QR 로 받은 컨택은 광고성 수신 동의가 없다. 코드 안내를 광고성으로
+              보내면 한 명에게도 가지 않는데, 발송 결과만 보면 "대상 0명" 이라 이유를
+              알기 어렵다. 고르는 자리에서 미리 알린다. */}
+          {sendForm.templateKey === 'redeem_code' && sendForm.mailType === 'promotional' && (
+            <p className="amp-warn">
+              코드 안내는 <strong>안내성</strong>으로 보내세요. 전시회에서 받은 컨택은 광고성 수신 동의가 없어
+              광고성으로는 발송되지 않습니다.
+            </p>
+          )}
         </div>
 
         <div className="amp-field">
@@ -173,7 +185,13 @@ const AdminMailingPanel: React.FC = () => {
 
         <div className="amp-field">
           <span className="amp-field__label">본문 내용 <em className="amp-note">HTML 허용</em> <span className="amp-req">*</span></span>
-          <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={10} placeholder="<p>안녕하세요. ...</p>" />
+          <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={10} placeholder="<p>{name}님 안녕하세요. ...</p>" />
+          <p className="amp-note amp-note--block">
+            <code>{'{name}'}</code> 수신자 이름 (없으면 <strong>고객</strong>) ·{' '}
+            <code>{'{company}'}</code> 소속 (없으면 빈칸)
+            <br />
+            예: <code>{'{name}'}님 안녕하세요</code> → <strong>강주원님 안녕하세요</strong> 로 각각 발송됩니다.
+          </p>
         </div>
 
         {sendResult && (
