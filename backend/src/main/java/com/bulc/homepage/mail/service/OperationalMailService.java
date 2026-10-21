@@ -57,7 +57,8 @@ public class OperationalMailService {
     public record MailSendResult(int targetCount, int sentCount, int failedCount) {}
 
     /** 광고성 발송 대상 (이메일 + 수신거부 토큰). */
-    private record PromoTarget(String email, String token) {}
+    /** 발송 한 건에 필요한 것 — 주소, 수신거부 토큰, 그리고 본문 치환에 쓸 이름·소속. */
+    private record PromoTarget(String email, String token, String name, String company) {}
 
     /**
      * 광고성(PROMOTIONAL) 메일 발송 (MDP-608).
@@ -91,22 +92,26 @@ public class OperationalMailService {
                     u.setUnsubscribeToken(token);
                     userRepository.save(u);
                 }
-                targets.add(new PromoTarget(email.trim(), token));
+                targets.add(new PromoTarget(email.trim(), token, u.getName(), null));
             }
         }
         if (includeContacts) {
             for (MailingContact c : leadContactPort.findMarketingRecipients()) {
                 String email = c.email();
                 if (email == null || email.isBlank() || !seen.add(email.trim().toLowerCase())) continue;
-                targets.add(new PromoTarget(email.trim(), c.unsubscribeToken()));
+                targets.add(new PromoTarget(email.trim(), c.unsubscribeToken(), c.name(), c.company()));
             }
         }
+
+        // 자리표시자가 없으면 본문이 모두에게 같으므로 수신자별로 다시 만들 이유가 없다.
+        boolean personalize = MailPersonalizer.hasPlaceholder(html);
 
         int sent = 0;
         int failed = 0;
         for (PromoTarget t : targets) {
             try {
-                emailService.sendPromotionalPreapproved(t.email(), t.token(), templateKey, subject, html);
+                String body = personalize ? MailPersonalizer.apply(html, t.name(), t.company()) : html;
+                emailService.sendPromotionalPreapproved(t.email(), t.token(), templateKey, subject, body);
                 sent++;
             } catch (Exception e) {
                 failed++;
@@ -136,7 +141,7 @@ public class OperationalMailService {
     public MailSendResult sendOperationalNotice(String title, String contentHtml, String subject,
                                                 String templateKey, boolean includeMembers,
                                                 boolean includeContacts, List<String> explicitRecipients) {
-        List<String> targets = resolveRecipients(includeMembers, includeContacts, explicitRecipients);
+        List<PromoTarget> targets = resolveRecipients(includeMembers, includeContacts, explicitRecipients);
         Map<String, String> vars = new HashMap<>();
         vars.put("title", title);
         vars.put("content", contentHtml);
@@ -144,17 +149,21 @@ public class OperationalMailService {
         // 운영 안내는 항상 operational_notice 템플릿 사용 (file) — templateKey 는 분류용
         String html = emailService.renderTemplate("operational_notice", vars);
 
+        // 자리표시자가 없으면 본문이 모두에게 같으므로 수신자별로 다시 만들 이유가 없다.
+        boolean personalize = MailPersonalizer.hasPlaceholder(html);
+
         int sent = 0;
         int failed = 0;
-        for (String email : targets) {
+        for (PromoTarget t : targets) {
             try {
-                emailService.send(EmailCategory.OPERATIONAL, email, templateKey, subject, html);
+                String body = personalize ? MailPersonalizer.apply(html, t.name(), t.company()) : html;
+                emailService.send(EmailCategory.OPERATIONAL, t.email(), templateKey, subject, body);
                 sent++;
             } catch (Exception e) {
                 failed++;
                 // 단일 수신자 실패해도 다른 수신자에게 계속 진행
                 // (EmailService 에서 email_log FAILED 로 이미 기록됨)
-                log.warn("운영성 메일 발송 실패 - {} / {} / 사유: {}", templateKey, email, e.getMessage());
+                log.warn("운영성 메일 발송 실패 - {} / {} / 사유: {}", templateKey, t.email(), e.getMessage());
             }
         }
         log.info("운영성 메일 발송 완료: templateKey={}, 대상={}명, 성공={}건, 실패={}건",
@@ -165,28 +174,37 @@ public class OperationalMailService {
 
 
     /**
-     * 발송 대상 이메일을 소스별로 모아 중복 제거(대소문자 무시)하여 반환.
+     * 발송 대상을 소스별로 모아 중복 제거(대소문자 무시)하여 반환.
+     *
+     * <p>주소뿐 아니라 이름·소속까지 모은다 — 본문 자리표시자 치환에 쓰인다 (MDP-1020).
+     * 같은 주소가 여러 소스에 있으면 먼저 들어온 쪽이 남는다. 회원을 먼저 넣으므로
+     * 회원 이름이 컨택 이름보다 우선한다(회원 정보가 더 최신이다).
+     *
+     * <p>안내성은 수신거부 링크가 없어 토큰 자리는 빈 문자열이다.
      */
-    private List<String> resolveRecipients(boolean includeMembers, boolean includeContacts,
-                                           List<String> explicitRecipients) {
-        Map<String, String> dedup = new LinkedHashMap<>();
+    private List<PromoTarget> resolveRecipients(boolean includeMembers, boolean includeContacts,
+                                                List<String> explicitRecipients) {
+        Map<String, PromoTarget> dedup = new LinkedHashMap<>();
         if (includeMembers) {
-            userRepository.findAllByIsActiveTrue().forEach(u -> addEmail(dedup, u.getEmail()));
+            userRepository.findAllByIsActiveTrue()
+                    .forEach(u -> addTarget(dedup, u.getEmail(), u.getName(), null));
         }
         if (includeContacts) {
-            leadContactPort.findTransactionalRecipients().forEach(e -> addEmail(dedup, e));
+            leadContactPort.findTransactionalRecipients()
+                    .forEach(c -> addTarget(dedup, c.email(), c.name(), c.company()));
         }
         if (explicitRecipients != null) {
-            explicitRecipients.forEach(e -> addEmail(dedup, e));
+            // 직접 입력한 주소는 이름을 알 수 없다 — 치환 시 기본값으로 대체된다.
+            explicitRecipients.forEach(e -> addTarget(dedup, e, null, null));
         }
         return new ArrayList<>(dedup.values());
     }
 
     /** 이메일을 소문자 키로 중복 제거하여 추가 (원본 표기는 보존). */
-    private void addEmail(Map<String, String> dedup, String email) {
+    private void addTarget(Map<String, PromoTarget> dedup, String email, String name, String company) {
         if (email == null) return;
         String trimmed = email.trim();
         if (trimmed.isEmpty()) return;
-        dedup.putIfAbsent(trimmed.toLowerCase(), trimmed);
+        dedup.putIfAbsent(trimmed.toLowerCase(), new PromoTarget(trimmed, "", name, company));
     }
 }

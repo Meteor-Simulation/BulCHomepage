@@ -274,3 +274,56 @@
   color: #9ca3af;
 }
 
+
+/* 입력 아래에 붙는 설명 줄 — 인라인 .amp-note 와 달리 한 덩어리로 놓인다 */
+.amp-note--block {
+  margin: 2px 0 0;
+  line-height: 1.7;
+}
+
+.amp-note--block code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+/* 고른 조합이 의도와 어긋날 때의 경고. 막지는 않는다 — 막으면 예외 상황에서
+   손쓸 방법이 없어지고, 여기서 틀리는 비용은 "안 가는 것" 이라 되돌릴 수 있다. */
+.amp-warn {
+  margin: 2px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  background: #fffbeb;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #92400e;
+}
+
+.amp-warn code {
+  padding: 1px 5px;
+  margin: 0 2px;
+  border-radius: 4px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  font-size: 12px;
+}
+
+/* 항목 이름 옆에 적는 자리표시자. 본문을 쓰면서 바로 눈에 들어와야 한다. */
+.amp-field__label code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 아직 치환되지 않는 항목 — 쓸 수 있는 것과 같아 보이면 안 된다 */
+.amp-field__label code.is-pending {
+  background: #f1f5f9;
+  color: #94a3b8;
+}

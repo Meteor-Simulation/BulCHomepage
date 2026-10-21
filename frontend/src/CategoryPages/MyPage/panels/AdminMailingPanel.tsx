@@ -21,6 +21,36 @@ const SEND_TEMPLATE_KEYS = [
   { value: 'program_update', label: '프로그램 업데이트 안내' },
   { value: 'terms_change', label: '약관 변경 안내' },
   { value: 'security_notice', label: '보안 공지' },
+  // 전시회·이벤트 참가자에게 체험 라이선스 코드를 보낼 때.
+  // 본인이 요청한 코드를 이행하는 발송이므로 안내성으로 보낸다 (아래 안내 문구 참고).
+  { value: 'redeem_code', label: '체험 라이선스 코드 안내' },
+];
+
+/**
+ * 본문에 쓸 수 있는 개인화 항목.
+ *
+ * 치환은 서버(MailPersonalizer)가 한다. 여기 목록은 화면 안내용이고, 둘이 어긋나면
+ * 관리자가 쓴 자리표시자가 메일에 그대로 나간다 — 추가할 때 양쪽을 같이 고쳐야 한다.
+ *
+ * `ready: false` 는 아직 서버가 치환하지 못하는 항목이다. 목록에서 빼지 않고 "준비 중" 으로
+ * 남겨 둔다 — 없으면 "쿠폰은 어떻게 넣나" 를 매번 다시 묻게 된다. 본문에 쓰면 경고한다.
+ */
+const MAIL_PLACEHOLDERS: Array<{
+  token: string;
+  label: string;
+  fallback: string;
+  ready: boolean;
+  note?: string;
+}> = [
+  { token: '{name}', label: '수신자 이름', fallback: '고객', ready: true },
+  { token: '{company}', label: '소속', fallback: '빈칸', ready: true },
+  {
+    token: '{coupon}',
+    label: '체험 라이선스 코드',
+    fallback: '-',
+    ready: false,
+    note: '1인당 1개씩 발급해 넣는 방식이라 코드 발급 연동이 필요합니다.',
+  },
 ];
 
 interface SendForm {
@@ -108,6 +138,12 @@ const AdminMailingPanel: React.FC = () => {
     }
   };
 
+  // 아직 치환되지 않는 항목이 본문에 들어가 있으면 그대로 발송된다.
+  // 보낸 뒤에는 되돌릴 수 없으므로 발송 전에 알린다.
+  const unreadyInBody = MAIL_PLACEHOLDERS.filter(
+    p => !p.ready && sendForm.contentHtml.includes(p.token)
+  );
+
   return (
     <div className="info-card admin-section-card wide">
       <div className="card-header">
@@ -145,6 +181,15 @@ const AdminMailingPanel: React.FC = () => {
           <select className="admin-modal-input" value={sendForm.templateKey} onChange={e => setSendForm({ ...sendForm, templateKey: e.target.value })}>
             {SEND_TEMPLATE_KEYS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
+          {/* 전시회 QR 로 받은 컨택은 광고성 수신 동의가 없다. 코드 안내를 광고성으로
+              보내면 한 명에게도 가지 않는데, 발송 결과만 보면 "대상 0명" 이라 이유를
+              알기 어렵다. 고르는 자리에서 미리 알린다. */}
+          {sendForm.templateKey === 'redeem_code' && sendForm.mailType === 'promotional' && (
+            <p className="amp-warn">
+              코드 안내는 <strong>안내성</strong>으로 보내세요. 전시회에서 받은 컨택은 광고성 수신 동의가 없어
+              광고성으로는 발송되지 않습니다.
+            </p>
+          )}
         </div>
 
         <div className="amp-field">
@@ -172,8 +217,43 @@ const AdminMailingPanel: React.FC = () => {
         </div>
 
         <div className="amp-field">
-          <span className="amp-field__label">본문 내용 <em className="amp-note">HTML 허용</em> <span className="amp-req">*</span></span>
-          <textarea className="admin-modal-input" value={sendForm.contentHtml} onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })} rows={10} placeholder="<p>안녕하세요. ...</p>" />
+          {/* 쓸 수 있는 항목을 항목 이름 옆에 바로 적는다. 아래에 표로 펼쳐 두면
+              눈이 한 번 더 움직여야 하고, 정작 본문을 쓸 때는 보이지 않는다. */}
+          <span className="amp-field__label">
+            본문 내용 <em className="amp-note">HTML 허용</em>
+            <em className="amp-note">
+              {' · 개인화 '}
+              {MAIL_PLACEHOLDERS.map((ph, i) => (
+                <React.Fragment key={ph.token}>
+                  {i > 0 && ' · '}
+                  <code className={ph.ready ? '' : 'is-pending'}>{ph.token}</code>
+                  {' '}
+                  {ph.label}
+                  {!ph.ready && ' (준비 중)'}
+                </React.Fragment>
+              ))}
+            </em>
+            <span className="amp-req">*</span>
+          </span>
+          <textarea
+            className="admin-modal-input"
+            value={sendForm.contentHtml}
+            onChange={e => setSendForm({ ...sendForm, contentHtml: e.target.value })}
+            rows={10}
+            placeholder="<p>{name}님 안녕하세요. ...</p>"
+          />
+          <p className="amp-note amp-note--block">
+            이름이 없으면 <strong>고객</strong>, 소속이 없으면 <strong>빈칸</strong>으로 나갑니다.
+            예: <code>{'{name}'}님 안녕하세요</code> → <strong>강주원님 안녕하세요</strong>
+          </p>
+
+          {unreadyInBody.length > 0 && (
+            <p className="amp-warn">
+              본문에 아직 치환되지 않는 항목이 있습니다 —{' '}
+              {unreadyInBody.map(p => <code key={p.token}>{p.token}</code>)}
+              . 이대로 보내면 <strong>중괄호가 그대로 메일에 나갑니다.</strong>
+            </p>
+          )}
         </div>
 
         {sendResult && (

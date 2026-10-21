@@ -27,11 +27,13 @@ public interface LeadContactPort {
     List<MailingContact> findMarketingRecipients();
 
     /**
-     * 안내성(트랜잭션) 메일 발송 대상 이메일.
+     * 안내성(트랜잭션) 메일 발송 대상.
      *
-     * <p>광고가 아닌 운영 공지라서 수신거부 링크가 필요 없고, 그래서 토큰 없이 주소만 준다.
+     * <p>광고가 아닌 운영 공지라서 수신거부 링크가 필요 없고, 그래서 토큰은 빈 문자열로 온다.
+     * 이름·소속은 본문 자리표시자 치환에 쓰인다 (MDP-1020) — 안내성 메일도 "{name}님,
+     * 라이선스가 곧 만료됩니다" 처럼 수신자를 불러야 할 때가 있다.
      */
-    List<String> findTransactionalRecipients();
+    List<MailingContact> findTransactionalRecipients();
 
     /**
      * 수신거부 토큰으로 컨택의 수신을 해지한다. <b>멱등</b>하다.

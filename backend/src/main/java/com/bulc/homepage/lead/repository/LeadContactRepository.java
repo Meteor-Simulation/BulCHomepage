@@ -23,12 +23,16 @@ public interface LeadContactRepository extends JpaRepository<LeadContact, Long> 
      * 안내성(운영성) 메일 발송 대상 컨택의 이메일 목록.
      * 미해지(unsubscribedAt IS NULL) + 안내성 수신동의(optInTransactional=true).
      */
+    /**
+     * 안내성 메일 발송 대상. 본문 자리표시자 치환에 이름·소속이 필요해 엔티티로 받는다
+     * (MDP-1020) — 주소만 받으면 치환할 값이 없다.
+     */
     @Query("""
-            SELECT lc.email FROM LeadContact lc
+            SELECT lc FROM LeadContact lc
              WHERE lc.unsubscribedAt IS NULL
                AND lc.optInTransactional = true
             """)
-    List<String> findActiveTransactionalEmails();
+    List<LeadContact> findActiveTransactionalContacts();
 
     /**
      * 광고성 메일 발송 대상 컨택. 미해지 + 광고성 수신동의(optInMarketing=true).
